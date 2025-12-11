@@ -1,0 +1,3425 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Multi-page A4 Editor</title>
+  <style>
+    :root {
+      --page-margin: 17mm;
+      --para-number-left: 6mm;
+      --editor-font-family: inherit;
+    }
+
+    body {
+      display: flex;
+      gap: 16px;
+      margin: 0;
+      padding: 16px;
+      font-family: sans-serif;
+      background: #ddd;
+      box-sizing: border-box;
+    }
+
+    #ai-image-index {
+      display: none;
+    }
+
+    #left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    #toolbar button {
+      padding: 4px 10px;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .file-menu {
+      position: relative;
+      display: inline-flex;
+      align-items: stretch;
+    }
+
+    .file-menu .file-trigger {
+      margin-right: 0;
+    }
+
+    .file-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      background: #fff;
+      border: 1px solid #aaa;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      display: none;
+      flex-direction: column;
+      min-width: 120px;
+      z-index: 10;
+    }
+
+    .file-dropdown.open {
+      display: flex;
+    }
+
+    .file-dropdown button {
+      margin: 0;
+      width: 100%;
+      border: none;
+      border-bottom: 1px solid #eee;
+      background: none;
+      text-align: left;
+    }
+
+    .file-dropdown button:last-child {
+      border-bottom: 0;
+    }
+
+    .nested-dropdown {
+      position: relative;
+      display: flex;
+      align-items: stretch;
+    }
+
+    .nested-trigger {
+      border: none;
+      border-bottom: 0;
+      background: none;
+      padding: 4px 10px;
+      margin: 0;
+      width: 100%;
+      text-align: left;
+    }
+
+    .nested-trigger::after {
+      content: '▸';
+      float: right;
+    }
+
+    .nested-dropdown-menu {
+      position: absolute;
+      top: 0;
+      left: 100%;
+      background: #fff;
+      border: 1px solid #aaa;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      display: none;
+      flex-direction: column;
+      min-width: 140px;
+      z-index: 12;
+    }
+
+    .nested-dropdown.open .nested-dropdown-menu {
+      display: flex;
+    }
+
+    .nested-dropdown-menu button {
+      border-bottom: 1px solid #eee;
+      border-radius: 0;
+      padding: 4px 10px;
+    }
+
+    .nested-dropdown-menu button:last-child {
+      border-bottom: 0;
+    }
+
+    .image-context-menu {
+      position: fixed;
+      display: none;
+      flex-direction: column;
+      background: #fff;
+      border: 1px solid #aaa;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+      padding: 4px 0;
+      min-width: 160px;
+      z-index: 20;
+    }
+
+    .image-context-menu.open {
+      display: flex;
+    }
+
+    .image-context-menu button {
+      background: none;
+      border: none;
+      padding: 6px 16px;
+      text-align: left;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .image-context-menu button:hover {
+      background: #f0f0f0;
+    }
+
+    .image-context-dropdown {
+      position: relative;
+    }
+
+    .image-context-trigger {
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 6px 16px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .image-context-trigger::after {
+      content: '▾';
+      float: right;
+    }
+
+    .image-context-dropdown .image-context-submenu {
+      position: absolute;
+      top: 0;
+      left: 100%;
+      background: #fff;
+      border: 1px solid #aaa;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      display: none;
+      flex-direction: column;
+      min-width: 140px;
+      z-index: 22;
+    }
+
+    .image-context-dropdown.open .image-context-submenu {
+      display: flex;
+    }
+
+    .image-context-submenu button {
+      padding: 6px 12px;
+      border: none;
+      background: none;
+      text-align: left;
+      width: 100%;
+    }
+
+    .image-context-submenu button:hover {
+      background: #f0f0f0;
+    }
+
+    .page-inner img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0.6em 0;
+    }
+
+    .img-xs {
+      width: 20%;
+    }
+
+    .img-s {
+      width: 35%;
+    }
+
+    .img-m {
+      width: 50%;
+    }
+
+    .img-l {
+      width: 65%;
+    }
+
+    .img-xl {
+      width: 85%;
+    }
+
+    #pages-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+      overflow-y: auto;
+    }
+
+    /* 1ページ（A4枠） */
+    section.page {
+      position: relative;
+      width: min(100%, 60vw);
+      aspect-ratio: 210 / 297;
+      /* A4比率 */
+      background: #fff;
+      border: 1px solid #aaa;
+      box-shadow: 0 0 8px rgba(0, 0, 0, .15);
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    section.page::after {
+      content: attr(data-page);
+      position: absolute;
+
+      /* 下中央へ移動 */
+      left: 50%;
+      bottom: 6mm;
+      transform: translateX(-50%);
+
+      font-size: 11px;
+      color: #666;
+    }
+
+
+    /* ページ内の編集領域 */
+    .page-inner {
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      padding: var(--page-margin);
+      position: relative;
+      overflow-y: auto;
+      outline: none;
+      font-family: var(--editor-font-family, inherit);
+    }
+
+    .page-inner .figure-inline {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    .page-inner .figure-inline img {
+      display: inline-block;
+      max-width: 100%;
+      height: auto;
+      margin: 0.6em auto;
+    }
+
+    .page-inner .figure-title {
+      display: inline-block;
+      margin-top: 0.35em;
+      text-align: center;
+    }
+
+    .page-inner .caret-slot {
+      display: inline;
+      user-select: none;
+      pointer-events: none;
+    }
+
+
+    .page-inner p,
+    .page-inner h1,
+    .page-inner h2,
+    .page-inner h3,
+    .page-inner h4,
+    .page-inner h5,
+    .page-inner h6 {
+      margin: 0 0 1em;
+      position: relative;
+      padding-left: 0;
+    }
+
+    .page-inner p[data-para]::before,
+    .page-inner h1[data-para]::before,
+    .page-inner h2[data-para]::before,
+    .page-inner h3[data-para]::before,
+    .page-inner h4[data-para]::before,
+    .page-inner h5[data-para]::before,
+    .page-inner h6[data-para]::before {
+      content: "[" attr(data-para) "]";
+      position: absolute;
+      left: calc(var(--para-number-left) - var(--page-margin));
+      top: 0.25em;
+      width: 2.4rem;
+      text-align: right;
+      color: #555;
+      font-size: 0.75rem;
+      font-weight: 400;
+      line-height: 1;
+      transform: none;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    /* 現在アクティブなページの枠を少し強調 */
+    section.page.active {
+      border-color: #337ab7;
+      box-shadow: 0 0 10px rgba(51, 122, 183, 0.6);
+    }
+
+    #source {
+      flex: 1;
+      height: 100vh;
+      box-sizing: border-box;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+    }
+
+    .page-inner .indent-1 {
+      padding-left: 36pt;
+    }
+
+    .page-inner .indent-2 {
+      padding-left: 72pt;
+    }
+
+    .page-inner .indent-3 {
+      padding-left: 108pt;
+    }
+
+    .page-inner .indent-4 {
+      padding-left: 144pt;
+    }
+
+    .page-inner .indent-5 {
+      padding-left: 180pt;
+    }
+
+    /* Highlight palette control */
+    .highlight-control {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    .highlight-control .highlight-palette {
+      display: none;
+      margin-top: 4px;
+      gap: 4px;
+      flex-wrap: wrap;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 6px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .highlight-control.is-open .highlight-palette {
+      display: flex;
+    }
+
+    .highlight-color-button {
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      border: 1px solid #999;
+      padding: 0;
+      cursor: pointer;
+      background: transparent;
+      position: relative;
+    }
+
+    .highlight-color-button::after {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border-radius: 2px;
+      background: currentColor;
+    }
+
+    .highlight-color-button:focus-visible,
+    .highlight-color-button:hover {
+      outline: 2px solid #333;
+      outline-offset: 2px;
+    }
+
+    .highlight-reset-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 4px;
+      border: 1px solid #999;
+      background: #f5f5f5;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .highlight-reset-button:focus-visible,
+    .highlight-reset-button:hover {
+      outline: 2px solid #333;
+      outline-offset: 2px;
+    }
+
+    .font-chooser {
+      position: relative;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .font-chooser-trigger {
+      padding: 4px 10px;
+      margin: 0;
+      border: 1px solid #999;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .font-chooser-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      background: #fff;
+      border: 1px solid #aaa;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      padding: 8px;
+      gap: 8px;
+      flex-direction: column;
+      min-width: 220px;
+      z-index: 15;
+    }
+
+    .font-chooser.is-open .font-chooser-panel {
+      display: flex;
+    }
+
+    .font-submenu {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .font-submenu-trigger {
+      width: 100%;
+      border: 1px solid #999;
+      border-radius: 4px;
+      background: #f9f9f9;
+      padding: 6px 10px;
+      cursor: pointer;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    .font-submenu-trigger::after {
+      content: '▾';
+      float: right;
+    }
+
+    .font-submenu.is-open .font-submenu-trigger::after {
+      content: '▴';
+    }
+
+    .font-submenu-panel {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fff;
+      box-shadow: inset 0 0 0 1px #eee;
+    }
+
+    .font-submenu.is-open .font-submenu-panel {
+      display: flex;
+    }
+
+    .font-family-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .font-family-option {
+      border: 1px solid #999;
+      border-radius: 4px;
+      background: #f9f9f9;
+      padding: 6px 10px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .font-family-option:hover {
+      background: #ececec;
+    }
+
+    .font-family-placeholder {
+      color: #777;
+      font-size: 0.85rem;
+    }
+
+    .color-palette {
+      display: flex;
+      margin-top: 4px;
+      gap: 4px;
+      flex-wrap: wrap;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 6px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .color-swatch-button {
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      border: 1px solid #999;
+      padding: 0;
+      cursor: pointer;
+      background: transparent;
+      position: relative;
+    }
+
+    .color-swatch-button::after {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border-radius: 2px;
+      background: currentColor;
+    }
+
+    .color-swatch-button:focus-visible,
+    .color-swatch-button:hover {
+      outline: 2px solid #333;
+      outline-offset: 2px;
+    }
+
+    .color-default-button {
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 4px;
+      border: 1px solid #999;
+      background: #f5f5f5;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .color-default-button:focus-visible,
+    .color-default-button:hover {
+      outline: 2px solid #333;
+      outline-offset: 2px;
+    }
+
+    /* Inline highlight spans mimic marker padding */
+    .inline-highlight {
+      display: inline-block;
+      padding: 0.1em 0.3em;
+      border-radius: 2px;
+      line-height: 1.2;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    .inline-color {
+      display: inline-block;
+      line-height: 1.2;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    .inline-tab {
+      display: inline-block;
+      width: var(--tab-width, 0px);
+      height: 1px;
+      pointer-events: auto;
+      line-height: 0;
+      font-size: 0;
+      overflow: hidden;
+      vertical-align: baseline;
+    }
+
+    .paragraph-chooser {
+      position: relative;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .paragraph-trigger {
+      padding: 4px 10px;
+      margin: 0;
+      border: 1px solid #999;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .paragraph-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      background: #fff;
+      border: 1px solid #aaa;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      padding: 8px;
+      gap: 8px;
+      flex-direction: column;
+      min-width: 220px;
+      z-index: 15;
+    }
+
+    .paragraph-chooser.is-open .paragraph-panel {
+      display: flex;
+    }
+
+    .paragraph-submenu {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .paragraph-submenu-trigger {
+      width: 100%;
+      border: 1px solid #999;
+      border-radius: 4px;
+      background: #f9f9f9;
+      padding: 6px 10px;
+      cursor: pointer;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    .paragraph-submenu-trigger::after {
+      content: '▾';
+      float: right;
+    }
+
+    .paragraph-submenu.is-open .paragraph-submenu-trigger::after {
+      content: '▴';
+    }
+
+    .paragraph-submenu-panel {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fff;
+      box-shadow: inset 0 0 0 1px #eee;
+    }
+
+    .paragraph-submenu.is-open .paragraph-submenu-panel {
+      display: flex;
+    }
+
+    .align-buttons {
+      display: flex;
+      gap: 6px;
+    }
+
+    .align-icon-button {
+      width: 40px;
+      height: 28px;
+      border-radius: 4px;
+      border: 1px solid #999;
+      background: #fff;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .align-icon-button:focus-visible,
+    .align-icon-button:hover {
+      outline: 2px solid #333;
+      outline-offset: 2px;
+    }
+
+    .spacing-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .spacing-button {
+      width: 40px;
+      height: 28px;
+      border-radius: 4px;
+      border: 1px solid #999;
+      background: #fff;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .spacing-button:focus-visible,
+    .spacing-button:hover {
+      outline: 2px solid #333;
+      outline-offset: 2px;
+    }
+
+    .inline-align {
+      display: inline-block;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .inline-align-left {
+      text-align: left;
+    }
+
+    .inline-align-center {
+      text-align: center;
+    }
+
+    .inline-align-right {
+      text-align: right;
+    }
+
+    .page-inner p.inline-spacing-xs,
+    .page-inner .inline-align.inline-spacing-xs {
+      margin-bottom: 4px;
+    }
+
+    .page-inner p.inline-spacing-s,
+    .page-inner .inline-align.inline-spacing-s {
+      margin-bottom: 12px;
+    }
+
+    .page-inner p.inline-spacing-m,
+    .page-inner .inline-align.inline-spacing-m {
+      margin-bottom: 20px;
+    }
+
+    .page-inner p.inline-spacing-l,
+    .page-inner .inline-align.inline-spacing-l {
+      margin-bottom: 28px;
+    }
+
+    .page-inner p.inline-spacing-xl,
+    .page-inner .inline-align.inline-spacing-xl {
+      margin-bottom: 36px;
+    }
+
+    .page-inner {
+      line-height: 1.5;
+    }
+
+    .page-inner.line-height-s {
+      line-height: 1.2;
+    }
+
+    .page-inner.line-height-l {
+      line-height: 1.8;
+    }
+
+    .mini-text {
+      font-size: 8pt;
+    }
+
+    dialog#image-title-dialog {
+      border: 1px solid #999;
+      border-radius: 8px;
+      padding: 16px;
+      background: #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    dialog#image-title-dialog::backdrop {
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    dialog#image-title-dialog form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    dialog#image-title-dialog label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.9rem;
+      color: #333;
+    }
+
+    dialog#image-title-dialog input[type="text"] {
+      padding: 6px 8px;
+      font-size: 0.85rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    dialog#image-title-dialog fieldset {
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    dialog#image-title-dialog button {
+      padding: 6px 12px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    dialog#image-title-dialog .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .indent-option {
+      padding: 6px 10px;
+      font-size: 0.85rem;
+    }
+
+    .indent-option label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .indent-option input:disabled+span {
+      color: #999;
+    }
+
+    .page-inner .indent-1.hanging-indent {
+      text-indent: -36pt;
+    }
+
+    .page-inner .indent-2.hanging-indent {
+      text-indent: -72pt;
+    }
+
+    .page-inner .indent-3.hanging-indent {
+      text-indent: -108pt;
+    }
+
+    .page-inner .indent-4.hanging-indent {
+      text-indent: -144pt;
+    }
+
+    .page-inner .indent-5.hanging-indent {
+      text-indent: -180pt;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="left">
+    <div id="toolbar">
+      <div class="file-menu">
+        <button type="button" class="file-trigger">File ▾</button>
+        <div class="file-dropdown" role="menu" aria-label="File options">
+          <button type="button" data-action="save">Save</button>
+          <button type="button" data-action="open">Open</button>
+          <button type="button" data-action="overwrite">Overwrite</button>
+          <div class="nested-dropdown">
+            <button type="button" class="nested-trigger" aria-haspopup="menu" aria-expanded="false">ハイパーリンク</button>
+            <div class="nested-dropdown-menu" role="menu">
+              <button type="button" data-action="add-link-destination">リンク先に追加</button>
+              <button type="button" data-action="create-link">リンクを生成</button>
+              <button type="button" data-action="remove-link">リンクを削除</button>
+            </div>
+          </div>
+          <div class="nested-dropdown">
+            <button type="button" class="nested-trigger" aria-haspopup="menu" aria-expanded="false">Insert
+              Image</button>
+            <div class="nested-dropdown-menu" role="menu">
+              <button type="button" data-action="insert-image-dropbox">dropboxから挿入</button>
+              <button type="button" data-action="insert-image-web">web上の画像を挿入</button>
+            </div>
+          </div>
+          <div class="nested-dropdown">
+            <button type="button" class="nested-trigger" aria-haspopup="menu" aria-expanded="false">余白</button>
+            <div class="nested-dropdown-menu" role="menu">
+              <button type="button" data-action="page-margin" data-size="s">S</button>
+              <button type="button" data-action="page-margin" data-size="m">M</button>
+              <button type="button" data-action="page-margin" data-size="l">L</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button type="button" data-action="bold">B</button>
+      <button type="button" data-action="italic">I</button>
+      <button type="button" data-action="underline">U</button>
+      <button type="button" data-action="strike">S</button>
+      <div class="highlight-control">
+        <button type="button" data-action="highlight" aria-expanded="false">HL</button>
+        <div class="highlight-palette" role="group" aria-label="ハイライトカラー">
+          <button type="button" class="highlight-color-button" data-action="highlight-color" data-color="#FFFF00"
+            style="color:#FFFF00" title="黄色" aria-label="黄色"></button>
+          <button type="button" class="highlight-color-button" data-action="highlight-color" data-color="#FFB7B7"
+            style="color:#FFB7B7" title="薄ピンク" aria-label="薄ピンク"></button>
+          <button type="button" class="highlight-color-button" data-action="highlight-color" data-color="#B7E1FF"
+            style="color:#B7E1FF" title="薄青" aria-label="薄青"></button>
+          <button type="button" class="highlight-color-button" data-action="highlight-color" data-color="#C4F0C5"
+            style="color:#C4F0C5" title="薄緑" aria-label="薄緑"></button>
+          <button type="button" class="highlight-reset-button" data-action="highlight-reset"
+            title="ハイライトを取り消す">取消</button>
+        </div>
+      </div>
+      <button type="button" data-action="superscript">上付き</button>
+      <button type="button" data-action="subscript">下付き</button>
+      <div class="font-chooser" id="font-chooser">
+        <button type="button" class="font-chooser-trigger" aria-haspopup="true" aria-expanded="false">Font ▾</button>
+        <div class="font-chooser-panel" role="menu" aria-label="フォント操作">
+          <div class="font-submenu" data-submenu="block-element">
+            <button type="button" class="font-submenu-trigger" aria-haspopup="true"
+              aria-expanded="false">ブロック要素</button>
+            <div class="font-submenu-panel" role="menu">
+              <div class="spacing-buttons">
+                <button type="button" class="spacing-button" data-action="block-element" data-tag="h1"
+                  title="見出し１">見出し１</button>
+                <button type="button" class="spacing-button" data-action="block-element" data-tag="h2"
+                  title="見出し２">見出し２</button>
+                <button type="button" class="spacing-button" data-action="block-element" data-tag="h3"
+                  title="見出し３">見出し３</button>
+                <button type="button" class="spacing-button" data-action="block-element" data-tag="p"
+                  title="本文">本文</button>
+                <button type="button" class="spacing-button" data-action="block-element" data-tag="mini-p"
+                  title="サブテキスト">サブテキスト</button>
+              </div>
+            </div>
+          </div>
+          <div class="font-submenu" data-submenu="font-color">
+            <button type="button" class="font-submenu-trigger" aria-haspopup="true"
+              aria-expanded="false">フォントカラー</button>
+            <div class="font-submenu-panel" role="menu">
+              <div class="color-palette" role="group" aria-label="フォントカラー">
+                <button type="button" class="color-default-button" data-action="font-color-default" title="デフォルトカラー"
+                  aria-label="デフォルトカラー">デフォルト</button>
+                <button type="button" class="color-swatch-button" data-action="font-color-swatch" data-color="#D92C2C"
+                  style="color:#D92C2C" title="#D92C2C" aria-label="#D92C2C"></button>
+                <button type="button" class="color-swatch-button" data-action="font-color-swatch" data-color="#E67F22"
+                  style="color:#E67F22" title="#E67F22" aria-label="#E67F22"></button>
+                <button type="button" class="color-swatch-button" data-action="font-color-swatch" data-color="#2E86C1"
+                  style="color:#2E86C1" title="#2E86C1" aria-label="#2E86C1"></button>
+                <button type="button" class="color-swatch-button" data-action="font-color-swatch" data-color="#1F618D"
+                  style="color:#1F618D" title="#1F618D" aria-label="#1F618D"></button>
+                <button type="button" class="color-swatch-button" data-action="font-color-swatch" data-color="#17A589"
+                  style="color:#17A589" title="#17A589" aria-label="#17A589"></button>
+                <button type="button" class="color-swatch-button" data-action="font-color-swatch" data-color="#7D3C98"
+                  style="color:#7D3C98" title="#7D3C98" aria-label="#7D3C98"></button>
+              </div>
+            </div>
+          </div>
+          <div class="font-submenu" data-submenu="font-family">
+            <button type="button" class="font-submenu-trigger" aria-haspopup="true"
+              aria-expanded="false">フォントファミリー</button>
+            <div class="font-submenu-panel" role="menu">
+              <div class="font-family-list">
+                <button type="button" class="font-family-option" data-action="font-family"
+                  data-family="'Yu Gothic', '游ゴシック体', sans-serif">游ゴシック / Yu Gothic</button>
+                <button type="button" class="font-family-option" data-action="font-family"
+                  data-family="'Yu Mincho', '游明朝', serif">游明朝 / Yu Mincho</button>
+                <button type="button" class="font-family-option" data-action="font-family"
+                  data-family="'Meiryo', 'メイリオ', sans-serif">メイリオ / Meiryo</button>
+                <button type="button" class="font-family-option" data-action="font-family"
+                  data-family="'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ ProN', sans-serif">Hiragino Sans / ヒラギノ角ゴ</button>
+                <button type="button" class="font-family-option" data-action="font-family"
+                  data-family="'Hiragino Mincho ProN', 'ヒラギノ明朝 ProN', serif">Hiragino Mincho / ヒラギノ明朝</button>
+                <button type="button" class="font-family-option" data-action="font-family"
+                  data-family="'Noto Sans JP', sans-serif">Noto Sans JP</button>
+                <button type="button" class="font-family-option" data-action="font-family"
+                  data-family="'Noto Serif JP', serif">Noto Serif JP</button>
+                <button type="button" class="font-family-option" data-action="font-family"
+                  data-family="'Arial', sans-serif">Arial</button>
+                <button type="button" class="font-family-option" data-action="font-family"
+                  data-family="'Times New Roman', serif">Times New Roman</button>
+                <button type="button" class="font-family-option" data-action="font-family"
+                  data-family="'Courier New', monospace">Courier New</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="paragraph-chooser" id="paragraph-chooser">
+        <button type="button" class="paragraph-trigger" aria-haspopup="true" aria-expanded="false">段落スタイル</button>
+        <div class="paragraph-panel" role="menu" aria-label="段落スタイル">
+          <div class="paragraph-submenu" data-submenu="align">
+            <button type="button" class="paragraph-submenu-trigger" aria-haspopup="true"
+              aria-expanded="false">Align</button>
+            <div class="paragraph-submenu-panel" role="menu">
+              <div class="align-buttons">
+                <button type="button" class="align-icon-button" data-action="align-left" title="左揃え"
+                  aria-label="左揃え">左</button>
+                <button type="button" class="align-icon-button" data-action="align-center" title="中央揃え"
+                  aria-label="中央揃え">中</button>
+                <button type="button" class="align-icon-button" data-action="align-right" title="右揃え"
+                  aria-label="右揃え">右</button>
+              </div>
+            </div>
+          </div>
+          <div class="paragraph-submenu" data-submenu="spacing">
+            <button type="button" class="paragraph-submenu-trigger" aria-haspopup="true"
+              aria-expanded="false">段落下の余白</button>
+            <div class="paragraph-submenu-panel" role="menu">
+              <div class="spacing-buttons">
+                <button type="button" class="spacing-button" data-action="paragraph-spacing" data-size="xs"
+                  title="XS">XS</button>
+                <button type="button" class="spacing-button" data-action="paragraph-spacing" data-size="s"
+                  title="S">S</button>
+                <button type="button" class="spacing-button" data-action="paragraph-spacing" data-size="m"
+                  title="M">M</button>
+                <button type="button" class="spacing-button" data-action="paragraph-spacing" data-size="l"
+                  title="L">L</button>
+                <button type="button" class="spacing-button" data-action="paragraph-spacing" data-size="xl"
+                  title="XL">XL</button>
+              </div>
+            </div>
+          </div>
+          <div class="paragraph-submenu" data-submenu="line-height">
+            <button type="button" class="paragraph-submenu-trigger" aria-haspopup="true"
+              aria-expanded="false">行間</button>
+            <div class="paragraph-submenu-panel" role="menu">
+              <div class="spacing-buttons">
+                <button type="button" class="spacing-button" data-action="line-height" data-size="s"
+                  title="S">S</button>
+                <button type="button" class="spacing-button" data-action="line-height" data-size="m"
+                  title="M">M</button>
+                <button type="button" class="spacing-button" data-action="line-height" data-size="l"
+                  title="L">L</button>
+              </div>
+            </div>
+          </div>
+          <div class="paragraph-submenu" data-submenu="indent">
+            <button type="button" class="paragraph-submenu-trigger" aria-haspopup="true"
+              aria-expanded="false">インデント</button>
+            <div class="paragraph-submenu-panel" role="menu">
+              <div class="spacing-buttons">
+                <button type="button" class="spacing-button" data-action="indent">インデント＋</button>
+                <button type="button" class="spacing-button" data-action="outdent">インデントー</button>
+              </div>
+              <div class="indent-option">
+                <label>
+                  <input type="checkbox" data-action="hanging-indent" disabled> ぶら下げ
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button type="button" data-action="add-page">+Page</button>
+      <button type="button" data-action="remove-page">-Page</button>
+    </div>
+    <input type="file" id="open-file-input" accept=".html,text/html" style="display:none" />
+    <div id="pages-container">
+      <!-- 初期ページ -->
+      <section class="page" data-page="1">
+        <div class="page-inner" contenteditable="true">
+          <p>ここに本文を書く</p>
+        </div>
+      </section>
+      <div id="ai-image-index" style="display:none"></div>
+    </div>
+  </div>
+
+  <textarea id="source" readonly></textarea>
+  <div id="image-context-menu" class="image-context-menu" role="menu">
+    <div class="image-context-dropdown">
+      <button type="button" class="image-context-trigger" aria-haspopup="menu" aria-expanded="false">サイズ</button>
+      <div class="image-context-submenu" role="menu">
+        <button type="button" data-action="image-size" data-size="xs">XS</button>
+        <button type="button" data-action="image-size" data-size="s">S</button>
+        <button type="button" data-action="image-size" data-size="m">M</button>
+        <button type="button" data-action="image-size" data-size="l">L</button>
+        <button type="button" data-action="image-size" data-size="xl">XL</button>
+      </div>
+    </div>
+    <button type="button" data-action="image-border">枠線</button>
+    <button type="button" data-action="image-title">タイトル</button>
+    <button type="button" data-action="image-caption">キャプション</button>
+    <button type="button" data-action="image-tag">タグ</button>
+  </div>
+
+  <dialog id="image-title-dialog" aria-labelledby="image-title-dialog-label">
+    <form method="dialog" aria-describedby="image-title-dialog-description">
+      <p id="image-title-dialog-label">画像タイトル</p>
+      <label for="image-title-input">
+        タイトル
+        <input type="text" id="image-title-input" name="image-title-input" placeholder="タイトルを入力" />
+      </label>
+      <fieldset id="image-title-dialog-description">
+        <legend>フォントサイズ</legend>
+        <label>
+          <input type="radio" name="image-title-font-size" value="default" checked />
+          標準
+        </label>
+        <label>
+          <input type="radio" name="image-title-font-size" value="mini" />
+          小サイズ (mini-p)
+        </label>
+      </fieldset>
+      <div class="dialog-actions">
+        <button type="button" data-action="cancel-image-title">キャンセル</button>
+        <button type="button" data-action="apply-image-title">適用</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    const pagesContainer = document.getElementById('pages-container');
+    const source = document.getElementById('source');
+    const toolbar = document.getElementById('toolbar');
+    const openFileInput = document.getElementById('open-file-input');
+    const fileMenu = document.querySelector('.file-menu');
+    const fileDropdown = document.querySelector('.file-dropdown');
+    const fileTrigger = document.querySelector('.file-trigger');
+    const nestedDropdowns = document.querySelectorAll('.nested-dropdown');
+    const nestedTriggers = document.querySelectorAll('.nested-trigger');
+    const imageContextMenu = document.getElementById('image-context-menu');
+    const imageContextDropdown = document.querySelector('.image-context-dropdown');
+    const imageContextTrigger = document.querySelector('.image-context-trigger');
+    const imageTitleDialog = document.getElementById('image-title-dialog');
+    const imageTitleInput = document.getElementById('image-title-input');
+    const imageTitleFontRadios = imageTitleDialog
+      ? imageTitleDialog.querySelectorAll('input[name="image-title-font-size"]')
+      : [];
+    const imageTitleApplyButton = document.querySelector('[data-action="apply-image-title"]');
+    const imageTitleCancelButton = document.querySelector('[data-action="cancel-image-title"]');
+    const highlightControl = document.querySelector('.highlight-control');
+    const highlightButton = highlightControl
+      ? highlightControl.querySelector('[data-action="highlight"]')
+      : null;
+    const fontChooser = document.querySelector('.font-chooser');
+    const fontChooserTrigger = fontChooser
+      ? fontChooser.querySelector('.font-chooser-trigger')
+      : null;
+    const fontSubmenuTriggers = fontChooser
+      ? fontChooser.querySelectorAll('.font-submenu-trigger')
+      : [];
+    const paragraphChooser = document.querySelector('.paragraph-chooser');
+    const paragraphTrigger = paragraphChooser
+      ? paragraphChooser.querySelector('.paragraph-trigger')
+      : null;
+    const paragraphSubmenuTriggers = paragraphChooser
+      ? paragraphChooser.querySelectorAll('.paragraph-submenu-trigger')
+      : [];
+    const styleTag = document.querySelector('style');
+    const paraNumberLeft = '6mm';
+    const pageMarginValues = { s: '12mm', m: '17mm', l: '24mm' };
+    let currentPageMargin = 'm';
+    let currentFontFamily = '';
+    let aiImageIndex = document.getElementById('ai-image-index');
+
+    let currentEditor = null; // 現在アクティブな .page-inner
+    let openedFileHandle = null; // File System Access API で開いたファイルハンドル
+    let contextTargetImage = null;
+    const imageSizeClasses = ['xs', 's', 'm', 'l', 'xl'];
+    const INDENT_STEP_PX = 36 * (96 / 72);
+    ensureAiImageIndex();
+    let lastSelectionState = null;
+
+    function isRangeInsideCurrentEditor(range) {
+      return !!(currentEditor && range && currentEditor.contains(range.commonAncestorContainer));
+    }
+
+    function saveTextSelectionFromEditor() {
+      const selection = window.getSelection();
+      if (!selection || !selection.rangeCount) return;
+      const range = selection.getRangeAt(0);
+      if (range.collapsed) return;
+      if (!isRangeInsideCurrentEditor(range)) return;
+      const state = computeSelectionStateFromRange(range);
+      if (state) {
+        lastSelectionState = state;
+      }
+    }
+
+    function getEffectiveTextRange() {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount) {
+        const range = selection.getRangeAt(0);
+        if (!range.collapsed && isRangeInsideCurrentEditor(range)) {
+          const state = computeSelectionStateFromRange(range);
+          if (state) {
+            lastSelectionState = state;
+            return range.cloneRange();
+          }
+        }
+      }
+      if (lastSelectionState) {
+        const restored = restoreRangeFromSelectionState(lastSelectionState);
+        if (restored && isRangeInsideCurrentEditor(restored)) {
+          if (selection) {
+            selection.removeAllRanges();
+            selection.addRange(restored);
+          }
+          return restored.cloneRange();
+        }
+      }
+      return null;
+    }
+
+    function compareParagraphOrder(a, b) {
+      if (a === b) return 0;
+      const pos = a.compareDocumentPosition(b);
+      if (pos & Node.DOCUMENT_POSITION_FOLLOWING) {
+        return -1;
+      }
+      if (pos & Node.DOCUMENT_POSITION_PRECEDING) {
+        return 1;
+      }
+      return 0;
+    }
+
+    function calculateOffsetWithinNode(root, container, offset) {
+      if (!root || !container) return null;
+      try {
+        const temp = document.createRange();
+        temp.setStart(root, 0);
+        temp.setEnd(container, offset);
+        return temp.toString().length;
+      } catch (err) {
+        return null;
+      }
+    }
+
+    function computeSelectionStateFromRange(range) {
+      if (!range) return null;
+      const startParagraph = findParagraph(range.startContainer);
+      const endParagraph = findParagraph(range.endContainer);
+      if (!startParagraph || !endParagraph) return null;
+      const startId = startParagraph.id;
+      const endId = endParagraph.id;
+      if (!startId || !endId) return null;
+      const startOffset = calculateOffsetWithinNode(startParagraph, range.startContainer, range.startOffset);
+      const endOffset = calculateOffsetWithinNode(endParagraph, range.endContainer, range.endOffset);
+      if (startOffset == null || endOffset == null) return null;
+
+      let startState = { block: startParagraph, id: startId, offset: startOffset };
+      let endState = { block: endParagraph, id: endId, offset: endOffset };
+      const order = compareParagraphOrder(startParagraph, endParagraph);
+      if (order > 0 || (order === 0 && startOffset > endOffset)) {
+        [startState, endState] = [endState, startState];
+      }
+
+      return {
+        startBlockId: startState.id,
+        endBlockId: endState.id,
+        startOffset: startState.offset,
+        endOffset: endState.offset
+      };
+    }
+
+    function findTextPositionInParagraph(block, targetOffset) {
+      if (!block) return null;
+      const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, null);
+      let node = walker.nextNode();
+      let remaining = Math.max(0, targetOffset);
+      while (node) {
+        const textLength = node.textContent.length;
+        if (remaining <= textLength) {
+          return { node, offset: remaining };
+        }
+        remaining -= textLength;
+        node = walker.nextNode();
+      }
+      const fallbackOffset = Math.min(Math.max(remaining, 0), block.childNodes.length);
+      return { node: block, offset: fallbackOffset };
+    }
+
+    function restoreRangeFromSelectionState(state) {
+      if (!state) return null;
+      const startBlock = document.getElementById(state.startBlockId);
+      const endBlock = document.getElementById(state.endBlockId);
+      if (!startBlock || !endBlock) return null;
+      const startPosition = findTextPositionInParagraph(startBlock, state.startOffset);
+      const endPosition = findTextPositionInParagraph(endBlock, state.endOffset);
+      if (!startPosition || !endPosition) return null;
+      const range = document.createRange();
+      range.setStart(startPosition.node, startPosition.offset);
+      range.setEnd(endPosition.node, endPosition.offset);
+      return range;
+    }
+
+    function toggleFileDropdown() {
+      if (!fileDropdown) return;
+      fileDropdown.classList.toggle('open');
+    }
+
+    function closeNestedDropdown() {
+      nestedDropdowns.forEach(dropdown => {
+        dropdown.classList.remove('open');
+        const trigger = dropdown.querySelector('.nested-trigger');
+        if (trigger) {
+          trigger.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+
+    function closeFileDropdown() {
+      if (!fileDropdown) return;
+      fileDropdown.classList.remove('open');
+      closeNestedDropdown();
+    }
+
+    function closeAllFontSubmenus() {
+      if (!fontChooser) return;
+      fontChooser.querySelectorAll('.font-submenu').forEach(submenu => {
+        submenu.classList.remove('is-open');
+        const trigger = submenu.querySelector('.font-submenu-trigger');
+        if (trigger) {
+          trigger.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+
+    function setFontMenuOpen(open) {
+      if (!fontChooser) return;
+      fontChooser.classList.toggle('is-open', open);
+      if (fontChooserTrigger) {
+        fontChooserTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+      if (!open) {
+        closeAllFontSubmenus();
+      }
+    }
+
+    function toggleFontMenu() {
+      if (!fontChooser) return;
+      const willOpen = !fontChooser.classList.contains('is-open');
+      setFontMenuOpen(willOpen);
+    }
+
+    function closeFontMenu() {
+      setFontMenuOpen(false);
+    }
+
+    function closeFontSubmenu(type) {
+      if (!fontChooser || !type) return;
+      const submenu = fontChooser.querySelector(`.font-submenu[data-submenu="${type}"]`);
+      if (!submenu) return;
+      submenu.classList.remove('is-open');
+      const trigger = submenu.querySelector('.font-submenu-trigger');
+      if (trigger) {
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    if (fileTrigger) {
+      fileTrigger.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleFileDropdown();
+      });
+    }
+
+    nestedTriggers.forEach(trigger => {
+      trigger.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const dropdown = trigger.closest('.nested-dropdown');
+        if (!dropdown) return;
+        const willOpen = !dropdown.classList.contains('open');
+        closeNestedDropdown();
+        dropdown.classList.toggle('open', willOpen);
+        trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      });
+    });
+
+    if (fontChooserTrigger) {
+      fontChooserTrigger.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleFontMenu();
+      });
+    }
+
+    fontSubmenuTriggers.forEach(trigger => {
+      const submenu = trigger.closest('.font-submenu');
+      if (!submenu) return;
+      trigger.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const willOpen = !submenu.classList.contains('is-open');
+        closeAllFontSubmenus();
+        submenu.classList.toggle('is-open', willOpen);
+        trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        if (willOpen) {
+          setFontMenuOpen(true);
+        }
+      });
+    });
+
+    if (paragraphTrigger) {
+      paragraphTrigger.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleParagraphMenu();
+      });
+    }
+
+    paragraphSubmenuTriggers.forEach(trigger => {
+      const submenu = trigger.closest('.paragraph-submenu');
+      if (!submenu) return;
+      trigger.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const willOpen = !submenu.classList.contains('is-open');
+        closeAllParagraphSubmenus();
+        submenu.classList.toggle('is-open', willOpen);
+        trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        if (willOpen) {
+          setParagraphMenuOpen(true);
+        }
+      });
+    });
+
+    document.addEventListener('mousedown', (event) => {
+      const tab = event.target.closest('.inline-tab');
+      if (!tab) return;
+      event.preventDefault();
+      const rect = tab.getBoundingClientRect();
+      const midpoint = rect.left + rect.width / 2;
+      if (event.clientX < midpoint) {
+        placeCaretBefore(tab);
+      } else {
+        placeCaretAfter(tab);
+      }
+    });
+
+    document.addEventListener('click', (event) => {
+      const clickedEditor = Boolean(event.target.closest('.page-inner'));
+      if (clickedEditor) {
+        if (fileMenu && !fileMenu.contains(event.target)) {
+          closeFileDropdown();
+        }
+        if (paragraphChooser && !paragraphChooser.contains(event.target)) {
+          closeParagraphMenu();
+        }
+        if (fontChooser && !fontChooser.contains(event.target)) {
+          closeFontMenu();
+        }
+      }
+      closeImageContextMenu();
+      if (highlightControl && !highlightControl.contains(event.target)) {
+        setHighlightPaletteOpen(false);
+      }
+    });
+
+    function showImageContextMenu(event, img) {
+      if (!imageContextMenu) return;
+      contextTargetImage = img;
+      closeImageSubmenu();
+      const { clientX, clientY } = event;
+      const { width, height } = imageContextMenu.getBoundingClientRect();
+      const maxX = window.innerWidth - width - 8;
+      const maxY = window.innerHeight - height - 8;
+      const x = Math.max(8, Math.min(clientX, maxX));
+      const y = Math.max(8, Math.min(clientY, maxY));
+      imageContextMenu.style.left = `${x}px`;
+      imageContextMenu.style.top = `${y}px`;
+      imageContextMenu.classList.add('open');
+    }
+
+    function closeImageContextMenu() {
+      if (!imageContextMenu) return;
+      imageContextMenu.classList.remove('open');
+      closeImageSubmenu();
+    }
+
+    function closeImageSubmenu() {
+      if (!imageContextDropdown) return;
+      imageContextDropdown.classList.remove('open');
+      if (imageContextTrigger) {
+        imageContextTrigger.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    function openTitleDialog() {
+      if (!imageTitleDialog || !contextTargetImage) return;
+      const block = contextTargetImage.closest('p, h1, h2, h3, h4, h5, h6');
+      if (!block) return;
+      let existingTitle = '';
+      let sibling = contextTargetImage.nextSibling;
+      while (sibling && sibling.nodeType === Node.TEXT_NODE && sibling.textContent.trim() === '') {
+        sibling = sibling.nextSibling;
+      }
+      if (sibling && sibling.nodeType === Node.ELEMENT_NODE && sibling.tagName === 'BR') {
+        const textNode = sibling.nextSibling;
+        if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+          existingTitle = textNode.textContent || '';
+        }
+      }
+      if (imageTitleInput) {
+        imageTitleInput.value = existingTitle;
+        imageTitleInput.focus();
+        imageTitleInput.select();
+      }
+      // 既存のタイトルがmini-text形式かどうかを判定
+      const figureTitleSpan = block.querySelector('.figure-title');
+      const hasMiniTextInTitle = figureTitleSpan && figureTitleSpan.querySelector('.mini-text');
+      const isBlockStyleMini = block.dataset.blockStyle === 'mini-p';
+
+      const fontValue = (isBlockStyleMini || hasMiniTextInTitle) ? 'mini' : 'default';
+      imageTitleFontRadios.forEach(radio => {
+        radio.checked = radio.value === fontValue;
+      });
+      if (typeof imageTitleDialog.showModal === 'function') {
+        imageTitleDialog.showModal();
+      } else {
+        imageTitleDialog.setAttribute('open', '');
+      }
+    }
+
+    function closeTitleDialog() {
+      if (!imageTitleDialog) return;
+      if (typeof imageTitleDialog.close === 'function') {
+        imageTitleDialog.close();
+      } else {
+        imageTitleDialog.removeAttribute('open');
+      }
+      if (imageTitleInput) {
+        imageTitleInput.value = '';
+      }
+      contextTargetImage = null;
+    }
+
+    function removeExistingImageTitle(img) {
+      if (!img) return;
+
+      // 次の兄弟要素から走査して、BR, caret-slot, figure-titleを削除
+      let next = img.nextSibling;
+      while (next) {
+        const toRemove = next;
+        next = next.nextSibling; // 先に次のノードを取得
+
+        if (toRemove.nodeType === Node.TEXT_NODE && toRemove.textContent.trim() === '') {
+          toRemove.remove(); // 空のテキストノード
+        } else if (toRemove.nodeType === Node.ELEMENT_NODE) {
+          if (toRemove.tagName === 'BR' || toRemove.classList.contains('caret-slot') || toRemove.classList.contains('figure-title')) {
+            toRemove.remove();
+          } else {
+            // 関係ない要素が見つかったら停止
+            break;
+          }
+        } else {
+          break;
+        }
+      }
+    }
+
+    function updateImageMetaTitle(img, rawTitle) {
+      if (!img) return;
+      ensureAiImageIndex();
+      if (!aiImageIndex) return;
+      let meta = Array.from(aiImageIndex.querySelectorAll('.figure-meta')).find(m => m.dataset.src === img.src);
+      if (!meta) {
+        rebuildFigureMetaStore();
+        meta = Array.from(aiImageIndex.querySelectorAll('.figure-meta')).find(m => m.dataset.src === img.src);
+      }
+      if (meta) {
+        meta.dataset.title = rawTitle || '';
+      }
+    }
+
+    function applyImageTitle() {
+      if (!contextTargetImage) return;
+      const rawTitle = imageTitleInput ? imageTitleInput.value : '';
+      const fontRadio = Array.from(imageTitleFontRadios).find(radio => radio.checked);
+      const fontSize = fontRadio ? fontRadio.value : 'default';
+      const block = contextTargetImage.closest('p, h1, h2, h3, h4, h5, h6');
+      if (!block) return;
+
+      // 画像タイトル自体は常に p タグに変換されるように
+      const paragraph = block.tagName.toLowerCase() === 'p'
+        ? block
+        : convertParagraphToTag(block, 'p');
+      if (!paragraph) return;
+
+      const isMini = fontSize === 'mini';
+
+      // 段落クラス 'mini-p' のトグルは削除
+      // paragraph.classList.toggle('mini-p', isMini);
+
+      // dataset.blockStyle の設定は、mini の場合は 'mini-p'、それ以外は 'p' にする
+      paragraph.dataset.blockStyle = isMini ? 'mini-p' : 'p';
+
+      const wrapper = ensureFigureWrapper(paragraph);
+      removeExistingImageTitle(contextTargetImage); // 既存のタイトル関連要素を削除
+
+      if (rawTitle) {
+        const br = document.createElement('br');
+        const caretSlot = document.createElement('span');
+        caretSlot.className = 'caret-slot';
+        caretSlot.contentEditable = 'false';
+        caretSlot.innerHTML = '&#8203;'; // Zero-width space
+
+        let titleContent;
+        if (isMini) {
+          // mini の場合、テキストを mini-text span でラップ
+          titleContent = document.createElement('span');
+          titleContent.className = 'mini-text'; // mini-text クラス
+          titleContent.style.fontSize = '8pt'; // インラインスタイル
+          titleContent.textContent = rawTitle;
+        } else {
+          // 通常のフォントサイズの場合
+          titleContent = document.createTextNode(rawTitle);
+        }
+
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'figure-title';
+        titleSpan.contentEditable = 'false';
+        titleSpan.appendChild(titleContent); // ラップした要素またはテキストノードを追加
+
+        const container = wrapper || paragraph;
+
+        container.appendChild(caretSlot);
+        container.appendChild(br);
+        container.appendChild(titleSpan);
+      }
+      updateImageMetaTitle(contextTargetImage, rawTitle);
+      syncToSource();
+    }
+
+    if (imageTitleApplyButton) {
+      imageTitleApplyButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        applyImageTitle();
+        closeTitleDialog();
+      });
+    }
+
+    if (imageTitleCancelButton) {
+      imageTitleCancelButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        closeTitleDialog();
+      });
+    }
+
+    if (imageTitleDialog) {
+      imageTitleDialog.addEventListener('cancel', (event) => {
+        event.preventDefault();
+        closeTitleDialog();
+      });
+    }
+
+    if (imageContextTrigger) {
+      imageContextTrigger.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!imageContextDropdown) return;
+        const willOpen = !imageContextDropdown.classList.contains('open');
+        imageContextDropdown.classList.toggle('open');
+        imageContextTrigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      });
+    }
+
+    document.addEventListener('contextmenu', (event) => {
+      const img = event.target.closest('img');
+      if (img && pagesContainer.contains(img)) {
+        event.preventDefault();
+        event.stopPropagation();
+        showImageContextMenu(event, img);
+        return;
+      }
+      closeImageContextMenu();
+    });
+
+    if (imageContextMenu) {
+      imageContextMenu.addEventListener('click', (event) => {
+        const btn = event.target.closest('button[data-action]');
+        if (!btn) return;
+        event.stopPropagation();
+        const action = btn.dataset.action;
+        if (action === 'image-size') {
+          const size = btn.dataset.size;
+          applyImageSize(contextTargetImage, size);
+          closeImageContextMenu();
+          contextTargetImage = null;
+          return;
+        }
+        if (action === 'image-title') {
+          closeImageContextMenu();
+          openTitleDialog();
+          return;
+        }
+        closeImageContextMenu();
+        contextTargetImage = null;
+      });
+    }
+
+    window.addEventListener('resize', closeImageContextMenu);
+    window.addEventListener('blur', closeImageContextMenu);
+
+    function promptDropboxImageUrl() {
+      const inputUrl = window.prompt('Dropbox画像の共有URLを貼り付けてください。');
+      if (!inputUrl) return;
+      let parsed;
+      try {
+        parsed = new URL(inputUrl);
+      } catch (err) {
+        alert('正しいURL形式を入力してください。');
+        return;
+      }
+
+      const hostname = parsed.hostname.toLowerCase();
+      if (!hostname.includes('dropbox.com')) {
+        alert('Dropboxドメインではありません。dropbox.com のURLを選択してください。');
+        return;
+      }
+
+      parsed.searchParams.delete('dl');
+      parsed.searchParams.set('raw', '1');
+
+      const normalizedUrl = parsed.toString();
+      insertImageAtCursor({
+        src: normalizedUrl,
+        alt: parsed.pathname.split('/').pop() || ''
+      });
+    }
+
+    function promptWebImageUrl() {
+      const inputUrl = window.prompt('画像URLを貼り付けてください。');
+      if (!inputUrl) return;
+      let parsed;
+      try {
+        parsed = new URL(inputUrl);
+      } catch (err) {
+        alert('正しいURL形式を入力してください。');
+        return;
+      }
+
+      insertImageAtCursor({
+        src: parsed.toString(),
+        alt: parsed.pathname.split('/').pop() || ''
+      });
+    }
+
+
+    function insertImageAtCursor({ src, alt }) {
+      if (!currentEditor) return;
+
+      const selection = window.getSelection();
+      let range = selection && selection.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
+      if (!range) {
+        range = document.createRange();
+        range.selectNodeContents(currentEditor);
+        range.collapse(false);
+        if (selection) {
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      }
+
+      const block = findParagraph(range.startContainer);
+      const isEmptyLine = block && isParagraphEmpty(block);
+
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = alt || src;
+      img.classList.add('img-m');
+
+      const insertSlotAndPositionCaret = (container) => {
+        const caretSlot = document.createElement('span');
+        caretSlot.className = 'caret-slot';
+        caretSlot.contentEditable = 'false';
+        caretSlot.innerHTML = '&#8203;';
+
+        const br = document.createElement('br');
+
+        container.appendChild(caretSlot);
+        container.appendChild(br);
+        placeCaretBefore(caretSlot);
+      };
+
+      if (isEmptyLine && block) {
+        block.innerHTML = '';
+        const wrapper = ensureFigureWrapper(block);
+        const container = wrapper || block;
+        container.appendChild(img);
+        insertSlotAndPositionCaret(container);
+      } else {
+        const newPara = document.createElement('p');
+        if (block && block.parentNode) {
+          block.parentNode.insertBefore(newPara, block.nextSibling);
+        } else {
+          currentEditor.appendChild(newPara);
+        }
+        const wrapper = ensureFigureWrapper(newPara);
+        const container = wrapper || newPara;
+        container.appendChild(img);
+        insertSlotAndPositionCaret(container);
+      }
+
+      setActiveEditor(currentEditor);
+      renumberParagraphs();
+    }
+
+    function placeCaretAfter(node) {
+      const range = document.createRange();
+      range.setStartAfter(node);
+      range.collapse(true);
+      const selection = window.getSelection();
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    }
+
+    function placeCaretBefore(node) {
+      const range = document.createRange();
+      range.setStartBefore(node);
+      range.collapse(true);
+      const selection = window.getSelection();
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    }
+
+    function applyImageSize(img, size) {
+      if (!img || !imageSizeClasses.includes(size)) return;
+      imageSizeClasses.forEach(s => {
+        img.classList.remove(`img-${s}`);
+      });
+      img.classList.add(`img-${size}`);
+    }
+
+    function rebuildFigureMetaStore() {
+      ensureAiImageIndex();
+      if (!aiImageIndex) return;
+      const preservedMetas = new Map();
+      Array.from(aiImageIndex.querySelectorAll('.figure-meta')).forEach(meta => {
+        const key = meta.dataset.src || '';
+        if (!preservedMetas.has(key)) {
+          preservedMetas.set(key, []);
+        }
+        preservedMetas.get(key).push(meta);
+      });
+      aiImageIndex.innerHTML = '';
+      const images = pagesContainer.querySelectorAll('.page-inner img');
+      images.forEach(img => {
+        const key = img.src || '';
+        const candidates = preservedMetas.get(key);
+        let meta = null;
+        if (candidates && candidates.length) {
+          meta = candidates.shift();
+        } else {
+          meta = document.createElement('div');
+          meta.className = 'figure-meta';
+          meta.dataset.src = img.src;
+          meta.dataset.title = '';
+          meta.dataset.caption = '';
+          meta.dataset.tag = '';
+        }
+        meta.dataset.anchor = getClosestBlockId(img);
+        if (!meta.dataset.src) {
+          meta.dataset.src = img.src;
+        }
+        meta.dataset.title = meta.dataset.title || '';
+        meta.dataset.caption = meta.dataset.caption || '';
+        meta.dataset.tag = meta.dataset.tag || '';
+        aiImageIndex.appendChild(meta);
+      });
+    }
+
+    function getClosestBlockId(element) {
+      const block = element.closest('p, h1, h2, h3, h4, h5, h6');
+      return block ? block.id : '';
+    }
+
+    function ensureAiImageIndex() {
+      let container = document.getElementById('ai-image-index');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'ai-image-index';
+        container.style.display = 'none';
+      } else if (container.parentNode) {
+        container.parentNode.removeChild(container);
+      }
+      pagesContainer.appendChild(container);
+      aiImageIndex = container;
+    }
+
+    const rootMarginRule = /:root\s*{[^}]*}/;
+
+    function updateMarginRule(value) {
+      if (!styleTag) return;
+      if (rootMarginRule.test(styleTag.innerHTML)) {
+        const formatted = `:root {\n      --page-margin: ${value};\n      --para-number-left: ${paraNumberLeft};\n    }`;
+        styleTag.innerHTML = styleTag.innerHTML.replace(rootMarginRule, formatted);
+      }
+    }
+
+    function updateMarginButtonState(activeSize) {
+      const buttons = toolbar.querySelectorAll('button[data-action="page-margin"]');
+      buttons.forEach(btn => {
+        btn.setAttribute('aria-pressed', btn.dataset.size === activeSize ? 'true' : 'false');
+      });
+    }
+
+    function applyPageMargin(size) {
+      if (!pageMarginValues[size]) return;
+      currentPageMargin = size;
+      const value = pageMarginValues[size];
+      document.documentElement.style.setProperty('--page-margin', value);
+      document.documentElement.style.setProperty('--para-number-left', paraNumberLeft);
+      updateMarginRule(value);
+      updateMarginButtonState(size);
+    }
+
+    function isParagraphEmpty(block) {
+      if (!block) return false;
+      for (const child of block.childNodes) {
+        if (child.nodeType === Node.TEXT_NODE) {
+          if (child.textContent.trim() !== '') return false;
+        } else if (child.nodeType === Node.ELEMENT_NODE && child.tagName !== 'BR') {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function findParagraph(node) {
+      while (node && node !== currentEditor) {
+        if (
+          node.nodeType === 1 &&
+          (/^p$/i.test(node.tagName) || /^h[1-6]$/i.test(node.tagName))
+        ) {
+          return node;
+        }
+        node = node.parentNode;
+      }
+      return null;
+    }
+
+    function getPagesHTML() {
+      return pagesContainer.innerHTML;
+    }
+
+    function setPagesHTML(html) {
+      pagesContainer.innerHTML = html || '';
+      ensureAiImageIndex();
+      pagesContainer.querySelectorAll('.page-inner').forEach(inner => {
+        inner.setAttribute('contenteditable', 'true');
+        inner.removeAttribute('data-bound');
+      });
+      if (aiImageIndex) {
+        aiImageIndex.innerHTML = '';
+      }
+      if (!pagesContainer.querySelector('.page-inner')) {
+        // もし空になったら最低1ページだけ作る
+        const page = createPage(1, '<p>ここに本文を書く</p>');
+        pagesContainer.appendChild(page);
+      }
+      ensureAiImageIndex();
+      applyEditorFontFamily(currentFontFamily);
+      renumberPages();
+      initPages();
+    }
+
+    // ★追加：Openボタンで選んだファイルを処理
+    if (openFileInput) {
+      openFileInput.addEventListener('change', handleOpenFile);
+    }
+
+    function syncToSource() {
+      source.value = getPagesHTML();
+    }
+
+    // ===== ページ生成 / 初期化 =====
+    function createPage(pageNumber, contentHTML) {
+      const section = document.createElement('section');
+      section.className = 'page';
+      section.dataset.page = pageNumber;
+
+      const inner = document.createElement('div');
+      inner.className = 'page-inner';
+      inner.contentEditable = 'true';
+      inner.innerHTML = contentHTML || '<p>ここに本文を書く</p>';
+
+      section.appendChild(inner);
+      return section;
+    }
+
+    function renumberPages() {
+      const pages = pagesContainer.querySelectorAll('section.page');
+      pages.forEach((page, idx) => {
+        page.dataset.page = idx + 1;
+      });
+    }
+
+    function setActiveEditor(inner) {
+      currentEditor = inner;
+      document.querySelectorAll('section.page').forEach(p => p.classList.remove('active'));
+      const page = inner.closest('section.page');
+      if (page) page.classList.add('active');
+    }
+
+    function bindEditorEvents(inner) {
+      if (inner.dataset.bound === '1') return;
+      inner.dataset.bound = '1';
+      if (!inner.dataset.preferredBlockTag) {
+        inner.dataset.preferredBlockTag = 'p';
+      }
+
+      inner.addEventListener('input', (e) => {
+        if (e && e.inputType === 'insertParagraph') {
+          applyPendingBlockTag(inner);
+          renumberParagraphs();
+        } else {
+          syncToSource();
+        }
+      });
+      const updateStateWithDelay = () => setTimeout(updateToolbarState, 50);
+
+      inner.addEventListener('focus', () => {
+        setActiveEditor(inner);
+        saveTextSelectionFromEditor();
+        updateToolbarState();
+      });
+      inner.addEventListener('mousedown', () => setActiveEditor(inner));
+      inner.addEventListener('mouseup', () => {
+        saveTextSelectionFromEditor();
+        updateStateWithDelay();
+      });
+      inner.addEventListener('keyup', (e) => {
+        saveTextSelectionFromEditor();
+        updateStateWithDelay();
+      });
+      inner.addEventListener('click', updateStateWithDelay);
+
+      // Caret slot logic
+      inner.addEventListener('click', (event) => {
+        const figureWrapper = event.target.closest('.figure-inline');
+        if (figureWrapper && event.target.tagName !== 'IMG') {
+          event.preventDefault();
+          const caretSlot = figureWrapper.querySelector('.caret-slot');
+          if (caretSlot) {
+            placeCaretBefore(caretSlot);
+          }
+        }
+      }, true); // Use capture phase
+
+      inner.addEventListener('keydown', (e) => {
+        const selection = window.getSelection();
+        if (!selection || !selection.rangeCount) return;
+
+        const range = selection.getRangeAt(0);
+        const isCollapsed = range.collapsed;
+
+        // isCaretBeforeCaretSlotの判定ロジック
+        const nodeAfterCaret = isCollapsed ? range.startContainer.childNodes[range.startOffset] : null;
+        const isBeforeSlot = nodeAfterCaret && nodeAfterCaret.nodeType === Node.ELEMENT_NODE && nodeAfterCaret.classList.contains('caret-slot');
+
+        if (isBeforeSlot) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const currentParagraph = nodeAfterCaret.closest('p, h1, h2, h3, h4, h5, h6');
+            if (currentParagraph) {
+              const newPara = document.createElement('p');
+              newPara.innerHTML = '<br>';
+              currentParagraph.parentNode.insertBefore(newPara, currentParagraph.nextSibling);
+
+              const newRange = document.createRange();
+              newRange.setStart(newPara, 0);
+              newRange.collapse(true);
+              selection.removeAllRanges();
+              selection.addRange(newRange);
+
+              renumberParagraphs();
+            }
+            return;
+          } else if (e.key === 'Backspace') {
+            e.preventDefault();
+            const currentParagraph = nodeAfterCaret.closest('p, h1, h2, h3, h4, h5, h6');
+            if (currentParagraph) {
+              const prevElement = currentParagraph.previousElementSibling;
+              currentParagraph.remove();
+
+              if (prevElement) {
+                placeCaretAfter(prevElement);
+              }
+
+              renumberParagraphs();
+            }
+            return;
+          }
+        }
+
+        if (e.key === 'Enter') {
+          const current = getCurrentParagraph();
+          const candidate = current ? (current.dataset.blockStyle || current.tagName.toLowerCase()) : (inner.dataset.preferredBlockTag || 'p');
+          inner.dataset.pendingBlockTag = candidate;
+        } else if (e.key === 'Tab') {
+          e.preventDefault();
+          handleInlineTabKey();
+        } else if (e.key === 'Backspace') {
+          if (handleInlineTabBackspace()) {
+            e.preventDefault();
+          }
+        }
+      });
+    }
+
+    function initPages() {
+      const inners = pagesContainer.querySelectorAll('.page-inner');
+      inners.forEach(bindEditorEvents);
+      if (!currentEditor && inners[0]) {
+        setActiveEditor(inners[0]);
+      }
+    }
+
+
+    function generateBookmarkId() {
+      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      let result = 'bm-';
+      for (let i = 0; i < 5; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    }
+
+    function addLinkDestination() {
+      if (!currentEditor) return;
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return;
+
+      const range = selection.getRangeAt(0);
+      if (range.collapsed) {
+        alert('テキストを選択してください。');
+        return;
+      }
+
+      if (!currentEditor.contains(range.commonAncestorContainer)) {
+        alert('編集エリア内のテキストを選択してください。');
+        return;
+      }
+
+      const span = document.createElement('span');
+      span.id = generateBookmarkId();
+
+      try {
+        range.surroundContents(span);
+      } catch (e) {
+        console.error("Failed to wrap selection: ", e);
+        alert("複雑な選択範囲のため、リンク先を追加できませんでした。段落をまたがない単純なテキストを選択してください。");
+        return;
+      }
+
+      selection.removeAllRanges();
+      syncToSource();
+    }
+
+    function createLink() {
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0 || selection.getRangeAt(0).collapsed) {
+        alert('リンクにしたいテキストを選択してください。');
+        return;
+      }
+      const range = selection.getRangeAt(0);
+      if (!currentEditor.contains(range.commonAncestorContainer)) {
+        alert('編集エリア内のテキストを選択してください。');
+        return;
+      }
+
+      const destinations = Array.from(document.querySelectorAll('.page-inner [id^="bm-"]'));
+      if (destinations.length === 0) {
+        alert('リンク先が登録されていません。');
+        return;
+      }
+
+      let promptMessage = 'どのリンク先にリンクしますか？番号を入力してください。\n\n';
+      const destinationMap = new Map();
+      destinations.forEach((dest, index) => {
+        const text = dest.textContent.trim().substring(0, 50) || '(テキストなし)';
+        promptMessage += `${index + 1}: ${text}\n`;
+        destinationMap.set(String(index + 1), dest.id);
+      });
+
+      const choice = window.prompt(promptMessage);
+      if (!choice) return; // キャンセル
+
+      const destinationId = destinationMap.get(choice.trim());
+      if (!destinationId) {
+        alert('無効な番号です。');
+        return;
+      }
+
+      // execCommand を使ってリンクを生成
+      document.execCommand('createLink', false, '#' + destinationId);
+
+      // aタグの後に不要なテキストノードが追加されることがあるので、正規化する
+      currentEditor.normalize();
+
+      syncToSource();
+    }
+
+    function removeLink() {
+      if (!currentEditor) return;
+
+      const links = Array.from(currentEditor.querySelectorAll('a[href^="#bm-"]'));
+      if (links.length === 0) {
+        alert('削除できるリンクがありません。');
+        return;
+      }
+
+      let promptMessage = 'どのリンクを削除しますか？番号を入力してください。\\n\\n';
+      const linkMap = new Map();
+      links.forEach((link, index) => {
+        const text = link.textContent.trim().substring(0, 50) || '(テキストなし)';
+        promptMessage += `${index + 1}: ${text}\\n`;
+        linkMap.set(String(index + 1), link);
+      });
+
+      const choice = window.prompt(promptMessage);
+      if (!choice) return; // キャンセル
+
+      const linkToRemove = linkMap.get(choice.trim());
+      if (!linkToRemove) {
+        alert('無効な番号です。');
+        return;
+      }
+
+      // aタグを解除(unwrap)
+      const parent = linkToRemove.parentNode;
+      while (linkToRemove.firstChild) {
+        parent.insertBefore(linkToRemove.firstChild, linkToRemove);
+      }
+      parent.removeChild(linkToRemove);
+      parent.normalize(); // テキストノードを結合
+
+      syncToSource();
+    }
+
+    function getCurrentParagraph() {
+      if (!currentEditor) return null;
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return null;
+      const range = selection.getRangeAt(0);
+      return findParagraph(range.commonAncestorContainer);
+    }
+
+    function toggleHangingIndent(shouldHang) {
+      const paragraph = getCurrentParagraph();
+      if (!paragraph) return;
+
+      const hasIndent = Array.from(paragraph.classList).some(cls => cls.startsWith('indent-'));
+      if (hasIndent) {
+        paragraph.classList.toggle('hanging-indent', shouldHang);
+      } else {
+        paragraph.classList.remove('hanging-indent');
+      }
+      syncToSource();
+      updateToolbarState();
+    }
+
+    function adjustIndent(direction) {
+      const paragraph = getCurrentParagraph();
+      if (!paragraph) return;
+
+      const indentClasses = Array.from(paragraph.classList).filter(cls => cls.startsWith('indent-'));
+      let currentLevel = 0;
+      if (indentClasses.length > 0) {
+        currentLevel = parseInt(indentClasses[0].replace('indent-', ''), 10) || 0;
+      }
+
+      let newLevel = currentLevel + direction;
+      newLevel = Math.max(0, Math.min(5, newLevel)); // 0から5の範囲に制限
+
+      indentClasses.forEach(cls => paragraph.classList.remove(cls));
+
+      if (newLevel > 0) {
+        paragraph.classList.add(`indent-${newLevel}`);
+      } else {
+        paragraph.classList.remove('hanging-indent');
+      }
+
+      syncToSource();
+      updateToolbarState();
+    }
+
+    function updateToolbarState() {
+      if (!currentEditor) return;
+
+      const paragraph = getCurrentParagraph();
+      const hangingIndentCheckbox = toolbar.querySelector('[data-action="hanging-indent"]');
+
+      if (paragraph && hangingIndentCheckbox) {
+        const hasIndent = Array.from(paragraph.classList).some(cls => cls.startsWith('indent-'));
+        const isHanging = paragraph.classList.contains('hanging-indent');
+
+        if (hasIndent) {
+          hangingIndentCheckbox.disabled = false;
+          hangingIndentCheckbox.checked = isHanging;
+        } else {
+          hangingIndentCheckbox.disabled = true;
+          hangingIndentCheckbox.checked = false;
+        }
+      } else if (hangingIndentCheckbox) {
+        hangingIndentCheckbox.disabled = true;
+        hangingIndentCheckbox.checked = false;
+      }
+    }
+    initPages();
+    renumberParagraphs();
+    applyPageMargin(currentPageMargin);
+
+    pagesContainer.addEventListener('click', (event) => {
+      const link = event.target.closest('a');
+      // contentEditable内での通常のクリックはリンクとして機能しないため、ここでハンドリングする
+      if (link && link.href && event.target.closest('[contenteditable="true"]')) {
+        event.preventDefault(); // デフォルトの編集動作（キャレット移動など）をキャンセル
+
+        const href = link.getAttribute('href');
+        // ページ内リンクの場合
+        if (href.startsWith('#')) {
+          const targetId = href.substring(1);
+          const targetElement = document.getElementById(targetId);
+          if (targetElement) {
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        } else {
+          // 外部リンクの場合は新しいタブで開く
+          window.open(link.href, '_blank', 'noopener,noreferrer');
+        }
+      }
+    });
+
+    // Toolbar event delegation (old listener removed)
+
+    // ===== 太字トグル（execCommand 任せ） =====
+    function toggleBold() {
+      if (!currentEditor) return;
+      currentEditor.focus();
+      document.execCommand('bold', false, null);
+      normalizeInlineFormatting();
+      syncToSource();
+    }
+
+    function toggleItalic() {
+      if (!currentEditor) return;
+      currentEditor.focus();
+      document.execCommand('italic', false, null);
+      normalizeInlineFormatting();
+      syncToSource();
+    }
+
+    function toggleUnderline() {
+      if (!currentEditor) return;
+      currentEditor.focus();
+      document.execCommand('underline', false, null);
+      normalizeInlineFormatting();
+      syncToSource();
+    }
+
+    function toggleStrikeThrough() {
+      if (!currentEditor) return;
+      currentEditor.focus();
+      document.execCommand('strikeThrough', false, null);
+      normalizeInlineFormatting();
+      syncToSource();
+    }
+
+    function applyInlineScript(command) {
+      if (!currentEditor) return;
+      currentEditor.focus();
+      document.execCommand(command, false, null);
+      syncToSource();
+    }
+
+    function toggleSuperscript() {
+      applyInlineScript('superscript');
+    }
+
+    function toggleSubscript() {
+      applyInlineScript('subscript');
+    }
+
+    function getCaretOffset(range) {
+      if (!currentEditor) return 0;
+      const rects = range.getClientRects();
+      const editorRect = currentEditor.getBoundingClientRect();
+      const rect = rects.length ? rects[0] : range.getBoundingClientRect();
+      if (!rect || (rect.left === 0 && rect.width === 0 && rect.height === 0)) {
+        return 0;
+      }
+      const offset = rect.left - editorRect.left + currentEditor.scrollLeft;
+      if (!Number.isFinite(offset)) return 0;
+      return Math.max(0, offset);
+    }
+
+    function insertInlineTabAt(range, width) {
+      if (!width || width <= 0) return false;
+      const span = document.createElement('span');
+      span.className = 'inline-tab';
+      span.setAttribute('aria-hidden', 'true');
+      span.style.width = `${width}px`;
+      const insertionRange = range.cloneRange();
+      insertionRange.collapse(true);
+      insertionRange.insertNode(span);
+      const newRange = document.createRange();
+      newRange.setStartAfter(span);
+      newRange.collapse(true);
+      const selection = window.getSelection();
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+      }
+      return true;
+    }
+
+    function handleInlineTabKey() {
+      if (!currentEditor) return false;
+      const selection = window.getSelection();
+      if (!selection || !selection.rangeCount) return false;
+      const range = selection.getRangeAt(0);
+      if (!currentEditor.contains(range.commonAncestorContainer)) return false;
+      if (!range.collapsed) {
+        range.collapse(false);
+      }
+      const step = INDENT_STEP_PX;
+      const caretX = getCaretOffset(range);
+      const currentStep = Math.floor(caretX / step);
+      const target = (currentStep + 1) * step;
+      let delta = target - caretX;
+      if (delta < 0.5) {
+        delta = step;
+      }
+      if (delta <= 0) return false;
+      const inserted = insertInlineTabAt(range, delta);
+      if (inserted) {
+        syncToSource();
+      }
+      return inserted;
+    }
+
+    function getInlineTabNodeBefore(range) {
+      let container = range.startContainer;
+      let offset = range.startOffset;
+      if (container.nodeType === Node.TEXT_NODE) {
+        if (offset > 0) return null;
+        container = container.previousSibling;
+      } else {
+        if (offset > 0) {
+          container = container.childNodes[offset - 1];
+        } else {
+          container = container.previousSibling;
+        }
+      }
+      if (
+        container &&
+        container.nodeType === 1 &&
+        container.classList &&
+        container.classList.contains('inline-tab')
+      ) {
+        return container;
+      }
+      return null;
+    }
+
+    function handleInlineTabBackspace() {
+      if (!currentEditor) return false;
+      const selection = window.getSelection();
+      if (!selection || !selection.rangeCount) return false;
+      const range = selection.getRangeAt(0);
+      if (!currentEditor.contains(range.commonAncestorContainer)) return false;
+      if (!range.collapsed) return false;
+      const inlineTab = getInlineTabNodeBefore(range);
+      if (!inlineTab) return false;
+      const newRange = document.createRange();
+      newRange.setStartBefore(inlineTab);
+      newRange.collapse(true);
+      inlineTab.parentNode.removeChild(inlineTab);
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+      syncToSource();
+      return true;
+    }
+
+    function normalizeInlineFormatting() {
+      if (!currentEditor) return;
+      replaceInlineTag('strong', 'b');
+      replaceInlineTag('em', 'i');
+      replaceInlineTag('strike', 's');
+      replaceInlineTag('del', 's');
+    }
+
+    function replaceInlineTag(from, to) {
+      currentEditor.querySelectorAll(from).forEach(node => {
+        const replacement = document.createElement(to);
+        Array.from(node.attributes).forEach(attr => {
+          replacement.setAttribute(attr.name, attr.value);
+        });
+        while (node.firstChild) {
+          replacement.appendChild(node.firstChild);
+        }
+        node.parentNode.replaceChild(replacement, node);
+      });
+    }
+
+    // ===== ハイライトパレット =====
+    function setHighlightPaletteOpen(open) {
+      if (!highlightControl || !highlightButton) return;
+      highlightControl.classList.toggle('is-open', open);
+      highlightButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    function toggleHighlightPalette() {
+      if (!highlightControl) return;
+      setHighlightPaletteOpen(!highlightControl.classList.contains('is-open'));
+    }
+
+    function applyColorHighlight(color) {
+      if (!currentEditor || !color) return;
+
+      const selection = window.getSelection();
+      if (!selection || !selection.rangeCount) return;
+
+      const range = selection.getRangeAt(0);
+      if (range.collapsed) return;
+      if (!currentEditor.contains(range.commonAncestorContainer)) return;
+
+      const cleanupRange = range.cloneRange();
+      if (removeHighlightsInRange(cleanupRange)) {
+        selection.removeAllRanges();
+        selection.addRange(cleanupRange);
+      }
+
+      const workingRange = cleanupRange.cloneRange();
+
+      const fragment = workingRange.extractContents();
+
+      const span = document.createElement('span');
+      span.className = 'inline-highlight';
+      span.style.backgroundColor = color;
+      span.appendChild(fragment);
+      workingRange.insertNode(span);
+
+      selection.removeAllRanges();
+      const newRange = document.createRange();
+      newRange.selectNodeContents(span);
+      selection.addRange(newRange);
+
+      syncToSource();
+      setHighlightPaletteOpen(false);
+    }
+
+    function unwrapColorSpan(span) {
+      const parent = span.parentNode;
+      if (!parent) return;
+      while (span.firstChild) {
+        parent.insertBefore(span.firstChild, span);
+      }
+      parent.removeChild(span);
+    }
+
+    function removeColorSpansInNode(root) {
+      if (!root || !root.querySelectorAll) return false;
+      const spans = Array.from(root.querySelectorAll('.inline-color'));
+      let removed = false;
+      spans.forEach(span => {
+        unwrapColorSpan(span);
+        removed = true;
+      });
+      return removed;
+    }
+
+    function cloneColorSpanWithText(template, text) {
+      if (!template || !text) return null;
+      const clone = template.cloneNode(false);
+      while (clone.firstChild) {
+        clone.removeChild(clone.firstChild);
+      }
+      clone.appendChild(document.createTextNode(text));
+      return clone;
+    }
+
+    function splitColorSpanForRange(span, range) {
+      if (!span || !range || !range.intersectsNode(span)) return false;
+      const spanRange = document.createRange();
+      spanRange.selectNodeContents(span);
+      const intersection = range.cloneRange();
+      if (intersection.compareBoundaryPoints(Range.START_TO_START, spanRange) < 0) {
+        intersection.setStart(spanRange.startContainer, spanRange.startOffset);
+      }
+      if (intersection.compareBoundaryPoints(Range.END_TO_END, spanRange) > 0) {
+        intersection.setEnd(spanRange.endContainer, spanRange.endOffset);
+      }
+      const totalLength = span.textContent.length;
+      const startOffset = calculateOffsetWithinNode(span, intersection.startContainer, intersection.startOffset);
+      const endOffset = calculateOffsetWithinNode(span, intersection.endContainer, intersection.endOffset);
+      if (startOffset == null || endOffset == null) return false;
+      if (startOffset <= 0 && endOffset >= totalLength) {
+        unwrapColorSpan(span);
+        return true;
+      }
+
+      const text = span.textContent || '';
+      const beforeText = text.slice(0, startOffset);
+      const middleText = text.slice(startOffset, endOffset);
+      const afterText = text.slice(endOffset);
+
+      if (!middleText) return false;
+
+      const parent = span.parentNode;
+      if (!parent) return false;
+
+      const fragments = [];
+      if (beforeText) {
+        const beforeSpan = cloneColorSpanWithText(span, beforeText);
+        if (beforeSpan) fragments.push(beforeSpan);
+      }
+      fragments.push(document.createTextNode(middleText));
+      if (afterText) {
+        const afterSpan = cloneColorSpanWithText(span, afterText);
+        if (afterSpan) fragments.push(afterSpan);
+      }
+
+      fragments.forEach(node => parent.insertBefore(node, span));
+      parent.removeChild(span);
+      return true;
+    }
+
+    function resetFontColorInSelection() {
+      const range = getEffectiveTextRange();
+      if (!range || !currentEditor) return false;
+      const colorSpans = Array.from(currentEditor.querySelectorAll('.inline-color'));
+      let removed = false;
+      colorSpans.forEach(span => {
+        if (splitColorSpanForRange(span, range)) {
+          removed = true;
+        }
+      });
+
+      const selection = window.getSelection();
+      if (selection) {
+        const restored = restoreRangeFromSelectionState(lastSelectionState) || range;
+        selection.removeAllRanges();
+        selection.addRange(restored);
+      }
+
+      if (removed) {
+        syncToSource();
+      }
+      saveTextSelectionFromEditor();
+      return removed;
+    }
+
+    function applyFontColor(color) {
+      if (!currentEditor || !color) return;
+
+      const range = getEffectiveTextRange();
+      if (!range) return;
+
+      const workingRange = range.cloneRange();
+      const fragment = workingRange.extractContents();
+      removeColorSpansInNode(fragment);
+
+      const span = document.createElement('span');
+      span.className = 'inline-color';
+      span.style.color = color;
+      span.appendChild(fragment);
+      workingRange.insertNode(span);
+
+      const selection = window.getSelection();
+      if (selection) {
+        selection.removeAllRanges();
+        const newRange = document.createRange();
+        newRange.selectNodeContents(span);
+        selection.addRange(newRange);
+      }
+
+      syncToSource();
+      setHighlightPaletteOpen(false);
+      saveTextSelectionFromEditor();
+    }
+
+    function applyEditorFontFamily(family) {
+      if (family) {
+        document.documentElement.style.setProperty('--editor-font-family', family);
+      } else {
+        document.documentElement.style.removeProperty('--editor-font-family');
+      }
+    }
+
+    function applyFontFamily(family) {
+      if (!family) return;
+      currentFontFamily = family;
+      applyEditorFontFamily(family);
+      syncToSource();
+    }
+
+    function closeAllParagraphSubmenus() {
+      if (!paragraphChooser) return;
+      paragraphChooser.querySelectorAll('.paragraph-submenu').forEach(submenu => {
+        submenu.classList.remove('is-open');
+        const trigger = submenu.querySelector('.paragraph-submenu-trigger');
+        if (trigger) {
+          trigger.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+
+    function setParagraphMenuOpen(open) {
+      if (!paragraphChooser) return;
+      paragraphChooser.classList.toggle('is-open', open);
+      if (paragraphTrigger) {
+        paragraphTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+      if (!open) {
+        closeAllParagraphSubmenus();
+      }
+    }
+
+    function toggleParagraphMenu() {
+      if (!paragraphChooser) return;
+      const willOpen = !paragraphChooser.classList.contains('is-open');
+      setParagraphMenuOpen(willOpen);
+    }
+
+    function closeParagraphMenu() {
+      setParagraphMenuOpen(false);
+    }
+
+    function findParagraphWrapper(paragraph) {
+      if (!paragraph) return null;
+      return Array.from(paragraph.children).find(child => {
+        return child.classList && child.classList.contains('inline-align');
+      }) || null;
+    }
+
+    function ensureParagraphWrapper(paragraph) {
+      let wrapper = findParagraphWrapper(paragraph);
+      if (wrapper) return wrapper;
+      const fragment = document.createDocumentFragment();
+      while (paragraph.firstChild) {
+        fragment.appendChild(paragraph.firstChild);
+      }
+      wrapper = document.createElement('span');
+      wrapper.classList.add('inline-align');
+      wrapper.appendChild(fragment);
+      paragraph.appendChild(wrapper);
+      return wrapper;
+    }
+
+    const alignDirections = ['left', 'center', 'right'];
+
+    function ensureFigureWrapper(paragraph) {
+      if (!paragraph) return null;
+      const wrapper = ensureParagraphWrapper(paragraph);
+      if (!wrapper) return null;
+      alignDirections.forEach(dir => {
+        wrapper.classList.remove(`inline-align-${dir}`);
+      });
+      wrapper.classList.add('inline-align-center', 'figure-inline');
+      return wrapper;
+    }
+
+    function convertParagraphToTag(paragraph, tag) {
+      if (!paragraph) return null;
+      // mini-p の場合は常に p タグとして扱う
+      const desiredTag = tag === 'mini-p' ? 'p' : tag;
+      const currentTag = paragraph.tagName.toLowerCase();
+
+      let replacement = paragraph; // デフォルトでは元の段落をそのまま使用
+
+      // タグの変更が必要な場合
+      if (currentTag !== desiredTag) {
+        replacement = document.createElement(desiredTag);
+        Array.from(paragraph.attributes).forEach(attr => {
+          replacement.setAttribute(attr.name, attr.value);
+        });
+        // 古いparagraphの子ノードを新しいreplacementに移動
+        while (paragraph.firstChild) {
+          replacement.appendChild(paragraph.firstChild);
+        }
+        paragraph.parentNode.replaceChild(replacement, paragraph);
+      }
+
+      // mini-p のロジック
+      if (tag === 'mini-p') { // tag === 'mini-p' の場合のみ処理
+        // 現在のreplacementの子要素が既にmini-textでラップされているかチェック
+        // :scope > .mini-text は直下の子要素のみを対象とする
+        let miniTextSpan = replacement.querySelector(':scope > .mini-text');
+        if (miniTextSpan) {
+          // 既にラップされている場合は、style="font-size:8pt"を確実に適用
+          miniTextSpan.style.fontSize = '8pt';
+          // 既存の mini-text にもクラスを付与 (互換性のため)
+          if (!miniTextSpan.classList.contains('mini-text')) {
+            miniTextSpan.classList.add('mini-text');
+          }
+        } else {
+          // まだラップされていない場合は、全ての子ノードをmini-textでラップ
+          const fragment = document.createDocumentFragment();
+          while (replacement.firstChild) {
+            fragment.appendChild(replacement.firstChild);
+          }
+          miniTextSpan = document.createElement('span');
+          miniTextSpan.className = 'mini-text';
+          miniTextSpan.style.fontSize = '8pt'; // インラインスタイルを直接適用
+          miniTextSpan.appendChild(fragment);
+          replacement.appendChild(miniTextSpan);
+        }
+        replacement.dataset.blockStyle = 'mini-p'; // blockStyleはmini-pを維持
+      } else {
+        // mini-p から別のタグに（またはpに）戻す場合
+        let miniTextSpan = replacement.querySelector(':scope > .mini-text');
+        if (miniTextSpan) {
+          // mini-text span が存在すれば unwrap
+          while (miniTextSpan.firstChild) {
+            replacement.insertBefore(miniTextSpan.firstChild, miniTextSpan);
+          }
+          replacement.removeChild(miniTextSpan);
+        }
+        replacement.dataset.blockStyle = desiredTag; // 通常のタグ名に設定
+      }
+      return replacement;
+    }
+
+    function getParagraphsInRange(range) {
+      if (!currentEditor || !range) return [];
+      const selectors = 'p, h1, h2, h3, h4, h5, h6';
+      return Array.from(currentEditor.querySelectorAll(selectors)).filter(paragraph => {
+        return range.intersectsNode(paragraph);
+      });
+    }
+
+    function applyParagraphAlignment(direction) {
+      if (!currentEditor || !direction) return;
+      const selection = window.getSelection();
+      if (!selection || !selection.rangeCount) return;
+      const range = selection.getRangeAt(0);
+      if (range.collapsed) return;
+      if (!currentEditor.contains(range.commonAncestorContainer)) return;
+
+      const paragraphs = getParagraphsInRange(range);
+      if (!paragraphs.length) return;
+
+      paragraphs.forEach(paragraph => {
+        const wrapper = ensureParagraphWrapper(paragraph);
+        if (!wrapper) return;
+        alignDirections.forEach(dir => {
+          wrapper.classList.remove(`inline-align-${dir}`);
+        });
+        if (wrapper.classList.contains('figure-inline')) {
+          wrapper.classList.add('inline-align-center');
+        } else {
+          wrapper.classList.add(`inline-align-${direction}`);
+        }
+      });
+
+      syncToSource();
+    }
+
+    const paragraphSpacingSizes = ['xs', 's', 'm', 'l', 'xl'];
+    function clearParagraphSpacingClasses(target) {
+      if (!target) return;
+      paragraphSpacingSizes.forEach(sz => target.classList.remove(`inline-spacing-${sz}`));
+    }
+    function applyParagraphSpacing(size) {
+      if (!currentEditor || !size || !paragraphSpacingSizes.includes(size)) return;
+      const selection = window.getSelection();
+      if (!selection || !selection.rangeCount) return;
+      const range = selection.getRangeAt(0);
+      if (range.collapsed) return;
+      if (!currentEditor.contains(range.commonAncestorContainer)) return;
+
+      const paragraphs = getParagraphsInRange(range);
+      if (!paragraphs.length) return;
+
+      paragraphs.forEach(paragraph => {
+        const wrapper = ensureParagraphWrapper(paragraph);
+        clearParagraphSpacingClasses(paragraph);
+        clearParagraphSpacingClasses(wrapper);
+        if (size !== 's') {
+          paragraph.classList.add(`inline-spacing-${size}`);
+          if (wrapper) wrapper.classList.add(`inline-spacing-${size}`);
+        }
+      });
+
+      syncToSource();
+    }
+
+    const lineHeightSizes = ['s', 'm', 'l'];
+    function applyLineHeight(size) {
+      if (!lineHeightSizes.includes(size)) return;
+      const inners = pagesContainer.querySelectorAll('.page-inner');
+      inners.forEach(inner => {
+        lineHeightSizes.forEach(sz => inner.classList.remove(`line-height-${sz}`));
+        if (size !== 'm') {
+          inner.classList.add(`line-height-${size}`);
+        }
+      });
+      syncToSource();
+    }
+
+    function setPreferredBlockTag(tag) {
+      if (currentEditor) {
+        currentEditor.dataset.preferredBlockTag = tag;
+      }
+    }
+
+    function applyPendingBlockTag(inner) {
+      const pendingTag = inner.dataset.pendingBlockTag || inner.dataset.preferredBlockTag || 'p';
+      if (!pendingTag) return;
+      const current = getCurrentParagraph();
+      if (!current) return;
+      convertParagraphToTag(current, pendingTag);
+      inner.dataset.pendingBlockTag = '';
+    }
+
+    const blockElementTags = ['h1', 'h2', 'h3', 'p', 'mini-p'];
+    function applyBlockElement(tag) {
+      if (!blockElementTags.includes(tag)) return;
+      if (!currentEditor) return;
+      const range = getEffectiveTextRange();
+      if (!range) return;
+
+      const paragraphs = getParagraphsInRange(range);
+      if (!paragraphs.length) return;
+
+      paragraphs.forEach(paragraph => {
+        const converted = convertParagraphToTag(paragraph, tag);
+        if (converted) {
+          converted.dataset.blockStyle = tag;
+        }
+      });
+      setPreferredBlockTag(tag);
+
+      renumberParagraphs();
+
+      const selection = window.getSelection();
+      if (selection) {
+        const first = paragraphs[0];
+        const last = paragraphs[paragraphs.length - 1];
+        if (first && last) {
+          const newRange = document.createRange();
+          newRange.setStartBefore(first);
+          newRange.setEndAfter(last);
+          selection.removeAllRanges();
+          selection.addRange(newRange);
+          saveTextSelectionFromEditor();
+        }
+      }
+    }
+
+    function unwrapHighlightSpan(span) {
+      const parent = span.parentNode;
+      if (!parent) return;
+      while (span.firstChild) {
+        parent.insertBefore(span.firstChild, span);
+      }
+      parent.removeChild(span);
+    }
+
+    function removeHighlightsInRange(range) {
+      if (!currentEditor || !range) return false;
+      const spans = Array.from(currentEditor.querySelectorAll('.inline-highlight'));
+      let removed = false;
+      spans.forEach(span => {
+        if (range.intersectsNode(span)) {
+          unwrapHighlightSpan(span);
+          removed = true;
+        }
+      });
+      return removed;
+    }
+
+    function resetHighlightsInSelection() {
+      const selection = window.getSelection();
+      if (!selection || !selection.rangeCount) return false;
+      const range = selection.getRangeAt(0);
+      if (range.collapsed) return false;
+      if (!currentEditor.contains(range.commonAncestorContainer)) return false;
+      const normalized = range.cloneRange();
+      const removed = removeHighlightsInRange(normalized);
+      if (removed) {
+        selection.removeAllRanges();
+        selection.addRange(normalized);
+        syncToSource();
+      }
+      return removed;
+    }
+
+    // ===== インデント =====
+    function getCurrentParagraph() {
+      if (!currentEditor) return null;
+      const sel = window.getSelection();
+      if (!sel.rangeCount) return null;
+
+      let node = sel.anchorNode;
+      if (!currentEditor.contains(node)) return null;
+
+      while (node && !(node.nodeType === 1 && /^(p|h[1-6]|div)$/i.test(node.nodeName))) {
+        node = node.parentNode;
+      }
+      return node;
+    }
+
+    function changeIndent(delta) {
+      const p = getCurrentParagraph();
+      if (!p) return;
+
+      const m = p.className.match(/indent-(\d+)/);
+      let level = m ? parseInt(m[1], 10) : 0;
+
+      level = Math.max(0, Math.min(5, level + delta));
+
+      p.className = p.className.replace(/indent-\d+/, '').trim();
+      if (level > 0) p.classList.add(`indent-${level}`);
+    }
+
+    // ===== ページ追加 / 削除 =====
+    function addPage() {
+      const pages = Array.from(pagesContainer.querySelectorAll('section.page'));
+      const newPage = createPage(pages.length + 1, '<p>ここに本文を書く</p>');
+
+      if (currentEditor) {
+        const currentPage = currentEditor.closest('section.page');
+        const idx = pages.indexOf(currentPage);
+        if (idx >= 0 && idx < pages.length - 1) {
+          pagesContainer.insertBefore(newPage, pages[idx + 1].nextSibling);
+        } else {
+          pagesContainer.appendChild(newPage);
+        }
+      } else {
+        pagesContainer.appendChild(newPage);
+      }
+
+      renumberPages();
+      renumberParagraphs();
+      initPages();
+      setActiveEditor(newPage.querySelector('.page-inner'));
+      ensureAiImageIndex();
+    }
+
+    function removePage() {
+      const pages = Array.from(pagesContainer.querySelectorAll('section.page'));
+      if (pages.length === 0) return;
+
+      if (!currentEditor) {
+        // 一応最後のページを削除対象に
+        currentEditor = pages[pages.length - 1].querySelector('.page-inner');
+      }
+
+      const currentPage = currentEditor.closest('section.page');
+      const idx = pages.indexOf(currentPage);
+
+      if (pages.length === 1) {
+        const inner = pages[0].querySelector('.page-inner');
+        inner.innerHTML = '<p>ここに本文を書く</p>';
+        setActiveEditor(inner);
+        renumberParagraphs(); // これだけでOK（中で syncToSource 済む）
+        return;
+      }
+
+
+      pagesContainer.removeChild(currentPage);
+
+      // 新しい currentEditor を決定
+      const newPages = pagesContainer.querySelectorAll('section.page');
+      const newInners = pagesContainer.querySelectorAll('.page-inner');
+      const newIdx = Math.max(0, idx - 1);
+      const newInner = newInners[newIdx] || newInners[0];
+      if (newInner) setActiveEditor(newInner);
+
+      renumberPages();
+      renumberParagraphs();
+      ensureAiImageIndex();
+    }
+
+    // ===== ツールバー操作 =====
+    toolbar.addEventListener('mousedown', (event) => {
+      const btn = event.target.closest('button');
+      if (btn) {
+        event.preventDefault();
+      }
+    });
+
+    toolbar.addEventListener('click', async (e) => {
+      const target = e.target.closest('button, input');
+      if (!target) return;
+
+      const action = target.dataset.action;
+
+      if (action === 'hanging-indent') {
+        toggleHangingIndent(target.checked);
+        return;
+      }
+
+      const btn = e.target.closest('button');
+      if (!btn) return;
+
+      if (action === 'bold') {
+        toggleBold();
+      } else if (action === 'italic') {
+        toggleItalic();
+      } else if (action === 'underline') {
+        toggleUnderline();
+      } else if (action === 'strike') {
+        toggleStrikeThrough();
+      } else if (action === 'superscript') {
+        toggleSuperscript();
+      } else if (action === 'subscript') {
+        toggleSubscript();
+      } else if (action === 'highlight') {
+        toggleHighlightPalette();
+      } else if (action === 'highlight-color') {
+        applyColorHighlight(btn.dataset.color);
+      } else if (action === 'highlight-reset') {
+        resetHighlightsInSelection();
+      } else if (action === 'font-color-swatch') {
+        applyFontColor(btn.dataset.color);
+      } else if (action === 'font-color-default') {
+        resetFontColorInSelection();
+      } else if (action === 'font-family') {
+        applyFontFamily(btn.dataset.family);
+      } else if (action === 'paragraph-style') {
+        toggleParagraphMenu();
+      } else if (action === 'align-left') {
+        applyParagraphAlignment('left');
+      } else if (action === 'align-center') {
+        applyParagraphAlignment('center');
+      } else if (action === 'align-right') {
+        applyParagraphAlignment('right');
+      } else if (action === 'paragraph-spacing') {
+        applyParagraphSpacing(btn.dataset.size);
+      } else if (action === 'line-height') {
+        applyLineHeight(btn.dataset.size);
+      } else if (action === 'block-element') {
+        applyBlockElement(btn.dataset.tag);
+      } else if (action === 'indent') {
+        changeIndent(1);
+        syncToSource();
+      } else if (action === 'outdent') {
+        changeIndent(-1);
+        syncToSource();
+      } else if (action === 'add-page') {
+        addPage();
+      } else if (action === 'remove-page') {
+        removePage();
+      } else if (action === 'save') {
+        saveFullHTML();
+      } else if (action === 'open') {
+        const opened = await openWithFilePicker();
+        if (!opened && openFileInput) {
+          openFileInput.value = ''; // 連続選択のためクリア
+          openFileInput.click();
+        }
+      } else if (action === 'insert-image-dropbox') {
+        promptDropboxImageUrl();
+      } else if (action === 'insert-image-web') {
+        promptWebImageUrl();
+      } else if (action === 'page-margin') {
+        applyPageMargin(btn.dataset.size);
+      } else if (action === 'overwrite') {
+        await overwriteCurrentFile();
+      } else if (action === 'add-link-destination') {
+        addLinkDestination();
+      } else if (action === 'create-link') {
+        createLink();
+      } else if (action === 'remove-link') {
+        removeLink();
+      }
+    });
+
+
+
+    function renumberParagraphs() {
+      const pages = pagesContainer.querySelectorAll('section.page');
+
+      pages.forEach(page => {
+        const pageNum = page.dataset.page;
+        const inner = page.querySelector('.page-inner');
+        if (!inner) return;
+
+        let paraIndex = 1;
+
+        // p と h1〜h6 のみ対象
+        inner.querySelectorAll('p, h1, h2, h3, h4, h5, h6').forEach(block => {
+
+          // 過去バージョンの para-num/para-body を除去
+          block.querySelectorAll('.para-num').forEach(span => span.remove());
+          block.querySelectorAll('.para-body').forEach(body => {
+            while (body.firstChild) {
+              block.insertBefore(body.firstChild, body);
+            }
+            body.remove();
+          });
+
+          // id と data-para を付与
+          block.dataset.para = paraIndex;
+          block.id = `p${pageNum}-${paraIndex}`;
+          // block.dataset.blockStyle が設定済みならそれを尊重し、
+          // 未設定の場合は mini-text span の有無で判断
+          if (!block.dataset.blockStyle) {
+            const hasMiniTextSpan = block.querySelector(':scope > .mini-text');
+            block.dataset.blockStyle = hasMiniTextSpan ? 'mini-p' : block.tagName.toLowerCase();
+          }
+
+          paraIndex++;
+        });
+      });
+
+      rebuildFigureMetaStore();
+      syncToSource();
+    }
+
+    function importFullHTMLText(text) {
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'text/html');
+        const importedContainer = doc.querySelector('#pages-container');
+
+        if (!importedContainer) {
+          alert('このツールで保存したHTMLではなさそうです。');
+          return false;
+        }
+
+        setPagesHTML(importedContainer.innerHTML);
+        if (typeof renumberParagraphs === 'function') {
+          renumberParagraphs();
+        }
+        return true;
+      } catch (err) {
+        console.error(err);
+        alert('ファイルの読み込み中にエラーが発生しました。');
+        return false;
+      }
+    }
+
+    // ★追加：保存した完全HTMLを読み込んでエディタに反映（input要素版）
+    function handleOpenFile(event) {
+      const input = event.target;
+      const file = input.files && input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = (ev) => {
+        const text = ev.target.result;
+        if (importFullHTMLText(text)) {
+          openedFileHandle = null;
+        }
+      };
+
+      reader.onerror = () => {
+        alert('ファイルを読み込めませんでした。');
+      };
+
+      reader.readAsText(file, 'utf-8');
+    }
+
+    async function openWithFilePicker() {
+      if (!window.showOpenFilePicker) return false;
+      try {
+        const [handle] = await window.showOpenFilePicker({
+          types: [
+            {
+              description: 'HTML Files',
+              accept: {
+                'text/html': ['.html', '.htm']
+              }
+            }
+          ],
+          multiple: false
+        });
+        if (!handle) return false;
+        const file = await handle.getFile();
+        const text = await file.text();
+        if (importFullHTMLText(text)) {
+          openedFileHandle = handle;
+          return true;
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error(err);
+          alert('ファイルを開けませんでした。');
+        }
+      }
+      return false;
+    }
+
+    async function overwriteCurrentFile() {
+      if (!openedFileHandle) {
+        alert('File System Access API で開いたファイルのみ上書きできます（Chrome 推奨）。');
+        return;
+      }
+      try {
+        const writable = await openedFileHandle.createWritable();
+        await writable.write(buildFullHTML());
+        await writable.close();
+        alert('上書き保存しました。');
+      } catch (err) {
+        console.error(err);
+        alert('上書き保存に失敗しました。');
+      }
+    }
+
+    function buildFullHTML() {
+      // 段落番号最新化（既存関数を使う）
+      if (typeof renumberParagraphs === "function") {
+        renumberParagraphs();
+      }
+
+      // 編集用DOMをそのまま使うと contenteditable が混ざるので、
+      // クローンを作ってから contenteditable を削除する
+      const pagesContainerClone = pagesContainer.cloneNode(true);
+      pagesContainerClone
+        .querySelectorAll('section.page')
+        .forEach(p => p.classList.remove('active'));
+      pagesContainerClone
+        .querySelectorAll('.page-inner')
+        .forEach(inner => {
+          inner.removeAttribute('contenteditable');
+          inner.removeAttribute('data-bound');
+        });
+
+      // A4エリアのHTML内容（編集不可バージョン）
+      const pagesHTML = pagesContainerClone.innerHTML;
+
+      // ページ内の <style> を抽出
+      const styleTag = document.querySelector("style");
+      const styleContent = styleTag ? styleTag.innerHTML : "";
+
+      // 完全HTMLを組み立て（安全のため </ だけエスケープ）
+      let html = "<!doctype html>\n";
+      html += "<html>\n<head>\n<meta charset=\"utf-8\">\n";
+      html += "<title>Document</title>\n<style>\n";
+      html += styleContent;
+      html += "\n</style>\n</head>\n<body>\n";
+      html += "<div id=\"pages-container\">\n";
+      html += pagesHTML;
+      html += "\n<\/div>\n<\/body>\n<\/html>";
+
+      return html;
+    }
+
+    function saveFullHTML() {
+      const html = buildFullHTML();
+
+      // HTML文字列から Blob を作成
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+
+      // 一時的な <a> を作成してクリック → ダウンロード
+      const a = document.createElement('a');
+      a.href = url;
+
+      // ファイル名をざっくり日時付きにする
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      a.download = `document-${y}${m}${d}-${hh}${mm}.html`;
+
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      // 一時URLを解放
+      URL.revokeObjectURL(url);
+    }
+
+  </script>
+
+<script type="module" src="./dist/main.js"></script>
+
+</body>
+
+</html>
