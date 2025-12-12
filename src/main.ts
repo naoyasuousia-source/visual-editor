@@ -870,6 +870,29 @@ function initImageContextMenuControls(): void {
   window.addEventListener('blur', closeImageContextMenu);
 }
 
+function initPageLinkHandler(): void {
+  if (!pagesContainerElement) return;
+  pagesContainerElement.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement | null;
+    const link = target?.closest<HTMLAnchorElement>('a');
+    if (!link || !link.href) return;
+    if (!target?.closest('[contenteditable="true"]')) return;
+    event.preventDefault();
+
+    const href = link.getAttribute('href') ?? '';
+    if (href.startsWith('#')) {
+      const targetId = href.substring(1);
+      const targetElement = document.getElementById(targetId);
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      return;
+    }
+
+    window.open(link.href, '_blank', 'noopener,noreferrer');
+  });
+}
+
 const lineHeightSizes = ['s', 'm', 'l'] as const;
 type LineHeightSize = typeof lineHeightSizes[number];
 const isLineHeightSize = (value: string | null | undefined): value is LineHeightSize =>
@@ -1462,6 +1485,7 @@ window.updateImageMetaTitle = updateImageMetaTitle;
 export function initEditor() {
   initFileMenuControls();
   initImageContextMenuControls();
+  initPageLinkHandler();
   ensureAiImageIndex();
   applyPageMargin(currentPageMarginSize);
   console.log("initEditor() 呼ばれた！");
