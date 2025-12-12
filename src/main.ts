@@ -484,6 +484,9 @@ const fontChooserElement = document.querySelector<HTMLElement>('.font-chooser');
 const fontChooserTriggerElement = fontChooserElement
   ? (fontChooserElement.querySelector<HTMLElement>('.font-chooser-trigger') ?? null)
   : null;
+const fontSubmenuTriggerElements = fontChooserElement
+  ? Array.from(fontChooserElement.querySelectorAll<HTMLElement>('.font-submenu-trigger'))
+  : [];
 const highlightControlElement = document.querySelector<HTMLElement>('.highlight-control');
 const highlightButtonElement = highlightControlElement
   ? (highlightControlElement.querySelector<HTMLElement>('[data-action="highlight"]') ?? null)
@@ -890,6 +893,32 @@ function initPageLinkHandler(): void {
     }
 
     window.open(link.href, '_blank', 'noopener,noreferrer');
+  });
+}
+
+function initFontChooserControls(): void {
+  if (fontChooserTriggerElement) {
+    fontChooserTriggerElement.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleFontMenu();
+    });
+  }
+
+  fontSubmenuTriggerElements.forEach(trigger => {
+    const submenu = trigger.closest<HTMLElement>('.font-submenu');
+    if (!submenu) return;
+    trigger.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const willOpen = !submenu.classList.contains('is-open');
+      closeAllFontSubmenus();
+      submenu.classList.toggle('is-open', willOpen);
+      trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      if (willOpen) {
+        setFontMenuOpen(true);
+      }
+    });
   });
 }
 
@@ -1486,6 +1515,7 @@ export function initEditor() {
   initFileMenuControls();
   initImageContextMenuControls();
   initPageLinkHandler();
+  initFontChooserControls();
   ensureAiImageIndex();
   applyPageMargin(currentPageMarginSize);
   console.log("initEditor() 呼ばれた！");

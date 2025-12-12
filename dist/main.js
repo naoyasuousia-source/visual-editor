@@ -373,6 +373,9 @@ const fontChooserElement = document.querySelector('.font-chooser');
 const fontChooserTriggerElement = fontChooserElement
     ? (fontChooserElement.querySelector('.font-chooser-trigger') ?? null)
     : null;
+const fontSubmenuTriggerElements = fontChooserElement
+    ? Array.from(fontChooserElement.querySelectorAll('.font-submenu-trigger'))
+    : [];
 const highlightControlElement = document.querySelector('.highlight-control');
 const highlightButtonElement = highlightControlElement
     ? (highlightControlElement.querySelector('[data-action="highlight"]') ?? null)
@@ -769,6 +772,31 @@ function initPageLinkHandler() {
             return;
         }
         window.open(link.href, '_blank', 'noopener,noreferrer');
+    });
+}
+function initFontChooserControls() {
+    if (fontChooserTriggerElement) {
+        fontChooserTriggerElement.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleFontMenu();
+        });
+    }
+    fontSubmenuTriggerElements.forEach(trigger => {
+        const submenu = trigger.closest('.font-submenu');
+        if (!submenu)
+            return;
+        trigger.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const willOpen = !submenu.classList.contains('is-open');
+            closeAllFontSubmenus();
+            submenu.classList.toggle('is-open', willOpen);
+            trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            if (willOpen) {
+                setFontMenuOpen(true);
+            }
+        });
     });
 }
 const lineHeightSizes = ['s', 'm', 'l'];
@@ -1373,6 +1401,7 @@ export function initEditor() {
     initFileMenuControls();
     initImageContextMenuControls();
     initPageLinkHandler();
+    initFontChooserControls();
     ensureAiImageIndex();
     applyPageMargin(currentPageMarginSize);
     console.log("initEditor() 呼ばれた！");

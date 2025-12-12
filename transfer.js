@@ -1,20 +1,23 @@
-pagesContainer.addEventListener('click', (event) => {
-      const link = event.target.closest('a');
-      // contentEditable内での通常のクリックはリンクとして機能しないため、ここでハンドリングする
-      if (link && link.href && event.target.closest('[contenteditable="true"]')) {
-        event.preventDefault(); // デフォルトの編集動作（キャレット移動など）をキャンセル
+ if (fontChooserTrigger) {
+      fontChooserTrigger.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleFontMenu();
+      });
+    }
 
-        const href = link.getAttribute('href');
-        // ページ内リンクの場合
-        if (href.startsWith('#')) {
-          const targetId = href.substring(1);
-          const targetElement = document.getElementById(targetId);
-          if (targetElement) {
-            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        } else {
-          // 外部リンクの場合は新しいタブで開く
-          window.open(link.href, '_blank', 'noopener,noreferrer');
+    fontSubmenuTriggers.forEach(trigger => {
+      const submenu = trigger.closest('.font-submenu');
+      if (!submenu) return;
+      trigger.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const willOpen = !submenu.classList.contains('is-open');
+        closeAllFontSubmenus();
+        submenu.classList.toggle('is-open', willOpen);
+        trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        if (willOpen) {
+          setFontMenuOpen(true);
         }
-      }
+      });
     });
