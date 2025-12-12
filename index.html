@@ -1933,11 +1933,6 @@
       aiImageIndex = container;
     }
 
-    // [TS-MIGRATE] ページマージン制御
-    
-
-    // [TS-MIGRATE] ページマージン制御
-
     function findParagraph(node) {
       while (node && node !== currentEditor) {
         if (
@@ -2199,7 +2194,7 @@
     }
     initPages();
     renumberParagraphs();
-    applyPageMargin(currentPageMargin);
+    // [TS-MIGRATE] ページマージン初期化
 
     pagesContainer.addEventListener('click', (event) => {
       const link = event.target.closest('a');

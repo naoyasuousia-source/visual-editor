@@ -12,6 +12,10 @@ declare global {
     addLinkDestination: () => void;
     createLink: () => void;
     removeLink: () => void;
+    updateMarginRule: (value: string) => void;
+    updateMarginButtonState: (activeSize: string) => void;
+    applyPageMargin: (size: string) => void;
+    applyParagraphAlignment: (direction: string) => void;
   }
 }
 
@@ -248,6 +252,71 @@ export function removeLink(): void {
   window.syncToSource();
 }
 
+const paraNumberLeft = '6mm';
+const pageMarginValues: Record<string, string> = { s: '12mm', m: '17mm', l: '24mm' };
+const rootMarginRule = /:root\s*{[^}]*}/;
+const toolbarElement = document.getElementById('toolbar');
+const styleTagElement = document.querySelector('style');
+let currentPageMarginSize = 'm';
+
+export function updateMarginRule(value: string): void {
+  if (!styleTagElement) return;
+  if (rootMarginRule.test(styleTagElement.innerHTML)) {
+    const formatted = `:root {\n      --page-margin: ${value};\n      --para-number-left: ${paraNumberLeft};\n    }`;
+    styleTagElement.innerHTML = styleTagElement.innerHTML.replace(rootMarginRule, formatted);
+  }
+}
+
+export function updateMarginButtonState(activeSize: string): void {
+  if (!toolbarElement) return;
+  const buttons = toolbarElement.querySelectorAll<HTMLButtonElement>('button[data-action="page-margin"]');
+  buttons.forEach(btn => {
+    btn.setAttribute('aria-pressed', btn.dataset.size === activeSize ? 'true' : 'false');
+  });
+}
+
+export function applyPageMargin(size: string): void {
+  if (!pageMarginValues[size]) return;
+  currentPageMarginSize = size;
+  const value = pageMarginValues[size];
+  document.documentElement.style.setProperty('--page-margin', value);
+  document.documentElement.style.setProperty('--para-number-left', paraNumberLeft);
+  updateMarginRule(value);
+  updateMarginButtonState(size);
+}
+
+export function applyParagraphAlignment(direction: string): void {
+  if (!direction) return;
+  const currentEditor = window.currentEditor;
+  if (!currentEditor) return;
+  const selection = window.getSelection();
+  if (!selection || !selection.rangeCount) return;
+  const range = selection.getRangeAt(0);
+  if (range.collapsed) return;
+  if (!currentEditor.contains(range.commonAncestorContainer)) return;
+
+  const selectors = 'p, h1, h2, h3, h4, h5, h6';
+  const paragraphs = Array.from(currentEditor.querySelectorAll<HTMLElement>(selectors)).filter(paragraph => {
+    return range.intersectsNode(paragraph);
+  });
+  if (!paragraphs.length) return;
+
+  paragraphs.forEach(paragraph => {
+    const wrapper = ensureParagraphWrapper(paragraph);
+    if (!wrapper) return;
+    alignDirections.forEach(dir => {
+      wrapper.classList.remove(`inline-align-${dir}`);
+    });
+    if (wrapper.classList.contains('figure-inline')) {
+      wrapper.classList.add('inline-align-center');
+    } else {
+      wrapper.classList.add(`inline-align-${direction}`);
+    }
+  });
+
+  window.syncToSource();
+}
+
 window.findParagraphWrapper = findParagraphWrapper;
 window.ensureParagraphWrapper = ensureParagraphWrapper;
 window.ensureFigureWrapper = ensureFigureWrapper;
@@ -256,8 +325,13 @@ window.generateBookmarkId = generateBookmarkId;
 window.addLinkDestination = addLinkDestination;
 window.createLink = createLink;
 window.removeLink = removeLink;
+window.updateMarginRule = updateMarginRule;
+window.updateMarginButtonState = updateMarginButtonState;
+window.applyPageMargin = applyPageMargin;
+window.applyParagraphAlignment = applyParagraphAlignment;
 
 // index.html からインポートされるため、再度エクスポートする
 export function initEditor() {
+  applyPageMargin(currentPageMarginSize);
   console.log("initEditor() 呼ばれた！");
 }
