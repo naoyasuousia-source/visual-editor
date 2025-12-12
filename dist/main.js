@@ -383,6 +383,20 @@ const INDENT_STEP_PX = 36 * (96 / 72);
 let currentPageMarginSize = 'm';
 const pagesContainerElement = document.getElementById('pages-container');
 const sourceElement = document.getElementById('source');
+const imageContextMenuElement = document.getElementById('image-context-menu');
+const imageContextDropdownElement = document.querySelector('.image-context-dropdown');
+const imageContextTriggerElement = document.querySelector('.image-context-trigger');
+const imageTitleDialogElement = document.getElementById('image-title-dialog');
+const imageTitleInputElement = document.getElementById('image-title-input');
+const imageTitleFontRadios = imageTitleDialogElement
+    ? Array.from(imageTitleDialogElement.querySelectorAll('input[name="image-title-font-size"]'))
+    : [];
+const imageTitleApplyButtonElement = document.querySelector('[data-action="apply-image-title"]');
+const imageTitleCancelButtonElement = document.querySelector('[data-action="cancel-image-title"]');
+const imageSizeClasses = ['xs', 's', 'm', 'l', 'xl'];
+const isImageSizeClass = (value) => !!value && imageSizeClasses.includes(value);
+let contextTargetImage = null;
+let aiImageIndex = null;
 export function toggleFileDropdown() {
     const element = getFileDropdownElement();
     if (!element)
@@ -428,6 +442,311 @@ function initFileMenuControls() {
             trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
         });
     });
+}
+export function applyImageSize(img, size) {
+    if (!img || !isImageSizeClass(size))
+        return;
+    imageSizeClasses.forEach(s => {
+        img.classList.remove(`img-${s}`);
+    });
+    img.classList.add(`img-${size}`);
+}
+export function ensureAiImageIndex() {
+    if (!pagesContainerElement)
+        return;
+    let container = document.getElementById('ai-image-index');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'ai-image-index';
+        container.style.display = 'none';
+    }
+    else if (container.parentNode) {
+        container.parentNode.removeChild(container);
+    }
+    pagesContainerElement.appendChild(container);
+    aiImageIndex = container;
+}
+export function getClosestBlockId(element) {
+    if (!element)
+        return '';
+    const block = element.closest('p, h1, h2, h3, h4, h5, h6');
+    return block ? block.id : '';
+}
+export function rebuildFigureMetaStore() {
+    if (!pagesContainerElement)
+        return;
+    ensureAiImageIndex();
+    if (!aiImageIndex)
+        return;
+    const preservedMetas = new Map();
+    aiImageIndex.querySelectorAll('.figure-meta').forEach(meta => {
+        const key = meta.dataset.src || '';
+        if (!preservedMetas.has(key)) {
+            preservedMetas.set(key, []);
+        }
+        preservedMetas.get(key).push(meta);
+    });
+    aiImageIndex.innerHTML = '';
+    const images = pagesContainerElement.querySelectorAll('.page-inner img');
+    images.forEach(img => {
+        const key = img.src || '';
+        const candidates = preservedMetas.get(key);
+        let meta = null;
+        if (candidates && candidates.length) {
+            meta = candidates.shift();
+        }
+        else {
+            meta = document.createElement('div');
+            meta.className = 'figure-meta';
+            meta.dataset.src = img.src;
+            meta.dataset.title = '';
+            meta.dataset.caption = '';
+            meta.dataset.tag = '';
+        }
+        meta.dataset.anchor = getClosestBlockId(img);
+        if (!meta.dataset.src) {
+            meta.dataset.src = img.src;
+        }
+        meta.dataset.title = meta.dataset.title || '';
+        meta.dataset.caption = meta.dataset.caption || '';
+        meta.dataset.tag = meta.dataset.tag || '';
+        aiImageIndex.appendChild(meta);
+    });
+}
+export function showImageContextMenu(event, img) {
+    if (!imageContextMenuElement)
+        return;
+    contextTargetImage = img;
+    closeImageSubmenu();
+    const { clientX, clientY } = event;
+    const { width, height } = imageContextMenuElement.getBoundingClientRect();
+    const maxX = window.innerWidth - width - 8;
+    const maxY = window.innerHeight - height - 8;
+    const x = Math.max(8, Math.min(clientX, maxX));
+    const y = Math.max(8, Math.min(clientY, maxY));
+    imageContextMenuElement.style.left = `${x}px`;
+    imageContextMenuElement.style.top = `${y}px`;
+    imageContextMenuElement.classList.add('open');
+}
+export function closeImageSubmenu() {
+    if (!imageContextDropdownElement)
+        return;
+    imageContextDropdownElement.classList.remove('open');
+    if (imageContextTriggerElement) {
+        imageContextTriggerElement.setAttribute('aria-expanded', 'false');
+    }
+}
+export function closeImageContextMenu() {
+    if (!imageContextMenuElement)
+        return;
+    imageContextMenuElement.classList.remove('open');
+    closeImageSubmenu();
+}
+function openTitleDialog() {
+    if (!imageTitleDialogElement || !contextTargetImage)
+        return;
+    const block = contextTargetImage.closest('p, h1, h2, h3, h4, h5, h6');
+    if (!block)
+        return;
+    let existingTitle = '';
+    let sibling = contextTargetImage.nextSibling;
+    while (sibling && sibling.nodeType === Node.TEXT_NODE && (sibling.textContent || '').trim() === '') {
+        sibling = sibling.nextSibling;
+    }
+    if (sibling && sibling.nodeType === Node.ELEMENT_NODE && sibling.nodeName === 'BR') {
+        const textNode = sibling.nextSibling;
+        if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+            existingTitle = textNode.textContent || '';
+        }
+    }
+    if (imageTitleInputElement) {
+        imageTitleInputElement.value = existingTitle;
+        imageTitleInputElement.focus();
+        imageTitleInputElement.select();
+    }
+    const figureTitleSpan = block.querySelector('.figure-title');
+    const hasMiniTextInTitle = !!figureTitleSpan?.querySelector('.mini-text');
+    const isBlockStyleMini = block.dataset.blockStyle === 'mini-p';
+    const fontValue = (isBlockStyleMini || hasMiniTextInTitle) ? 'mini' : 'default';
+    imageTitleFontRadios.forEach(radio => {
+        radio.checked = radio.value === fontValue;
+    });
+    if (typeof imageTitleDialogElement.showModal === 'function') {
+        imageTitleDialogElement.showModal();
+    }
+    else {
+        imageTitleDialogElement.setAttribute('open', '');
+    }
+}
+function closeTitleDialog() {
+    if (!imageTitleDialogElement)
+        return;
+    if (typeof imageTitleDialogElement.close === 'function') {
+        imageTitleDialogElement.close();
+    }
+    else {
+        imageTitleDialogElement.removeAttribute('open');
+    }
+    if (imageTitleInputElement) {
+        imageTitleInputElement.value = '';
+    }
+    contextTargetImage = null;
+}
+function removeExistingImageTitle(img) {
+    if (!img)
+        return;
+    let next = img.nextSibling;
+    while (next) {
+        const toRemove = next;
+        next = next.nextSibling;
+        if (toRemove.nodeType === Node.TEXT_NODE && (toRemove.textContent || '').trim() === '') {
+            toRemove.remove();
+        }
+        else if (toRemove.nodeType === Node.ELEMENT_NODE) {
+            const element = toRemove;
+            if (element.tagName === 'BR' ||
+                element.classList.contains('caret-slot') ||
+                element.classList.contains('figure-title')) {
+                element.remove();
+            }
+            else {
+                break;
+            }
+        }
+        else {
+            break;
+        }
+    }
+}
+function updateImageMetaTitle(img, rawTitle) {
+    if (!img)
+        return;
+    ensureAiImageIndex();
+    if (!aiImageIndex)
+        return;
+    let meta = Array.from(aiImageIndex.querySelectorAll('.figure-meta')).find(m => m.dataset.src === img.src);
+    if (!meta) {
+        rebuildFigureMetaStore();
+        meta = Array.from(aiImageIndex.querySelectorAll('.figure-meta')).find(m => m.dataset.src === img.src);
+    }
+    if (meta) {
+        meta.dataset.title = rawTitle || '';
+    }
+}
+export function applyImageTitle() {
+    if (!contextTargetImage)
+        return;
+    const rawTitle = imageTitleInputElement ? imageTitleInputElement.value : '';
+    const fontRadio = imageTitleFontRadios.find(radio => radio.checked);
+    const fontSize = fontRadio ? fontRadio.value : 'default';
+    const block = contextTargetImage.closest('p, h1, h2, h3, h4, h5, h6');
+    if (!block)
+        return;
+    const paragraph = block.tagName.toLowerCase() === 'p'
+        ? block
+        : convertParagraphToTag(block, 'p');
+    if (!paragraph)
+        return;
+    const isMini = fontSize === 'mini';
+    paragraph.dataset.blockStyle = isMini ? 'mini-p' : 'p';
+    const wrapper = ensureFigureWrapper(paragraph);
+    removeExistingImageTitle(contextTargetImage);
+    if (rawTitle) {
+        const br = document.createElement('br');
+        const caretSlot = document.createElement('span');
+        caretSlot.className = 'caret-slot';
+        caretSlot.contentEditable = 'false';
+        caretSlot.innerHTML = '&#8203;';
+        let titleContent;
+        if (isMini) {
+            const miniSpan = document.createElement('span');
+            miniSpan.className = 'mini-text';
+            miniSpan.style.fontSize = '8pt';
+            miniSpan.textContent = rawTitle;
+            titleContent = miniSpan;
+        }
+        else {
+            titleContent = document.createTextNode(rawTitle);
+        }
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'figure-title';
+        titleSpan.contentEditable = 'false';
+        titleSpan.appendChild(titleContent);
+        const container = wrapper || paragraph;
+        container.appendChild(caretSlot);
+        container.appendChild(br);
+        container.appendChild(titleSpan);
+    }
+    updateImageMetaTitle(contextTargetImage, rawTitle);
+    syncToSource();
+}
+function initImageContextMenuControls() {
+    document.addEventListener('contextmenu', (event) => {
+        const target = event.target;
+        const img = target?.closest('img');
+        if (img && pagesContainerElement && pagesContainerElement.contains(img)) {
+            event.preventDefault();
+            event.stopPropagation();
+            showImageContextMenu(event, img);
+            return;
+        }
+        closeImageContextMenu();
+    });
+    if (imageContextTriggerElement) {
+        imageContextTriggerElement.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (!imageContextDropdownElement)
+                return;
+            const willOpen = !imageContextDropdownElement.classList.contains('open');
+            imageContextDropdownElement.classList.toggle('open', willOpen);
+            imageContextTriggerElement.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        });
+    }
+    if (imageContextMenuElement) {
+        imageContextMenuElement.addEventListener('click', (event) => {
+            const btn = event.target.closest('button[data-action]');
+            if (!btn)
+                return;
+            event.stopPropagation();
+            const action = btn.dataset.action;
+            if (action === 'image-size') {
+                const size = btn.dataset.size;
+                applyImageSize(contextTargetImage, size);
+                closeImageContextMenu();
+                contextTargetImage = null;
+                return;
+            }
+            if (action === 'image-title') {
+                closeImageContextMenu();
+                openTitleDialog();
+                return;
+            }
+            closeImageContextMenu();
+            contextTargetImage = null;
+        });
+    }
+    if (imageTitleApplyButtonElement) {
+        imageTitleApplyButtonElement.addEventListener('click', (event) => {
+            event.preventDefault();
+            applyImageTitle();
+            closeTitleDialog();
+        });
+    }
+    if (imageTitleCancelButtonElement) {
+        imageTitleCancelButtonElement.addEventListener('click', (event) => {
+            event.preventDefault();
+            closeTitleDialog();
+        });
+    }
+    if (imageTitleDialogElement) {
+        imageTitleDialogElement.addEventListener('cancel', (event) => {
+            event.preventDefault();
+            closeTitleDialog();
+        });
+    }
+    window.addEventListener('resize', closeImageContextMenu);
+    window.addEventListener('blur', closeImageContextMenu);
 }
 const lineHeightSizes = ['s', 'm', 'l'];
 const isLineHeightSize = (value) => !!value && lineHeightSizes.includes(value);
@@ -1014,9 +1333,23 @@ window.computeSelectionStateFromRange = computeSelectionStateFromRange;
 window.findTextPositionInParagraph = findTextPositionInParagraph;
 window.restoreRangeFromSelectionState = restoreRangeFromSelectionState;
 window.findParagraph = findParagraph;
+window.applyImageSize = applyImageSize;
+window.ensureAiImageIndex = ensureAiImageIndex;
+window.rebuildFigureMetaStore = rebuildFigureMetaStore;
+window.getClosestBlockId = getClosestBlockId;
+window.showImageContextMenu = showImageContextMenu;
+window.closeImageContextMenu = closeImageContextMenu;
+window.closeImageSubmenu = closeImageSubmenu;
+window.openTitleDialog = openTitleDialog;
+window.closeTitleDialog = closeTitleDialog;
+window.applyImageTitle = applyImageTitle;
+window.removeExistingImageTitle = removeExistingImageTitle;
+window.updateImageMetaTitle = updateImageMetaTitle;
 // index.html からインポートされるため、再度エクスポートする
 export function initEditor() {
     initFileMenuControls();
+    initImageContextMenuControls();
+    ensureAiImageIndex();
     applyPageMargin(currentPageMarginSize);
     console.log("initEditor() 呼ばれた！");
 }

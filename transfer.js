@@ -1,122 +1,244 @@
-function isRangeInsideCurrentEditor(range) {
-      return !!(currentEditor && range && currentEditor.contains(range.commonAncestorContainer));
+function showImageContextMenu(event, img) {
+      if (!imageContextMenu) return;
+      contextTargetImage = img;
+      closeImageSubmenu();
+      const { clientX, clientY } = event;
+      const { width, height } = imageContextMenu.getBoundingClientRect();
+      const maxX = window.innerWidth - width - 8;
+      const maxY = window.innerHeight - height - 8;
+      const x = Math.max(8, Math.min(clientX, maxX));
+      const y = Math.max(8, Math.min(clientY, maxY));
+      imageContextMenu.style.left = `${x}px`;
+      imageContextMenu.style.top = `${y}px`;
+      imageContextMenu.classList.add('open');
     }
 
-    function saveTextSelectionFromEditor() {
-      const selection = window.getSelection();
-      if (!selection || !selection.rangeCount) return;
-      const range = selection.getRangeAt(0);
-      if (range.collapsed) return;
-      if (!isRangeInsideCurrentEditor(range)) return;
-      const state = computeSelectionStateFromRange(range);
-      if (state) {
-        lastSelectionState = state;
+    function closeImageContextMenu() {
+      if (!imageContextMenu) return;
+      imageContextMenu.classList.remove('open');
+      closeImageSubmenu();
+    }
+
+    function closeImageSubmenu() {
+      if (!imageContextDropdown) return;
+      imageContextDropdown.classList.remove('open');
+      if (imageContextTrigger) {
+        imageContextTrigger.setAttribute('aria-expanded', 'false');
       }
     }
 
-    function getEffectiveTextRange() {
-      const selection = window.getSelection();
-      if (selection && selection.rangeCount) {
-        const range = selection.getRangeAt(0);
-        if (!range.collapsed && isRangeInsideCurrentEditor(range)) {
-          const state = computeSelectionStateFromRange(range);
-          if (state) {
-            lastSelectionState = state;
-            return range.cloneRange();
+    function openTitleDialog() {
+      if (!imageTitleDialog || !contextTargetImage) return;
+      const block = contextTargetImage.closest('p, h1, h2, h3, h4, h5, h6');
+      if (!block) return;
+      let existingTitle = '';
+      let sibling = contextTargetImage.nextSibling;
+      while (sibling && sibling.nodeType === Node.TEXT_NODE && sibling.textContent.trim() === '') {
+        sibling = sibling.nextSibling;
+      }
+      if (sibling && sibling.nodeType === Node.ELEMENT_NODE && sibling.tagName === 'BR') {
+        const textNode = sibling.nextSibling;
+        if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+          existingTitle = textNode.textContent || '';
+        }
+      }
+      if (imageTitleInput) {
+        imageTitleInput.value = existingTitle;
+        imageTitleInput.focus();
+        imageTitleInput.select();
+      }
+      // 既存のタイトルがmini-text形式かどうかを判定
+      const figureTitleSpan = block.querySelector('.figure-title');
+      const hasMiniTextInTitle = figureTitleSpan && figureTitleSpan.querySelector('.mini-text');
+      const isBlockStyleMini = block.dataset.blockStyle === 'mini-p';
+
+      const fontValue = (isBlockStyleMini || hasMiniTextInTitle) ? 'mini' : 'default';
+      imageTitleFontRadios.forEach(radio => {
+        radio.checked = radio.value === fontValue;
+      });
+      if (typeof imageTitleDialog.showModal === 'function') {
+        imageTitleDialog.showModal();
+      } else {
+        imageTitleDialog.setAttribute('open', '');
+      }
+    }
+
+    function closeTitleDialog() {
+      if (!imageTitleDialog) return;
+      if (typeof imageTitleDialog.close === 'function') {
+        imageTitleDialog.close();
+      } else {
+        imageTitleDialog.removeAttribute('open');
+      }
+      if (imageTitleInput) {
+        imageTitleInput.value = '';
+      }
+      contextTargetImage = null;
+    }
+
+    function removeExistingImageTitle(img) {
+      if (!img) return;
+
+      // 次の兄弟要素から走査して、BR, caret-slot, figure-titleを削除
+      let next = img.nextSibling;
+      while (next) {
+        const toRemove = next;
+        next = next.nextSibling; // 先に次のノードを取得
+
+        if (toRemove.nodeType === Node.TEXT_NODE && toRemove.textContent.trim() === '') {
+          toRemove.remove(); // 空のテキストノード
+        } else if (toRemove.nodeType === Node.ELEMENT_NODE) {
+          if (toRemove.tagName === 'BR' || toRemove.classList.contains('caret-slot') || toRemove.classList.contains('figure-title')) {
+            toRemove.remove();
+          } else {
+            // 関係ない要素が見つかったら停止
+            break;
           }
+        } else {
+          break;
         }
       }
-      if (lastSelectionState) {
-        const restored = restoreRangeFromSelectionState(lastSelectionState);
-        if (restored && isRangeInsideCurrentEditor(restored)) {
-          if (selection) {
-            selection.removeAllRanges();
-            selection.addRange(restored);
-          }
-          return restored.cloneRange();
+    }
+
+    function updateImageMetaTitle(img, rawTitle) {
+      if (!img) return;
+      ensureAiImageIndex();
+      if (!aiImageIndex) return;
+      let meta = Array.from(aiImageIndex.querySelectorAll('.figure-meta')).find(m => m.dataset.src === img.src);
+      if (!meta) {
+        rebuildFigureMetaStore();
+        meta = Array.from(aiImageIndex.querySelectorAll('.figure-meta')).find(m => m.dataset.src === img.src);
+      }
+      if (meta) {
+        meta.dataset.title = rawTitle || '';
+      }
+    }
+
+    function applyImageTitle() {
+      if (!contextTargetImage) return;
+      const rawTitle = imageTitleInput ? imageTitleInput.value : '';
+      const fontRadio = Array.from(imageTitleFontRadios).find(radio => radio.checked);
+      const fontSize = fontRadio ? fontRadio.value : 'default';
+      const block = contextTargetImage.closest('p, h1, h2, h3, h4, h5, h6');
+      if (!block) return;
+
+      // 画像タイトル自体は常に p タグに変換されるように
+      const paragraph = block.tagName.toLowerCase() === 'p'
+        ? block
+        : convertParagraphToTag(block, 'p');
+      if (!paragraph) return;
+
+      const isMini = fontSize === 'mini';
+
+      // 段落クラス 'mini-p' のトグルは削除
+      // paragraph.classList.toggle('mini-p', isMini);
+
+      // dataset.blockStyle の設定は、mini の場合は 'mini-p'、それ以外は 'p' にする
+      paragraph.dataset.blockStyle = isMini ? 'mini-p' : 'p';
+
+      const wrapper = ensureFigureWrapper(paragraph);
+      removeExistingImageTitle(contextTargetImage); // 既存のタイトル関連要素を削除
+
+      if (rawTitle) {
+        const br = document.createElement('br');
+        const caretSlot = document.createElement('span');
+        caretSlot.className = 'caret-slot';
+        caretSlot.contentEditable = 'false';
+        caretSlot.innerHTML = '&#8203;'; // Zero-width space
+
+        let titleContent;
+        if (isMini) {
+          // mini の場合、テキストを mini-text span でラップ
+          titleContent = document.createElement('span');
+          titleContent.className = 'mini-text'; // mini-text クラス
+          titleContent.style.fontSize = '8pt'; // インラインスタイル
+          titleContent.textContent = rawTitle;
+        } else {
+          // 通常のフォントサイズの場合
+          titleContent = document.createTextNode(rawTitle);
         }
+
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'figure-title';
+        titleSpan.contentEditable = 'false';
+        titleSpan.appendChild(titleContent); // ラップした要素またはテキストノードを追加
+
+        const container = wrapper || paragraph;
+
+        container.appendChild(caretSlot);
+        container.appendChild(br);
+        container.appendChild(titleSpan);
       }
-      return null;
+      updateImageMetaTitle(contextTargetImage, rawTitle);
+      syncToSource();
     }
 
-    function compareParagraphOrder(a, b) {
-      if (a === b) return 0;
-      const pos = a.compareDocumentPosition(b);
-      if (pos & Node.DOCUMENT_POSITION_FOLLOWING) {
-        return -1;
-      }
-      if (pos & Node.DOCUMENT_POSITION_PRECEDING) {
-        return 1;
-      }
-      return 0;
+    if (imageTitleApplyButton) {
+      imageTitleApplyButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        applyImageTitle();
+        closeTitleDialog();
+      });
     }
 
-    function calculateOffsetWithinNode(root, container, offset) {
-      if (!root || !container) return null;
-      try {
-        const temp = document.createRange();
-        temp.setStart(root, 0);
-        temp.setEnd(container, offset);
-        return temp.toString().length;
-      } catch (err) {
-        return null;
-      }
+    if (imageTitleCancelButton) {
+      imageTitleCancelButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        closeTitleDialog();
+      });
     }
 
-    function computeSelectionStateFromRange(range) {
-      if (!range) return null;
-      const startParagraph = findParagraph(range.startContainer);
-      const endParagraph = findParagraph(range.endContainer);
-      if (!startParagraph || !endParagraph) return null;
-      const startId = startParagraph.id;
-      const endId = endParagraph.id;
-      if (!startId || !endId) return null;
-      const startOffset = calculateOffsetWithinNode(startParagraph, range.startContainer, range.startOffset);
-      const endOffset = calculateOffsetWithinNode(endParagraph, range.endContainer, range.endOffset);
-      if (startOffset == null || endOffset == null) return null;
-
-      let startState = { block: startParagraph, id: startId, offset: startOffset };
-      let endState = { block: endParagraph, id: endId, offset: endOffset };
-      const order = compareParagraphOrder(startParagraph, endParagraph);
-      if (order > 0 || (order === 0 && startOffset > endOffset)) {
-        [startState, endState] = [endState, startState];
-      }
-
-      return {
-        startBlockId: startState.id,
-        endBlockId: endState.id,
-        startOffset: startState.offset,
-        endOffset: endState.offset
-      };
+    if (imageTitleDialog) {
+      imageTitleDialog.addEventListener('cancel', (event) => {
+        event.preventDefault();
+        closeTitleDialog();
+      });
     }
 
-    function findTextPositionInParagraph(block, targetOffset) {
-      if (!block) return null;
-      const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, null);
-      let node = walker.nextNode();
-      let remaining = Math.max(0, targetOffset);
-      while (node) {
-        const textLength = node.textContent.length;
-        if (remaining <= textLength) {
-          return { node, offset: remaining };
+    if (imageContextTrigger) {
+      imageContextTrigger.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!imageContextDropdown) return;
+        const willOpen = !imageContextDropdown.classList.contains('open');
+        imageContextDropdown.classList.toggle('open');
+        imageContextTrigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      });
+    }
+
+    document.addEventListener('contextmenu', (event) => {
+      const img = event.target.closest('img');
+      if (img && pagesContainer.contains(img)) {
+        event.preventDefault();
+        event.stopPropagation();
+        showImageContextMenu(event, img);
+        return;
+      }
+      closeImageContextMenu();
+    });
+
+    if (imageContextMenu) {
+      imageContextMenu.addEventListener('click', (event) => {
+        const btn = event.target.closest('button[data-action]');
+        if (!btn) return;
+        event.stopPropagation();
+        const action = btn.dataset.action;
+        if (action === 'image-size') {
+          const size = btn.dataset.size;
+          applyImageSize(contextTargetImage, size);
+          closeImageContextMenu();
+          contextTargetImage = null;
+          return;
         }
-        remaining -= textLength;
-        node = walker.nextNode();
-      }
-      const fallbackOffset = Math.min(Math.max(remaining, 0), block.childNodes.length);
-      return { node: block, offset: fallbackOffset };
+        if (action === 'image-title') {
+          closeImageContextMenu();
+          openTitleDialog();
+          return;
+        }
+        closeImageContextMenu();
+        contextTargetImage = null;
+      });
     }
 
-    function restoreRangeFromSelectionState(state) {
-      if (!state) return null;
-      const startBlock = document.getElementById(state.startBlockId);
-      const endBlock = document.getElementById(state.endBlockId);
-      if (!startBlock || !endBlock) return null;
-      const startPosition = findTextPositionInParagraph(startBlock, state.startOffset);
-      const endPosition = findTextPositionInParagraph(endBlock, state.endOffset);
-      if (!startPosition || !endPosition) return null;
-      const range = document.createRange();
-      range.setStart(startPosition.node, startPosition.offset);
-      range.setEnd(endPosition.node, endPosition.offset);
-      return range;
-    }
+    window.addEventListener('resize', closeImageContextMenu);
+    window.addEventListener('blur', closeImageContextMenu);
