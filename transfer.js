@@ -1,94 +1,120 @@
-function findParagraphWrapper(paragraph) {
-      if (!paragraph) return null;
-      return Array.from(paragraph.children).find(child => {
-        return child.classList && child.classList.contains('inline-align');
-      }) || null;
-    }
-
-    function ensureParagraphWrapper(paragraph) {
-      let wrapper = findParagraphWrapper(paragraph);
-      if (wrapper) return wrapper;
-      const fragment = document.createDocumentFragment();
-      while (paragraph.firstChild) {
-        fragment.appendChild(paragraph.firstChild);
+function generateBookmarkId() {
+      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      let result = 'bm-';
+      for (let i = 0; i < 5; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
       }
-      wrapper = document.createElement('span');
-      wrapper.classList.add('inline-align');
-      wrapper.appendChild(fragment);
-      paragraph.appendChild(wrapper);
-      return wrapper;
+      return result;
     }
 
-    const alignDirections = ['left', 'center', 'right'];
+    function addLinkDestination() {
+      if (!currentEditor) return;
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return;
 
-    function ensureFigureWrapper(paragraph) {
-      if (!paragraph) return null;
-      const wrapper = ensureParagraphWrapper(paragraph);
-      if (!wrapper) return null;
-      alignDirections.forEach(dir => {
-        wrapper.classList.remove(`inline-align-${dir}`);
+      const range = selection.getRangeAt(0);
+      if (range.collapsed) {
+        alert('テキストを選択してください。');
+        return;
+      }
+
+      if (!currentEditor.contains(range.commonAncestorContainer)) {
+        alert('編集エリア内のテキストを選択してください。');
+        return;
+      }
+
+      const span = document.createElement('span');
+      span.id = generateBookmarkId();
+
+      try {
+        range.surroundContents(span);
+      } catch (e) {
+        console.error("Failed to wrap selection: ", e);
+        alert("複雑な選択範囲のため、リンク先を追加できませんでした。段落をまたがない単純なテキストを選択してください。");
+        return;
+      }
+
+      selection.removeAllRanges();
+      syncToSource();
+    }
+
+    function createLink() {
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0 || selection.getRangeAt(0).collapsed) {
+        alert('リンクにしたいテキストを選択してください。');
+        return;
+      }
+      const range = selection.getRangeAt(0);
+      if (!currentEditor.contains(range.commonAncestorContainer)) {
+        alert('編集エリア内のテキストを選択してください。');
+        return;
+      }
+
+      const destinations = Array.from(document.querySelectorAll('.page-inner [id^="bm-"]'));
+      if (destinations.length === 0) {
+        alert('リンク先が登録されていません。');
+        return;
+      }
+
+      let promptMessage = 'どのリンク先にリンクしますか？番号を入力してください。\n\n';
+      const destinationMap = new Map();
+      destinations.forEach((dest, index) => {
+        const text = dest.textContent.trim().substring(0, 50) || '(テキストなし)';
+        promptMessage += `${index + 1}: ${text}\n`;
+        destinationMap.set(String(index + 1), dest.id);
       });
-      wrapper.classList.add('inline-align-center', 'figure-inline');
-      return wrapper;
+
+      const choice = window.prompt(promptMessage);
+      if (!choice) return; // キャンセル
+
+      const destinationId = destinationMap.get(choice.trim());
+      if (!destinationId) {
+        alert('無効な番号です。');
+        return;
+      }
+
+      // execCommand を使ってリンクを生成
+      document.execCommand('createLink', false, '#' + destinationId);
+
+      // aタグの後に不要なテキストノードが追加されることがあるので、正規化する
+      currentEditor.normalize();
+
+      syncToSource();
     }
 
-    function convertParagraphToTag(paragraph, tag) {
-      if (!paragraph) return null;
-      // mini-p の場合は常に p タグとして扱う
-      const desiredTag = tag === 'mini-p' ? 'p' : tag;
-      const currentTag = paragraph.tagName.toLowerCase();
+    function removeLink() {
+      if (!currentEditor) return;
 
-      let replacement = paragraph; // デフォルトでは元の段落をそのまま使用
-
-      // タグの変更が必要な場合
-      if (currentTag !== desiredTag) {
-        replacement = document.createElement(desiredTag);
-        Array.from(paragraph.attributes).forEach(attr => {
-          replacement.setAttribute(attr.name, attr.value);
-        });
-        // 古いparagraphの子ノードを新しいreplacementに移動
-        while (paragraph.firstChild) {
-          replacement.appendChild(paragraph.firstChild);
-        }
-        paragraph.parentNode.replaceChild(replacement, paragraph);
+      const links = Array.from(currentEditor.querySelectorAll('a[href^="#bm-"]'));
+      if (links.length === 0) {
+        alert('削除できるリンクがありません。');
+        return;
       }
 
-      // mini-p のロジック
-      if (tag === 'mini-p') { // tag === 'mini-p' の場合のみ処理
-        // 現在のreplacementの子要素が既にmini-textでラップされているかチェック
-        // :scope > .mini-text は直下の子要素のみを対象とする
-        let miniTextSpan = replacement.querySelector(':scope > .mini-text');
-        if (miniTextSpan) {
-          // 既にラップされている場合は、style="font-size:8pt"を確実に適用
-          miniTextSpan.style.fontSize = '8pt';
-          // 既存の mini-text にもクラスを付与 (互換性のため)
-          if (!miniTextSpan.classList.contains('mini-text')) {
-            miniTextSpan.classList.add('mini-text');
-          }
-        } else {
-          // まだラップされていない場合は、全ての子ノードをmini-textでラップ
-          const fragment = document.createDocumentFragment();
-          while (replacement.firstChild) {
-            fragment.appendChild(replacement.firstChild);
-          }
-          miniTextSpan = document.createElement('span');
-          miniTextSpan.className = 'mini-text';
-          miniTextSpan.style.fontSize = '8pt'; // インラインスタイルを直接適用
-          miniTextSpan.appendChild(fragment);
-          replacement.appendChild(miniTextSpan);
-        }
-        replacement.dataset.blockStyle = 'mini-p'; // blockStyleはmini-pを維持
-      } else {
-        // mini-p から別のタグに（またはpに）戻す場合
-        let miniTextSpan = replacement.querySelector(':scope > .mini-text');
-        if (miniTextSpan) {
-          // mini-text span が存在すれば unwrap
-          while (miniTextSpan.firstChild) {
-            replacement.insertBefore(miniTextSpan.firstChild, miniTextSpan);
-          }
-          replacement.removeChild(miniTextSpan);
-        }
-        replacement.dataset.blockStyle = desiredTag; // 通常のタグ名に設定
+      let promptMessage = 'どのリンクを削除しますか？番号を入力してください。\\n\\n';
+      const linkMap = new Map();
+      links.forEach((link, index) => {
+        const text = link.textContent.trim().substring(0, 50) || '(テキストなし)';
+        promptMessage += `${index + 1}: ${text}\\n`;
+        linkMap.set(String(index + 1), link);
+      });
+
+      const choice = window.prompt(promptMessage);
+      if (!choice) return; // キャンセル
+
+      const linkToRemove = linkMap.get(choice.trim());
+      if (!linkToRemove) {
+        alert('無効な番号です。');
+        return;
       }
-      return replacement;
+
+      // aタグを解除(unwrap)
+      const parent = linkToRemove.parentNode;
+      while (linkToRemove.firstChild) {
+        parent.insertBefore(linkToRemove.firstChild, linkToRemove);
+      }
+      parent.removeChild(linkToRemove);
+      parent.normalize(); // テキストノードを結合
+
+      syncToSource();
     }
