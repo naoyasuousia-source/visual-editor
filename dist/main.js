@@ -222,6 +222,10 @@ const fontChooserElement = document.querySelector('.font-chooser');
 const fontChooserTriggerElement = fontChooserElement
     ? (fontChooserElement.querySelector('.font-chooser-trigger') ?? null)
     : null;
+const highlightControlElement = document.querySelector('.highlight-control');
+const highlightButtonElement = highlightControlElement
+    ? (highlightControlElement.querySelector('[data-action="highlight"]') ?? null)
+    : null;
 let currentPageMarginSize = 'm';
 export function updateMarginRule(value) {
     if (!styleTagElement)
@@ -285,6 +289,157 @@ export function applyParagraphAlignment(direction) {
     });
     window.syncToSource();
 }
+export function setHighlightPaletteOpen(open) {
+    if (!highlightControlElement || !highlightButtonElement)
+        return;
+    highlightControlElement.classList.toggle('is-open', open);
+    highlightButtonElement.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+export function toggleHighlightPalette() {
+    if (!highlightControlElement)
+        return;
+    setHighlightPaletteOpen(!highlightControlElement.classList.contains('is-open'));
+}
+export function applyColorHighlight(color) {
+    if (!color)
+        return;
+    const currentEditor = window.currentEditor;
+    if (!currentEditor)
+        return;
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount)
+        return;
+    const range = selection.getRangeAt(0);
+    if (range.collapsed)
+        return;
+    if (!currentEditor.contains(range.commonAncestorContainer))
+        return;
+    const cleanupRange = range.cloneRange();
+    if (window.removeHighlightsInRange(cleanupRange)) {
+        selection.removeAllRanges();
+        selection.addRange(cleanupRange);
+    }
+    const workingRange = cleanupRange.cloneRange();
+    const fragment = workingRange.extractContents();
+    removeColorSpansInNode(fragment);
+    const span = document.createElement('span');
+    span.className = 'inline-highlight';
+    span.style.backgroundColor = color;
+    span.appendChild(fragment);
+    workingRange.insertNode(span);
+    selection.removeAllRanges();
+    const newRange = document.createRange();
+    newRange.selectNodeContents(span);
+    selection.addRange(newRange);
+    window.syncToSource();
+    setHighlightPaletteOpen(false);
+}
+function unwrapColorSpan(span) {
+    if (!span)
+        return;
+    const parent = span.parentNode;
+    if (!parent)
+        return;
+    while (span.firstChild) {
+        parent.insertBefore(span.firstChild, span);
+    }
+    parent.removeChild(span);
+}
+function removeColorSpansInNode(root) {
+    if (!root)
+        return false;
+    const spans = Array.from(root.querySelectorAll('.inline-color'));
+    let removed = false;
+    spans.forEach(span => {
+        unwrapColorSpan(span);
+        removed = true;
+    });
+    return removed;
+}
+function cloneColorSpanWithText(template, text) {
+    if (!template || !text)
+        return null;
+    const clone = template.cloneNode(false);
+    while (clone.firstChild) {
+        clone.removeChild(clone.firstChild);
+    }
+    clone.appendChild(document.createTextNode(text));
+    return clone;
+}
+function splitColorSpanForRange(span, range) {
+    if (!span || !range || !range.intersectsNode(span))
+        return false;
+    const spanRange = document.createRange();
+    spanRange.selectNodeContents(span);
+    const intersection = range.cloneRange();
+    if (intersection.compareBoundaryPoints(Range.START_TO_START, spanRange) < 0) {
+        intersection.setStart(spanRange.startContainer, spanRange.startOffset);
+    }
+    if (intersection.compareBoundaryPoints(Range.END_TO_END, spanRange) > 0) {
+        intersection.setEnd(spanRange.endContainer, spanRange.endOffset);
+    }
+    const totalLength = span.textContent?.length ?? 0;
+    const startOffset = window.calculateOffsetWithinNode(span, intersection.startContainer, intersection.startOffset);
+    const endOffset = window.calculateOffsetWithinNode(span, intersection.endContainer, intersection.endOffset);
+    if (startOffset == null || endOffset == null)
+        return false;
+    if (startOffset <= 0 && endOffset >= totalLength) {
+        unwrapColorSpan(span);
+        return true;
+    }
+    const text = span.textContent || '';
+    const beforeText = text.slice(0, startOffset);
+    const middleText = text.slice(startOffset, endOffset);
+    const afterText = text.slice(endOffset);
+    if (!middleText)
+        return false;
+    const parent = span.parentNode;
+    if (!parent)
+        return false;
+    const fragments = [];
+    if (beforeText) {
+        const beforeSpan = cloneColorSpanWithText(span, beforeText);
+        if (beforeSpan)
+            fragments.push(beforeSpan);
+    }
+    fragments.push(document.createTextNode(middleText));
+    if (afterText) {
+        const afterSpan = cloneColorSpanWithText(span, afterText);
+        if (afterSpan)
+            fragments.push(afterSpan);
+    }
+    fragments.forEach(node => parent.insertBefore(node, span));
+    parent.removeChild(span);
+    return true;
+}
+export function applyFontColor(color) {
+    if (!color)
+        return;
+    const currentEditor = window.currentEditor;
+    if (!currentEditor)
+        return;
+    const range = window.getEffectiveTextRange();
+    if (!range)
+        return;
+    const workingRange = range.cloneRange();
+    const fragment = workingRange.extractContents();
+    removeColorSpansInNode(fragment);
+    const span = document.createElement('span');
+    span.className = 'inline-color';
+    span.style.color = color;
+    span.appendChild(fragment);
+    workingRange.insertNode(span);
+    const selection = window.getSelection();
+    if (selection) {
+        selection.removeAllRanges();
+        const newRange = document.createRange();
+        newRange.selectNodeContents(span);
+        selection.addRange(newRange);
+    }
+    window.syncToSource();
+    setHighlightPaletteOpen(false);
+    window.saveTextSelectionFromEditor();
+}
 export function closeAllFontSubmenus() {
     if (!fontChooserElement)
         return;
@@ -344,6 +499,10 @@ window.setFontMenuOpen = setFontMenuOpen;
 window.toggleFontMenu = toggleFontMenu;
 window.closeFontMenu = closeFontMenu;
 window.closeFontSubmenu = closeFontSubmenu;
+window.setHighlightPaletteOpen = setHighlightPaletteOpen;
+window.toggleHighlightPalette = toggleHighlightPalette;
+window.applyColorHighlight = applyColorHighlight;
+window.applyFontColor = applyFontColor;
 // index.html からインポートされるため、再度エクスポートする
 export function initEditor() {
     applyPageMargin(currentPageMarginSize);

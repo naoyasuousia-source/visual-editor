@@ -1961,6 +1961,7 @@
 
     function setActiveEditor(inner) {
       currentEditor = inner;
+      window.currentEditor = inner;//例外
       document.querySelectorAll('section.page').forEach(p => p.classList.remove('active'));
       const page = inner.closest('section.page');
       if (page) page.classList.add('active');
