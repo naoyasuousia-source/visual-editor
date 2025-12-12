@@ -1,41 +1,46 @@
-function toggleFileDropdown() {
-      if (!fileDropdown) return;
-      fileDropdown.classList.toggle('open');
+function toggleBold() {
+      if (!currentEditor) return;
+      currentEditor.focus();
+      document.execCommand('bold', false, null);
+      normalizeInlineFormatting();
+      syncToSource();
     }
 
-    function closeNestedDropdown() {
-      nestedDropdowns.forEach(dropdown => {
-        dropdown.classList.remove('open');
-        const trigger = dropdown.querySelector('.nested-trigger');
-        if (trigger) {
-          trigger.setAttribute('aria-expanded', 'false');
-        }
-      });
+    function toggleItalic() {
+      if (!currentEditor) return;
+      currentEditor.focus();
+      document.execCommand('italic', false, null);
+      normalizeInlineFormatting();
+      syncToSource();
     }
 
-    function closeFileDropdown() {
-      if (!fileDropdown) return;
-      fileDropdown.classList.remove('open');
-      closeNestedDropdown();
+    function toggleUnderline() {
+      if (!currentEditor) return;
+      currentEditor.focus();
+      document.execCommand('underline', false, null);
+      normalizeInlineFormatting();
+      syncToSource();
     }
 
-    if (fileTrigger) {
-      fileTrigger.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        toggleFileDropdown();
-      });
+    function toggleStrikeThrough() {
+      if (!currentEditor) return;
+      currentEditor.focus();
+      document.execCommand('strikeThrough', false, null);
+      normalizeInlineFormatting();
+      syncToSource();
     }
 
-    nestedTriggers.forEach(trigger => {
-      trigger.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const dropdown = trigger.closest('.nested-dropdown');
-        if (!dropdown) return;
-        const willOpen = !dropdown.classList.contains('open');
-        closeNestedDropdown();
-        dropdown.classList.toggle('open', willOpen);
-        trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-      });
-    });
+    function applyInlineScript(command) {
+      if (!currentEditor) return;
+      currentEditor.focus();
+      document.execCommand(command, false, null);
+      syncToSource();
+    }
+
+    function toggleSuperscript() {
+      applyInlineScript('superscript');
+    }
+
+    function toggleSubscript() {
+      applyInlineScript('subscript');
+    }

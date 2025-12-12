@@ -380,6 +380,83 @@ export function applyParagraphSpacing(size) {
     });
     window.syncToSource();
 }
+export function toggleBold() {
+    const currentEditor = window.currentEditor;
+    if (!currentEditor)
+        return;
+    currentEditor.focus();
+    document.execCommand('bold', false, undefined);
+    normalizeInlineFormatting();
+    syncToSource();
+}
+export function toggleItalic() {
+    const currentEditor = window.currentEditor;
+    if (!currentEditor)
+        return;
+    currentEditor.focus();
+    document.execCommand('italic', false, undefined);
+    normalizeInlineFormatting();
+    syncToSource();
+}
+export function toggleUnderline() {
+    const currentEditor = window.currentEditor;
+    if (!currentEditor)
+        return;
+    currentEditor.focus();
+    document.execCommand('underline', false, undefined);
+    normalizeInlineFormatting();
+    syncToSource();
+}
+export function toggleStrikeThrough() {
+    const currentEditor = window.currentEditor;
+    if (!currentEditor)
+        return;
+    currentEditor.focus();
+    document.execCommand('strikeThrough', false, undefined);
+    normalizeInlineFormatting();
+    syncToSource();
+}
+export function applyInlineScript(command) {
+    if (!command)
+        return;
+    const currentEditor = window.currentEditor;
+    if (!currentEditor)
+        return;
+    currentEditor.focus();
+    document.execCommand(command, false, undefined);
+    syncToSource();
+}
+export function toggleSuperscript() {
+    applyInlineScript('superscript');
+}
+export function toggleSubscript() {
+    applyInlineScript('subscript');
+}
+export function normalizeInlineFormatting() {
+    const currentEditor = window.currentEditor;
+    if (!currentEditor)
+        return;
+    replaceInlineTag(currentEditor, 'strong', 'b');
+    replaceInlineTag(currentEditor, 'em', 'i');
+    replaceInlineTag(currentEditor, 'strike', 's');
+    replaceInlineTag(currentEditor, 'del', 's');
+}
+function replaceInlineTag(currentEditor, from, to) {
+    const nodes = currentEditor.querySelectorAll(from);
+    nodes.forEach(node => {
+        const replacement = document.createElement(to);
+        Array.from(node.attributes).forEach(attr => {
+            replacement.setAttribute(attr.name, attr.value);
+        });
+        while (node.firstChild) {
+            replacement.appendChild(node.firstChild);
+        }
+        const parent = node.parentNode;
+        if (!parent)
+            return;
+        parent.replaceChild(replacement, node);
+    });
+}
 export function getCaretOffset(range) {
     const currentEditor = window.currentEditor;
     if (!currentEditor)
@@ -643,6 +720,33 @@ export function applyFontColor(color) {
     setHighlightPaletteOpen(false);
     window.saveTextSelectionFromEditor();
 }
+export function resetFontColorInSelection() {
+    const currentEditor = window.currentEditor;
+    if (!currentEditor)
+        return;
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount)
+        return;
+    const range = selection.getRangeAt(0);
+    if (range.collapsed)
+        return;
+    if (!currentEditor.contains(range.commonAncestorContainer))
+        return;
+    const spans = Array.from(currentEditor.querySelectorAll('.inline-color'));
+    let removed = false;
+    spans.forEach(span => {
+        if (range.intersectsNode(span)) {
+            unwrapColorSpan(span);
+            removed = true;
+        }
+    });
+    if (!removed)
+        return;
+    const normalized = range.cloneRange();
+    selection.removeAllRanges();
+    selection.addRange(normalized);
+    syncToSource();
+}
 export function closeAllFontSubmenus() {
     if (!fontChooserElement)
         return;
@@ -718,6 +822,14 @@ window.applyLineHeight = applyLineHeight;
 window.toggleFileDropdown = toggleFileDropdown;
 window.closeNestedDropdown = closeNestedDropdown;
 window.closeFileDropdown = closeFileDropdown;
+window.toggleBold = toggleBold;
+window.toggleItalic = toggleItalic;
+window.toggleUnderline = toggleUnderline;
+window.toggleStrikeThrough = toggleStrikeThrough;
+window.applyInlineScript = applyInlineScript;
+window.toggleSuperscript = toggleSuperscript;
+window.toggleSubscript = toggleSubscript;
+window.resetFontColorInSelection = resetFontColorInSelection;
 // index.html からインポートされるため、再度エクスポートする
 export function initEditor() {
     applyPageMargin(currentPageMarginSize);

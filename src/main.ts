@@ -26,6 +26,13 @@ declare global {
     getParagraphsInRange: (range: Range | null) => HTMLElement[];
     applyParagraphSpacing: (size?: string | null) => void;
     applyLineHeight: (size?: string | null) => void;
+    toggleBold: () => void;
+    toggleItalic: () => void;
+    toggleUnderline: () => void;
+    toggleStrikeThrough: () => void;
+    applyInlineScript: (command: string) => void;
+    toggleSuperscript: () => void;
+    toggleSubscript: () => void;
     closeAllFontSubmenus: () => void;
     setFontMenuOpen: (open: boolean) => void;
     toggleFontMenu: () => void;
@@ -38,6 +45,7 @@ declare global {
     toggleHighlightPalette: () => void;
     applyColorHighlight: (color?: string | null) => void;
     applyFontColor: (color?: string | null) => void;
+    resetFontColorInSelection: () => void;
     removeHighlightsInRange: (range: Range) => boolean;
     saveTextSelectionFromEditor: () => void;
     getEffectiveTextRange: () => Range | null;
@@ -446,6 +454,84 @@ export function applyParagraphSpacing(size?: string | null): void {
   window.syncToSource();
 }
 
+export function toggleBold(): void {
+  const currentEditor = window.currentEditor;
+  if (!currentEditor) return;
+  currentEditor.focus();
+  document.execCommand('bold', false, undefined);
+  normalizeInlineFormatting();
+  syncToSource();
+}
+
+export function toggleItalic(): void {
+  const currentEditor = window.currentEditor;
+  if (!currentEditor) return;
+  currentEditor.focus();
+  document.execCommand('italic', false, undefined);
+  normalizeInlineFormatting();
+  syncToSource();
+}
+
+export function toggleUnderline(): void {
+  const currentEditor = window.currentEditor;
+  if (!currentEditor) return;
+  currentEditor.focus();
+  document.execCommand('underline', false, undefined);
+  normalizeInlineFormatting();
+  syncToSource();
+}
+
+export function toggleStrikeThrough(): void {
+  const currentEditor = window.currentEditor;
+  if (!currentEditor) return;
+  currentEditor.focus();
+  document.execCommand('strikeThrough', false, undefined);
+  normalizeInlineFormatting();
+  syncToSource();
+}
+
+export function applyInlineScript(command: string): void {
+  if (!command) return;
+  const currentEditor = window.currentEditor;
+  if (!currentEditor) return;
+  currentEditor.focus();
+  document.execCommand(command, false, undefined);
+  syncToSource();
+}
+
+export function toggleSuperscript(): void {
+  applyInlineScript('superscript');
+}
+
+export function toggleSubscript(): void {
+  applyInlineScript('subscript');
+}
+
+export function normalizeInlineFormatting(): void {
+  const currentEditor = window.currentEditor;
+  if (!currentEditor) return;
+  replaceInlineTag(currentEditor, 'strong', 'b');
+  replaceInlineTag(currentEditor, 'em', 'i');
+  replaceInlineTag(currentEditor, 'strike', 's');
+  replaceInlineTag(currentEditor, 'del', 's');
+}
+
+function replaceInlineTag(currentEditor: HTMLElement, from: string, to: string): void {
+  const nodes = currentEditor.querySelectorAll<HTMLElement>(from);
+  nodes.forEach(node => {
+    const replacement = document.createElement(to);
+    Array.from(node.attributes).forEach(attr => {
+      replacement.setAttribute(attr.name, attr.value);
+    });
+    while (node.firstChild) {
+      replacement.appendChild(node.firstChild);
+    }
+    const parent = node.parentNode;
+    if (!parent) return;
+    parent.replaceChild(replacement, node);
+  });
+}
+
 export function getCaretOffset(range: Range): number {
   const currentEditor = window.currentEditor;
   if (!currentEditor) return 0;
@@ -704,6 +790,31 @@ export function applyFontColor(color?: string | null): void {
   window.saveTextSelectionFromEditor();
 }
 
+export function resetFontColorInSelection(): void {
+  const currentEditor = window.currentEditor;
+  if (!currentEditor) return;
+  const selection = window.getSelection();
+  if (!selection || !selection.rangeCount) return;
+  const range = selection.getRangeAt(0);
+  if (range.collapsed) return;
+  if (!currentEditor.contains(range.commonAncestorContainer)) return;
+
+  const spans = Array.from(currentEditor.querySelectorAll<HTMLElement>('.inline-color'));
+  let removed = false;
+  spans.forEach(span => {
+    if (range.intersectsNode(span)) {
+      unwrapColorSpan(span);
+      removed = true;
+    }
+  });
+  if (!removed) return;
+
+  const normalized = range.cloneRange();
+  selection.removeAllRanges();
+  selection.addRange(normalized);
+  syncToSource();
+}
+
 export function closeAllFontSubmenus(): void {
   if (!fontChooserElement) return;
   fontChooserElement.querySelectorAll<HTMLElement>('.font-submenu').forEach(submenu => {
@@ -779,6 +890,14 @@ window.applyLineHeight = applyLineHeight;
 window.toggleFileDropdown = toggleFileDropdown;
 window.closeNestedDropdown = closeNestedDropdown;
 window.closeFileDropdown = closeFileDropdown;
+window.toggleBold = toggleBold;
+window.toggleItalic = toggleItalic;
+window.toggleUnderline = toggleUnderline;
+window.toggleStrikeThrough = toggleStrikeThrough;
+window.applyInlineScript = applyInlineScript;
+window.toggleSuperscript = toggleSuperscript;
+window.toggleSubscript = toggleSubscript;
+window.resetFontColorInSelection = resetFontColorInSelection;
 
 // index.html からインポートされるため、再度エクスポートする
 export function initEditor() {
