@@ -1,6 +1,6 @@
 // グローバルスコープの型定義
 declare global {
-  interface Window {
+interface Window {
     isParagraphEmpty: (block: Element | null | undefined) => boolean;
     findParagraphWrapper: (paragraph: Element | null) => HTMLElement | null;
     ensureParagraphWrapper: (paragraph: Element) => HTMLElement;
@@ -16,6 +16,11 @@ declare global {
     updateMarginButtonState: (activeSize: string) => void;
     applyPageMargin: (size: string) => void;
     applyParagraphAlignment: (direction: string) => void;
+    closeAllFontSubmenus: () => void;
+    setFontMenuOpen: (open: boolean) => void;
+    toggleFontMenu: () => void;
+    closeFontMenu: () => void;
+    closeFontSubmenu: (type?: string | null) => void;
   }
 }
 
@@ -257,6 +262,10 @@ const pageMarginValues: Record<string, string> = { s: '12mm', m: '17mm', l: '24m
 const rootMarginRule = /:root\s*{[^}]*}/;
 const toolbarElement = document.getElementById('toolbar');
 const styleTagElement = document.querySelector('style');
+const fontChooserElement = document.querySelector<HTMLElement>('.font-chooser');
+const fontChooserTriggerElement = fontChooserElement
+  ? (fontChooserElement.querySelector<HTMLElement>('.font-chooser-trigger') ?? null)
+  : null;
 let currentPageMarginSize = 'm';
 
 export function updateMarginRule(value: string): void {
@@ -317,6 +326,48 @@ export function applyParagraphAlignment(direction: string): void {
   window.syncToSource();
 }
 
+export function closeAllFontSubmenus(): void {
+  if (!fontChooserElement) return;
+  fontChooserElement.querySelectorAll<HTMLElement>('.font-submenu').forEach(submenu => {
+    submenu.classList.remove('is-open');
+    const trigger = submenu.querySelector<HTMLElement>('.font-submenu-trigger');
+    if (trigger) {
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+  });
+}
+
+export function setFontMenuOpen(open: boolean): void {
+  if (!fontChooserElement) return;
+  fontChooserElement.classList.toggle('is-open', open);
+  if (fontChooserTriggerElement) {
+    fontChooserTriggerElement.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  if (!open) {
+    closeAllFontSubmenus();
+  }
+}
+
+export function toggleFontMenu(): void {
+  if (!fontChooserElement) return;
+  setFontMenuOpen(!fontChooserElement.classList.contains('is-open'));
+}
+
+export function closeFontMenu(): void {
+  setFontMenuOpen(false);
+}
+
+export function closeFontSubmenu(type?: string | null): void {
+  if (!fontChooserElement || !type) return;
+  const submenu = fontChooserElement.querySelector<HTMLElement>(`.font-submenu[data-submenu="${type}"]`);
+  if (!submenu) return;
+  submenu.classList.remove('is-open');
+  const trigger = submenu.querySelector<HTMLElement>('.font-submenu-trigger');
+  if (trigger) {
+    trigger.setAttribute('aria-expanded', 'false');
+  }
+}
+
 window.findParagraphWrapper = findParagraphWrapper;
 window.ensureParagraphWrapper = ensureParagraphWrapper;
 window.ensureFigureWrapper = ensureFigureWrapper;
@@ -329,6 +380,11 @@ window.updateMarginRule = updateMarginRule;
 window.updateMarginButtonState = updateMarginButtonState;
 window.applyPageMargin = applyPageMargin;
 window.applyParagraphAlignment = applyParagraphAlignment;
+window.closeAllFontSubmenus = closeAllFontSubmenus;
+window.setFontMenuOpen = setFontMenuOpen;
+window.toggleFontMenu = toggleFontMenu;
+window.closeFontMenu = closeFontMenu;
+window.closeFontSubmenu = closeFontSubmenu;
 
 // index.html からインポートされるため、再度エクスポートする
 export function initEditor() {

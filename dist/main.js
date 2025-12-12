@@ -218,6 +218,10 @@ const pageMarginValues = { s: '12mm', m: '17mm', l: '24mm' };
 const rootMarginRule = /:root\s*{[^}]*}/;
 const toolbarElement = document.getElementById('toolbar');
 const styleTagElement = document.querySelector('style');
+const fontChooserElement = document.querySelector('.font-chooser');
+const fontChooserTriggerElement = fontChooserElement
+    ? (fontChooserElement.querySelector('.font-chooser-trigger') ?? null)
+    : null;
 let currentPageMarginSize = 'm';
 export function updateMarginRule(value) {
     if (!styleTagElement)
@@ -281,6 +285,48 @@ export function applyParagraphAlignment(direction) {
     });
     window.syncToSource();
 }
+export function closeAllFontSubmenus() {
+    if (!fontChooserElement)
+        return;
+    fontChooserElement.querySelectorAll('.font-submenu').forEach(submenu => {
+        submenu.classList.remove('is-open');
+        const trigger = submenu.querySelector('.font-submenu-trigger');
+        if (trigger) {
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+    });
+}
+export function setFontMenuOpen(open) {
+    if (!fontChooserElement)
+        return;
+    fontChooserElement.classList.toggle('is-open', open);
+    if (fontChooserTriggerElement) {
+        fontChooserTriggerElement.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    if (!open) {
+        closeAllFontSubmenus();
+    }
+}
+export function toggleFontMenu() {
+    if (!fontChooserElement)
+        return;
+    setFontMenuOpen(!fontChooserElement.classList.contains('is-open'));
+}
+export function closeFontMenu() {
+    setFontMenuOpen(false);
+}
+export function closeFontSubmenu(type) {
+    if (!fontChooserElement || !type)
+        return;
+    const submenu = fontChooserElement.querySelector(`.font-submenu[data-submenu="${type}"]`);
+    if (!submenu)
+        return;
+    submenu.classList.remove('is-open');
+    const trigger = submenu.querySelector('.font-submenu-trigger');
+    if (trigger) {
+        trigger.setAttribute('aria-expanded', 'false');
+    }
+}
 window.findParagraphWrapper = findParagraphWrapper;
 window.ensureParagraphWrapper = ensureParagraphWrapper;
 window.ensureFigureWrapper = ensureFigureWrapper;
@@ -293,6 +339,11 @@ window.updateMarginRule = updateMarginRule;
 window.updateMarginButtonState = updateMarginButtonState;
 window.applyPageMargin = applyPageMargin;
 window.applyParagraphAlignment = applyParagraphAlignment;
+window.closeAllFontSubmenus = closeAllFontSubmenus;
+window.setFontMenuOpen = setFontMenuOpen;
+window.toggleFontMenu = toggleFontMenu;
+window.closeFontMenu = closeFontMenu;
+window.closeFontSubmenu = closeFontSubmenu;
 // index.html からインポートされるため、再度エクスポートする
 export function initEditor() {
     applyPageMargin(currentPageMarginSize);
