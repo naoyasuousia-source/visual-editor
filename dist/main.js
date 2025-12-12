@@ -376,6 +376,10 @@ const fontChooserTriggerElement = fontChooserElement
 const fontSubmenuTriggerElements = fontChooserElement
     ? Array.from(fontChooserElement.querySelectorAll('.font-submenu-trigger'))
     : [];
+const paragraphChooserElement = document.querySelector('.paragraph-chooser');
+const paragraphTriggerElement = paragraphChooserElement
+    ? (paragraphChooserElement.querySelector('.paragraph-trigger') ?? null)
+    : null;
 const highlightControlElement = document.querySelector('.highlight-control');
 const highlightButtonElement = highlightControlElement
     ? (highlightControlElement.querySelector('[data-action="highlight"]') ?? null)
@@ -798,6 +802,37 @@ function initFontChooserControls() {
             }
         });
     });
+}
+export function closeAllParagraphSubmenus() {
+    if (!paragraphChooserElement)
+        return;
+    paragraphChooserElement.querySelectorAll('.paragraph-submenu').forEach(submenu => {
+        submenu.classList.remove('is-open');
+        const trigger = submenu.querySelector('.paragraph-submenu-trigger');
+        if (trigger) {
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+    });
+}
+export function setParagraphMenuOpen(open) {
+    if (!paragraphChooserElement)
+        return;
+    paragraphChooserElement.classList.toggle('is-open', open);
+    if (paragraphTriggerElement) {
+        paragraphTriggerElement.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    if (!open) {
+        closeAllParagraphSubmenus();
+    }
+}
+export function toggleParagraphMenu() {
+    if (!paragraphChooserElement)
+        return;
+    const willOpen = !paragraphChooserElement.classList.contains('is-open');
+    setParagraphMenuOpen(willOpen);
+}
+export function closeParagraphMenu() {
+    setParagraphMenuOpen(false);
 }
 const lineHeightSizes = ['s', 'm', 'l'];
 const isLineHeightSize = (value) => !!value && lineHeightSizes.includes(value);
@@ -1354,6 +1389,10 @@ window.setFontMenuOpen = setFontMenuOpen;
 window.toggleFontMenu = toggleFontMenu;
 window.closeFontMenu = closeFontMenu;
 window.closeFontSubmenu = closeFontSubmenu;
+window.closeAllParagraphSubmenus = closeAllParagraphSubmenus;
+window.setParagraphMenuOpen = setParagraphMenuOpen;
+window.toggleParagraphMenu = toggleParagraphMenu;
+window.closeParagraphMenu = closeParagraphMenu;
 window.getCaretOffset = getCaretOffset;
 window.insertInlineTabAt = insertInlineTabAt;
 window.handleInlineTabKey = handleInlineTabKey;

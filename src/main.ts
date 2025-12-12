@@ -38,6 +38,10 @@ declare global {
     toggleFontMenu: () => void;
     closeFontMenu: () => void;
     closeFontSubmenu: (type?: string | null) => void;
+    closeAllParagraphSubmenus: () => void;
+    setParagraphMenuOpen: (open: boolean) => void;
+    toggleParagraphMenu: () => void;
+    closeParagraphMenu: () => void;
     toggleFileDropdown: () => void;
     closeNestedDropdown: () => void;
     closeFileDropdown: () => void;
@@ -487,6 +491,10 @@ const fontChooserTriggerElement = fontChooserElement
 const fontSubmenuTriggerElements = fontChooserElement
   ? Array.from(fontChooserElement.querySelectorAll<HTMLElement>('.font-submenu-trigger'))
   : [];
+const paragraphChooserElement = document.querySelector<HTMLElement>('.paragraph-chooser');
+const paragraphTriggerElement = paragraphChooserElement
+  ? (paragraphChooserElement.querySelector<HTMLElement>('.paragraph-trigger') ?? null)
+  : null;
 const highlightControlElement = document.querySelector<HTMLElement>('.highlight-control');
 const highlightButtonElement = highlightControlElement
   ? (highlightControlElement.querySelector<HTMLElement>('[data-action="highlight"]') ?? null)
@@ -920,6 +928,38 @@ function initFontChooserControls(): void {
       }
     });
   });
+}
+
+export function closeAllParagraphSubmenus(): void {
+  if (!paragraphChooserElement) return;
+  paragraphChooserElement.querySelectorAll<HTMLElement>('.paragraph-submenu').forEach(submenu => {
+    submenu.classList.remove('is-open');
+    const trigger = submenu.querySelector<HTMLElement>('.paragraph-submenu-trigger');
+    if (trigger) {
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+  });
+}
+
+export function setParagraphMenuOpen(open: boolean): void {
+  if (!paragraphChooserElement) return;
+  paragraphChooserElement.classList.toggle('is-open', open);
+  if (paragraphTriggerElement) {
+    paragraphTriggerElement.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  if (!open) {
+    closeAllParagraphSubmenus();
+  }
+}
+
+export function toggleParagraphMenu(): void {
+  if (!paragraphChooserElement) return;
+  const willOpen = !paragraphChooserElement.classList.contains('is-open');
+  setParagraphMenuOpen(willOpen);
+}
+
+export function closeParagraphMenu(): void {
+  setParagraphMenuOpen(false);
 }
 
 const lineHeightSizes = ['s', 'm', 'l'] as const;
@@ -1467,6 +1507,10 @@ window.setFontMenuOpen = setFontMenuOpen;
 window.toggleFontMenu = toggleFontMenu;
 window.closeFontMenu = closeFontMenu;
 window.closeFontSubmenu = closeFontSubmenu;
+window.closeAllParagraphSubmenus = closeAllParagraphSubmenus;
+window.setParagraphMenuOpen = setParagraphMenuOpen;
+window.toggleParagraphMenu = toggleParagraphMenu;
+window.closeParagraphMenu = closeParagraphMenu;
 window.getCaretOffset = getCaretOffset;
 window.insertInlineTabAt = insertInlineTabAt;
 window.handleInlineTabKey = handleInlineTabKey;
