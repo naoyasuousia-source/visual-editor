@@ -380,6 +380,9 @@ const paragraphChooserElement = document.querySelector('.paragraph-chooser');
 const paragraphTriggerElement = paragraphChooserElement
     ? (paragraphChooserElement.querySelector('.paragraph-trigger') ?? null)
     : null;
+const paragraphSubmenuTriggerElements = paragraphChooserElement
+    ? Array.from(paragraphChooserElement.querySelectorAll('.paragraph-submenu-trigger'))
+    : [];
 const highlightControlElement = document.querySelector('.highlight-control');
 const highlightButtonElement = highlightControlElement
     ? (highlightControlElement.querySelector('[data-action="highlight"]') ?? null)
@@ -390,6 +393,7 @@ const INDENT_STEP_PX = 36 * (96 / 72);
 let currentPageMarginSize = 'm';
 const pagesContainerElement = document.getElementById('pages-container');
 const sourceElement = document.getElementById('source');
+const openFileInputElement = document.getElementById('open-file-input');
 const imageContextMenuElement = document.getElementById('image-context-menu');
 const imageContextDropdownElement = document.querySelector('.image-context-dropdown');
 const imageContextTriggerElement = document.querySelector('.image-context-trigger');
@@ -1435,13 +1439,214 @@ window.closeTitleDialog = closeTitleDialog;
 window.applyImageTitle = applyImageTitle;
 window.removeExistingImageTitle = removeExistingImageTitle;
 window.updateImageMetaTitle = updateImageMetaTitle;
+function bindParagraphMenuListeners() {
+    if (paragraphTriggerElement) {
+        paragraphTriggerElement.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleParagraphMenu();
+        });
+    }
+    paragraphSubmenuTriggerElements.forEach(trigger => {
+        const submenu = trigger.closest('.paragraph-submenu');
+        if (!submenu)
+            return;
+        trigger.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const willOpen = !submenu.classList.contains('is-open');
+            closeAllParagraphSubmenus();
+            submenu.classList.toggle('is-open', willOpen);
+            trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            if (willOpen) {
+                setParagraphMenuOpen(true);
+            }
+        });
+    });
+}
+function bindDocumentLevelHandlers() {
+    document.addEventListener('mousedown', (event) => {
+        const target = event.target;
+        const tab = target?.closest('.inline-tab');
+        if (!tab)
+            return;
+        event.preventDefault();
+        const rect = tab.getBoundingClientRect();
+        const midpoint = rect.left + rect.width / 2;
+        if (event.clientX < midpoint) {
+            window.placeCaretBefore?.(tab);
+        }
+        else {
+            window.placeCaretAfter?.(tab);
+        }
+    });
+    document.addEventListener('click', (event) => {
+        const target = event.target;
+        const clickedEditor = Boolean(target?.closest('.page-inner'));
+        if (clickedEditor) {
+            const fileMenu = document.querySelector('.file-menu');
+            if (fileMenu && target && !fileMenu.contains(target)) {
+                closeFileDropdown();
+            }
+            if (paragraphChooserElement && target && !paragraphChooserElement.contains(target)) {
+                closeParagraphMenu();
+            }
+            if (fontChooserElement && target && !fontChooserElement.contains(target)) {
+                closeFontMenu();
+            }
+        }
+        closeImageContextMenu();
+        if (highlightControlElement && target && !highlightControlElement.contains(target)) {
+            setHighlightPaletteOpen(false);
+        }
+    });
+}
+function bindToolbarHandlers() {
+    if (!toolbarElement)
+        return;
+    toolbarElement.addEventListener('mousedown', (event) => {
+        const btn = event.target?.closest('button');
+        if (btn) {
+            event.preventDefault();
+        }
+    });
+    toolbarElement.addEventListener('click', async (event) => {
+        const target = event.target?.closest('button, input');
+        if (!target)
+            return;
+        const action = target.dataset.action;
+        if (action === 'hanging-indent') {
+            const input = target;
+            window.toggleHangingIndent?.(input.checked);
+            return;
+        }
+        const btn = event.target?.closest('button');
+        if (!btn)
+            return;
+        switch (action) {
+            case 'bold':
+                toggleBold();
+                break;
+            case 'italic':
+                toggleItalic();
+                break;
+            case 'underline':
+                toggleUnderline();
+                break;
+            case 'strike':
+                toggleStrikeThrough();
+                break;
+            case 'superscript':
+                toggleSuperscript();
+                break;
+            case 'subscript':
+                toggleSubscript();
+                break;
+            case 'highlight':
+                toggleHighlightPalette();
+                break;
+            case 'highlight-color':
+                applyColorHighlight(btn.dataset.color ?? null);
+                break;
+            case 'highlight-reset':
+                window.resetHighlightsInSelection?.();
+                break;
+            case 'font-color-swatch':
+                applyFontColor(btn.dataset.color ?? null);
+                break;
+            case 'font-color-default':
+                resetFontColorInSelection();
+                break;
+            case 'font-family':
+                window.applyFontFamily?.(btn.dataset.family ?? null);
+                break;
+            case 'paragraph-style':
+                toggleParagraphMenu();
+                break;
+            case 'align-left':
+                applyParagraphAlignment('left');
+                break;
+            case 'align-center':
+                applyParagraphAlignment('center');
+                break;
+            case 'align-right':
+                applyParagraphAlignment('right');
+                break;
+            case 'paragraph-spacing':
+                applyParagraphSpacing(btn.dataset.size ?? null);
+                break;
+            case 'line-height':
+                applyLineHeight(btn.dataset.size ?? null);
+                break;
+            case 'block-element':
+                window.applyBlockElement?.(btn.dataset.tag ?? null);
+                break;
+            case 'indent':
+                window.changeIndent?.(1);
+                syncToSource();
+                break;
+            case 'outdent':
+                window.changeIndent?.(-1);
+                syncToSource();
+                break;
+            case 'add-page':
+                window.addPage?.();
+                break;
+            case 'remove-page':
+                window.removePage?.();
+                break;
+            case 'save':
+                window.saveFullHTML?.();
+                break;
+            case 'open':
+                {
+                    const opened = await window.openWithFilePicker?.();
+                    if (!opened && openFileInputElement) {
+                        openFileInputElement.value = '';
+                        openFileInputElement.click();
+                    }
+                }
+                break;
+            case 'insert-image-dropbox':
+                window.promptDropboxImageUrl?.();
+                break;
+            case 'insert-image-web':
+                window.promptWebImageUrl?.();
+                break;
+            case 'page-margin':
+                if (btn.dataset.size) {
+                    applyPageMargin(btn.dataset.size);
+                }
+                break;
+            case 'overwrite':
+                await window.overwriteCurrentFile?.();
+                break;
+            case 'add-link-destination':
+                addLinkDestination();
+                break;
+            case 'create-link':
+                createLink();
+                break;
+            case 'remove-link':
+                removeLink();
+                break;
+            default:
+                break;
+        }
+    });
+}
 // index.html からインポートされるため、再度エクスポートする
 export function initEditor() {
     initFileMenuControls();
     initImageContextMenuControls();
     initPageLinkHandler();
     initFontChooserControls();
+    bindParagraphMenuListeners();
+    bindDocumentLevelHandlers();
+    bindToolbarHandlers();
     ensureAiImageIndex();
     applyPageMargin(currentPageMarginSize);
+    window.initPages?.();
+    window.renumberParagraphs?.();
     console.log("initEditor() 呼ばれた！");
 }

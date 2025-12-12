@@ -1162,11 +1162,6 @@
     const source = document.getElementById('source');
     const toolbar = document.getElementById('toolbar');
     const openFileInput = document.getElementById('open-file-input');
-    const fileMenu = document.querySelector('.file-menu');
-    const fileDropdown = document.querySelector('.file-dropdown');
-    const fileTrigger = document.querySelector('.file-trigger');
-    const nestedDropdowns = document.querySelectorAll('.nested-dropdown');
-    const nestedTriggers = document.querySelectorAll('.nested-trigger');
     const imageContextMenu = document.getElementById('image-context-menu');
     const imageContextDropdown = document.querySelector('.image-context-dropdown');
     const imageContextTrigger = document.querySelector('.image-context-trigger');
@@ -1177,24 +1172,6 @@
       : [];
     const imageTitleApplyButton = document.querySelector('[data-action="apply-image-title"]');
     const imageTitleCancelButton = document.querySelector('[data-action="cancel-image-title"]');
-    const highlightControl = document.querySelector('.highlight-control');
-    const highlightButton = highlightControl
-      ? highlightControl.querySelector('[data-action="highlight"]')
-      : null;
-    const fontChooser = document.querySelector('.font-chooser');
-    const fontChooserTrigger = fontChooser
-      ? fontChooser.querySelector('.font-chooser-trigger')
-      : null;
-    const fontSubmenuTriggers = fontChooser
-      ? fontChooser.querySelectorAll('.font-submenu-trigger')
-      : [];
-    const paragraphChooser = document.querySelector('.paragraph-chooser');
-    const paragraphTrigger = paragraphChooser
-      ? paragraphChooser.querySelector('.paragraph-trigger')
-      : null;
-    const paragraphSubmenuTriggers = paragraphChooser
-      ? paragraphChooser.querySelectorAll('.paragraph-submenu-trigger')
-      : [];
     const styleTag = document.querySelector('style');
     const paraNumberLeft = '6mm';
     const pageMarginValues = { s: '12mm', m: '17mm', l: '24mm' };
@@ -1209,62 +1186,6 @@
     const INDENT_STEP_PX = 36 * (96 / 72);
     ensureAiImageIndex();
     let lastSelectionState = null;
-
-    if (paragraphTrigger) {
-      paragraphTrigger.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        toggleParagraphMenu();
-      });
-    }
-
-    paragraphSubmenuTriggers.forEach(trigger => {
-      const submenu = trigger.closest('.paragraph-submenu');
-      if (!submenu) return;
-      trigger.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const willOpen = !submenu.classList.contains('is-open');
-        closeAllParagraphSubmenus();
-        submenu.classList.toggle('is-open', willOpen);
-        trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-        if (willOpen) {
-          setParagraphMenuOpen(true);
-        }
-      });
-    });
-
-    document.addEventListener('mousedown', (event) => {
-      const tab = event.target.closest('.inline-tab');
-      if (!tab) return;
-      event.preventDefault();
-      const rect = tab.getBoundingClientRect();
-      const midpoint = rect.left + rect.width / 2;
-      if (event.clientX < midpoint) {
-        placeCaretBefore(tab);
-      } else {
-        placeCaretAfter(tab);
-      }
-    });
-
-    document.addEventListener('click', (event) => {
-      const clickedEditor = Boolean(event.target.closest('.page-inner'));
-      if (clickedEditor) {
-        if (fileMenu && !fileMenu.contains(event.target)) {
-          closeFileDropdown();
-        }
-        if (paragraphChooser && !paragraphChooser.contains(event.target)) {
-          closeParagraphMenu();
-        }
-        if (fontChooser && !fontChooser.contains(event.target)) {
-          closeFontMenu();
-        }
-      }
-      closeImageContextMenu();
-      if (highlightControl && !highlightControl.contains(event.target)) {
-        setHighlightPaletteOpen(false);
-      }
-    });
 
     function promptDropboxImageUrl() {
       const inputUrl = window.prompt('Dropbox画像の共有URLを貼り付けてください。');
@@ -1716,8 +1637,6 @@
         hangingIndentCheckbox.checked = false;
       }
     }
-    initPages();
-    renumberParagraphs();
     // 例外
 
     // ===== 太字トグル（execCommand 任せ） =====
@@ -2033,103 +1952,6 @@
       renumberParagraphs();
       ensureAiImageIndex();
     }
-
-    // ===== ツールバー操作 =====
-    toolbar.addEventListener('mousedown', (event) => {
-      const btn = event.target.closest('button');
-      if (btn) {
-        event.preventDefault();
-      }
-    });
-
-    toolbar.addEventListener('click', async (e) => {
-      const target = e.target.closest('button, input');
-      if (!target) return;
-
-      const action = target.dataset.action;
-
-      if (action === 'hanging-indent') {
-        toggleHangingIndent(target.checked);
-        return;
-      }
-
-      const btn = e.target.closest('button');
-      if (!btn) return;
-
-      if (action === 'bold') {
-        toggleBold();
-      } else if (action === 'italic') {
-        toggleItalic();
-      } else if (action === 'underline') {
-        toggleUnderline();
-      } else if (action === 'strike') {
-        toggleStrikeThrough();
-      } else if (action === 'superscript') {
-        toggleSuperscript();
-      } else if (action === 'subscript') {
-        toggleSubscript();
-      } else if (action === 'highlight') {
-        toggleHighlightPalette();
-      } else if (action === 'highlight-color') {
-        applyColorHighlight(btn.dataset.color);
-      } else if (action === 'highlight-reset') {
-        resetHighlightsInSelection();
-      } else if (action === 'font-color-swatch') {
-        applyFontColor(btn.dataset.color);
-      } else if (action === 'font-color-default') {
-        resetFontColorInSelection();
-      } else if (action === 'font-family') {
-        applyFontFamily(btn.dataset.family);
-      } else if (action === 'paragraph-style') {
-        toggleParagraphMenu();
-      } else if (action === 'align-left') {
-        applyParagraphAlignment('left');
-      } else if (action === 'align-center') {
-        applyParagraphAlignment('center');
-      } else if (action === 'align-right') {
-        applyParagraphAlignment('right');
-      } else if (action === 'paragraph-spacing') {
-        applyParagraphSpacing(btn.dataset.size);
-      } else if (action === 'line-height') {
-        applyLineHeight(btn.dataset.size);
-      } else if (action === 'block-element') {
-        applyBlockElement(btn.dataset.tag);
-      } else if (action === 'indent') {
-        changeIndent(1);
-        syncToSource();
-      } else if (action === 'outdent') {
-        changeIndent(-1);
-        syncToSource();
-      } else if (action === 'add-page') {
-        addPage();
-      } else if (action === 'remove-page') {
-        removePage();
-      } else if (action === 'save') {
-        saveFullHTML();
-      } else if (action === 'open') {
-        const opened = await openWithFilePicker();
-        if (!opened && openFileInput) {
-          openFileInput.value = ''; // 連続選択のためクリア
-          openFileInput.click();
-        }
-      } else if (action === 'insert-image-dropbox') {
-        promptDropboxImageUrl();
-      } else if (action === 'insert-image-web') {
-        promptWebImageUrl();
-      } else if (action === 'page-margin') {
-        applyPageMargin(btn.dataset.size);
-      } else if (action === 'overwrite') {
-        await overwriteCurrentFile();
-      } else if (action === 'add-link-destination') {
-        addLinkDestination();
-      } else if (action === 'create-link') {
-        createLink();
-      } else if (action === 'remove-link') {
-        removeLink();
-      }
-    });
-
-
 
     function renumberParagraphs() {
       const pages = pagesContainer.querySelectorAll('section.page');
