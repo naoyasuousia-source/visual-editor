@@ -1,3 +1,5 @@
+type AlignDirection = 'left' | 'center' | 'right';
+
 // グローバルスコープの型定義
 declare global {
   interface Window {
@@ -9,6 +11,10 @@ declare global {
     currentEditor: HTMLElement | null;
     syncToSource: () => void;
     generateBookmarkId: () => string;
+    getCaretOffset: (range: Range) => number;
+    insertInlineTabAt: (range: Range, width: number) => boolean;
+    handleInlineTabKey: () => boolean;
+    handleInlineTabBackspace: () => boolean;
     addLinkDestination: () => void;
     createLink: () => void;
     removeLink: () => void;
@@ -16,6 +22,9 @@ declare global {
     updateMarginButtonState: (activeSize: string) => void;
     applyPageMargin: (size: string) => void;
     applyParagraphAlignment: (direction: string) => void;
+    alignDirections: readonly AlignDirection[];
+    getParagraphsInRange: (range: Range | null) => HTMLElement[];
+    applyParagraphSpacing: (size?: string | null) => void;
     closeAllFontSubmenus: () => void;
     setFontMenuOpen: (open: boolean) => void;
     toggleFontMenu: () => void;
@@ -57,7 +66,11 @@ const isParagraphEmpty = (block: Element | null | undefined): boolean => {
 // 段階的な移行のため、グローバルスコープで利用できるようにする
 window.isParagraphEmpty = isParagraphEmpty;
 
-const alignDirections = ['left', 'center', 'right'] as const;
+const alignDirections: readonly AlignDirection[] = ['left', 'center', 'right'];
+const paragraphSpacingSizes = ['xs', 's', 'm', 'l', 'xl'] as const;
+type ParagraphSpacingSize = typeof paragraphSpacingSizes[number];
+const isParagraphSpacingSize = (value: string | null | undefined): value is ParagraphSpacingSize =>
+  !!value && paragraphSpacingSizes.includes(value as ParagraphSpacingSize);
 
 export function findParagraphWrapper(paragraph: Element | null): HTMLElement | null {
   if (!paragraph || !(paragraph instanceof HTMLElement)) return null;
@@ -278,6 +291,7 @@ const highlightControlElement = document.querySelector<HTMLElement>('.highlight-
 const highlightButtonElement = highlightControlElement
   ? (highlightControlElement.querySelector<HTMLElement>('[data-action="highlight"]') ?? null)
   : null;
+const INDENT_STEP_PX = 36 * (96 / 72);
 let currentPageMarginSize = 'm';
 
 export function updateMarginRule(value: string): void {
@@ -336,6 +350,152 @@ export function applyParagraphAlignment(direction: string): void {
   });
 
   window.syncToSource();
+}
+
+export function getParagraphsInRange(range: Range | null): HTMLElement[] {
+  const currentEditor = window.currentEditor;
+  if (!currentEditor || !range) return [];
+  const selectors = 'p, h1, h2, h3, h4, h5, h6';
+  return Array.from(currentEditor.querySelectorAll<HTMLElement>(selectors)).filter(paragraph => {
+    return range.intersectsNode(paragraph);
+  });
+}
+
+function clearParagraphSpacingClasses(target: HTMLElement | null): void {
+  if (!target) return;
+  paragraphSpacingSizes.forEach(sz => {
+    target.classList.remove(`inline-spacing-${sz}`);
+  });
+}
+
+export function applyParagraphSpacing(size?: string | null): void {
+  if (!isParagraphSpacingSize(size)) return;
+  const currentEditor = window.currentEditor;
+  if (!currentEditor) return;
+  const selection = window.getSelection();
+  if (!selection || !selection.rangeCount) return;
+  const range = selection.getRangeAt(0);
+  if (range.collapsed) return;
+  if (!currentEditor.contains(range.commonAncestorContainer)) return;
+
+  const paragraphs = getParagraphsInRange(range);
+  if (!paragraphs.length) return;
+
+  paragraphs.forEach(paragraph => {
+    const wrapper = ensureParagraphWrapper(paragraph);
+    clearParagraphSpacingClasses(paragraph);
+    clearParagraphSpacingClasses(wrapper);
+    if (size !== 's') {
+      paragraph.classList.add(`inline-spacing-${size}`);
+      if (wrapper) wrapper.classList.add(`inline-spacing-${size}`);
+    }
+  });
+
+  window.syncToSource();
+}
+
+export function getCaretOffset(range: Range): number {
+  const currentEditor = window.currentEditor;
+  if (!currentEditor) return 0;
+  const rects = range.getClientRects();
+  const editorRect = currentEditor.getBoundingClientRect();
+  const rect = rects.length ? rects[0] : range.getBoundingClientRect();
+  if (!rect || (rect.left === 0 && rect.width === 0 && rect.height === 0)) {
+    return 0;
+  }
+  const offset = rect.left - editorRect.left + currentEditor.scrollLeft;
+  if (!Number.isFinite(offset)) return 0;
+  return Math.max(0, offset);
+}
+
+export function insertInlineTabAt(range: Range, width: number): boolean {
+  if (!width || width <= 0) return false;
+  const span = document.createElement('span');
+  span.className = 'inline-tab';
+  span.setAttribute('aria-hidden', 'true');
+  span.style.width = `${width}px`;
+  const insertionRange = range.cloneRange();
+  insertionRange.collapse(true);
+  insertionRange.insertNode(span);
+  const newRange = document.createRange();
+  newRange.setStartAfter(span);
+  newRange.collapse(true);
+  const selection = window.getSelection();
+  if (selection) {
+    selection.removeAllRanges();
+    selection.addRange(newRange);
+  }
+  return true;
+}
+
+export function handleInlineTabKey(): boolean {
+  const currentEditor = window.currentEditor;
+  if (!currentEditor) return false;
+  const selection = window.getSelection();
+  if (!selection || !selection.rangeCount) return false;
+  const range = selection.getRangeAt(0);
+  if (!currentEditor.contains(range.commonAncestorContainer)) return false;
+  if (!range.collapsed) {
+    range.collapse(false);
+  }
+  const step = INDENT_STEP_PX;
+  const caretX = getCaretOffset(range);
+  const currentStep = Math.floor(caretX / step);
+  const target = (currentStep + 1) * step;
+  let delta = target - caretX;
+  if (delta < 0.5) {
+    delta = step;
+  }
+  if (delta <= 0) return false;
+  const inserted = insertInlineTabAt(range, delta);
+  if (inserted) {
+    window.syncToSource();
+  }
+  return inserted;
+}
+
+function getInlineTabNodeBefore(range: Range): Element | null {
+  let container: Node | null = range.startContainer;
+  let offset = range.startOffset;
+  if (container && container.nodeType === Node.TEXT_NODE) {
+    if (offset > 0) return null;
+    container = container.previousSibling;
+  } else if (container) {
+    if (offset > 0) {
+      container = container.childNodes[offset - 1];
+    } else {
+      container = container.previousSibling;
+    }
+  }
+  if (
+    container &&
+    container.nodeType === 1 &&
+    (container as Element).classList &&
+    (container as Element).classList.contains('inline-tab')
+  ) {
+    return container as Element;
+  }
+  return null;
+}
+
+export function handleInlineTabBackspace(): boolean {
+  const currentEditor = window.currentEditor;
+  if (!currentEditor) return false;
+  const selection = window.getSelection();
+  if (!selection || !selection.rangeCount) return false;
+  const range = selection.getRangeAt(0);
+  if (!currentEditor.contains(range.commonAncestorContainer)) return false;
+  if (!range.collapsed) return false;
+  const inlineTab = getInlineTabNodeBefore(range);
+  if (!inlineTab) return false;
+  const newRange = document.createRange();
+  newRange.setStartBefore(inlineTab);
+  newRange.collapse(true);
+  inlineTab.parentNode?.removeChild(inlineTab);
+  selection.removeAllRanges();
+  selection.addRange(newRange);
+  window.syncToSource();
+  return true;
 }
 
 export function setHighlightPaletteOpen(open: boolean): void {
@@ -545,12 +705,19 @@ window.removeLink = removeLink;
 window.updateMarginRule = updateMarginRule;
 window.updateMarginButtonState = updateMarginButtonState;
 window.applyPageMargin = applyPageMargin;
+window.alignDirections = alignDirections;
 window.applyParagraphAlignment = applyParagraphAlignment;
+window.getParagraphsInRange = getParagraphsInRange;
+window.applyParagraphSpacing = applyParagraphSpacing;
 window.closeAllFontSubmenus = closeAllFontSubmenus;
 window.setFontMenuOpen = setFontMenuOpen;
 window.toggleFontMenu = toggleFontMenu;
 window.closeFontMenu = closeFontMenu;
 window.closeFontSubmenu = closeFontSubmenu;
+window.getCaretOffset = getCaretOffset;
+window.insertInlineTabAt = insertInlineTabAt;
+window.handleInlineTabKey = handleInlineTabKey;
+window.handleInlineTabBackspace = handleInlineTabBackspace;
 window.setHighlightPaletteOpen = setHighlightPaletteOpen;
 window.toggleHighlightPalette = toggleHighlightPalette;
 window.applyColorHighlight = applyColorHighlight;

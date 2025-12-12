@@ -24,6 +24,8 @@ const isParagraphEmpty = (block) => {
 // 段階的な移行のため、グローバルスコープで利用できるようにする
 window.isParagraphEmpty = isParagraphEmpty;
 const alignDirections = ['left', 'center', 'right'];
+const paragraphSpacingSizes = ['xs', 's', 'm', 'l', 'xl'];
+const isParagraphSpacingSize = (value) => !!value && paragraphSpacingSizes.includes(value);
 export function findParagraphWrapper(paragraph) {
     if (!paragraph || !(paragraph instanceof HTMLElement))
         return null;
@@ -226,6 +228,7 @@ const highlightControlElement = document.querySelector('.highlight-control');
 const highlightButtonElement = highlightControlElement
     ? (highlightControlElement.querySelector('[data-action="highlight"]') ?? null)
     : null;
+const INDENT_STEP_PX = 36 * (96 / 72);
 let currentPageMarginSize = 'm';
 export function updateMarginRule(value) {
     if (!styleTagElement)
@@ -288,6 +291,163 @@ export function applyParagraphAlignment(direction) {
         }
     });
     window.syncToSource();
+}
+export function getParagraphsInRange(range) {
+    const currentEditor = window.currentEditor;
+    if (!currentEditor || !range)
+        return [];
+    const selectors = 'p, h1, h2, h3, h4, h5, h6';
+    return Array.from(currentEditor.querySelectorAll(selectors)).filter(paragraph => {
+        return range.intersectsNode(paragraph);
+    });
+}
+function clearParagraphSpacingClasses(target) {
+    if (!target)
+        return;
+    paragraphSpacingSizes.forEach(sz => {
+        target.classList.remove(`inline-spacing-${sz}`);
+    });
+}
+export function applyParagraphSpacing(size) {
+    if (!isParagraphSpacingSize(size))
+        return;
+    const currentEditor = window.currentEditor;
+    if (!currentEditor)
+        return;
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount)
+        return;
+    const range = selection.getRangeAt(0);
+    if (range.collapsed)
+        return;
+    if (!currentEditor.contains(range.commonAncestorContainer))
+        return;
+    const paragraphs = getParagraphsInRange(range);
+    if (!paragraphs.length)
+        return;
+    paragraphs.forEach(paragraph => {
+        const wrapper = ensureParagraphWrapper(paragraph);
+        clearParagraphSpacingClasses(paragraph);
+        clearParagraphSpacingClasses(wrapper);
+        if (size !== 's') {
+            paragraph.classList.add(`inline-spacing-${size}`);
+            if (wrapper)
+                wrapper.classList.add(`inline-spacing-${size}`);
+        }
+    });
+    window.syncToSource();
+}
+export function getCaretOffset(range) {
+    const currentEditor = window.currentEditor;
+    if (!currentEditor)
+        return 0;
+    const rects = range.getClientRects();
+    const editorRect = currentEditor.getBoundingClientRect();
+    const rect = rects.length ? rects[0] : range.getBoundingClientRect();
+    if (!rect || (rect.left === 0 && rect.width === 0 && rect.height === 0)) {
+        return 0;
+    }
+    const offset = rect.left - editorRect.left + currentEditor.scrollLeft;
+    if (!Number.isFinite(offset))
+        return 0;
+    return Math.max(0, offset);
+}
+export function insertInlineTabAt(range, width) {
+    if (!width || width <= 0)
+        return false;
+    const span = document.createElement('span');
+    span.className = 'inline-tab';
+    span.setAttribute('aria-hidden', 'true');
+    span.style.width = `${width}px`;
+    const insertionRange = range.cloneRange();
+    insertionRange.collapse(true);
+    insertionRange.insertNode(span);
+    const newRange = document.createRange();
+    newRange.setStartAfter(span);
+    newRange.collapse(true);
+    const selection = window.getSelection();
+    if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+    }
+    return true;
+}
+export function handleInlineTabKey() {
+    const currentEditor = window.currentEditor;
+    if (!currentEditor)
+        return false;
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount)
+        return false;
+    const range = selection.getRangeAt(0);
+    if (!currentEditor.contains(range.commonAncestorContainer))
+        return false;
+    if (!range.collapsed) {
+        range.collapse(false);
+    }
+    const step = INDENT_STEP_PX;
+    const caretX = getCaretOffset(range);
+    const currentStep = Math.floor(caretX / step);
+    const target = (currentStep + 1) * step;
+    let delta = target - caretX;
+    if (delta < 0.5) {
+        delta = step;
+    }
+    if (delta <= 0)
+        return false;
+    const inserted = insertInlineTabAt(range, delta);
+    if (inserted) {
+        window.syncToSource();
+    }
+    return inserted;
+}
+function getInlineTabNodeBefore(range) {
+    let container = range.startContainer;
+    let offset = range.startOffset;
+    if (container && container.nodeType === Node.TEXT_NODE) {
+        if (offset > 0)
+            return null;
+        container = container.previousSibling;
+    }
+    else if (container) {
+        if (offset > 0) {
+            container = container.childNodes[offset - 1];
+        }
+        else {
+            container = container.previousSibling;
+        }
+    }
+    if (container &&
+        container.nodeType === 1 &&
+        container.classList &&
+        container.classList.contains('inline-tab')) {
+        return container;
+    }
+    return null;
+}
+export function handleInlineTabBackspace() {
+    const currentEditor = window.currentEditor;
+    if (!currentEditor)
+        return false;
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount)
+        return false;
+    const range = selection.getRangeAt(0);
+    if (!currentEditor.contains(range.commonAncestorContainer))
+        return false;
+    if (!range.collapsed)
+        return false;
+    const inlineTab = getInlineTabNodeBefore(range);
+    if (!inlineTab)
+        return false;
+    const newRange = document.createRange();
+    newRange.setStartBefore(inlineTab);
+    newRange.collapse(true);
+    inlineTab.parentNode?.removeChild(inlineTab);
+    selection.removeAllRanges();
+    selection.addRange(newRange);
+    window.syncToSource();
+    return true;
 }
 export function setHighlightPaletteOpen(open) {
     if (!highlightControlElement || !highlightButtonElement)
@@ -493,12 +653,19 @@ window.removeLink = removeLink;
 window.updateMarginRule = updateMarginRule;
 window.updateMarginButtonState = updateMarginButtonState;
 window.applyPageMargin = applyPageMargin;
+window.alignDirections = alignDirections;
 window.applyParagraphAlignment = applyParagraphAlignment;
+window.getParagraphsInRange = getParagraphsInRange;
+window.applyParagraphSpacing = applyParagraphSpacing;
 window.closeAllFontSubmenus = closeAllFontSubmenus;
 window.setFontMenuOpen = setFontMenuOpen;
 window.toggleFontMenu = toggleFontMenu;
 window.closeFontMenu = closeFontMenu;
 window.closeFontSubmenu = closeFontSubmenu;
+window.getCaretOffset = getCaretOffset;
+window.insertInlineTabAt = insertInlineTabAt;
+window.handleInlineTabKey = handleInlineTabKey;
+window.handleInlineTabBackspace = handleInlineTabBackspace;
 window.setHighlightPaletteOpen = setHighlightPaletteOpen;
 window.toggleHighlightPalette = toggleHighlightPalette;
 window.applyColorHighlight = applyColorHighlight;
