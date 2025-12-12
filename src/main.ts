@@ -31,6 +31,9 @@ declare global {
     toggleFontMenu: () => void;
     closeFontMenu: () => void;
     closeFontSubmenu: (type?: string | null) => void;
+    toggleFileDropdown: () => void;
+    closeNestedDropdown: () => void;
+    closeFileDropdown: () => void;
     setHighlightPaletteOpen: (open: boolean) => void;
     toggleHighlightPalette: () => void;
     applyColorHighlight: (color?: string | null) => void;
@@ -292,11 +295,34 @@ const highlightControlElement = document.querySelector<HTMLElement>('.highlight-
 const highlightButtonElement = highlightControlElement
   ? (highlightControlElement.querySelector<HTMLElement>('[data-action="highlight"]') ?? null)
   : null;
+const fileDropdownElement = document.querySelector<HTMLElement>('.file-dropdown');
+const nestedDropdownElements = document.querySelectorAll<HTMLElement>('.nested-dropdown');
 const INDENT_STEP_PX = 36 * (96 / 72);
 let currentPageMarginSize = 'm';
 
 const pagesContainerElement = document.getElementById('pages-container');
 const sourceElement = document.getElementById('source') as HTMLTextAreaElement | null;
+
+export function toggleFileDropdown(): void {
+  if (!fileDropdownElement) return;
+  fileDropdownElement.classList.toggle('open');
+}
+
+export function closeNestedDropdown(): void {
+  nestedDropdownElements.forEach(dropdown => {
+    dropdown.classList.remove('open');
+    const trigger = dropdown.querySelector<HTMLElement>('.nested-trigger');
+    if (trigger) {
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+  });
+}
+
+export function closeFileDropdown(): void {
+  if (!fileDropdownElement) return;
+  fileDropdownElement.classList.remove('open');
+  closeNestedDropdown();
+}
 
 const lineHeightSizes = ['s', 'm', 'l'] as const;
 type LineHeightSize = typeof lineHeightSizes[number];
@@ -750,6 +776,9 @@ window.applyColorHighlight = applyColorHighlight;
 window.applyFontColor = applyFontColor;
 window.syncToSource = syncToSource;
 window.applyLineHeight = applyLineHeight;
+window.toggleFileDropdown = toggleFileDropdown;
+window.closeNestedDropdown = closeNestedDropdown;
+window.closeFileDropdown = closeFileDropdown;
 
 // index.html からインポートされるため、再度エクスポートする
 export function initEditor() {

@@ -228,10 +228,32 @@ const highlightControlElement = document.querySelector('.highlight-control');
 const highlightButtonElement = highlightControlElement
     ? (highlightControlElement.querySelector('[data-action="highlight"]') ?? null)
     : null;
+const fileDropdownElement = document.querySelector('.file-dropdown');
+const nestedDropdownElements = document.querySelectorAll('.nested-dropdown');
 const INDENT_STEP_PX = 36 * (96 / 72);
 let currentPageMarginSize = 'm';
 const pagesContainerElement = document.getElementById('pages-container');
 const sourceElement = document.getElementById('source');
+export function toggleFileDropdown() {
+    if (!fileDropdownElement)
+        return;
+    fileDropdownElement.classList.toggle('open');
+}
+export function closeNestedDropdown() {
+    nestedDropdownElements.forEach(dropdown => {
+        dropdown.classList.remove('open');
+        const trigger = dropdown.querySelector('.nested-trigger');
+        if (trigger) {
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+    });
+}
+export function closeFileDropdown() {
+    if (!fileDropdownElement)
+        return;
+    fileDropdownElement.classList.remove('open');
+    closeNestedDropdown();
+}
 const lineHeightSizes = ['s', 'm', 'l'];
 const isLineHeightSize = (value) => !!value && lineHeightSizes.includes(value);
 export function syncToSource() {
@@ -693,6 +715,9 @@ window.applyColorHighlight = applyColorHighlight;
 window.applyFontColor = applyFontColor;
 window.syncToSource = syncToSource;
 window.applyLineHeight = applyLineHeight;
+window.toggleFileDropdown = toggleFileDropdown;
+window.closeNestedDropdown = closeNestedDropdown;
+window.closeFileDropdown = closeFileDropdown;
 // index.html からインポートされるため、再度エクスポートする
 export function initEditor() {
     applyPageMargin(currentPageMarginSize);
