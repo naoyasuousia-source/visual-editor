@@ -2224,7 +2224,7 @@
     function toggleSubscript() {
       applyInlineScript('subscript');
     }
-
+    
     function getCaretOffset(range) {
       if (!currentEditor) return 0;
       const rects = range.getClientRects();
@@ -2346,11 +2346,6 @@
         node.parentNode.replaceChild(replacement, node);
       });
     }
-
-    // ===== ハイライトパレット =====
-    // [TS-MIGRATE] ハイライトパレット
-    
-    // [TS-MIGRATE] ハイライトパレット
 
     function applyEditorFontFamily(family) {
       if (family) {
