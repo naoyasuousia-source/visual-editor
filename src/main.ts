@@ -50,8 +50,32 @@ declare global {
     saveTextSelectionFromEditor: () => void;
     getEffectiveTextRange: () => Range | null;
     calculateOffsetWithinNode: (root: Node | null, container: Node | null, offset: number) => number | null;
+    isRangeInsideCurrentEditor: (range: Range | null | undefined) => boolean;
+    compareParagraphOrder: (a: Node, b: Node) => number;
+    computeSelectionStateFromRange: (range: Range | null) => SelectionState | null;
+    findTextPositionInParagraph: (block: Element | null, targetOffset: number) => TextPosition | null;
+    restoreRangeFromSelectionState: (state: SelectionState | null) => Range | null;
+    findParagraph: (node: Node | null) => Element | null;
   }
 }
+
+type SelectionState = {
+  startBlockId: string;
+  endBlockId: string;
+  startOffset: number;
+  endOffset: number;
+};
+
+type ParagraphPosition = {
+  block: Element;
+  id: string;
+  offset: number;
+};
+
+type TextPosition = {
+  node: Node;
+  offset: number;
+};
 
 /**
  * 段落要素が空（テキストや<br>以外の要素がない）かどうかを判定します。
@@ -77,6 +101,8 @@ const isParagraphEmpty = (block: Element | null | undefined): boolean => {
 
 // 段階的な移行のため、グローバルスコープで利用できるようにする
 window.isParagraphEmpty = isParagraphEmpty;
+
+let lastSelectionState: SelectionState | null = null;
 
 const alignDirections: readonly AlignDirection[] = ['left', 'center', 'right'];
 const paragraphSpacingSizes = ['xs', 's', 'm', 'l', 'xl'] as const;
@@ -290,6 +316,153 @@ export function removeLink(): void {
   window.syncToSource();
 }
 
+export function isRangeInsideCurrentEditor(range: Range | null | undefined): boolean {
+  const currentEditor = window.currentEditor;
+  return !!(currentEditor && range && currentEditor.contains(range.commonAncestorContainer));
+}
+
+export function saveTextSelectionFromEditor(): void {
+  const selection = window.getSelection();
+  if (!selection || !selection.rangeCount) return;
+  const range = selection.getRangeAt(0);
+  if (range.collapsed) return;
+  if (!isRangeInsideCurrentEditor(range)) return;
+  const state = computeSelectionStateFromRange(range);
+  if (state) {
+    lastSelectionState = state;
+  }
+}
+
+export function getEffectiveTextRange(): Range | null {
+  const selection = window.getSelection();
+  if (selection && selection.rangeCount) {
+    const range = selection.getRangeAt(0);
+    if (!range.collapsed && isRangeInsideCurrentEditor(range)) {
+      const state = computeSelectionStateFromRange(range);
+      if (state) {
+        lastSelectionState = state;
+      }
+      return range.cloneRange();
+    }
+  }
+  if (lastSelectionState) {
+    const restored = restoreRangeFromSelectionState(lastSelectionState);
+    if (restored && isRangeInsideCurrentEditor(restored)) {
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(restored);
+      }
+      return restored.cloneRange();
+    }
+  }
+  return null;
+}
+
+export function compareParagraphOrder(a: Node, b: Node): number {
+  if (a === b) return 0;
+  const pos = a.compareDocumentPosition(b);
+  if (pos & Node.DOCUMENT_POSITION_FOLLOWING) {
+    return -1;
+  }
+  if (pos & Node.DOCUMENT_POSITION_PRECEDING) {
+    return 1;
+  }
+  return 0;
+}
+
+export function calculateOffsetWithinNode(root: Node | null, container: Node | null, offset: number): number | null {
+  if (!root || !container) return null;
+  try {
+    const temp = document.createRange();
+    temp.setStart(root, 0);
+    temp.setEnd(container, offset);
+    return temp.toString().length;
+  } catch (err) {
+    return null;
+  }
+}
+
+export function computeSelectionStateFromRange(range: Range | null): SelectionState | null {
+  if (!range) return null;
+  const startParagraph = findParagraph(range.startContainer);
+  const endParagraph = findParagraph(range.endContainer);
+  if (!startParagraph || !endParagraph) return null;
+  const startId = startParagraph.id;
+  const endId = endParagraph.id;
+  if (!startId || !endId) return null;
+  const startOffset = calculateOffsetWithinNode(startParagraph, range.startContainer, range.startOffset);
+  const endOffset = calculateOffsetWithinNode(endParagraph, range.endContainer, range.endOffset);
+  if (startOffset == null || endOffset == null) return null;
+
+  let startState: ParagraphPosition = {
+    block: startParagraph,
+    id: startId,
+    offset: startOffset
+  };
+  let endState: ParagraphPosition = {
+    block: endParagraph,
+    id: endId,
+    offset: endOffset
+  };
+  let order = compareParagraphOrder(startParagraph, endParagraph);
+  if (order > 0 || (order === 0 && startOffset > endOffset)) {
+    [startState, endState] = [endState, startState];
+  }
+
+  return {
+    startBlockId: startState.id,
+    endBlockId: endState.id,
+    startOffset: startState.offset,
+    endOffset: endState.offset
+  };
+}
+
+export function findTextPositionInParagraph(block: Element | null, targetOffset: number): TextPosition | null {
+  if (!block) return null;
+  const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, null);
+  let node = walker.nextNode();
+  let remaining = Math.max(0, targetOffset);
+  while (node) {
+    const length = node.textContent?.length ?? 0;
+    if (remaining <= length) {
+      return { node, offset: remaining };
+    }
+    remaining -= length;
+    node = walker.nextNode();
+  }
+  const fallbackOffset = Math.min(Math.max(remaining, 0), block.childNodes.length);
+  return { node: block, offset: fallbackOffset };
+}
+
+export function restoreRangeFromSelectionState(state: SelectionState | null): Range | null {
+  if (!state) return null;
+  const startBlock = document.getElementById(state.startBlockId);
+  const endBlock = document.getElementById(state.endBlockId);
+  if (!startBlock || !endBlock) return null;
+  const startPosition = findTextPositionInParagraph(startBlock, state.startOffset);
+  const endPosition = findTextPositionInParagraph(endBlock, state.endOffset);
+  if (!startPosition || !endPosition) return null;
+  const range = document.createRange();
+  range.setStart(startPosition.node, startPosition.offset);
+  range.setEnd(endPosition.node, endPosition.offset);
+  return range;
+}
+
+export function findParagraph(node: Node | null): Element | null {
+  let current = node;
+  const currentEditor = window.currentEditor;
+  while (current && current !== currentEditor) {
+    if (
+      current.nodeType === Node.ELEMENT_NODE &&
+      /^(p|h[1-6])$/i.test((current as Element).tagName)
+    ) {
+      return current as Element;
+    }
+    current = current.parentNode;
+  }
+  return null;
+}
+
 const paraNumberLeft = '6mm';
 const pageMarginValues: Record<string, string> = { s: '12mm', m: '17mm', l: '24mm' };
 const rootMarginRule = /:root\s*{[^}]*}/;
@@ -303,8 +476,8 @@ const highlightControlElement = document.querySelector<HTMLElement>('.highlight-
 const highlightButtonElement = highlightControlElement
   ? (highlightControlElement.querySelector<HTMLElement>('[data-action="highlight"]') ?? null)
   : null;
-const fileDropdownElement = document.querySelector<HTMLElement>('.file-dropdown');
-const nestedDropdownElements = document.querySelectorAll<HTMLElement>('.nested-dropdown');
+const getFileDropdownElement = (): HTMLElement | null => document.querySelector<HTMLElement>('.file-dropdown');
+const getNestedDropdownElements = (): NodeListOf<HTMLElement> => document.querySelectorAll<HTMLElement>('.nested-dropdown');
 const INDENT_STEP_PX = 36 * (96 / 72);
 let currentPageMarginSize = 'm';
 
@@ -312,12 +485,13 @@ const pagesContainerElement = document.getElementById('pages-container');
 const sourceElement = document.getElementById('source') as HTMLTextAreaElement | null;
 
 export function toggleFileDropdown(): void {
-  if (!fileDropdownElement) return;
-  fileDropdownElement.classList.toggle('open');
+  const element = getFileDropdownElement();
+  if (!element) return;
+  element.classList.toggle('open');
 }
 
 export function closeNestedDropdown(): void {
-  nestedDropdownElements.forEach(dropdown => {
+  getNestedDropdownElements().forEach(dropdown => {
     dropdown.classList.remove('open');
     const trigger = dropdown.querySelector<HTMLElement>('.nested-trigger');
     if (trigger) {
@@ -327,9 +501,36 @@ export function closeNestedDropdown(): void {
 }
 
 export function closeFileDropdown(): void {
-  if (!fileDropdownElement) return;
-  fileDropdownElement.classList.remove('open');
+  const element = getFileDropdownElement();
+  if (!element) return;
+  element.classList.remove('open');
   closeNestedDropdown();
+}
+
+function initFileMenuControls(): void {
+  const fileTrigger = document.querySelector<HTMLElement>('.file-trigger');
+  const nestedTriggers = document.querySelectorAll<HTMLElement>('.nested-trigger');
+
+  if (fileTrigger) {
+    fileTrigger.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleFileDropdown();
+    });
+  }
+
+  nestedTriggers.forEach(trigger => {
+    trigger.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const dropdown = trigger.closest<HTMLElement>('.nested-dropdown');
+      if (!dropdown) return;
+      const willOpen = !dropdown.classList.contains('open');
+      closeNestedDropdown();
+      dropdown.classList.toggle('open', willOpen);
+      trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    });
+  });
 }
 
 const lineHeightSizes = ['s', 'm', 'l'] as const;
@@ -898,9 +1099,19 @@ window.applyInlineScript = applyInlineScript;
 window.toggleSuperscript = toggleSuperscript;
 window.toggleSubscript = toggleSubscript;
 window.resetFontColorInSelection = resetFontColorInSelection;
+window.isRangeInsideCurrentEditor = isRangeInsideCurrentEditor;
+window.saveTextSelectionFromEditor = saveTextSelectionFromEditor;
+window.getEffectiveTextRange = getEffectiveTextRange;
+window.compareParagraphOrder = compareParagraphOrder;
+window.calculateOffsetWithinNode = calculateOffsetWithinNode;
+window.computeSelectionStateFromRange = computeSelectionStateFromRange;
+window.findTextPositionInParagraph = findTextPositionInParagraph;
+window.restoreRangeFromSelectionState = restoreRangeFromSelectionState;
+window.findParagraph = findParagraph;
 
 // index.html からインポートされるため、再度エクスポートする
 export function initEditor() {
+  initFileMenuControls();
   applyPageMargin(currentPageMarginSize);
   console.log("initEditor() 呼ばれた！");
 }

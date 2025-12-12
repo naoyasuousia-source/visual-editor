@@ -23,6 +23,7 @@ const isParagraphEmpty = (block) => {
 };
 // 段階的な移行のため、グローバルスコープで利用できるようにする
 window.isParagraphEmpty = isParagraphEmpty;
+let lastSelectionState = null;
 const alignDirections = ['left', 'center', 'right'];
 const paragraphSpacingSizes = ['xs', 's', 'm', 'l', 'xl'];
 const isParagraphSpacingSize = (value) => !!value && paragraphSpacingSizes.includes(value);
@@ -215,6 +216,154 @@ export function removeLink() {
     parent.normalize();
     window.syncToSource();
 }
+export function isRangeInsideCurrentEditor(range) {
+    const currentEditor = window.currentEditor;
+    return !!(currentEditor && range && currentEditor.contains(range.commonAncestorContainer));
+}
+export function saveTextSelectionFromEditor() {
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount)
+        return;
+    const range = selection.getRangeAt(0);
+    if (range.collapsed)
+        return;
+    if (!isRangeInsideCurrentEditor(range))
+        return;
+    const state = computeSelectionStateFromRange(range);
+    if (state) {
+        lastSelectionState = state;
+    }
+}
+export function getEffectiveTextRange() {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount) {
+        const range = selection.getRangeAt(0);
+        if (!range.collapsed && isRangeInsideCurrentEditor(range)) {
+            const state = computeSelectionStateFromRange(range);
+            if (state) {
+                lastSelectionState = state;
+            }
+            return range.cloneRange();
+        }
+    }
+    if (lastSelectionState) {
+        const restored = restoreRangeFromSelectionState(lastSelectionState);
+        if (restored && isRangeInsideCurrentEditor(restored)) {
+            if (selection) {
+                selection.removeAllRanges();
+                selection.addRange(restored);
+            }
+            return restored.cloneRange();
+        }
+    }
+    return null;
+}
+export function compareParagraphOrder(a, b) {
+    if (a === b)
+        return 0;
+    const pos = a.compareDocumentPosition(b);
+    if (pos & Node.DOCUMENT_POSITION_FOLLOWING) {
+        return -1;
+    }
+    if (pos & Node.DOCUMENT_POSITION_PRECEDING) {
+        return 1;
+    }
+    return 0;
+}
+export function calculateOffsetWithinNode(root, container, offset) {
+    if (!root || !container)
+        return null;
+    try {
+        const temp = document.createRange();
+        temp.setStart(root, 0);
+        temp.setEnd(container, offset);
+        return temp.toString().length;
+    }
+    catch (err) {
+        return null;
+    }
+}
+export function computeSelectionStateFromRange(range) {
+    if (!range)
+        return null;
+    const startParagraph = findParagraph(range.startContainer);
+    const endParagraph = findParagraph(range.endContainer);
+    if (!startParagraph || !endParagraph)
+        return null;
+    const startId = startParagraph.id;
+    const endId = endParagraph.id;
+    if (!startId || !endId)
+        return null;
+    const startOffset = calculateOffsetWithinNode(startParagraph, range.startContainer, range.startOffset);
+    const endOffset = calculateOffsetWithinNode(endParagraph, range.endContainer, range.endOffset);
+    if (startOffset == null || endOffset == null)
+        return null;
+    let startState = {
+        block: startParagraph,
+        id: startId,
+        offset: startOffset
+    };
+    let endState = {
+        block: endParagraph,
+        id: endId,
+        offset: endOffset
+    };
+    let order = compareParagraphOrder(startParagraph, endParagraph);
+    if (order > 0 || (order === 0 && startOffset > endOffset)) {
+        [startState, endState] = [endState, startState];
+    }
+    return {
+        startBlockId: startState.id,
+        endBlockId: endState.id,
+        startOffset: startState.offset,
+        endOffset: endState.offset
+    };
+}
+export function findTextPositionInParagraph(block, targetOffset) {
+    if (!block)
+        return null;
+    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, null);
+    let node = walker.nextNode();
+    let remaining = Math.max(0, targetOffset);
+    while (node) {
+        const length = node.textContent?.length ?? 0;
+        if (remaining <= length) {
+            return { node, offset: remaining };
+        }
+        remaining -= length;
+        node = walker.nextNode();
+    }
+    const fallbackOffset = Math.min(Math.max(remaining, 0), block.childNodes.length);
+    return { node: block, offset: fallbackOffset };
+}
+export function restoreRangeFromSelectionState(state) {
+    if (!state)
+        return null;
+    const startBlock = document.getElementById(state.startBlockId);
+    const endBlock = document.getElementById(state.endBlockId);
+    if (!startBlock || !endBlock)
+        return null;
+    const startPosition = findTextPositionInParagraph(startBlock, state.startOffset);
+    const endPosition = findTextPositionInParagraph(endBlock, state.endOffset);
+    if (!startPosition || !endPosition)
+        return null;
+    const range = document.createRange();
+    range.setStart(startPosition.node, startPosition.offset);
+    range.setEnd(endPosition.node, endPosition.offset);
+    return range;
+}
+export function findParagraph(node) {
+    let current = node;
+    const currentEditor = window.currentEditor;
+    while (current && current !== currentEditor) {
+        if (current.nodeType === Node.ELEMENT_NODE &&
+            /^(p|h[1-6])$/i.test(current.tagName)) {
+            return current;
+        }
+        current = current.parentNode;
+    }
+    return null;
+}
 const paraNumberLeft = '6mm';
 const pageMarginValues = { s: '12mm', m: '17mm', l: '24mm' };
 const rootMarginRule = /:root\s*{[^}]*}/;
@@ -228,19 +377,20 @@ const highlightControlElement = document.querySelector('.highlight-control');
 const highlightButtonElement = highlightControlElement
     ? (highlightControlElement.querySelector('[data-action="highlight"]') ?? null)
     : null;
-const fileDropdownElement = document.querySelector('.file-dropdown');
-const nestedDropdownElements = document.querySelectorAll('.nested-dropdown');
+const getFileDropdownElement = () => document.querySelector('.file-dropdown');
+const getNestedDropdownElements = () => document.querySelectorAll('.nested-dropdown');
 const INDENT_STEP_PX = 36 * (96 / 72);
 let currentPageMarginSize = 'm';
 const pagesContainerElement = document.getElementById('pages-container');
 const sourceElement = document.getElementById('source');
 export function toggleFileDropdown() {
-    if (!fileDropdownElement)
+    const element = getFileDropdownElement();
+    if (!element)
         return;
-    fileDropdownElement.classList.toggle('open');
+    element.classList.toggle('open');
 }
 export function closeNestedDropdown() {
-    nestedDropdownElements.forEach(dropdown => {
+    getNestedDropdownElements().forEach(dropdown => {
         dropdown.classList.remove('open');
         const trigger = dropdown.querySelector('.nested-trigger');
         if (trigger) {
@@ -249,10 +399,35 @@ export function closeNestedDropdown() {
     });
 }
 export function closeFileDropdown() {
-    if (!fileDropdownElement)
+    const element = getFileDropdownElement();
+    if (!element)
         return;
-    fileDropdownElement.classList.remove('open');
+    element.classList.remove('open');
     closeNestedDropdown();
+}
+function initFileMenuControls() {
+    const fileTrigger = document.querySelector('.file-trigger');
+    const nestedTriggers = document.querySelectorAll('.nested-trigger');
+    if (fileTrigger) {
+        fileTrigger.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleFileDropdown();
+        });
+    }
+    nestedTriggers.forEach(trigger => {
+        trigger.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const dropdown = trigger.closest('.nested-dropdown');
+            if (!dropdown)
+                return;
+            const willOpen = !dropdown.classList.contains('open');
+            closeNestedDropdown();
+            dropdown.classList.toggle('open', willOpen);
+            trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        });
+    });
 }
 const lineHeightSizes = ['s', 'm', 'l'];
 const isLineHeightSize = (value) => !!value && lineHeightSizes.includes(value);
@@ -830,8 +1005,18 @@ window.applyInlineScript = applyInlineScript;
 window.toggleSuperscript = toggleSuperscript;
 window.toggleSubscript = toggleSubscript;
 window.resetFontColorInSelection = resetFontColorInSelection;
+window.isRangeInsideCurrentEditor = isRangeInsideCurrentEditor;
+window.saveTextSelectionFromEditor = saveTextSelectionFromEditor;
+window.getEffectiveTextRange = getEffectiveTextRange;
+window.compareParagraphOrder = compareParagraphOrder;
+window.calculateOffsetWithinNode = calculateOffsetWithinNode;
+window.computeSelectionStateFromRange = computeSelectionStateFromRange;
+window.findTextPositionInParagraph = findTextPositionInParagraph;
+window.restoreRangeFromSelectionState = restoreRangeFromSelectionState;
+window.findParagraph = findParagraph;
 // index.html からインポートされるため、再度エクスポートする
 export function initEditor() {
+    initFileMenuControls();
     applyPageMargin(currentPageMarginSize);
     console.log("initEditor() 呼ばれた！");
 }
