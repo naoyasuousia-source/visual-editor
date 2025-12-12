@@ -25,6 +25,7 @@ declare global {
     alignDirections: readonly AlignDirection[];
     getParagraphsInRange: (range: Range | null) => HTMLElement[];
     applyParagraphSpacing: (size?: string | null) => void;
+    applyLineHeight: (size?: string | null) => void;
     closeAllFontSubmenus: () => void;
     setFontMenuOpen: (open: boolean) => void;
     toggleFontMenu: () => void;
@@ -293,6 +294,31 @@ const highlightButtonElement = highlightControlElement
   : null;
 const INDENT_STEP_PX = 36 * (96 / 72);
 let currentPageMarginSize = 'm';
+
+const pagesContainerElement = document.getElementById('pages-container');
+const sourceElement = document.getElementById('source') as HTMLTextAreaElement | null;
+
+const lineHeightSizes = ['s', 'm', 'l'] as const;
+type LineHeightSize = typeof lineHeightSizes[number];
+const isLineHeightSize = (value: string | null | undefined): value is LineHeightSize =>
+  !!value && lineHeightSizes.includes(value as LineHeightSize);
+
+export function syncToSource(): void {
+  if (!pagesContainerElement || !sourceElement) return;
+  sourceElement.value = pagesContainerElement.innerHTML;
+}
+
+export function applyLineHeight(size?: string | null): void {
+  if (!isLineHeightSize(size) || !pagesContainerElement) return;
+  const inners = pagesContainerElement.querySelectorAll<HTMLElement>('.page-inner');
+  inners.forEach(inner => {
+    lineHeightSizes.forEach(sz => inner.classList.remove(`line-height-${sz}`));
+    if (size !== 'm') {
+      inner.classList.add(`line-height-${size}`);
+    }
+  });
+  syncToSource();
+}
 
 export function updateMarginRule(value: string): void {
   if (!styleTagElement) return;
@@ -722,6 +748,8 @@ window.setHighlightPaletteOpen = setHighlightPaletteOpen;
 window.toggleHighlightPalette = toggleHighlightPalette;
 window.applyColorHighlight = applyColorHighlight;
 window.applyFontColor = applyFontColor;
+window.syncToSource = syncToSource;
+window.applyLineHeight = applyLineHeight;
 
 // index.html からインポートされるため、再度エクスポートする
 export function initEditor() {

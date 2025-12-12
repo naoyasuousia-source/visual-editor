@@ -230,6 +230,27 @@ const highlightButtonElement = highlightControlElement
     : null;
 const INDENT_STEP_PX = 36 * (96 / 72);
 let currentPageMarginSize = 'm';
+const pagesContainerElement = document.getElementById('pages-container');
+const sourceElement = document.getElementById('source');
+const lineHeightSizes = ['s', 'm', 'l'];
+const isLineHeightSize = (value) => !!value && lineHeightSizes.includes(value);
+export function syncToSource() {
+    if (!pagesContainerElement || !sourceElement)
+        return;
+    sourceElement.value = pagesContainerElement.innerHTML;
+}
+export function applyLineHeight(size) {
+    if (!isLineHeightSize(size) || !pagesContainerElement)
+        return;
+    const inners = pagesContainerElement.querySelectorAll('.page-inner');
+    inners.forEach(inner => {
+        lineHeightSizes.forEach(sz => inner.classList.remove(`line-height-${sz}`));
+        if (size !== 'm') {
+            inner.classList.add(`line-height-${size}`);
+        }
+    });
+    syncToSource();
+}
 export function updateMarginRule(value) {
     if (!styleTagElement)
         return;
@@ -670,6 +691,8 @@ window.setHighlightPaletteOpen = setHighlightPaletteOpen;
 window.toggleHighlightPalette = toggleHighlightPalette;
 window.applyColorHighlight = applyColorHighlight;
 window.applyFontColor = applyFontColor;
+window.syncToSource = syncToSource;
+window.applyLineHeight = applyLineHeight;
 // index.html からインポートされるため、再度エクスポートする
 export function initEditor() {
     applyPageMargin(currentPageMarginSize);
