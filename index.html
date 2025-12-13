@@ -1425,27 +1425,6 @@
     }
 
     // ===== ページ生成 / 初期化 =====
-    function createPage(pageNumber, contentHTML) {
-      const section = document.createElement('section');
-      section.className = 'page';
-      section.dataset.page = pageNumber;
-
-      const inner = document.createElement('div');
-      inner.className = 'page-inner';
-      inner.contentEditable = 'true';
-      inner.innerHTML = contentHTML || '<p>ここに本文を書く</p>';
-
-      section.appendChild(inner);
-      return section;
-    }
-
-    function renumberPages() {
-      const pages = pagesContainer.querySelectorAll('section.page');
-      pages.forEach((page, idx) => {
-        page.dataset.page = idx + 1;
-      });
-    }
-
     function setActiveEditor(inner) {
       currentEditor = inner;
       window.currentEditor = inner;//例外
@@ -1558,14 +1537,6 @@
           }
         }
       });
-    }
-
-    function initPages() {
-      const inners = pagesContainer.querySelectorAll('.page-inner');
-      inners.forEach(bindEditorEvents);
-      if (!currentEditor && inners[0]) {
-        setActiveEditor(inners[0]);
-      }
     }
 
     function getCurrentParagraph() {
@@ -1895,64 +1866,6 @@
     }
 
     // ===== ページ追加 / 削除 =====
-    function addPage() {
-      const pages = Array.from(pagesContainer.querySelectorAll('section.page'));
-      const newPage = createPage(pages.length + 1, '<p>ここに本文を書く</p>');
-
-      if (currentEditor) {
-        const currentPage = currentEditor.closest('section.page');
-        const idx = pages.indexOf(currentPage);
-        if (idx >= 0 && idx < pages.length - 1) {
-          pagesContainer.insertBefore(newPage, pages[idx + 1].nextSibling);
-        } else {
-          pagesContainer.appendChild(newPage);
-        }
-      } else {
-        pagesContainer.appendChild(newPage);
-      }
-
-      renumberPages();
-      renumberParagraphs();
-      initPages();
-      setActiveEditor(newPage.querySelector('.page-inner'));
-      ensureAiImageIndex();
-    }
-
-    function removePage() {
-      const pages = Array.from(pagesContainer.querySelectorAll('section.page'));
-      if (pages.length === 0) return;
-
-      if (!currentEditor) {
-        // 一応最後のページを削除対象に
-        currentEditor = pages[pages.length - 1].querySelector('.page-inner');
-      }
-
-      const currentPage = currentEditor.closest('section.page');
-      const idx = pages.indexOf(currentPage);
-
-      if (pages.length === 1) {
-        const inner = pages[0].querySelector('.page-inner');
-        inner.innerHTML = '<p>ここに本文を書く</p>';
-        setActiveEditor(inner);
-        renumberParagraphs(); // これだけでOK（中で syncToSource 済む）
-        return;
-      }
-
-
-      pagesContainer.removeChild(currentPage);
-
-      // 新しい currentEditor を決定
-      const newPages = pagesContainer.querySelectorAll('section.page');
-      const newInners = pagesContainer.querySelectorAll('.page-inner');
-      const newIdx = Math.max(0, idx - 1);
-      const newInner = newInners[newIdx] || newInners[0];
-      if (newInner) setActiveEditor(newInner);
-
-      renumberPages();
-      renumberParagraphs();
-      ensureAiImageIndex();
-    }
-
     function renumberParagraphs() {
       const pages = pagesContainer.querySelectorAll('section.page');
 
