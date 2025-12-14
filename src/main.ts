@@ -2209,8 +2209,22 @@ export function closeFontSubmenu(type?: string | null): void {
   }
 }
 
+
+
+export function applyBlockElement(tag: string | null | undefined): void {
+  if (!tag) return;
+  const current = getCurrentParagraph();
+  if (current) {
+    convertParagraphToTag(current, tag);
+    renumberParagraphs();
+    window.syncToSource();
+  }
+}
+
 window.findParagraphWrapper = findParagraphWrapper;
+window.applyBlockElement = applyBlockElement;
 window.ensureParagraphWrapper = ensureParagraphWrapper;
+
 window.ensureFigureWrapper = ensureFigureWrapper;
 window.convertParagraphToTag = convertParagraphToTag;
 window.generateBookmarkId = generateBookmarkId;

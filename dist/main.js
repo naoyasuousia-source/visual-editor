@@ -2001,7 +2001,18 @@ export function closeFontSubmenu(type) {
         trigger.setAttribute('aria-expanded', 'false');
     }
 }
+export function applyBlockElement(tag) {
+    if (!tag)
+        return;
+    const current = getCurrentParagraph();
+    if (current) {
+        convertParagraphToTag(current, tag);
+        renumberParagraphs();
+        window.syncToSource();
+    }
+}
 window.findParagraphWrapper = findParagraphWrapper;
+window.applyBlockElement = applyBlockElement;
 window.ensureParagraphWrapper = ensureParagraphWrapper;
 window.ensureFigureWrapper = ensureFigureWrapper;
 window.convertParagraphToTag = convertParagraphToTag;

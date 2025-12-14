@@ -1157,46 +1157,7 @@
     </form>
   </dialog>
 
-  <script>
-    const pagesContainer = document.getElementById('pages-container');
-    const source = document.getElementById('source');
-    const toolbar = document.getElementById('toolbar');
-    const openFileInput = document.getElementById('open-file-input');
-    const imageContextMenu = document.getElementById('image-context-menu');
-    const imageContextDropdown = document.querySelector('.image-context-dropdown');
-    const imageContextTrigger = document.querySelector('.image-context-trigger');
-    const imageTitleDialog = document.getElementById('image-title-dialog');
-    const imageTitleInput = document.getElementById('image-title-input');
-    const imageTitleFontRadios = imageTitleDialog
-      ? imageTitleDialog.querySelectorAll('input[name="image-title-font-size"]')
-      : [];
-    const imageTitleApplyButton = document.querySelector('[data-action="apply-image-title"]');
-    const imageTitleCancelButton = document.querySelector('[data-action="cancel-image-title"]');
-    const styleTag = document.querySelector('style');
-    const paraNumberLeft = '6mm';
-    const pageMarginValues = { s: '12mm', m: '17mm', l: '24mm' };
-    let currentPageMargin = 'm';
-    let currentFontFamily = '';
-    let aiImageIndex = document.getElementById('ai-image-index');
 
-    let currentEditor = null; // 現在アクティブな .page-inner
-    let openedFileHandle = null; // File System Access API で開いたファイルハンドル
-    let contextTargetImage = null;
-    const imageSizeClasses = ['xs', 's', 'm', 'l', 'xl'];
-    const INDENT_STEP_PX = 36 * (96 / 72);
-    let lastSelectionState = null;
-
-    // Image insertion logic migrated to main.ts
-
-
-
-
-    // Definitions for setActiveEditor, placeCaretBefore, placeCaretAfter, getCurrentParagraph
-    // have been migrated to src/main.ts and are available globally.
-
-    // File/HTML/Indent logic migrated to main.ts
-
-  </script>
 
   <script type="module">
     import { initEditor } from "./dist/main.js";
