@@ -1380,6 +1380,26 @@ export function bindEditorEvents(inner: HTMLElement): void {
       e.preventDefault();
       handleInlineTabKey();
     } else if (e.key === 'Backspace') {
+      // --- 修正: 最後の1段落を消させない処理 ---
+      // 現在のページ内のブロック要素（p, h1-h6）を取得
+      const blocks = inner.querySelectorAll('p, h1, h2, h3, h4, h5, h6');
+      if (blocks.length === 1) {
+        const block = blocks[0];
+        // カーソルがそのブロックの先頭にあるかどうかを確認
+        if (selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          // 選択範囲が潰れていて(collapsed)、かつ始点がブロックの先頭(offset 0)の場合
+          // または、ブロックが空の場合
+          if (range.collapsed && range.startOffset === 0) {
+            // さらに厳密に、ブロックが空（またはBRのみ）なら削除禁止
+            // 「テキストの途中でのバックスペース」は許可するが、「段落そのものを消すバックスペース」は禁止する
+            e.preventDefault();
+            return;
+          }
+        }
+      }
+      // ------------------------------------------
+
       if (handleInlineTabBackspace()) {
         e.preventDefault();
       }
