@@ -331,7 +331,12 @@
     .page-inner h6[data-para]::before {
       content: "[" attr(data-para) "]";
       position: absolute;
-      left: calc(var(--para-number-left) - var(--page-margin));
+      /* 
+         以前は left: calc(var(--para-number-left) - var(--page-margin)); でしたが、
+         余白が変わっても本文からの距離を一定にするため、固定値にします。
+         Mサイズ(余白17mm, 番号位置6mm)の差分である -11mm を基準とします。
+      */
+      left: -11mm;
       top: 0.25em;
       width: 2.4rem;
       text-align: right;
@@ -342,6 +347,15 @@
       transform: none;
       user-select: none;
       pointer-events: none;
+    }
+
+    /* ぶら下げインデント修正 */
+    .page-inner .hanging-indent {
+      /* 
+          1行目を1文字分(約1em)左に突き出す設定。
+          text-indentをマイナスにし、1行目を左へずらす。
+       */
+      text-indent: -1em;
     }
 
     /* 現在アクティブなページの枠を少し強調 */
