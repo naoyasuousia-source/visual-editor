@@ -855,14 +855,22 @@ function openTitleDialog() {
     if (!block)
         return;
     let existingTitle = '';
-    let sibling = contextTargetImage.nextSibling;
-    while (sibling && sibling.nodeType === Node.TEXT_NODE && (sibling.textContent || '').trim() === '') {
-        sibling = sibling.nextSibling;
+    // 修正: まず明示的な .figure-title 要素を探す
+    const existingTitleSpan = block.querySelector('.figure-title');
+    if (existingTitleSpan) {
+        existingTitle = (existingTitleSpan.textContent || '').trim();
     }
-    if (sibling && sibling.nodeType === Node.ELEMENT_NODE && sibling.nodeName === 'BR') {
-        const textNode = sibling.nextSibling;
-        if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-            existingTitle = textNode.textContent || '';
+    else {
+        // 後方互換性: 古い構造（BRのあとに直書きテキストがある場合など）への対応
+        let sibling = contextTargetImage.nextSibling;
+        while (sibling && sibling.nodeType === Node.TEXT_NODE && (sibling.textContent || '').trim() === '') {
+            sibling = sibling.nextSibling;
+        }
+        if (sibling && sibling.nodeType === Node.ELEMENT_NODE && sibling.nodeName === 'BR') {
+            const textNode = sibling.nextSibling;
+            if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+                existingTitle = textNode.textContent || '';
+            }
         }
     }
     if (imageTitleInputElement) {
@@ -931,21 +939,22 @@ export function renumberParagraphs() {
         return;
     const pages = pagesContainer.querySelectorAll('section.page');
     pages.forEach(page => {
-        // ページ番号はHTML上の属性として管理されている前提
-        // const pageNum = page.getAttribute('data-page'); 
-        // 現在のページ番号再番機能は renumberPages() にあるため、ここでは paragraph の番号のみ扱う
-        // ただし、ブロックID生成のために pageNum が必要であれば取得する
-        // 既存の実装に合わせて pageNum を取得
         let pageNum = page.getAttribute('data-page');
-        // もし renumberPages がまだ走っていない場合などに備える
         if (!pageNum) {
-            // フォールバック: pageWrapper内でのindexなどから算出も可能だが、
-            // ここでは単純に既存DOMの状態を信じる
             pageNum = '1';
         }
         const inner = page.querySelector('.page-inner');
         if (!inner)
             return;
+        // --- 修正: 段落が消失してしまった場合のリカバリ ---
+        // 何も入力がない、あるいはすべて消してしまった場合にも、最低1つのPタグを保証する
+        // バックスペース連打で最後の1行のタグまで消えると、以後入力できなくなるのを防ぐ
+        if (!inner.querySelector('p, h1, h2, h3, h4, h5, h6')) {
+            const p = document.createElement('p');
+            p.innerHTML = '<br>'; // カーソルが入れるようにBRを入れる
+            inner.appendChild(p);
+        }
+        // ------------------------------------------------
         let paraIndex = 1;
         // p と h1〜h6 のみ対象
         inner.querySelectorAll('p, h1, h2, h3, h4, h5, h6').forEach(block => {
