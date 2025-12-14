@@ -2090,23 +2090,51 @@ export function resetHighlightsInSelection(): void {
   const range = selection.getRangeAt(0);
   if (range.collapsed) return;
 
-  // 1. 範囲内のDOMを抽出（自動的に境界で分割される）
+  // 1. 範囲がハイライト要素の内側にある場合（＝完全に選択している場合など）
+  //    親のハイライトを解除し、かつ選択範囲を維持する
+  const ancestor = getAncestorHighlight(range.commonAncestorContainer);
+  if (ancestor) {
+    const first = ancestor.firstChild;
+    const last = ancestor.lastChild;
+
+    // 親を解除
+    unwrapColorSpan(ancestor);
+
+    // 選択範囲を復元（解除された中身を選択し直す）
+    if (first && last) {
+      selection.removeAllRanges();
+      const newRange = document.createRange();
+      newRange.setStartBefore(first);
+      newRange.setEndAfter(last);
+      selection.addRange(newRange);
+    }
+    window.syncToSource();
+    return;
+  }
+
+  // 2. 部分的な選択や、複数のハイライトを含む場合
+  //    範囲内のDOMを抽出して掃除する
   const fragment = range.extractContents();
 
-  // 2. 抽出した部分から、既存のハイライトタグを除去（掃除）
+  // 抽出後のフラグメント内のハイライトを除去
   removeColorSpansInNode(fragment);
 
-  // 3. 元の位置に挿入
+  // 挿入後の参照用に最初と最後のノードを確保
+  const first = fragment.firstChild;
+  const last = fragment.lastChild;
+
+  // 元の位置に挿入
   range.insertNode(fragment);
 
-  // 4. 選択範囲の復元
-  selection.removeAllRanges();
-  const newRange = document.createRange();
-  newRange.selectNodeContents(fragment); // Fragmentは挿入後に空になるため、これは機能しない
-  // 挿入されたノード群を選択し直すのは複雑なので、ここでは挿入位置にカーソルを置く
-  newRange.setStartAfter(range.startContainer); // 挿入後のRangeの開始位置の直後
-  newRange.collapse(true);
-  selection.addRange(newRange);
+  // 3. 選択範囲の復元
+  //    挿入された範囲全体を再度選択する
+  if (first && last) {
+    selection.removeAllRanges();
+    const newRange = document.createRange();
+    newRange.setStartBefore(first);
+    newRange.setEndAfter(last);
+    selection.addRange(newRange);
+  }
 
   window.syncToSource();
 }
