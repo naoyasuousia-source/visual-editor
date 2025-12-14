@@ -1840,6 +1840,34 @@ export function applyParagraphSpacing(size?: string | null): void {
   window.syncToSource();
 }
 
+export function applyBlockElement(tag: string | null | undefined): void {
+  if (!tag) return;
+  const current = getCurrentParagraph();
+  if (current) {
+    // 1. 選択範囲を保存
+    const selection = window.getSelection();
+    let savedState: SelectionState | null = null;
+    if (selection && selection.rangeCount > 0) {
+      savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
+    }
+
+    // 2. ブロック変換
+    convertParagraphToTag(current, tag);
+    renumberParagraphs();
+
+    // 3. 選択範囲を復元
+    if (savedState) {
+      const restored = restoreRangeFromSelectionState(savedState);
+      if (restored && selection) {
+        selection.removeAllRanges();
+        selection.addRange(restored);
+      }
+    }
+
+    window.syncToSource();
+  }
+}
+
 export function toggleBold(): void {
   const currentEditor = window.currentEditor;
   if (!currentEditor) return;
@@ -1870,9 +1898,29 @@ export function toggleUnderline(): void {
 export function toggleStrikeThrough(): void {
   const currentEditor = window.currentEditor;
   if (!currentEditor) return;
+
+  // 1. 選択範囲を保存
+  const selection = window.getSelection();
+  let savedState: SelectionState | null = null;
+  if (selection && selection.rangeCount > 0) {
+    savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
+  }
+
   currentEditor.focus();
   document.execCommand('strikeThrough', false, undefined);
+
+  // 2. タグ正規化（これがDOMを置換して選択を壊す原因）
   normalizeInlineFormatting();
+
+  // 3. 選択範囲を復元
+  if (savedState) {
+    const restored = restoreRangeFromSelectionState(savedState);
+    if (restored && selection) {
+      selection.removeAllRanges();
+      selection.addRange(restored);
+    }
+  }
+
   syncToSource();
 }
 
@@ -2370,15 +2418,6 @@ export function closeFontSubmenu(type?: string | null): void {
 
 
 
-export function applyBlockElement(tag: string | null | undefined): void {
-  if (!tag) return;
-  const current = getCurrentParagraph();
-  if (current) {
-    convertParagraphToTag(current, tag);
-    renumberParagraphs();
-    window.syncToSource();
-  }
-}
 
 window.findParagraphWrapper = findParagraphWrapper;
 window.applyBlockElement = applyBlockElement;
