@@ -22,19 +22,14 @@
 import { toggleBold, toggleItalic, toggleUnderline, toggleStrikeThrough, applyInlineScript, toggleSuperscript, toggleSubscript, resetHighlightsInSelection, applyColorHighlight, applyFontColor, resetFontColorInSelection, removeHighlightsInRange, applyBlockElement, renumberParagraphs } from './editor/formatting.js';
 import { createPage, renumberPages, addPage, removePage, initPages } from './editor/page.js';
 import { saveFullHTML, openWithFilePicker, overwriteCurrentFile, handleOpenFile, setPagesHTML, importFullHTMLText, buildFullHTML } from './editor/io.js';
-import { ensureAiImageIndex, rebuildFigureMetaStore } from './editor/image.js';
-import { convertParagraphToTag, generateBookmarkId, getClosestBlockId, compareParagraphOrder, calculateOffsetWithinNode } from './utils/dom.js';
 // Functions still in main.ts (exported)
-import { setActiveEditor, placeCaretBefore, placeCaretAfter, getCurrentParagraph, updateToolbarState, applyPendingBlockTag, toggleHangingIndent, changeIndent, bindEditorEvents, toggleHighlightPalette, setHighlightPaletteOpen, applyPageMargin, updateMarginRule, applyFontFamily, updateMarginButtonState, 
+import { convertParagraphToTag, generateBookmarkId, getClosestBlockId, compareParagraphOrder, calculateOffsetWithinNode, isParagraphEmpty, findParagraphWrapper, ensureParagraphWrapper, ensureFigureWrapper } from './utils/dom.js';
+// Functions still in main.ts (exported)
+import { setActiveEditor, getCurrentParagraph, updateToolbarState, applyPendingBlockTag, toggleHangingIndent, changeIndent, bindEditorEvents, toggleHighlightPalette, setHighlightPaletteOpen, applyPageMargin, updateMarginRule, applyFontFamily, updateMarginButtonState, 
 // alignDirections, // Not exported yet
-applyParagraphAlignment, getParagraphsInRange, applyParagraphSpacing, closeAllFontSubmenus, setFontMenuOpen, toggleFontMenu, closeFontMenu, closeFontSubmenu, closeAllParagraphSubmenus, setParagraphMenuOpen, toggleParagraphMenu, closeParagraphMenu, getCaretOffset, insertInlineTabAt, handleInlineTabKey, handleInlineTabBackspace, syncToSource, applyLineHeight, toggleFileDropdown, closeNestedDropdown, closeFileDropdown, isRangeInsideCurrentEditor, saveTextSelectionFromEditor, getEffectiveTextRange, applyImageSize, showImageContextMenu, closeImageContextMenu, closeImageSubmenu, 
-// openTitleDialog, // Not exported yet
-// closeTitleDialog, // Not exported yet
-applyImageTitle, 
-// removeExistingImageTitle, // Not exported yet
-// updateImageMetaTitle, // Not exported yet
-promptDropboxImageUrl, promptWebImageUrl, insertImageAtCursor, ensureParagraphWrapper, ensureFigureWrapper, findParagraphWrapper, addLinkDestination, createLink, removeLink } from './main.js';
-import { computeSelectionStateFromRange, findTextPositionInParagraph, restoreRangeFromSelectionState, findParagraph } from './editor/selection.js';
+applyParagraphAlignment, getParagraphsInRange, applyParagraphSpacing, closeAllFontSubmenus, setFontMenuOpen, toggleFontMenu, closeFontMenu, closeFontSubmenu, closeAllParagraphSubmenus, setParagraphMenuOpen, toggleParagraphMenu, closeParagraphMenu, getCaretOffset, insertInlineTabAt, handleInlineTabKey, handleInlineTabBackspace, syncToSource, applyLineHeight, toggleFileDropdown, closeNestedDropdown, closeFileDropdown, isRangeInsideCurrentEditor, saveTextSelectionFromEditor, getEffectiveTextRange, addLinkDestination, createLink, removeLink } from './main.js';
+import { computeSelectionStateFromRange, findTextPositionInParagraph, restoreRangeFromSelectionState, findParagraph, placeCaretBefore, placeCaretAfter } from './editor/selection.js';
+import { applyImageSize, showImageContextMenu, closeImageContextMenu, closeImageSubmenu, applyImageTitle, promptDropboxImageUrl, promptWebImageUrl, insertImageAtCursor, openTitleDialog, closeTitleDialog, removeExistingImageTitle, updateImageMetaTitle, ensureAiImageIndex, rebuildFigureMetaStore } from './editor/image.js';
 // --- Window Assignments ---
 // Editor Core & UI
 window.setActiveEditor = setActiveEditor;
@@ -122,6 +117,7 @@ window.ensureFigureWrapper = ensureFigureWrapper;
 window.convertParagraphToTag = convertParagraphToTag;
 window.generateBookmarkId = generateBookmarkId;
 window.getClosestBlockId = getClosestBlockId;
+window.isParagraphEmpty = isParagraphEmpty;
 // Links
 window.addLinkDestination = addLinkDestination;
 window.createLink = createLink;
@@ -133,11 +129,11 @@ window.rebuildFigureMetaStore = rebuildFigureMetaStore;
 window.showImageContextMenu = showImageContextMenu;
 window.closeImageContextMenu = closeImageContextMenu;
 window.closeImageSubmenu = closeImageSubmenu;
-// window.openTitleDialog = openTitleDialog;
-// window.closeTitleDialog = closeTitleDialog;
+window.openTitleDialog = openTitleDialog;
+window.closeTitleDialog = closeTitleDialog;
 window.applyImageTitle = applyImageTitle;
-// window.removeExistingImageTitle = removeExistingImageTitle;
-// window.updateImageMetaTitle = updateImageMetaTitle;
+window.removeExistingImageTitle = removeExistingImageTitle;
+window.updateImageMetaTitle = updateImageMetaTitle;
 window.promptDropboxImageUrl = promptDropboxImageUrl;
 window.promptWebImageUrl = promptWebImageUrl;
 window.insertImageAtCursor = insertImageAtCursor;

@@ -61,21 +61,23 @@ import {
     buildFullHTML
 } from './editor/io.js';
 
-import { ensureAiImageIndex, rebuildFigureMetaStore } from './editor/image.js';
 
+// Functions still in main.ts (exported)
 import {
     convertParagraphToTag,
     generateBookmarkId,
     getClosestBlockId,
     compareParagraphOrder,
-    calculateOffsetWithinNode
+    calculateOffsetWithinNode,
+    isParagraphEmpty,
+    findParagraphWrapper,
+    ensureParagraphWrapper,
+    ensureFigureWrapper
 } from './utils/dom.js';
 
 // Functions still in main.ts (exported)
 import {
     setActiveEditor,
-    placeCaretBefore,
-    placeCaretAfter,
     getCurrentParagraph,
     updateToolbarState,
     applyPendingBlockTag,
@@ -113,21 +115,6 @@ import {
     isRangeInsideCurrentEditor,
     saveTextSelectionFromEditor,
     getEffectiveTextRange,
-    applyImageSize,
-    showImageContextMenu,
-    closeImageContextMenu,
-    closeImageSubmenu,
-    // openTitleDialog, // Not exported yet
-    // closeTitleDialog, // Not exported yet
-    applyImageTitle,
-    // removeExistingImageTitle, // Not exported yet
-    // updateImageMetaTitle, // Not exported yet
-    promptDropboxImageUrl,
-    promptWebImageUrl,
-    insertImageAtCursor,
-    ensureParagraphWrapper,
-    ensureFigureWrapper,
-    findParagraphWrapper,
     addLinkDestination,
     createLink,
     removeLink
@@ -137,8 +124,27 @@ import {
     computeSelectionStateFromRange,
     findTextPositionInParagraph,
     restoreRangeFromSelectionState,
-    findParagraph
+    findParagraph,
+    placeCaretBefore,
+    placeCaretAfter
 } from './editor/selection.js';
+
+import {
+    applyImageSize,
+    showImageContextMenu,
+    closeImageContextMenu,
+    closeImageSubmenu,
+    applyImageTitle,
+    promptDropboxImageUrl,
+    promptWebImageUrl,
+    insertImageAtCursor,
+    openTitleDialog,
+    closeTitleDialog,
+    removeExistingImageTitle,
+    updateImageMetaTitle,
+    ensureAiImageIndex,
+    rebuildFigureMetaStore
+} from './editor/image.js';
 
 // --- Window Assignments ---
 
@@ -235,6 +241,7 @@ window.ensureFigureWrapper = ensureFigureWrapper;
 window.convertParagraphToTag = convertParagraphToTag;
 window.generateBookmarkId = generateBookmarkId;
 window.getClosestBlockId = getClosestBlockId;
+window.isParagraphEmpty = isParagraphEmpty;
 
 // Links
 window.addLinkDestination = addLinkDestination;
@@ -248,11 +255,11 @@ window.rebuildFigureMetaStore = rebuildFigureMetaStore;
 window.showImageContextMenu = showImageContextMenu;
 window.closeImageContextMenu = closeImageContextMenu;
 window.closeImageSubmenu = closeImageSubmenu;
-// window.openTitleDialog = openTitleDialog;
-// window.closeTitleDialog = closeTitleDialog;
+window.openTitleDialog = openTitleDialog;
+window.closeTitleDialog = closeTitleDialog;
 window.applyImageTitle = applyImageTitle;
-// window.removeExistingImageTitle = removeExistingImageTitle;
-// window.updateImageMetaTitle = updateImageMetaTitle;
+window.removeExistingImageTitle = removeExistingImageTitle;
+window.updateImageMetaTitle = updateImageMetaTitle;
 window.promptDropboxImageUrl = promptDropboxImageUrl;
 window.promptWebImageUrl = promptWebImageUrl;
 window.insertImageAtCursor = insertImageAtCursor;

@@ -123,3 +123,54 @@ export function getClosestBlockId(element) {
     const block = element.closest('p, h1, h2, h3, h4, h5, h6');
     return block ? block.id : '';
 }
+/**
+ * 段落要素が空（テキストや<br>以外の要素がない）かどうかを判定します。
+ * @param block - 判定対象の要素
+ * @returns 空であれば true
+ */
+export const isParagraphEmpty = (block) => {
+    if (!block)
+        return false;
+    for (const child of block.childNodes) {
+        if (child.nodeType === Node.TEXT_NODE) {
+            if (child.textContent?.trim() !== '') {
+                return false;
+            }
+        }
+        else if (child.nodeType === Node.ELEMENT_NODE) {
+            if (child.tagName !== 'BR') {
+                return false;
+            }
+        }
+    }
+    return true;
+};
+export function findParagraphWrapper(paragraph) {
+    if (!paragraph || !(paragraph instanceof HTMLElement))
+        return null;
+    return (Array.from(paragraph.children).find((child) => child instanceof HTMLElement && child.classList.contains('inline-align')) ?? null);
+}
+export function ensureParagraphWrapper(paragraph) {
+    let wrapper = findParagraphWrapper(paragraph);
+    if (wrapper)
+        return wrapper;
+    const fragment = document.createDocumentFragment();
+    while (paragraph.firstChild) {
+        fragment.appendChild(paragraph.firstChild);
+    }
+    wrapper = document.createElement('span');
+    wrapper.classList.add('inline-align');
+    wrapper.appendChild(fragment);
+    paragraph.appendChild(wrapper);
+    return wrapper;
+}
+export function ensureFigureWrapper(paragraph) {
+    if (!paragraph || !(paragraph instanceof HTMLElement))
+        return null;
+    const wrapper = ensureParagraphWrapper(paragraph);
+    ['left', 'center', 'right'].forEach(dir => {
+        wrapper.classList.remove(`inline-align-${dir}`);
+    });
+    wrapper.classList.add('inline-align-center', 'figure-inline');
+    return wrapper;
+}

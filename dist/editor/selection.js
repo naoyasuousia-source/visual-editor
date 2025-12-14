@@ -88,3 +88,42 @@ export function restoreRangeFromSelectionState(state) {
     range.setEnd(endPosition.node, endPosition.offset);
     return range;
 }
+export function placeCaretBefore(node) {
+    if (!node)
+        return;
+    const range = document.createRange();
+    range.setStartBefore(node);
+    range.collapse(true);
+    const selection = window.getSelection();
+    if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+}
+export function placeCaretAfter(node) {
+    if (!node)
+        return;
+    const range = document.createRange();
+    range.setStartAfter(node);
+    range.collapse(true);
+    const selection = window.getSelection();
+    if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+}
+export function getCurrentParagraph() {
+    const currentEditor = window.currentEditor;
+    if (!currentEditor)
+        return null;
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount)
+        return null;
+    let node = sel.anchorNode;
+    if (!currentEditor.contains(node))
+        return null;
+    while (node && !(node.nodeType === 1 && /^(p|h[1-6]|div)$/i.test(node.nodeName))) {
+        node = node.parentNode;
+    }
+    return node;
+}
