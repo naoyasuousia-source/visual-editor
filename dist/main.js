@@ -445,11 +445,45 @@ const getFileDropdownElement = () => document.querySelector('.file-dropdown');
 const getNestedDropdownElements = () => document.querySelectorAll('.nested-dropdown');
 const INDENT_STEP_PX = 36 * (96 / 72);
 let currentPageMarginSize = 'm';
+let currentEditorFontFamily = 'inherit';
 const pagesContainerElement = document.getElementById('pages-container');
 const sourceElement = document.getElementById('source');
 const openFileInputElement = document.getElementById('open-file-input');
 const imageContextMenuElement = document.getElementById('image-context-menu');
 const imageContextDropdownElement = document.querySelector('.image-context-dropdown');
+export function updateRootVariables() {
+    if (!styleTagElement)
+        return;
+    const marginValue = pageMarginValues[currentPageMarginSize] || '17mm';
+    const formatted = `:root {
+      --page-margin: ${marginValue};
+      --para-number-left: ${paraNumberLeft};
+      --editor-font-family: ${currentEditorFontFamily};
+    }`;
+    if (rootMarginRule.test(styleTagElement.innerHTML)) {
+        styleTagElement.innerHTML = styleTagElement.innerHTML.replace(rootMarginRule, formatted);
+    }
+    else {
+        styleTagElement.innerHTML += '\n' + formatted;
+    }
+}
+export function applyPageMargin(size) {
+    if (!pageMarginValues[size])
+        return;
+    currentPageMarginSize = size;
+    updateRootVariables();
+    updateMarginButtonState(size);
+}
+// Deprecated: Internal use only -> updateRootVariables
+export function updateMarginRule(value) {
+    updateRootVariables();
+}
+export function applyFontFamily(family) {
+    if (!family)
+        return;
+    currentEditorFontFamily = family;
+    updateRootVariables();
+}
 const imageContextTriggerElement = document.querySelector('.image-context-trigger');
 const imageTitleDialogElement = document.getElementById('image-title-dialog');
 const imageTitleInputElement = document.getElementById('image-title-input');
@@ -1383,6 +1417,26 @@ function initFontChooserControls() {
             }
         });
     });
+    // Font Family Options
+    const fontButtons = document.querySelectorAll('.font-family-option');
+    fontButtons.forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            event.preventDefault();
+            const family = btn.dataset.family;
+            if (family) {
+                applyFontFamily(family);
+                closeFontMenu();
+            }
+        });
+    });
+}
+export function updateMarginButtonState(activeSize) {
+    if (!toolbarElement)
+        return;
+    const buttons = toolbarElement.querySelectorAll('button[data-action="page-margin"]');
+    buttons.forEach(btn => {
+        btn.setAttribute('aria-pressed', btn.dataset.size === activeSize ? 'true' : 'false');
+    });
 }
 export function closeAllParagraphSubmenus() {
     if (!paragraphChooserElement)
@@ -1433,32 +1487,6 @@ export function applyLineHeight(size) {
         }
     });
     syncToSource();
-}
-export function updateMarginRule(value) {
-    if (!styleTagElement)
-        return;
-    if (rootMarginRule.test(styleTagElement.innerHTML)) {
-        const formatted = `:root {\n      --page-margin: ${value};\n      --para-number-left: ${paraNumberLeft};\n    }`;
-        styleTagElement.innerHTML = styleTagElement.innerHTML.replace(rootMarginRule, formatted);
-    }
-}
-export function updateMarginButtonState(activeSize) {
-    if (!toolbarElement)
-        return;
-    const buttons = toolbarElement.querySelectorAll('button[data-action="page-margin"]');
-    buttons.forEach(btn => {
-        btn.setAttribute('aria-pressed', btn.dataset.size === activeSize ? 'true' : 'false');
-    });
-}
-export function applyPageMargin(size) {
-    if (!pageMarginValues[size])
-        return;
-    currentPageMarginSize = size;
-    const value = pageMarginValues[size];
-    document.documentElement.style.setProperty('--page-margin', value);
-    document.documentElement.style.setProperty('--para-number-left', paraNumberLeft);
-    updateMarginRule(value);
-    updateMarginButtonState(size);
 }
 export function applyParagraphAlignment(direction) {
     if (!direction)
@@ -2023,6 +2051,7 @@ window.removeLink = removeLink;
 window.updateMarginRule = updateMarginRule;
 window.updateMarginButtonState = updateMarginButtonState;
 window.applyPageMargin = applyPageMargin;
+window.applyFontFamily = applyFontFamily;
 window.alignDirections = alignDirections;
 window.applyParagraphAlignment = applyParagraphAlignment;
 window.getParagraphsInRange = getParagraphsInRange;
