@@ -707,7 +707,11 @@ export function toggleFileDropdown() {
     const element = getFileDropdownElement();
     if (!element)
         return;
-    element.classList.toggle('open');
+    const willOpen = !element.classList.contains('open');
+    if (willOpen) {
+        closeAllMenus('file');
+    }
+    element.classList.toggle('open', willOpen);
 }
 export function closeNestedDropdown() {
     getNestedDropdownElements().forEach(dropdown => {
@@ -1492,6 +1496,9 @@ export function toggleParagraphMenu() {
     if (!paragraphChooserElement)
         return;
     const willOpen = !paragraphChooserElement.classList.contains('is-open');
+    if (willOpen) {
+        closeAllMenus('paragraph');
+    }
     setParagraphMenuOpen(willOpen);
 }
 export function closeParagraphMenu() {
@@ -1550,6 +1557,27 @@ export function applyParagraphAlignment(direction) {
             wrapper.classList.add(`inline-align-${direction}`);
         }
     });
+    // 選択範囲の復元（DOM構造変化により失われるため）
+    if (selection && paragraphs.length > 0) {
+        const first = paragraphs[0];
+        const last = paragraphs[paragraphs.length - 1];
+        // ラッパーまたはパラグラフ自体を取得
+        const firstTarget = findParagraphWrapper(first) || first;
+        const lastTarget = findParagraphWrapper(last) || last;
+        const newRange = document.createRange();
+        // ざっくりと最初の要素の先頭から最後の要素の末尾までを選択
+        newRange.setStart(firstTarget, 0);
+        // lastTargetの中身を含めるため、childNodesのlengthを使うか、afterを使う
+        // ここでは要素全体を選択するイメージで
+        if (lastTarget.lastChild) {
+            newRange.setEndAfter(lastTarget.lastChild);
+        }
+        else {
+            newRange.setEnd(lastTarget, lastTarget.childNodes.length);
+        }
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+    }
     window.syncToSource();
 }
 export function getParagraphsInRange(range) {
@@ -1795,7 +1823,11 @@ export function setHighlightPaletteOpen(open) {
 export function toggleHighlightPalette() {
     if (!highlightControlElement)
         return;
-    setHighlightPaletteOpen(!highlightControlElement.classList.contains('is-open'));
+    const willOpen = !highlightControlElement.classList.contains('is-open');
+    if (willOpen) {
+        closeAllMenus('highlight');
+    }
+    setHighlightPaletteOpen(willOpen);
 }
 function unwrapColorSpan(span) {
     if (!span)
@@ -2064,10 +2096,32 @@ export function setFontMenuOpen(open) {
         closeAllFontSubmenus();
     }
 }
+// Helper to close all valid menus
+function closeAllMenus(exclude) {
+    // Note: These functions must be hoisted or defined
+    if (exclude !== 'file' && typeof closeFileDropdown === 'function')
+        closeFileDropdown();
+    if (exclude !== 'font' && typeof closeFontMenu === 'function') {
+        closeFontMenu();
+        if (typeof closeAllFontSubmenus === 'function')
+            closeAllFontSubmenus();
+    }
+    if (exclude !== 'paragraph' && typeof closeParagraphMenu === 'function')
+        closeParagraphMenu();
+    if (exclude !== 'highlight') {
+        if (highlightControlElement)
+            setHighlightPaletteOpen(false);
+    }
+    closeImageContextMenu(); // Context menu should usually close on other interactions
+}
 export function toggleFontMenu() {
     if (!fontChooserElement)
         return;
-    setFontMenuOpen(!fontChooserElement.classList.contains('is-open'));
+    const willOpen = !fontChooserElement.classList.contains('is-open');
+    if (willOpen) {
+        closeAllMenus('font');
+    }
+    setFontMenuOpen(willOpen);
 }
 export function closeFontMenu() {
     setFontMenuOpen(false);
@@ -2339,6 +2393,10 @@ function bindToolbarHandlers() {
         // Handle input (checkbox) clicks first
         const inputTarget = event.target?.closest('input');
         if (inputTarget) {
+            // メニュー内の操作であればイベント伝播を止める（メニューを閉じさせないため）
+            if (inputTarget.closest('.font-chooser, .paragraph-chooser, .highlight-control')) {
+                event.stopPropagation();
+            }
             const action = inputTarget.dataset.action;
             if (action === 'hanging-indent') {
                 window.toggleHangingIndent?.(inputTarget.checked);
@@ -2348,6 +2406,11 @@ function bindToolbarHandlers() {
         const btn = event.target?.closest('button');
         if (!btn)
             return;
+        // メニュー内のボタンであればイベント伝播を止める
+        // (.font-chooser-panel, .paragraph-panel, .highlight-palette, .file-dropdown などの子孫である場合)
+        if (btn.closest('.font-chooser, .paragraph-chooser, .highlight-control, .file-dropdown')) {
+            event.stopPropagation();
+        }
         const action = btn.dataset.action;
         switch (action) {
             case 'bold':
