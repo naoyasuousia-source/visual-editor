@@ -1,25 +1,22 @@
-
-// Formatting logic such as Toggle Bold, Italic, Color, etc.
-
 import {
     SelectionState,
-} from '../types';
+} from '../types.js';
 
 import {
     computeSelectionStateFromRange,
     restoreRangeFromSelectionState
-} from './selection';
+} from './selection.js';
 
 import {
     convertParagraphToTag,
     unwrapColorSpan,
     removeColorSpansInNode
-} from '../utils/dom';
+} from '../utils/dom.js';
 
 // We rely on window.* extension methods for some core side-effects for now
 // to maintain compatibility with the monolithic main.ts behavior during refactoring.
 
-function normalizeInlineFormatting() {
+export function normalizeInlineFormatting() {
     const currentEditor = window.currentEditor;
     if (!currentEditor) return;
     replaceInlineTag(currentEditor, 'strong', 'b');
@@ -138,6 +135,14 @@ export function applyBlockElement(tag: string | null | undefined): void {
     }
 }
 
+export function toggleSuperscript(): void {
+    applyInlineScript('superscript');
+}
+
+export function toggleSubscript(): void {
+    applyInlineScript('subscript');
+}
+
 export function applyColorHighlight(color?: string | null): void {
     const currentEditor = window.currentEditor;
     if (!currentEditor) return;
@@ -241,6 +246,33 @@ export function resetFontColorInSelection(): void {
     selection.removeAllRanges();
     selection.addRange(normalized);
     window.syncToSource();
+}
+
+export function removeHighlightsInRange(range: Range): boolean {
+    if (!range) return false;
+
+    // 1. 範囲がハイライト要素の内側にある場合、親を分割して「裸」にする必要がある
+    const ancestor = getAncestorHighlight(range.commonAncestorContainer);
+    if (ancestor) {
+        // 親がいる場合は親を剥がす
+        unwrapColorSpan(ancestor);
+        // unwrapするとDOM構造が変わるので、rangeの再取得が必要になるケースがあるが、
+        // ここでは単純に「解除した」としてtrueを返す
+        // (完全に正確な範囲復元は複雑だが、今回の要件では「掃除」ができればよい)
+        return true;
+    }
+
+    // 2. 範囲内のハイライト要素を除去
+    const clone = range.cloneContents();
+    const spans = clone.querySelectorAll('.inline-highlight, .inline-color, span[style*="background-color"], span[style*="color"]');
+    if (spans.length > 0) {
+        const fragment = range.extractContents();
+        removeColorSpansInNode(fragment); // Use the new helper
+        range.insertNode(fragment);
+        return true;
+    }
+
+    return false;
 }
 
 export function resetHighlightsInSelection(): void {

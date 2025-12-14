@@ -1,5 +1,5 @@
-import { SelectionState, ParagraphPosition, TextPosition } from '../types';
-import { calculateOffsetWithinNode, compareParagraphOrder } from '../utils/dom';
+import { SelectionState, ParagraphPosition, TextPosition } from '../types.js';
+import { calculateOffsetWithinNode, compareParagraphOrder } from '../utils/dom.js';
 
 // Note: Using window.currentEditor might be risky if we want pure modules.
 // Ideally, pass editor context or use a robust state management.

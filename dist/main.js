@@ -1,3 +1,9 @@
+import { findParagraph, findTextPositionInParagraph, computeSelectionStateFromRange, restoreRangeFromSelectionState } from './editor/selection.js';
+import { toggleBold, toggleItalic, toggleUnderline, toggleStrikeThrough, applyInlineScript, toggleSuperscript, toggleSubscript, applyColorHighlight, applyFontColor, resetFontColorInSelection, resetHighlightsInSelection, removeHighlightsInRange, applyBlockElement } from './editor/formatting.js';
+import { convertParagraphToTag, calculateOffsetWithinNode, compareParagraphOrder, generateBookmarkId } from './utils/dom.js';
+// Note: Window interface extension is now in types.ts. 
+// We don't need to redeclare it here if we include types.ts in compilation, 
+// but TS needs to know about it. Since this is an entry point, imports might suffice.
 // Phase 1: Core Utilities Implementation
 export function setActiveEditor(inner) {
     window.currentEditor = inner;
@@ -52,6 +58,8 @@ window.setActiveEditor = setActiveEditor;
 window.placeCaretBefore = placeCaretBefore;
 window.placeCaretAfter = placeCaretAfter;
 window.getCurrentParagraph = getCurrentParagraph;
+// 段階的移行のため、ローカル定義の helper を維持しつつ、必要に応じて utils からインポートしたものを使う
+// ここではまず、重複している型定義と convertParagraphToTag を削除・インポートに置換
 /**
  * 段落要素が空（テキストや<br>以外の要素がない）かどうかを判定します。
  * @param block - 判定対象の要素
@@ -62,7 +70,6 @@ const isParagraphEmpty = (block) => {
         return false;
     for (const child of block.childNodes) {
         if (child.nodeType === Node.TEXT_NODE) {
-            // textContent が null の可能性を考慮し、オプショナルチェイニング(?.)を使用
             if (child.textContent?.trim() !== '') {
                 return false;
             }
@@ -75,7 +82,6 @@ const isParagraphEmpty = (block) => {
     }
     return true;
 };
-// 段階的な移行のため、グローバルスコープで利用できるようにする
 window.isParagraphEmpty = isParagraphEmpty;
 let lastSelectionState = null;
 const alignDirections = ['left', 'center', 'right'];
@@ -109,67 +115,6 @@ export function ensureFigureWrapper(paragraph) {
     });
     wrapper.classList.add('inline-align-center', 'figure-inline');
     return wrapper;
-}
-export function convertParagraphToTag(paragraph, tag) {
-    if (!paragraph || !(paragraph instanceof HTMLElement))
-        return null;
-    const desiredTag = tag === 'mini-p' ? 'p' : tag;
-    const currentTag = paragraph.tagName.toLowerCase();
-    let replacement = paragraph;
-    if (currentTag !== desiredTag) {
-        const replacementElement = document.createElement(desiredTag);
-        Array.from(paragraph.attributes).forEach(attr => {
-            replacementElement.setAttribute(attr.name, attr.value);
-        });
-        while (paragraph.firstChild) {
-            replacementElement.appendChild(paragraph.firstChild);
-        }
-        const parent = paragraph.parentNode;
-        if (parent) {
-            parent.replaceChild(replacementElement, paragraph);
-        }
-        replacement = replacementElement;
-    }
-    if (tag === 'mini-p') {
-        let miniTextSpan = replacement.querySelector(':scope > .mini-text');
-        if (miniTextSpan) {
-            miniTextSpan.style.fontSize = '8pt';
-            if (!miniTextSpan.classList.contains('mini-text')) {
-                miniTextSpan.classList.add('mini-text');
-            }
-        }
-        else {
-            const fragment = document.createDocumentFragment();
-            while (replacement.firstChild) {
-                fragment.appendChild(replacement.firstChild);
-            }
-            miniTextSpan = document.createElement('span');
-            miniTextSpan.className = 'mini-text';
-            miniTextSpan.style.fontSize = '8pt';
-            miniTextSpan.appendChild(fragment);
-            replacement.appendChild(miniTextSpan);
-        }
-        replacement.dataset.blockStyle = 'mini-p';
-    }
-    else {
-        const miniTextSpan = replacement.querySelector(':scope > .mini-text');
-        if (miniTextSpan) {
-            while (miniTextSpan.firstChild) {
-                replacement.insertBefore(miniTextSpan.firstChild, miniTextSpan);
-            }
-            replacement.removeChild(miniTextSpan);
-        }
-        replacement.dataset.blockStyle = desiredTag;
-    }
-    return replacement;
-}
-export function generateBookmarkId() {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let result = 'bm-';
-    for (let i = 0; i < 5; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
 }
 export function addLinkDestination() {
     const currentEditor = window.currentEditor;
@@ -309,112 +254,7 @@ export function getEffectiveTextRange() {
             }
             return restored.cloneRange();
         }
-    }
-    return null;
-}
-export function compareParagraphOrder(a, b) {
-    if (a === b)
-        return 0;
-    const pos = a.compareDocumentPosition(b);
-    if (pos & Node.DOCUMENT_POSITION_FOLLOWING) {
-        return -1;
-    }
-    if (pos & Node.DOCUMENT_POSITION_PRECEDING) {
-        return 1;
-    }
-    return 0;
-}
-export function calculateOffsetWithinNode(root, container, offset) {
-    if (!root || !container)
-        return null;
-    try {
-        const temp = document.createRange();
-        temp.setStart(root, 0);
-        temp.setEnd(container, offset);
-        return temp.toString().length;
-    }
-    catch (err) {
-        return null;
-    }
-}
-export function computeSelectionStateFromRange(range) {
-    if (!range)
-        return null;
-    const startParagraph = findParagraph(range.startContainer);
-    const endParagraph = findParagraph(range.endContainer);
-    if (!startParagraph || !endParagraph)
-        return null;
-    const startId = startParagraph.id;
-    const endId = endParagraph.id;
-    if (!startId || !endId)
-        return null;
-    const startOffset = calculateOffsetWithinNode(startParagraph, range.startContainer, range.startOffset);
-    const endOffset = calculateOffsetWithinNode(endParagraph, range.endContainer, range.endOffset);
-    if (startOffset == null || endOffset == null)
-        return null;
-    let startState = {
-        block: startParagraph,
-        id: startId,
-        offset: startOffset
-    };
-    let endState = {
-        block: endParagraph,
-        id: endId,
-        offset: endOffset
-    };
-    let order = compareParagraphOrder(startParagraph, endParagraph);
-    if (order > 0 || (order === 0 && startOffset > endOffset)) {
-        [startState, endState] = [endState, startState];
-    }
-    return {
-        startBlockId: startState.id,
-        endBlockId: endState.id,
-        startOffset: startState.offset,
-        endOffset: endState.offset
-    };
-}
-export function findTextPositionInParagraph(block, targetOffset) {
-    if (!block)
-        return null;
-    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, null);
-    let node = walker.nextNode();
-    let remaining = Math.max(0, targetOffset);
-    while (node) {
-        const length = node.textContent?.length ?? 0;
-        if (remaining <= length) {
-            return { node, offset: remaining };
-        }
-        remaining -= length;
-        node = walker.nextNode();
-    }
-    const fallbackOffset = Math.min(Math.max(remaining, 0), block.childNodes.length);
-    return { node: block, offset: fallbackOffset };
-}
-export function restoreRangeFromSelectionState(state) {
-    if (!state)
-        return null;
-    const startBlock = document.getElementById(state.startBlockId);
-    const endBlock = document.getElementById(state.endBlockId);
-    if (!startBlock || !endBlock)
-        return null;
-    const startPosition = findTextPositionInParagraph(startBlock, state.startOffset);
-    const endPosition = findTextPositionInParagraph(endBlock, state.endOffset);
-    if (!startPosition || !endPosition)
-        return null;
-    const range = document.createRange();
-    range.setStart(startPosition.node, startPosition.offset);
-    range.setEnd(endPosition.node, endPosition.offset);
-    return range;
-}
-export function findParagraph(node) {
-    let current = node;
-    const currentEditor = window.currentEditor;
-    while (current && current !== currentEditor) {
-        if (current.nodeType === Node.ELEMENT_NODE &&
-            /^(p|h[1-6])$/i.test(current.tagName)) {
-            return current;
-        }
-        current = current.parentNode;
+        return restoreRangeFromSelectionState(lastSelectionState);
     }
     return null;
 }
@@ -1625,123 +1465,21 @@ export function applyParagraphSpacing(size) {
     });
     window.syncToSource();
 }
-export function applyBlockElement(tag) {
-    if (!tag)
-        return;
-    const current = getCurrentParagraph();
-    if (current) {
-        // 1. 選択範囲を保存
-        const selection = window.getSelection();
-        let savedState = null;
-        if (selection && selection.rangeCount > 0) {
-            savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
-        }
-        // 2. ブロック変換
-        convertParagraphToTag(current, tag);
-        renumberParagraphs();
-        // 3. 選択範囲を復元
-        if (savedState) {
-            const restored = restoreRangeFromSelectionState(savedState);
-            if (restored && selection) {
-                selection.removeAllRanges();
-                selection.addRange(restored);
-            }
-        }
-        window.syncToSource();
-    }
-}
-export function toggleBold() {
-    const currentEditor = window.currentEditor;
-    if (!currentEditor)
-        return;
-    currentEditor.focus();
-    document.execCommand('bold', false, undefined);
-    normalizeInlineFormatting();
-    syncToSource();
-}
-export function toggleItalic() {
-    const currentEditor = window.currentEditor;
-    if (!currentEditor)
-        return;
-    currentEditor.focus();
-    document.execCommand('italic', false, undefined);
-    normalizeInlineFormatting();
-    syncToSource();
-}
-export function toggleUnderline() {
-    const currentEditor = window.currentEditor;
-    if (!currentEditor)
-        return;
-    currentEditor.focus();
-    document.execCommand('underline', false, undefined);
-    normalizeInlineFormatting();
-    syncToSource();
-}
-export function toggleStrikeThrough() {
-    const currentEditor = window.currentEditor;
-    if (!currentEditor)
-        return;
-    // 1. 選択範囲を保存
-    const selection = window.getSelection();
-    let savedState = null;
-    if (selection && selection.rangeCount > 0) {
-        savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
-    }
-    currentEditor.focus();
-    document.execCommand('strikeThrough', false, undefined);
-    // 2. タグ正規化（これがDOMを置換して選択を壊す原因）
-    normalizeInlineFormatting();
-    // 3. 選択範囲を復元
-    if (savedState) {
-        const restored = restoreRangeFromSelectionState(savedState);
-        if (restored && selection) {
-            selection.removeAllRanges();
-            selection.addRange(restored);
-        }
-    }
-    syncToSource();
-}
-export function applyInlineScript(command) {
-    if (!command)
-        return;
-    const currentEditor = window.currentEditor;
-    if (!currentEditor)
-        return;
-    currentEditor.focus();
-    document.execCommand(command, false, undefined);
-    syncToSource();
-}
-export function toggleSuperscript() {
-    applyInlineScript('superscript');
-}
-export function toggleSubscript() {
-    applyInlineScript('subscript');
-}
-export function normalizeInlineFormatting() {
-    const currentEditor = window.currentEditor;
-    if (!currentEditor)
-        return;
-    replaceInlineTag(currentEditor, 'strong', 'b');
-    replaceInlineTag(currentEditor, 'em', 'i');
-    replaceInlineTag(currentEditor, 'strike', 's');
-    replaceInlineTag(currentEditor, 'del', 's');
-}
-function replaceInlineTag(currentEditor, from, to) {
-    const nodes = currentEditor.querySelectorAll(from);
-    nodes.forEach(node => {
-        const replacement = document.createElement(to);
-        Array.from(node.attributes).forEach(attr => {
-            replacement.setAttribute(attr.name, attr.value);
-        });
-        while (node.firstChild) {
-            replacement.appendChild(node.firstChild);
-        }
-        const parent = node.parentNode;
-        if (!parent)
-            return;
-        parent.replaceChild(replacement, node);
-    });
-}
+// Phase 3: Formatting & Selection Implementation
+// Imported from editor/formatting.ts
+// Legacy exports for HTML usage via window
+window.toggleBold = toggleBold;
+window.toggleItalic = toggleItalic;
+window.toggleUnderline = toggleUnderline;
+window.toggleStrikeThrough = toggleStrikeThrough;
+window.applyInlineScript = applyInlineScript;
+window.toggleSuperscript = toggleSuperscript;
+window.toggleSubscript = toggleSubscript;
+window.resetHighlightsInSelection = resetHighlightsInSelection;
+window.applyColorHighlight = applyColorHighlight;
+window.applyFontColor = applyFontColor;
+window.resetFontColorInSelection = resetFontColorInSelection;
+window.removeHighlightsInRange = removeHighlightsInRange;
 export function getCaretOffset(range) {
     const currentEditor = window.currentEditor;
     if (!currentEditor)
@@ -1868,251 +1606,6 @@ export function toggleHighlightPalette() {
         closeAllMenus('highlight');
     }
     setHighlightPaletteOpen(willOpen);
-}
-function unwrapColorSpan(span) {
-    if (!span)
-        return;
-    const parent = span.parentNode;
-    if (!parent)
-        return;
-    while (span.firstChild) {
-        parent.insertBefore(span.firstChild, span);
-    }
-    parent.removeChild(span);
-}
-function getAncestorHighlight(node) {
-    let curr = node;
-    const editor = window.currentEditor;
-    while (curr && curr !== editor && curr !== document.body) {
-        if (curr.nodeType === Node.ELEMENT_NODE) {
-            const el = curr;
-            if (el.classList.contains('inline-highlight') ||
-                el.classList.contains('inline-color') ||
-                el.style.backgroundColor ||
-                el.style.color) {
-                return el;
-            }
-        }
-        curr = curr.parentNode;
-    }
-    return null;
-}
-/**
- * Helper to remove color/highlight spans from a fragment/node recursively
- * but keep their text content.
- */
-function removeColorSpansInNode(root) {
-    if (root.nodeType !== Node.DOCUMENT_FRAGMENT_NODE && root.nodeType !== Node.ELEMENT_NODE)
-        return;
-    const parent = root;
-    const spans = Array.from(parent.querySelectorAll('.inline-highlight, .inline-color, span[style*="background-color"], span[style*="color"]'));
-    spans.forEach(span => {
-        // 該当クラスまたはスタイルを持つ場合のみ Unwrap
-        const el = span;
-        if (el.classList.contains('inline-highlight') ||
-            el.classList.contains('inline-color') ||
-            el.style.backgroundColor ||
-            el.style.color) {
-            unwrapColorSpan(el);
-        }
-    });
-}
-export function removeHighlightsInRange(range) {
-    if (!range)
-        return false;
-    // 1. 範囲がハイライト要素の内側にある場合、親を分割して「裸」にする必要がある
-    const ancestor = getAncestorHighlight(range.commonAncestorContainer);
-    if (ancestor) {
-        // 親がいる場合は親を剥がす
-        unwrapColorSpan(ancestor);
-        // unwrapするとDOM構造が変わるので、rangeの再取得が必要になるケースがあるが、
-        // ここでは単純に「解除した」としてtrueを返す
-        // (完全に正確な範囲復元は複雑だが、今回の要件では「掃除」ができればよい)
-        return true;
-    }
-    // 2. 範囲内のハイライト要素を除去
-    const clone = range.cloneContents();
-    const spans = clone.querySelectorAll('.inline-highlight, .inline-color, span[style*="background-color"], span[style*="color"]');
-    if (spans.length > 0) {
-        const fragment = range.extractContents();
-        removeColorSpansInNode(fragment); // Use the new helper
-        range.insertNode(fragment);
-        return true;
-    }
-    return false;
-}
-export function resetHighlightsInSelection() {
-    const selection = window.getSelection();
-    if (!selection || !selection.rangeCount)
-        return;
-    const range = selection.getRangeAt(0);
-    if (range.collapsed)
-        return;
-    // 1. 範囲がハイライト要素の内側にある場合（＝完全に選択している場合など）
-    //    親のハイライトを解除し、かつ選択範囲を維持する
-    const ancestor = getAncestorHighlight(range.commonAncestorContainer);
-    if (ancestor) {
-        const first = ancestor.firstChild;
-        const last = ancestor.lastChild;
-        // 親を解除
-        unwrapColorSpan(ancestor);
-        // 選択範囲を復元（解除された中身を選択し直す）
-        if (first && last) {
-            selection.removeAllRanges();
-            const newRange = document.createRange();
-            newRange.setStartBefore(first);
-            newRange.setEndAfter(last);
-            selection.addRange(newRange);
-        }
-        window.syncToSource();
-        return;
-    }
-    // 2. 部分的な選択や、複数のハイライトを含む場合
-    //    範囲内のDOMを抽出して掃除する
-    const fragment = range.extractContents();
-    // 抽出後のフラグメント内のハイライトを除去
-    removeColorSpansInNode(fragment);
-    // 挿入後の参照用に最初と最後のノードを確保
-    const first = fragment.firstChild;
-    const last = fragment.lastChild;
-    // 元の位置に挿入
-    range.insertNode(fragment);
-    // 3. 選択範囲の復元
-    //    挿入された範囲全体を再度選択する
-    if (first && last) {
-        selection.removeAllRanges();
-        const newRange = document.createRange();
-        newRange.setStartBefore(first);
-        newRange.setEndAfter(last);
-        selection.addRange(newRange);
-    }
-    window.syncToSource();
-}
-export function applyColorHighlight(color) {
-    const currentEditor = window.currentEditor;
-    if (!currentEditor)
-        return;
-    const selection = window.getSelection();
-    if (!selection || !selection.rangeCount)
-        return;
-    const range = selection.getRangeAt(0);
-    if (range.collapsed)
-        return;
-    if (!currentEditor.contains(range.commonAncestorContainer))
-        return;
-    // 1. 範囲内のDOMを抽出（自動的に境界で分割される）
-    //    extractContents() は、選択範囲がタグをまたぐ場合、タグを複製して
-    //    「選択された部分」だけを含むFragmentを生成し、元のDOMからはその部分を除去する。
-    //    また、元のDOMに残る部分（選択範囲外）はそのまま残る。
-    //    これがまさに「分割して適用」の動作そのもの。
-    const fragment = range.extractContents();
-    // 2. 抽出した部分から、既存のハイライトタグを除去（掃除）
-    //    これにより「二重タグ」を防ぐ。
-    removeColorSpansInNode(fragment);
-    // 3. 新しいタグで包む
-    //    colorがnullなら包まずに戻すだけ（解除）
-    let nodeToInsert = fragment;
-    let newSpan = null;
-    if (color) {
-        newSpan = document.createElement('span');
-        newSpan.className = 'inline-highlight';
-        newSpan.style.backgroundColor = color;
-        newSpan.appendChild(fragment);
-        nodeToInsert = newSpan;
-    }
-    // 4. 元の位置に挿入
-    range.insertNode(nodeToInsert);
-    // 5. 選択範囲の復元
-    //    挿入したノード（またはFragmentの中身）を再度選択する
-    selection.removeAllRanges();
-    const newRange = document.createRange();
-    if (newSpan) {
-        newRange.selectNode(newSpan);
-    }
-    else {
-        // 解除の場合は nodeToInsert は Fragment なので、挿入後の実体ノードを選択する必要があるが、
-        // Fragment挿入後はFragment自体は空になるため、挿入位置を特定するのが難しい。
-        // そのため、insertNodeの前に位置をマーキングするか、あるいは単純にカーソルを置く。
-        // 今回は「変更した部分を選択維持」したい要望があるので、
-        // insertNodeした直後のRange状態（通常は挿入物の直後）ではなく、包含するようにしたい。
-        // 簡易的に newRange.selectNode(nodeToInsert) はできない（Fragmentだから）。
-        // 代案: 挿入前に空のSpan（マーカー）を前後に入れておき、その間を選択する等のハックが必要。
-        // ここではcolorがある場合（通常フロー）を優先し、解除時は一旦カーソルのみ復帰とする（複雑化回避）
-        newRange.setStartAfter(nodeToInsert); // 仮
-        newRange.collapse(true);
-    }
-    selection.addRange(newRange);
-    currentEditor.focus(); // フォーカスを戻す
-    window.syncToSource();
-}
-export function applyFontColor(color) {
-    const currentEditor = window.currentEditor;
-    if (!currentEditor)
-        return;
-    const selection = window.getSelection();
-    if (!selection || !selection.rangeCount)
-        return;
-    const range = selection.getRangeAt(0);
-    if (range.collapsed)
-        return;
-    if (!currentEditor.contains(range.commonAncestorContainer))
-        return;
-    // 1. Extract (Split implicitly)
-    const fragment = range.extractContents();
-    // 2. Clean existing fonts
-    removeColorSpansInNode(fragment);
-    // 3. Wrap new
-    let nodeToInsert = fragment;
-    let newSpan = null;
-    if (color) {
-        newSpan = document.createElement('span');
-        newSpan.className = 'inline-color';
-        newSpan.style.color = color;
-        newSpan.appendChild(fragment);
-        nodeToInsert = newSpan;
-    }
-    // 4. Insert
-    range.insertNode(nodeToInsert);
-    // 5. Reselect
-    selection.removeAllRanges();
-    const newRange = document.createRange();
-    if (newSpan) {
-        newRange.selectNode(newSpan);
-    }
-    else {
-        newRange.setStartAfter(nodeToInsert);
-        newRange.collapse(true);
-    }
-    selection.addRange(newRange);
-    currentEditor.focus();
-    window.syncToSource();
-}
-export function resetFontColorInSelection() {
-    const currentEditor = window.currentEditor;
-    if (!currentEditor)
-        return;
-    const selection = window.getSelection();
-    if (!selection || !selection.rangeCount)
-        return;
-    const range = selection.getRangeAt(0);
-    if (range.collapsed)
-        return;
-    if (!currentEditor.contains(range.commonAncestorContainer))
-        return;
-    const spans = Array.from(currentEditor.querySelectorAll('.inline-color'));
-    let removed = false;
-    spans.forEach(span => {
-        if (range.intersectsNode(span)) {
-            unwrapColorSpan(span);
-            removed = true;
-        }
-    });
-    if (!removed)
-        return;
-    const normalized = range.cloneRange();
-    selection.removeAllRanges();
-    selection.addRange(normalized);
-    syncToSource();
 }
 export function closeAllFontSubmenus() {
     if (!fontChooserElement)

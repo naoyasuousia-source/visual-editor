@@ -1,109 +1,48 @@
-type AlignDirection = 'left' | 'center' | 'right';
 
-// グローバルスコープの型定義
-declare global {
-  interface Window {
-    isParagraphEmpty: (block: Element | null | undefined) => boolean;
-    findParagraphWrapper: (paragraph: Element | null) => HTMLElement | null;
-    ensureParagraphWrapper: (paragraph: Element) => HTMLElement;
-    ensureFigureWrapper: (paragraph: Element | null) => HTMLElement | null;
-    convertParagraphToTag: (paragraph: Element | null, tag: string) => HTMLElement | null;
-    currentEditor: HTMLElement | null;
-    syncToSource: () => void;
-    generateBookmarkId: () => string;
-    getCaretOffset: (range: Range) => number;
-    insertInlineTabAt: (range: Range, width: number) => boolean;
-    handleInlineTabKey: () => boolean;
-    handleInlineTabBackspace: () => boolean;
-    addLinkDestination: () => void;
-    createLink: () => void;
-    removeLink: () => void;
-    updateMarginRule: (value: string) => void;
-    updateMarginButtonState: (activeSize: string) => void;
-    applyPageMargin: (size: string) => void;
-    applyParagraphAlignment: (direction: string) => void;
-    alignDirections: readonly AlignDirection[];
-    getParagraphsInRange: (range: Range | null) => HTMLElement[];
-    applyParagraphSpacing: (size?: string | null) => void;
-    applyLineHeight: (size?: string | null) => void;
-    toggleBold: () => void;
-    toggleItalic: () => void;
-    toggleUnderline: () => void;
-    toggleStrikeThrough: () => void;
-    applyInlineScript: (command: string) => void;
-    toggleSuperscript: () => void;
-    toggleSubscript: () => void;
-    closeAllFontSubmenus: () => void;
-    setFontMenuOpen: (open: boolean) => void;
-    toggleFontMenu: () => void;
-    closeFontMenu: () => void;
-    closeFontSubmenu: (type?: string | null) => void;
-    closeAllParagraphSubmenus: () => void;
-    setParagraphMenuOpen: (open: boolean) => void;
-    toggleParagraphMenu: () => void;
-    closeParagraphMenu: () => void;
-    toggleFileDropdown: () => void;
-    closeNestedDropdown: () => void;
-    closeFileDropdown: () => void;
-    setHighlightPaletteOpen: (open: boolean) => void;
-    toggleHighlightPalette: () => void;
-    applyColorHighlight: (color?: string | null) => void;
-    applyFontColor: (color?: string | null) => void;
-    resetFontColorInSelection: () => void;
-    removeHighlightsInRange: (range: Range) => boolean;
-    saveTextSelectionFromEditor: () => void;
-    getEffectiveTextRange: () => Range | null;
-    calculateOffsetWithinNode: (root: Node | null, container: Node | null, offset: number) => number | null;
-    isRangeInsideCurrentEditor: (range: Range | null | undefined) => boolean;
-    compareParagraphOrder: (a: Node, b: Node) => number;
-    computeSelectionStateFromRange: (range: Range | null) => SelectionState | null;
-    findTextPositionInParagraph: (block: Element | null, targetOffset: number) => TextPosition | null;
-    restoreRangeFromSelectionState: (state: SelectionState | null) => Range | null;
-    findParagraph: (node: Node | null) => Element | null;
-    applyImageSize: (img: HTMLElement | null, size?: string | null) => void;
-    ensureAiImageIndex: () => void;
-    rebuildFigureMetaStore: () => void;
-    getClosestBlockId: (element: Element | null) => string;
-    showImageContextMenu: (event: MouseEvent, img: HTMLImageElement) => void;
-    closeImageContextMenu: () => void;
-    closeImageSubmenu: () => void;
-    openTitleDialog: () => void;
-    closeTitleDialog: () => void;
-    applyImageTitle: () => void;
-    removeExistingImageTitle: (img: HTMLImageElement | null) => void;
-    updateImageMetaTitle: (img: HTMLImageElement | null, title: string) => void;
-    toggleHangingIndent: (shouldHang: boolean) => void;
-    applyFontFamily: (family: string | null | undefined) => void;
-    applyBlockElement: (tag: string | null | undefined) => void;
-    changeIndent: (delta: number) => void;
-    addPage: () => void;
-    removePage: () => void;
-    saveFullHTML: () => void;
-    openWithFilePicker: () => Promise<boolean>;
-    promptDropboxImageUrl: () => void;
-    promptWebImageUrl: () => void;
-    overwriteCurrentFile: () => Promise<void>;
-    initPages: () => void;
-    renumberPages: () => void;
-    resetHighlightsInSelection: () => void;
-    createPage: (pageNumber: number, contentHTML?: string) => HTMLElement;
-    setActiveEditor: (inner: HTMLElement | null) => void;
-    bindEditorEvents: (inner: HTMLElement) => void;
-    placeCaretBefore: (node: Element | null) => void;
-    placeCaretAfter: (node: Element | null) => void;
-    getCurrentParagraph: () => Element | null;
-    renumberParagraphs: () => void;
-    insertImageAtCursor: (args: { src: string; alt: string }) => void;
-    updateToolbarState: () => void;
-    applyPendingBlockTag: (inner: HTMLElement) => void;
+import {
+  findParagraph,
+  findTextPositionInParagraph,
+  computeSelectionStateFromRange,
+  restoreRangeFromSelectionState
+} from './editor/selection.js';
 
-    // Phase 4 Extensions
-    setPagesHTML: (html: string) => void;
-    importFullHTMLText: (text: string) => boolean;
-    handleOpenFile: (event: Event) => void;
-    buildFullHTML: () => string;
-  }
-} // end of declare global
+import {
+  toggleBold,
+  toggleItalic,
+  toggleUnderline,
+  toggleStrikeThrough,
+  applyInlineScript,
+  toggleSuperscript,
+  toggleSubscript,
+  normalizeInlineFormatting,
+  applyColorHighlight,
+  applyFontColor,
+  resetFontColorInSelection,
+  resetHighlightsInSelection,
+  removeHighlightsInRange,
+  applyBlockElement
+} from './editor/formatting.js';
+
+import {
+  AlignDirection,
+  SelectionState,
+  ParagraphPosition,
+  TextPosition
+} from './types.js';
+
+import {
+  unwrapColorSpan,
+  removeColorSpansInNode,
+  convertParagraphToTag,
+  calculateOffsetWithinNode,
+  compareParagraphOrder,
+  generateBookmarkId,
+  removeColorSpansInNode as removeColorSpansInNodeUtil // Alias if needed, or just use removeColorSpansInNode
+} from './utils/dom.js';
+
+// Note: Window interface extension is now in types.ts. 
+// We don't need to redeclare it here if we include types.ts in compilation, 
+// but TS needs to know about it. Since this is an entry point, imports might suffice.
 
 // Phase 1: Core Utilities Implementation
 
@@ -161,23 +100,8 @@ window.placeCaretBefore = placeCaretBefore;
 window.placeCaretAfter = placeCaretAfter;
 window.getCurrentParagraph = getCurrentParagraph;
 
-type SelectionState = {
-  startBlockId: string;
-  endBlockId: string;
-  startOffset: number;
-  endOffset: number;
-};
-
-type ParagraphPosition = {
-  block: Element;
-  id: string;
-  offset: number;
-};
-
-type TextPosition = {
-  node: Node;
-  offset: number;
-};
+// 段階的移行のため、ローカル定義の helper を維持しつつ、必要に応じて utils からインポートしたものを使う
+// ここではまず、重複している型定義と convertParagraphToTag を削除・インポートに置換
 
 /**
  * 段落要素が空（テキストや<br>以外の要素がない）かどうかを判定します。
@@ -188,7 +112,6 @@ const isParagraphEmpty = (block: Element | null | undefined): boolean => {
   if (!block) return false;
   for (const child of block.childNodes) {
     if (child.nodeType === Node.TEXT_NODE) {
-      // textContent が null の可能性を考慮し、オプショナルチェイニング(?.)を使用
       if (child.textContent?.trim() !== '') {
         return false;
       }
@@ -201,7 +124,6 @@ const isParagraphEmpty = (block: Element | null | undefined): boolean => {
   return true;
 };
 
-// 段階的な移行のため、グローバルスコープで利用できるようにする
 window.isParagraphEmpty = isParagraphEmpty;
 
 let lastSelectionState: SelectionState | null = null;
@@ -243,70 +165,6 @@ export function ensureFigureWrapper(paragraph: Element | null): HTMLElement | nu
   });
   wrapper.classList.add('inline-align-center', 'figure-inline');
   return wrapper;
-}
-
-export function convertParagraphToTag(paragraph: Element | null, tag: string): HTMLElement | null {
-  if (!paragraph || !(paragraph instanceof HTMLElement)) return null;
-  const desiredTag = tag === 'mini-p' ? 'p' : tag;
-  const currentTag = paragraph.tagName.toLowerCase();
-
-  let replacement: HTMLElement = paragraph;
-
-  if (currentTag !== desiredTag) {
-    const replacementElement = document.createElement(desiredTag);
-    Array.from(paragraph.attributes).forEach(attr => {
-      replacementElement.setAttribute(attr.name, attr.value);
-    });
-    while (paragraph.firstChild) {
-      replacementElement.appendChild(paragraph.firstChild);
-    }
-    const parent = paragraph.parentNode;
-    if (parent) {
-      parent.replaceChild(replacementElement, paragraph);
-    }
-    replacement = replacementElement;
-  }
-
-  if (tag === 'mini-p') {
-    let miniTextSpan = replacement.querySelector(':scope > .mini-text') as HTMLElement | null;
-    if (miniTextSpan) {
-      miniTextSpan.style.fontSize = '8pt';
-      if (!miniTextSpan.classList.contains('mini-text')) {
-        miniTextSpan.classList.add('mini-text');
-      }
-    } else {
-      const fragment = document.createDocumentFragment();
-      while (replacement.firstChild) {
-        fragment.appendChild(replacement.firstChild);
-      }
-      miniTextSpan = document.createElement('span');
-      miniTextSpan.className = 'mini-text';
-      miniTextSpan.style.fontSize = '8pt';
-      miniTextSpan.appendChild(fragment);
-      replacement.appendChild(miniTextSpan);
-    }
-    replacement.dataset.blockStyle = 'mini-p';
-  } else {
-    const miniTextSpan = replacement.querySelector(':scope > .mini-text') as HTMLElement | null;
-    if (miniTextSpan) {
-      while (miniTextSpan.firstChild) {
-        replacement.insertBefore(miniTextSpan.firstChild, miniTextSpan);
-      }
-      replacement.removeChild(miniTextSpan);
-    }
-    replacement.dataset.blockStyle = desiredTag;
-  }
-
-  return replacement;
-}
-
-export function generateBookmarkId(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  let result = 'bm-';
-  for (let i = 0; i < 5; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
 }
 
 export function addLinkDestination(): void {
@@ -456,111 +314,7 @@ export function getEffectiveTextRange(): Range | null {
       }
       return restored.cloneRange();
     }
-  }
-  return null;
-}
-
-export function compareParagraphOrder(a: Node, b: Node): number {
-  if (a === b) return 0;
-  const pos = a.compareDocumentPosition(b);
-  if (pos & Node.DOCUMENT_POSITION_FOLLOWING) {
-    return -1;
-  }
-  if (pos & Node.DOCUMENT_POSITION_PRECEDING) {
-    return 1;
-  }
-  return 0;
-}
-
-export function calculateOffsetWithinNode(root: Node | null, container: Node | null, offset: number): number | null {
-  if (!root || !container) return null;
-  try {
-    const temp = document.createRange();
-    temp.setStart(root, 0);
-    temp.setEnd(container, offset);
-    return temp.toString().length;
-  } catch (err) {
-    return null;
-  }
-}
-
-export function computeSelectionStateFromRange(range: Range | null): SelectionState | null {
-  if (!range) return null;
-  const startParagraph = findParagraph(range.startContainer);
-  const endParagraph = findParagraph(range.endContainer);
-  if (!startParagraph || !endParagraph) return null;
-  const startId = startParagraph.id;
-  const endId = endParagraph.id;
-  if (!startId || !endId) return null;
-  const startOffset = calculateOffsetWithinNode(startParagraph, range.startContainer, range.startOffset);
-  const endOffset = calculateOffsetWithinNode(endParagraph, range.endContainer, range.endOffset);
-  if (startOffset == null || endOffset == null) return null;
-
-  let startState: ParagraphPosition = {
-    block: startParagraph,
-    id: startId,
-    offset: startOffset
-  };
-  let endState: ParagraphPosition = {
-    block: endParagraph,
-    id: endId,
-    offset: endOffset
-  };
-  let order = compareParagraphOrder(startParagraph, endParagraph);
-  if (order > 0 || (order === 0 && startOffset > endOffset)) {
-    [startState, endState] = [endState, startState];
-  }
-
-  return {
-    startBlockId: startState.id,
-    endBlockId: endState.id,
-    startOffset: startState.offset,
-    endOffset: endState.offset
-  };
-}
-
-export function findTextPositionInParagraph(block: Element | null, targetOffset: number): TextPosition | null {
-  if (!block) return null;
-  const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, null);
-  let node = walker.nextNode();
-  let remaining = Math.max(0, targetOffset);
-  while (node) {
-    const length = node.textContent?.length ?? 0;
-    if (remaining <= length) {
-      return { node, offset: remaining };
-    }
-    remaining -= length;
-    node = walker.nextNode();
-  }
-  const fallbackOffset = Math.min(Math.max(remaining, 0), block.childNodes.length);
-  return { node: block, offset: fallbackOffset };
-}
-
-export function restoreRangeFromSelectionState(state: SelectionState | null): Range | null {
-  if (!state) return null;
-  const startBlock = document.getElementById(state.startBlockId);
-  const endBlock = document.getElementById(state.endBlockId);
-  if (!startBlock || !endBlock) return null;
-  const startPosition = findTextPositionInParagraph(startBlock, state.startOffset);
-  const endPosition = findTextPositionInParagraph(endBlock, state.endOffset);
-  if (!startPosition || !endPosition) return null;
-  const range = document.createRange();
-  range.setStart(startPosition.node, startPosition.offset);
-  range.setEnd(endPosition.node, endPosition.offset);
-  return range;
-}
-
-export function findParagraph(node: Node | null): Element | null {
-  let current = node;
-  const currentEditor = window.currentEditor;
-  while (current && current !== currentEditor) {
-    if (
-      current.nodeType === Node.ELEMENT_NODE &&
-      /^(p|h[1-6])$/i.test((current as Element).tagName)
-    ) {
-      return current as Element;
-    }
-    current = current.parentNode;
+    return restoreRangeFromSelectionState(lastSelectionState);
   }
   return null;
 }
@@ -1840,131 +1594,23 @@ export function applyParagraphSpacing(size?: string | null): void {
   window.syncToSource();
 }
 
-export function applyBlockElement(tag: string | null | undefined): void {
-  if (!tag) return;
-  const current = getCurrentParagraph();
-  if (current) {
-    // 1. 選択範囲を保存
-    const selection = window.getSelection();
-    let savedState: SelectionState | null = null;
-    if (selection && selection.rangeCount > 0) {
-      savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
-    }
 
-    // 2. ブロック変換
-    convertParagraphToTag(current, tag);
-    renumberParagraphs();
+// Phase 3: Formatting & Selection Implementation
+// Imported from editor/formatting.ts
 
-    // 3. 選択範囲を復元
-    if (savedState) {
-      const restored = restoreRangeFromSelectionState(savedState);
-      if (restored && selection) {
-        selection.removeAllRanges();
-        selection.addRange(restored);
-      }
-    }
-
-    window.syncToSource();
-  }
-}
-
-export function toggleBold(): void {
-  const currentEditor = window.currentEditor;
-  if (!currentEditor) return;
-  currentEditor.focus();
-  document.execCommand('bold', false, undefined);
-  normalizeInlineFormatting();
-  syncToSource();
-}
-
-export function toggleItalic(): void {
-  const currentEditor = window.currentEditor;
-  if (!currentEditor) return;
-  currentEditor.focus();
-  document.execCommand('italic', false, undefined);
-  normalizeInlineFormatting();
-  syncToSource();
-}
-
-export function toggleUnderline(): void {
-  const currentEditor = window.currentEditor;
-  if (!currentEditor) return;
-  currentEditor.focus();
-  document.execCommand('underline', false, undefined);
-  normalizeInlineFormatting();
-  syncToSource();
-}
-
-export function toggleStrikeThrough(): void {
-  const currentEditor = window.currentEditor;
-  if (!currentEditor) return;
-
-  // 1. 選択範囲を保存
-  const selection = window.getSelection();
-  let savedState: SelectionState | null = null;
-  if (selection && selection.rangeCount > 0) {
-    savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
-  }
-
-  currentEditor.focus();
-  document.execCommand('strikeThrough', false, undefined);
-
-  // 2. タグ正規化（これがDOMを置換して選択を壊す原因）
-  normalizeInlineFormatting();
-
-  // 3. 選択範囲を復元
-  if (savedState) {
-    const restored = restoreRangeFromSelectionState(savedState);
-    if (restored && selection) {
-      selection.removeAllRanges();
-      selection.addRange(restored);
-    }
-  }
-
-  syncToSource();
-}
-
-export function applyInlineScript(command: string): void {
-  if (!command) return;
-  const currentEditor = window.currentEditor;
-  if (!currentEditor) return;
-  currentEditor.focus();
-  document.execCommand(command, false, undefined);
-  syncToSource();
-}
-
-export function toggleSuperscript(): void {
-  applyInlineScript('superscript');
-}
-
-export function toggleSubscript(): void {
-  applyInlineScript('subscript');
-}
-
-export function normalizeInlineFormatting(): void {
-  const currentEditor = window.currentEditor;
-  if (!currentEditor) return;
-  replaceInlineTag(currentEditor, 'strong', 'b');
-  replaceInlineTag(currentEditor, 'em', 'i');
-  replaceInlineTag(currentEditor, 'strike', 's');
-  replaceInlineTag(currentEditor, 'del', 's');
-}
-
-function replaceInlineTag(currentEditor: HTMLElement, from: string, to: string): void {
-  const nodes = currentEditor.querySelectorAll<HTMLElement>(from);
-  nodes.forEach(node => {
-    const replacement = document.createElement(to);
-    Array.from(node.attributes).forEach(attr => {
-      replacement.setAttribute(attr.name, attr.value);
-    });
-    while (node.firstChild) {
-      replacement.appendChild(node.firstChild);
-    }
-    const parent = node.parentNode;
-    if (!parent) return;
-    parent.replaceChild(replacement, node);
-  });
-}
+// Legacy exports for HTML usage via window
+window.toggleBold = toggleBold;
+window.toggleItalic = toggleItalic;
+window.toggleUnderline = toggleUnderline;
+window.toggleStrikeThrough = toggleStrikeThrough;
+window.applyInlineScript = applyInlineScript;
+window.toggleSuperscript = toggleSuperscript;
+window.toggleSubscript = toggleSubscript;
+window.resetHighlightsInSelection = resetHighlightsInSelection;
+window.applyColorHighlight = applyColorHighlight;
+window.applyFontColor = applyFontColor;
+window.resetFontColorInSelection = resetFontColorInSelection;
+window.removeHighlightsInRange = removeHighlightsInRange;
 
 export function getCaretOffset(range: Range): number {
   const currentEditor = window.currentEditor;
@@ -2070,6 +1716,7 @@ export function handleInlineTabBackspace(): boolean {
   return true;
 }
 
+
 export function setHighlightPaletteOpen(open: boolean): void {
   if (!highlightControlElement || !highlightButtonElement) return;
   highlightControlElement.classList.toggle('is-open', open);
@@ -2083,276 +1730,6 @@ export function toggleHighlightPalette(): void {
     closeAllMenus('highlight');
   }
   setHighlightPaletteOpen(willOpen);
-}
-
-
-function unwrapColorSpan(span: Element | null): void {
-  if (!span) return;
-  const parent = span.parentNode;
-  if (!parent) return;
-  while (span.firstChild) {
-    parent.insertBefore(span.firstChild, span);
-  }
-  parent.removeChild(span);
-}
-
-function getAncestorHighlight(node: Node | null): HTMLElement | null {
-  let curr = node;
-  const editor = window.currentEditor;
-  while (curr && curr !== editor && curr !== document.body) {
-    if (curr.nodeType === Node.ELEMENT_NODE) {
-      const el = curr as HTMLElement;
-      if (
-        el.classList.contains('inline-highlight') ||
-        el.classList.contains('inline-color') ||
-        el.style.backgroundColor ||
-        el.style.color
-      ) {
-        return el;
-      }
-    }
-    curr = curr.parentNode;
-  }
-  return null;
-}
-
-/**
- * Helper to remove color/highlight spans from a fragment/node recursively
- * but keep their text content.
- */
-function removeColorSpansInNode(root: Node): void {
-  if (root.nodeType !== Node.DOCUMENT_FRAGMENT_NODE && root.nodeType !== Node.ELEMENT_NODE) return;
-
-  const parent = root as ParentNode;
-  const spans = Array.from(parent.querySelectorAll('.inline-highlight, .inline-color, span[style*="background-color"], span[style*="color"]'));
-
-  spans.forEach(span => {
-    // 該当クラスまたはスタイルを持つ場合のみ Unwrap
-    const el = span as HTMLElement;
-    if (
-      el.classList.contains('inline-highlight') ||
-      el.classList.contains('inline-color') ||
-      el.style.backgroundColor ||
-      el.style.color
-    ) {
-      unwrapColorSpan(el);
-    }
-  });
-}
-
-export function removeHighlightsInRange(range: Range): boolean {
-  if (!range) return false;
-
-  // 1. 範囲がハイライト要素の内側にある場合、親を分割して「裸」にする必要がある
-  const ancestor = getAncestorHighlight(range.commonAncestorContainer);
-  if (ancestor) {
-    // 親がいる場合は親を剥がす
-    unwrapColorSpan(ancestor);
-    // unwrapするとDOM構造が変わるので、rangeの再取得が必要になるケースがあるが、
-    // ここでは単純に「解除した」としてtrueを返す
-    // (完全に正確な範囲復元は複雑だが、今回の要件では「掃除」ができればよい)
-    return true;
-  }
-
-  // 2. 範囲内のハイライト要素を除去
-  const clone = range.cloneContents();
-  const spans = clone.querySelectorAll('.inline-highlight, .inline-color, span[style*="background-color"], span[style*="color"]');
-  if (spans.length > 0) {
-    const fragment = range.extractContents();
-    removeColorSpansInNode(fragment); // Use the new helper
-    range.insertNode(fragment);
-    return true;
-  }
-
-  return false;
-}
-
-export function resetHighlightsInSelection(): void {
-  const selection = window.getSelection();
-  if (!selection || !selection.rangeCount) return;
-  const range = selection.getRangeAt(0);
-  if (range.collapsed) return;
-
-  // 1. 範囲がハイライト要素の内側にある場合（＝完全に選択している場合など）
-  //    親のハイライトを解除し、かつ選択範囲を維持する
-  const ancestor = getAncestorHighlight(range.commonAncestorContainer);
-  if (ancestor) {
-    const first = ancestor.firstChild;
-    const last = ancestor.lastChild;
-
-    // 親を解除
-    unwrapColorSpan(ancestor);
-
-    // 選択範囲を復元（解除された中身を選択し直す）
-    if (first && last) {
-      selection.removeAllRanges();
-      const newRange = document.createRange();
-      newRange.setStartBefore(first);
-      newRange.setEndAfter(last);
-      selection.addRange(newRange);
-    }
-    window.syncToSource();
-    return;
-  }
-
-  // 2. 部分的な選択や、複数のハイライトを含む場合
-  //    範囲内のDOMを抽出して掃除する
-  const fragment = range.extractContents();
-
-  // 抽出後のフラグメント内のハイライトを除去
-  removeColorSpansInNode(fragment);
-
-  // 挿入後の参照用に最初と最後のノードを確保
-  const first = fragment.firstChild;
-  const last = fragment.lastChild;
-
-  // 元の位置に挿入
-  range.insertNode(fragment);
-
-  // 3. 選択範囲の復元
-  //    挿入された範囲全体を再度選択する
-  if (first && last) {
-    selection.removeAllRanges();
-    const newRange = document.createRange();
-    newRange.setStartBefore(first);
-    newRange.setEndAfter(last);
-    selection.addRange(newRange);
-  }
-
-  window.syncToSource();
-}
-
-export function applyColorHighlight(color?: string | null): void {
-  const currentEditor = window.currentEditor;
-  if (!currentEditor) return;
-  const selection = window.getSelection();
-  if (!selection || !selection.rangeCount) return;
-  const range = selection.getRangeAt(0);
-  if (range.collapsed) return;
-  if (!currentEditor.contains(range.commonAncestorContainer)) return;
-
-  // 1. 範囲内のDOMを抽出（自動的に境界で分割される）
-  //    extractContents() は、選択範囲がタグをまたぐ場合、タグを複製して
-  //    「選択された部分」だけを含むFragmentを生成し、元のDOMからはその部分を除去する。
-  //    また、元のDOMに残る部分（選択範囲外）はそのまま残る。
-  //    これがまさに「分割して適用」の動作そのもの。
-  const fragment = range.extractContents();
-
-  // 2. 抽出した部分から、既存のハイライトタグを除去（掃除）
-  //    これにより「二重タグ」を防ぐ。
-  removeColorSpansInNode(fragment);
-
-  // 3. 新しいタグで包む
-  //    colorがnullなら包まずに戻すだけ（解除）
-  let nodeToInsert: Node = fragment;
-  let newSpan: HTMLElement | null = null;
-
-  if (color) {
-    newSpan = document.createElement('span');
-    newSpan.className = 'inline-highlight';
-    newSpan.style.backgroundColor = color;
-    newSpan.appendChild(fragment);
-    nodeToInsert = newSpan;
-  }
-
-  // 4. 元の位置に挿入
-  range.insertNode(nodeToInsert);
-
-  // 5. 選択範囲の復元
-  //    挿入したノード（またはFragmentの中身）を再度選択する
-  selection.removeAllRanges();
-  const newRange = document.createRange();
-  if (newSpan) {
-    newRange.selectNode(newSpan);
-  } else {
-    // 解除の場合は nodeToInsert は Fragment なので、挿入後の実体ノードを選択する必要があるが、
-    // Fragment挿入後はFragment自体は空になるため、挿入位置を特定するのが難しい。
-    // そのため、insertNodeの前に位置をマーキングするか、あるいは単純にカーソルを置く。
-    // 今回は「変更した部分を選択維持」したい要望があるので、
-    // insertNodeした直後のRange状態（通常は挿入物の直後）ではなく、包含するようにしたい。
-    // 簡易的に newRange.selectNode(nodeToInsert) はできない（Fragmentだから）。
-    // 代案: 挿入前に空のSpan（マーカー）を前後に入れておき、その間を選択する等のハックが必要。
-
-    // ここではcolorがある場合（通常フロー）を優先し、解除時は一旦カーソルのみ復帰とする（複雑化回避）
-    newRange.setStartAfter(nodeToInsert); // 仮
-    newRange.collapse(true);
-  }
-  selection.addRange(newRange);
-
-  currentEditor.focus(); // フォーカスを戻す
-  window.syncToSource();
-}
-
-
-export function applyFontColor(color?: string | null): void {
-  const currentEditor = window.currentEditor;
-  if (!currentEditor) return;
-  const selection = window.getSelection();
-  if (!selection || !selection.rangeCount) return;
-
-  const range = selection.getRangeAt(0);
-  if (range.collapsed) return;
-  if (!currentEditor.contains(range.commonAncestorContainer)) return;
-
-  // 1. Extract (Split implicitly)
-  const fragment = range.extractContents();
-
-  // 2. Clean existing fonts
-  removeColorSpansInNode(fragment);
-
-  // 3. Wrap new
-  let nodeToInsert: Node = fragment;
-  let newSpan: HTMLElement | null = null;
-
-  if (color) {
-    newSpan = document.createElement('span');
-    newSpan.className = 'inline-color';
-    newSpan.style.color = color;
-    newSpan.appendChild(fragment);
-    nodeToInsert = newSpan;
-  }
-
-  // 4. Insert
-  range.insertNode(nodeToInsert);
-
-  // 5. Reselect
-  selection.removeAllRanges();
-  const newRange = document.createRange();
-  if (newSpan) {
-    newRange.selectNode(newSpan);
-  } else {
-    newRange.setStartAfter(nodeToInsert);
-    newRange.collapse(true);
-  }
-  selection.addRange(newRange);
-
-  currentEditor.focus();
-  window.syncToSource();
-}
-
-export function resetFontColorInSelection(): void {
-  const currentEditor = window.currentEditor;
-  if (!currentEditor) return;
-  const selection = window.getSelection();
-  if (!selection || !selection.rangeCount) return;
-  const range = selection.getRangeAt(0);
-  if (range.collapsed) return;
-  if (!currentEditor.contains(range.commonAncestorContainer)) return;
-
-  const spans = Array.from(currentEditor.querySelectorAll<HTMLElement>('.inline-color'));
-  let removed = false;
-  spans.forEach(span => {
-    if (range.intersectsNode(span)) {
-      unwrapColorSpan(span);
-      removed = true;
-    }
-  });
-  if (!removed) return;
-
-  const normalized = range.cloneRange();
-  selection.removeAllRanges();
-  selection.addRange(normalized);
-  syncToSource();
 }
 
 export function closeAllFontSubmenus(): void {

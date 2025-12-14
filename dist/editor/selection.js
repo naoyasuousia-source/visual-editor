@@ -1,4 +1,4 @@
-import { calculateOffsetWithinNode, compareParagraphOrder } from '../utils/dom';
+import { calculateOffsetWithinNode, compareParagraphOrder } from '../utils/dom.js';
 // Note: Using window.currentEditor might be risky if we want pure modules.
 // Ideally, pass editor context or use a robust state management.
 // For now, we mimic current behavior by accessing window.currentEditor via a helper or direct access if Typescript allows.
