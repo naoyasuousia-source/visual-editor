@@ -83,17 +83,77 @@ declare global {
     promptDropboxImageUrl: () => void;
     promptWebImageUrl: () => void;
     overwriteCurrentFile: () => Promise<void>;
-    placeCaretBefore: (node: Element | null) => void;
-    placeCaretAfter: (node: Element | null) => void;
     initPages: () => void;
-    renumberParagraphs: () => void;
     renumberPages: () => void;
     resetHighlightsInSelection: () => void;
     createPage: (pageNumber: number, contentHTML?: string) => HTMLElement;
     setActiveEditor: (inner: HTMLElement | null) => void;
     bindEditorEvents: (inner: HTMLElement) => void;
+    placeCaretBefore: (node: Element | null) => void;
+    placeCaretAfter: (node: Element | null) => void;
+    getCurrentParagraph: () => Element | null;
+    renumberParagraphs: () => void;
+    insertImageAtCursor: (args: { src: string; alt: string }) => void;
+    updateToolbarState: () => void;
+    applyPendingBlockTag: (inner: HTMLElement) => void;
+  }
+} // end of declare global
+
+// Phase 1: Core Utilities Implementation
+
+export function setActiveEditor(inner: HTMLElement | null): void {
+  window.currentEditor = inner;
+  document.querySelectorAll('section.page').forEach(p => p.classList.remove('active'));
+  if (inner) {
+    const page = inner.closest('section.page');
+    if (page) page.classList.add('active');
   }
 }
+
+export function placeCaretBefore(node: Element | null): void {
+  if (!node) return;
+  const range = document.createRange();
+  range.setStartBefore(node);
+  range.collapse(true);
+  const selection = window.getSelection();
+  if (selection) {
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+}
+
+export function placeCaretAfter(node: Element | null): void {
+  if (!node) return;
+  const range = document.createRange();
+  range.setStartAfter(node);
+  range.collapse(true);
+  const selection = window.getSelection();
+  if (selection) {
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+}
+
+export function getCurrentParagraph(): Element | null {
+  const currentEditor = window.currentEditor;
+  if (!currentEditor) return null;
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return null;
+
+  let node = sel.anchorNode;
+  if (!currentEditor.contains(node)) return null;
+
+  while (node && !(node.nodeType === 1 && /^(p|h[1-6]|div)$/i.test(node.nodeName))) {
+    node = node.parentNode;
+  }
+  return node as Element;
+}
+
+// Ensure global exposure for index.html compatibility
+window.setActiveEditor = setActiveEditor;
+window.placeCaretBefore = placeCaretBefore;
+window.placeCaretAfter = placeCaretAfter;
+window.getCurrentParagraph = getCurrentParagraph;
 
 type SelectionState = {
   startBlockId: string;
@@ -767,6 +827,334 @@ function removeExistingImageTitle(img: HTMLImageElement | null): void {
   }
 }
 
+// Phase 2 & 3 Migration: Paragraph Management & Image Insertion & Event Binding
+
+export function renumberParagraphs(): void {
+  const pagesContainer = document.getElementById('pages-container');
+  if (!pagesContainer) return;
+  const pages = pagesContainer.querySelectorAll('section.page');
+
+  pages.forEach(page => {
+    // ページ番号はHTML上の属性として管理されている前提
+    // const pageNum = page.getAttribute('data-page'); 
+    // 現在のページ番号再番機能は renumberPages() にあるため、ここでは paragraph の番号のみ扱う
+    // ただし、ブロックID生成のために pageNum が必要であれば取得する
+
+    // 既存の実装に合わせて pageNum を取得
+    let pageNum = page.getAttribute('data-page');
+
+    // もし renumberPages がまだ走っていない場合などに備える
+    if (!pageNum) {
+      // フォールバック: pageWrapper内でのindexなどから算出も可能だが、
+      // ここでは単純に既存DOMの状態を信じる
+      pageNum = '1';
+    }
+
+    const inner = page.querySelector('.page-inner') as HTMLElement | null;
+    if (!inner) return;
+
+    let paraIndex = 1;
+
+    // p と h1〜h6 のみ対象
+    inner.querySelectorAll('p, h1, h2, h3, h4, h5, h6').forEach(block => {
+      const el = block as HTMLElement;
+      // 過去バージョンの para-num/para-body を除去
+      el.querySelectorAll('.para-num').forEach(span => span.remove());
+      el.querySelectorAll('.para-body').forEach(body => {
+        while (body.firstChild) {
+          el.insertBefore(body.firstChild, body);
+        }
+        body.remove();
+      });
+
+      // id と data-para を付与
+      el.dataset.para = String(paraIndex);
+      el.id = `p${pageNum}-${paraIndex}`;
+
+      // block.dataset.blockStyle が設定済みならそれを尊重し、
+      // 未設定の場合は mini-text span の有無で判断
+      if (!el.dataset.blockStyle) {
+        const hasMiniTextSpan = el.querySelector(':scope > .mini-text');
+        el.dataset.blockStyle = hasMiniTextSpan ? 'mini-p' : el.tagName.toLowerCase();
+      }
+
+      paraIndex++;
+    });
+  });
+
+  rebuildFigureMetaStore();
+  window.syncToSource();
+}
+
+export function promptDropboxImageUrl(): void {
+  const inputUrl = window.prompt('Dropbox画像の共有URLを貼り付けてください。');
+  if (!inputUrl) return;
+  let parsed: URL;
+  try {
+    parsed = new URL(inputUrl);
+  } catch (err) {
+    alert('正しいURL形式を入力してください。');
+    return;
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+  if (!hostname.includes('dropbox.com')) {
+    alert('Dropboxドメインではありません。dropbox.com のURLを選択してください。');
+    return;
+  }
+
+  parsed.searchParams.delete('dl');
+  parsed.searchParams.set('raw', '1');
+
+  const normalizedUrl = parsed.toString();
+  insertImageAtCursor({
+    src: normalizedUrl,
+    alt: parsed.pathname.split('/').pop() || ''
+  });
+}
+
+export function promptWebImageUrl(): void {
+  const inputUrl = window.prompt('画像URLを貼り付けてください。');
+  if (!inputUrl) return;
+  let parsed: URL;
+  try {
+    parsed = new URL(inputUrl);
+  } catch (err) {
+    alert('正しいURL形式を入力してください。');
+    return;
+  }
+
+  insertImageAtCursor({
+    src: parsed.toString(),
+    alt: parsed.pathname.split('/').pop() || ''
+  });
+}
+
+export function insertImageAtCursor({ src, alt }: { src: string; alt: string }): void {
+  const currentEditor = window.currentEditor;
+  if (!currentEditor) return;
+
+  const selection = window.getSelection();
+  let range = selection && selection.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
+  if (!range) {
+    range = document.createRange();
+    range.selectNodeContents(currentEditor);
+    range.collapse(false);
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+  }
+  // rangeがnullの場合の対策 (TypeScript用)
+  if (!range) return;
+
+  const block = findParagraph(range.startContainer);
+  const isEmptyLine = block && isParagraphEmpty(block);
+
+  const img = document.createElement('img');
+  img.src = src;
+  img.alt = alt || src;
+  img.classList.add('img-m');
+
+  const insertSlotAndPositionCaret = (container: HTMLElement) => {
+    const caretSlot = document.createElement('span');
+    caretSlot.className = 'caret-slot';
+    caretSlot.contentEditable = 'false';
+    caretSlot.innerHTML = '&#8203;';
+
+    const br = document.createElement('br');
+
+    container.appendChild(caretSlot);
+    container.appendChild(br);
+    placeCaretBefore(caretSlot);
+  };
+
+  if (isEmptyLine && block) {
+    block.innerHTML = '';
+    const wrapper = ensureFigureWrapper(block);
+    const container = wrapper || (block as HTMLElement);
+    container.appendChild(img);
+    insertSlotAndPositionCaret(container);
+  } else {
+    const newPara = document.createElement('p');
+    if (block && block.parentNode) {
+      block.parentNode.insertBefore(newPara, block.nextSibling);
+    } else {
+      currentEditor.appendChild(newPara);
+    }
+    const wrapper = ensureFigureWrapper(newPara);
+    const container = wrapper || newPara;
+    container.appendChild(img);
+    insertSlotAndPositionCaret(container);
+  }
+
+  setActiveEditor(currentEditor);
+  renumberParagraphs();
+}
+
+export function bindEditorEvents(inner: HTMLElement): void {
+  if (inner.dataset.bound === '1') return;
+  inner.dataset.bound = '1';
+  if (!inner.dataset.preferredBlockTag) {
+    inner.dataset.preferredBlockTag = 'p';
+  }
+
+  inner.addEventListener('input', (e: Event) => {
+    const inputEvent = e as InputEvent;
+    if (inputEvent && inputEvent.inputType === 'insertParagraph') {
+      applyPendingBlockTag(inner);
+      renumberParagraphs();
+    } else {
+      window.syncToSource();
+    }
+  });
+
+  // existing definition in index.html used a timeout for updateToolbarState
+  // function updateToolbarState() is likely still in index.html (Phase 4 target),
+  // but we can try to call it via window if it exists, or migrate it now.
+  // For safety in this "Mixed" phase, we will assume it might be on window or we need to migrate it.
+  // Let's migrate updateToolbarState briefly here to ensure dependency.
+
+  const updateStateWithDelay = () => setTimeout(updateToolbarState, 50);
+
+  inner.addEventListener('focus', () => {
+    setActiveEditor(inner);
+    saveTextSelectionFromEditor();
+    updateToolbarState();
+  });
+  inner.addEventListener('mousedown', () => setActiveEditor(inner));
+  inner.addEventListener('mouseup', () => {
+    saveTextSelectionFromEditor();
+    updateStateWithDelay();
+  });
+  inner.addEventListener('keyup', (e) => {
+    saveTextSelectionFromEditor();
+    updateStateWithDelay();
+  });
+  inner.addEventListener('click', updateStateWithDelay);
+
+  // Caret slot logic
+  inner.addEventListener('click', (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+    const figureWrapper = target.closest('.figure-inline');
+    if (figureWrapper && target.tagName !== 'IMG') {
+      event.preventDefault();
+      const caretSlot = figureWrapper.querySelector('.caret-slot');
+      if (caretSlot) {
+        placeCaretBefore(caretSlot);
+      }
+    }
+  }, true); // Use capture phase
+
+  inner.addEventListener('keydown', (e: KeyboardEvent) => {
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+
+    const range = selection.getRangeAt(0);
+    const isCollapsed = range.collapsed;
+
+    // isCaretBeforeCaretSlotの判定ロジック
+    const nodeAfterCaret = isCollapsed ? range.startContainer.childNodes[range.startOffset] : null;
+    const isBeforeSlot = nodeAfterCaret && nodeAfterCaret.nodeType === Node.ELEMENT_NODE && (nodeAfterCaret as Element).classList.contains('caret-slot');
+
+    if (isBeforeSlot) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const currentParagraph = (nodeAfterCaret as Element).closest('p, h1, h2, h3, h4, h5, h6');
+        if (currentParagraph && currentParagraph.parentNode) {
+          const newPara = document.createElement('p');
+          newPara.innerHTML = '<br>';
+          currentParagraph.parentNode.insertBefore(newPara, currentParagraph.nextSibling);
+
+          const newRange = document.createRange();
+          newRange.setStart(newPara, 0);
+          newRange.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(newRange);
+
+          renumberParagraphs();
+        }
+        return;
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        const currentParagraph = (nodeAfterCaret as Element).closest('p, h1, h2, h3, h4, h5, h6');
+        if (currentParagraph) {
+          const prevElement = currentParagraph.previousElementSibling;
+          currentParagraph.remove();
+
+          if (prevElement) {
+            placeCaretAfter(prevElement);
+          }
+
+          renumberParagraphs();
+        }
+        return;
+      }
+    }
+
+    if (e.key === 'Enter') {
+      const current = getCurrentParagraph();
+      const candidate = current
+        ? ((current as HTMLElement).dataset.blockStyle || current.tagName.toLowerCase())
+        : (inner.dataset.preferredBlockTag || 'p');
+      inner.dataset.pendingBlockTag = candidate;
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      handleInlineTabKey();
+    } else if (e.key === 'Backspace') {
+      if (handleInlineTabBackspace()) {
+        e.preventDefault();
+      }
+    }
+  });
+}
+
+// Helper: updateToolbarState (Migrated to support bindEditorEvents)
+export function updateToolbarState(): void {
+  const currentEditor = window.currentEditor;
+  if (!currentEditor) return;
+
+  const paragraph = getCurrentParagraph();
+  const toolbar = document.getElementById('toolbar');
+  if (!toolbar) return;
+
+  const hangingIndentCheckbox = toolbar.querySelector('[data-action="hanging-indent"]') as HTMLInputElement | null;
+
+  if (paragraph && hangingIndentCheckbox) {
+    const hasIndent = Array.from(paragraph.classList).some(cls => cls.startsWith('indent-'));
+    const isHanging = paragraph.classList.contains('hanging-indent');
+
+    if (hasIndent) {
+      hangingIndentCheckbox.disabled = false;
+      hangingIndentCheckbox.checked = isHanging;
+    } else {
+      hangingIndentCheckbox.disabled = true;
+      hangingIndentCheckbox.checked = false;
+    }
+  } else if (hangingIndentCheckbox) {
+    hangingIndentCheckbox.disabled = true;
+    hangingIndentCheckbox.checked = false;
+  }
+}
+
+// Helper: applyPendingBlockTag (Migrated since used in bindEditorEvents)
+export function applyPendingBlockTag(inner: HTMLElement): void {
+  const pendingTag = inner.dataset.pendingBlockTag || inner.dataset.preferredBlockTag || 'p';
+  if (!pendingTag) return;
+  const current = getCurrentParagraph();
+  if (!current) return;
+  convertParagraphToTag(current, pendingTag);
+  inner.dataset.pendingBlockTag = '';
+}
+
+// Global Assignments
+window.renumberParagraphs = renumberParagraphs;
+window.bindEditorEvents = bindEditorEvents;
+window.promptDropboxImageUrl = promptDropboxImageUrl;
+window.promptWebImageUrl = promptWebImageUrl;
+window.insertImageAtCursor = insertImageAtCursor;
+window.updateToolbarState = updateToolbarState;
+window.applyPendingBlockTag = applyPendingBlockTag;
 function updateImageMetaTitle(img: HTMLImageElement | null, rawTitle: string): void {
   if (!img) return;
   ensureAiImageIndex();
