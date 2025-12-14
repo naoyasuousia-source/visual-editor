@@ -1389,6 +1389,8 @@ window.applyPendingBlockTag = applyPendingBlockTag;
 window.toggleHangingIndent = toggleHangingIndent;
 window.toggleHighlightPalette = toggleHighlightPalette;
 window.applyColorHighlight = applyColorHighlight;
+window.removeHighlightsInRange = removeHighlightsInRange;
+window.resetHighlightsInSelection = resetHighlightsInSelection;
 window.setHighlightPaletteOpen = setHighlightPaletteOpen;
 window.changeIndent = changeIndent;
 window.setPagesHTML = setPagesHTML;
@@ -1934,40 +1936,7 @@ export function toggleHighlightPalette(): void {
   setHighlightPaletteOpen(!highlightControlElement.classList.contains('is-open'));
 }
 
-export function applyColorHighlight(color?: string | null): void {
-  if (!color) return;
-  const currentEditor = window.currentEditor;
-  if (!currentEditor) return;
-  const selection = window.getSelection();
-  if (!selection || !selection.rangeCount) return;
-  const range = selection.getRangeAt(0);
-  if (range.collapsed) return;
-  if (!currentEditor.contains(range.commonAncestorContainer)) return;
 
-  const cleanupRange = range.cloneRange();
-  if (window.removeHighlightsInRange(cleanupRange)) {
-    selection.removeAllRanges();
-    selection.addRange(cleanupRange);
-  }
-
-  const workingRange = cleanupRange.cloneRange();
-  const fragment = workingRange.extractContents();
-  removeColorSpansInNode(fragment);
-
-  const span = document.createElement('span');
-  span.className = 'inline-highlight';
-  span.style.backgroundColor = color;
-  span.appendChild(fragment);
-  workingRange.insertNode(span);
-
-  selection.removeAllRanges();
-  const newRange = document.createRange();
-  newRange.selectNodeContents(span);
-  selection.addRange(newRange);
-
-  window.syncToSource();
-  setHighlightPaletteOpen(false);
-}
 
 function unwrapColorSpan(span: Element | null): void {
   if (!span) return;
@@ -1979,9 +1948,27 @@ function unwrapColorSpan(span: Element | null): void {
   parent.removeChild(span);
 }
 
+
+
+function getAncestorHighlight(node: Node | null): HTMLElement | null {
+  let curr = node;
+  const editor = window.currentEditor;
+  while (curr && curr !== editor && curr !== document.body) {
+    if (curr.nodeType === Node.ELEMENT_NODE) {
+      const el = curr as HTMLElement;
+      if (el.classList.contains('inline-highlight') || el.classList.contains('inline-color') || el.getAttribute('style')?.includes('background-color')) {
+        return el;
+      }
+    }
+    curr = curr.parentNode;
+  }
+  return null;
+}
+
+
 function removeColorSpansInNode(root: ParentNode | null): boolean {
   if (!root) return false;
-  const spans = Array.from(root.querySelectorAll('.inline-color'));
+  const spans = Array.from(root.querySelectorAll('.inline-highlight, .inline-color, [class^="highlight-"]'));
   let removed = false;
   spans.forEach(span => {
     unwrapColorSpan(span);
@@ -1989,6 +1976,84 @@ function removeColorSpansInNode(root: ParentNode | null): boolean {
   });
   return removed;
 }
+
+export function removeHighlightsInRange(range: Range): boolean {
+  if (!range) return false;
+
+  // 1. 範囲がハイライト要素の内側にある場合、親を分割して「裸」にする必要がある
+  const ancestor = getAncestorHighlight(range.commonAncestorContainer);
+  if (ancestor) {
+    const sel = window.getSelection();
+    if (sel) {
+      sel.removeAllRanges();
+      sel.addRange(range);
+      document.execCommand('backColor', false, 'transparent');
+      document.execCommand('removeFormat');
+    }
+  }
+
+  // 2. 範囲内のハイライト要素を除去
+  const clone = range.cloneContents();
+  const spans = clone.querySelectorAll('.inline-highlight, .inline-color, [class^="highlight-"]');
+  if (spans.length > 0 || ancestor) {
+    const fragment = range.extractContents();
+    const removed = removeColorSpansInNode(fragment);
+    range.insertNode(fragment);
+    return true;
+  }
+
+  return false;
+}
+
+export function resetHighlightsInSelection(): void {
+  const selection = window.getSelection();
+  if (!selection || !selection.rangeCount) return;
+  const range = selection.getRangeAt(0);
+  if (range.collapsed) return;
+
+  if (window.removeHighlightsInRange(range)) {
+    window.syncToSource();
+  }
+}
+
+export function applyColorHighlight(color?: string | null): void {
+  if (!color) return;
+  const currentEditor = window.currentEditor;
+  if (!currentEditor) return;
+  const selection = window.getSelection();
+  if (!selection || !selection.rangeCount) return;
+
+  // 1. 範囲確保・調整
+  let range = selection.getRangeAt(0);
+  if (range.collapsed) return;
+  if (!currentEditor.contains(range.commonAncestorContainer)) return;
+
+  // 2. 既存のハイライトをクリア
+  document.execCommand('backColor', false, 'transparent');
+  range = selection.getRangeAt(0);
+
+  // 3. 範囲内を抽出して、残っているspanクラスを除去
+  const workingRange = range.cloneRange();
+  const fragment = workingRange.extractContents();
+  removeColorSpansInNode(fragment);
+
+  // 4. 新しい色でラップして挿入
+  const span = document.createElement('span');
+  span.className = 'inline-highlight';
+  span.style.backgroundColor = color;
+  span.appendChild(fragment);
+  workingRange.insertNode(span);
+
+  // 5. 選択範囲の復元
+  selection.removeAllRanges();
+  const newRange = document.createRange();
+  newRange.selectNode(span);
+  selection.addRange(newRange);
+
+  window.syncToSource();
+}
+
+
 
 function cloneColorSpanWithText(template: Element | null, text: string): HTMLElement | null {
   if (!template || !text) return null;
