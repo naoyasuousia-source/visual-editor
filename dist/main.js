@@ -1,9 +1,9 @@
-import { findParagraph, findTextPositionInParagraph, computeSelectionStateFromRange, restoreRangeFromSelectionState } from './editor/selection.js';
-import { toggleBold, toggleItalic, toggleUnderline, toggleStrikeThrough, applyInlineScript, toggleSuperscript, toggleSubscript, applyColorHighlight, applyFontColor, resetFontColorInSelection, resetHighlightsInSelection, removeHighlightsInRange, applyBlockElement, renumberParagraphs } from './editor/formatting.js';
+import { findParagraph, computeSelectionStateFromRange, restoreRangeFromSelectionState } from './editor/selection.js';
+import { toggleBold, toggleItalic, toggleUnderline, toggleStrikeThrough, applyInlineScript, toggleSuperscript, toggleSubscript, applyColorHighlight, applyFontColor, resetFontColorInSelection, resetHighlightsInSelection, removeHighlightsInRange, renumberParagraphs } from './editor/formatting.js';
 import { saveFullHTML, openWithFilePicker, overwriteCurrentFile, handleOpenFile, setPagesHTML, importFullHTMLText, buildFullHTML } from './editor/io.js';
 import { createPage, renumberPages, addPage, removePage, initPages } from './editor/page.js';
 import { ensureAiImageIndex, rebuildFigureMetaStore } from './editor/image.js';
-import { convertParagraphToTag, calculateOffsetWithinNode, compareParagraphOrder, generateBookmarkId, getClosestBlockId } from './utils/dom.js';
+import { convertParagraphToTag, generateBookmarkId } from './utils/dom.js';
 // Note: Window interface extension is now in types.ts. 
 // We don't need to redeclare it here if we include types.ts in compilation, 
 // but TS needs to know about it. Since this is an entry point, imports might suffice.
@@ -1388,74 +1388,8 @@ export function closeFontSubmenu(type) {
         trigger.setAttribute('aria-expanded', 'false');
     }
 }
-window.findParagraphWrapper = findParagraphWrapper;
-window.applyBlockElement = applyBlockElement;
-window.ensureParagraphWrapper = ensureParagraphWrapper;
-window.ensureFigureWrapper = ensureFigureWrapper;
-window.convertParagraphToTag = convertParagraphToTag;
-window.generateBookmarkId = generateBookmarkId;
-window.addLinkDestination = addLinkDestination;
-window.createLink = createLink;
-window.removeLink = removeLink;
-window.updateMarginRule = updateMarginRule;
-window.updateMarginButtonState = updateMarginButtonState;
-window.applyPageMargin = applyPageMargin;
-window.applyFontFamily = applyFontFamily;
-window.alignDirections = alignDirections;
-window.applyParagraphAlignment = applyParagraphAlignment;
-window.getParagraphsInRange = getParagraphsInRange;
-window.applyParagraphSpacing = applyParagraphSpacing;
-window.closeAllFontSubmenus = closeAllFontSubmenus;
-window.setFontMenuOpen = setFontMenuOpen;
-window.toggleFontMenu = toggleFontMenu;
-window.closeFontMenu = closeFontMenu;
-window.closeFontSubmenu = closeFontSubmenu;
-window.closeAllParagraphSubmenus = closeAllParagraphSubmenus;
-window.setParagraphMenuOpen = setParagraphMenuOpen;
-window.toggleParagraphMenu = toggleParagraphMenu;
-window.closeParagraphMenu = closeParagraphMenu;
-window.getCaretOffset = getCaretOffset;
-window.insertInlineTabAt = insertInlineTabAt;
-window.handleInlineTabKey = handleInlineTabKey;
-window.handleInlineTabBackspace = handleInlineTabBackspace;
-window.setHighlightPaletteOpen = setHighlightPaletteOpen;
-window.toggleHighlightPalette = toggleHighlightPalette;
-window.applyColorHighlight = applyColorHighlight;
-window.applyFontColor = applyFontColor;
-window.syncToSource = syncToSource;
-window.applyLineHeight = applyLineHeight;
-window.toggleFileDropdown = toggleFileDropdown;
-window.closeNestedDropdown = closeNestedDropdown;
-window.closeFileDropdown = closeFileDropdown;
-window.toggleBold = toggleBold;
-window.toggleItalic = toggleItalic;
-window.toggleUnderline = toggleUnderline;
-window.toggleStrikeThrough = toggleStrikeThrough;
-window.applyInlineScript = applyInlineScript;
-window.toggleSuperscript = toggleSuperscript;
-window.toggleSubscript = toggleSubscript;
-window.resetFontColorInSelection = resetFontColorInSelection;
-window.isRangeInsideCurrentEditor = isRangeInsideCurrentEditor;
-window.saveTextSelectionFromEditor = saveTextSelectionFromEditor;
-window.getEffectiveTextRange = getEffectiveTextRange;
-window.compareParagraphOrder = compareParagraphOrder;
-window.calculateOffsetWithinNode = calculateOffsetWithinNode;
-window.computeSelectionStateFromRange = computeSelectionStateFromRange;
-window.findTextPositionInParagraph = findTextPositionInParagraph;
-window.restoreRangeFromSelectionState = restoreRangeFromSelectionState;
-window.findParagraph = findParagraph;
-window.applyImageSize = applyImageSize;
-window.ensureAiImageIndex = ensureAiImageIndex;
-window.rebuildFigureMetaStore = rebuildFigureMetaStore;
-window.getClosestBlockId = getClosestBlockId;
-window.showImageContextMenu = showImageContextMenu;
-window.closeImageContextMenu = closeImageContextMenu;
-window.closeImageSubmenu = closeImageSubmenu;
-window.openTitleDialog = openTitleDialog;
-window.closeTitleDialog = closeTitleDialog;
-window.applyImageTitle = applyImageTitle;
-window.removeExistingImageTitle = removeExistingImageTitle;
-window.updateImageMetaTitle = updateImageMetaTitle;
+// Global Assignments
+// Moved to registry.ts
 function bindParagraphMenuListeners() {
     if (paragraphTriggerElement) {
         paragraphTriggerElement.addEventListener('click', (event) => {
@@ -1704,6 +1638,10 @@ export function initEditor() {
     else {
         console.error("window.renumberParagraphs is MISSING!");
     }
+    // Late import of registry to ensure exports are ready
+    import('./registry.js')
+        .then(() => console.log('Registry loaded'))
+        .catch(err => console.error('Failed to load registry', err));
     console.log("initEditor() completed.");
 }
 console.log("main.ts module evaluated. window.bindEditorEvents:", window.bindEditorEvents);
