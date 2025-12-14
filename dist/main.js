@@ -462,6 +462,213 @@ const imageSizeClasses = ['xs', 's', 'm', 'l', 'xl'];
 const isImageSizeClass = (value) => !!value && imageSizeClasses.includes(value);
 let contextTargetImage = null;
 let aiImageIndex = null;
+let openedFileHandle = null; // FileSystemFileHandle
+export function toggleHangingIndent(shouldHang) {
+    const p = getCurrentParagraph();
+    if (!p)
+        return;
+    if (shouldHang) {
+        p.classList.add('hanging-indent');
+    }
+    else {
+        p.classList.remove('hanging-indent');
+    }
+    window.syncToSource();
+    updateToolbarState();
+}
+export function changeIndent(delta) {
+    const p = getCurrentParagraph();
+    if (!p)
+        return;
+    const m = p.className.match(/indent-(\d+)/);
+    let level = m ? parseInt(m[1], 10) : 0;
+    level = Math.max(0, Math.min(5, level + delta));
+    p.className = p.className.replace(/indent-\d+/, '').trim();
+    if (level > 0)
+        p.classList.add(`indent-${level}`);
+    window.syncToSource();
+    updateToolbarState();
+}
+export function setPagesHTML(html) {
+    if (!pagesContainerElement)
+        return;
+    pagesContainerElement.innerHTML = html || '';
+    ensureAiImageIndex();
+    pagesContainerElement.querySelectorAll('.page-inner').forEach(inner => {
+        inner.setAttribute('contenteditable', 'true');
+        inner.removeAttribute('data-bound');
+    });
+    if (aiImageIndex) {
+        aiImageIndex.innerHTML = '';
+    }
+    if (!pagesContainerElement.querySelector('.page-inner')) {
+        // もし空になったら最低1ページだけ作る
+        if (typeof window.createPage === 'function') {
+            const page = window.createPage(1, '<p>ここに本文を書く</p>');
+            pagesContainerElement.appendChild(page);
+        }
+    }
+    ensureAiImageIndex();
+    // applyEditorFontFamily is likely a global helper or style manipulation. 
+    // We can assume it's available or we need to migrate it. 
+    // For now let's skip explicit font re-app otherwise we need to migrate that too.
+    // Actually applyFontFamily is in valid Window interface.
+    if (window.applyFontFamily) {
+        const style = getComputedStyle(document.documentElement).getPropertyValue('--editor-font-family').trim();
+        if (style)
+            window.applyFontFamily(style);
+    }
+    if (window.renumberPages)
+        window.renumberPages();
+    if (window.initPages)
+        window.initPages();
+}
+export function importFullHTMLText(text) {
+    try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'text/html');
+        const importedContainer = doc.querySelector('#pages-container');
+        if (!importedContainer) {
+            alert('このツールで保存したHTMLではなさそうです。');
+            return false;
+        }
+        setPagesHTML(importedContainer.innerHTML);
+        if (typeof renumberParagraphs === 'function') {
+            renumberParagraphs();
+        }
+        return true;
+    }
+    catch (err) {
+        console.error(err);
+        alert('ファイルの読み込み中にエラーが発生しました。');
+        return false;
+    }
+}
+export function handleOpenFile(event) {
+    const input = event.target;
+    const file = input.files && input.files[0];
+    if (!file)
+        return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const text = ev.target?.result;
+        if (typeof text === 'string' && importFullHTMLText(text)) {
+            openedFileHandle = null;
+        }
+    };
+    reader.onerror = () => {
+        alert('ファイルを読み込めませんでした。');
+    };
+    reader.readAsText(file, 'utf-8');
+}
+export async function openWithFilePicker() {
+    // @ts-ignore
+    if (!window.showOpenFilePicker)
+        return false;
+    try {
+        // @ts-ignore
+        const [handle] = await window.showOpenFilePicker({
+            types: [
+                {
+                    description: 'HTML Files',
+                    accept: {
+                        'text/html': ['.html', '.htm']
+                    }
+                }
+            ],
+            multiple: false
+        });
+        if (!handle)
+            return false;
+        const file = await handle.getFile();
+        const text = await file.text();
+        if (importFullHTMLText(text)) {
+            openedFileHandle = handle;
+            return true;
+        }
+    }
+    catch (err) {
+        if (err.name !== 'AbortError') {
+            console.error(err);
+            alert('ファイルを開けませんでした。');
+        }
+    }
+    return false;
+}
+export function buildFullHTML() {
+    if (typeof renumberParagraphs === "function") {
+        renumberParagraphs();
+    }
+    if (!pagesContainerElement)
+        return '';
+    // 編集用DOMをそのまま使うと contenteditable が混ざるので、
+    // クローンを作ってから contenteditable を削除する
+    const pagesContainerClone = pagesContainerElement.cloneNode(true);
+    pagesContainerClone
+        .querySelectorAll('section.page')
+        .forEach(p => p.classList.remove('active'));
+    pagesContainerClone
+        .querySelectorAll('.page-inner')
+        .forEach(inner => {
+        inner.removeAttribute('contenteditable');
+        inner.removeAttribute('data-bound');
+    });
+    // A4エリアのHTML内容（編集不可バージョン）
+    const pagesHTML = pagesContainerClone.innerHTML;
+    // ページ内の <style> を抽出
+    // Note: main.ts might not have access to 'styleTag' global from index.html if not defined.
+    // We use document.querySelector('style') as in the original code.
+    const styleTag = document.querySelector("style");
+    const styleContent = styleTag ? styleTag.innerHTML : "";
+    // 完全HTMLを組み立て
+    let html = "<!doctype html>\n";
+    html += "<html>\n<head>\n<meta charset=\"utf-8\">\n";
+    html += "<title>Document</title>\n<style>\n";
+    html += styleContent;
+    html += "\n</style>\n</head>\n<body>\n";
+    html += "<div id=\"pages-container\">\n";
+    html += pagesHTML;
+    html += "\n<\/div>\n<\/body>\n<\/html>";
+    return html;
+}
+export async function overwriteCurrentFile() {
+    if (!openedFileHandle) {
+        alert('File System Access API で開いたファイルのみ上書きできます（Chrome 推奨）。');
+        return;
+    }
+    try {
+        const writable = await openedFileHandle.createWritable();
+        await writable.write(buildFullHTML());
+        await writable.close();
+        alert('上書き保存しました。');
+    }
+    catch (err) {
+        console.error(err);
+        alert('上書き保存に失敗しました。');
+    }
+}
+export function saveFullHTML() {
+    const html = buildFullHTML();
+    // HTML文字列から Blob を作成
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    // 一時的な <a> を作成してクリック → ダウンロード
+    const a = document.createElement('a');
+    a.href = url;
+    // ファイル名をざっくり日時付きにする
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    a.download = `document-${y}${m}${d}-${hh}${mm}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    // 一時URLを解放
+    URL.revokeObjectURL(url);
+}
 export function toggleFileDropdown() {
     const element = getFileDropdownElement();
     if (!element)
@@ -985,6 +1192,18 @@ window.promptWebImageUrl = promptWebImageUrl;
 window.insertImageAtCursor = insertImageAtCursor;
 window.updateToolbarState = updateToolbarState;
 window.applyPendingBlockTag = applyPendingBlockTag;
+window.toggleHangingIndent = toggleHangingIndent;
+window.toggleHighlightPalette = toggleHighlightPalette;
+window.applyColorHighlight = applyColorHighlight;
+window.setHighlightPaletteOpen = setHighlightPaletteOpen;
+window.changeIndent = changeIndent;
+window.setPagesHTML = setPagesHTML;
+window.importFullHTMLText = importFullHTMLText;
+window.handleOpenFile = handleOpenFile;
+window.openWithFilePicker = openWithFilePicker;
+window.overwriteCurrentFile = overwriteCurrentFile;
+window.buildFullHTML = buildFullHTML;
+window.saveFullHTML = saveFullHTML;
 function updateImageMetaTitle(img, rawTitle) {
     if (!img)
         return;
@@ -1969,18 +2188,19 @@ function bindToolbarHandlers() {
         }
     });
     toolbarElement.addEventListener('click', async (event) => {
-        const target = event.target?.closest('button, input');
-        if (!target)
-            return;
-        const action = target.dataset.action;
-        if (action === 'hanging-indent') {
-            const input = target;
-            window.toggleHangingIndent?.(input.checked);
+        // Handle input (checkbox) clicks first
+        const inputTarget = event.target?.closest('input');
+        if (inputTarget) {
+            const action = inputTarget.dataset.action;
+            if (action === 'hanging-indent') {
+                window.toggleHangingIndent?.(inputTarget.checked);
+            }
             return;
         }
         const btn = event.target?.closest('button');
         if (!btn)
             return;
+        const action = btn.dataset.action;
         switch (action) {
             case 'bold':
                 toggleBold();
@@ -2099,9 +2319,25 @@ export function initEditor() {
     initImageContextMenuControls();
     initPageLinkHandler();
     initFontChooserControls();
-    bindParagraphMenuListeners();
+    if (typeof window.bindParagraphMenuListeners === 'function') {
+        window.bindParagraphMenuListeners();
+    }
+    else if (typeof bindParagraphMenuListeners === 'function') {
+        bindParagraphMenuListeners();
+    }
+    // Ensure file input listener is bound
+    const openFileInput = document.getElementById('open-file-input');
+    if (openFileInput) {
+        openFileInput.removeEventListener('change', handleOpenFile);
+        openFileInput.addEventListener('change', handleOpenFile);
+    }
     bindDocumentLevelHandlers();
-    bindToolbarHandlers();
+    if (typeof window.bindToolbarHandlers === 'function') {
+        window.bindToolbarHandlers();
+    }
+    else if (typeof bindToolbarHandlers === 'function') {
+        bindToolbarHandlers();
+    }
     ensureAiImageIndex();
     applyPageMargin(currentPageMarginSize);
     window.initPages?.();
