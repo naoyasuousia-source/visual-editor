@@ -20,7 +20,8 @@ import {
   resetFontColorInSelection,
   resetHighlightsInSelection,
   removeHighlightsInRange,
-  applyBlockElement
+  applyBlockElement,
+  renumberParagraphs
 } from './editor/formatting.js';
 
 import {
@@ -41,12 +42,23 @@ import {
 } from './editor/io.js';
 
 import {
+  createPage,
+  renumberPages,
+  addPage,
+  removePage,
+  initPages
+} from './editor/page.js';
+
+import { ensureAiImageIndex, rebuildFigureMetaStore } from './editor/image.js';
+
+import {
   unwrapColorSpan,
   removeColorSpansInNode,
   convertParagraphToTag,
   calculateOffsetWithinNode,
   compareParagraphOrder,
   generateBookmarkId,
+  getClosestBlockId,
   removeColorSpansInNode as removeColorSpansInNodeUtil // Alias if needed, or just use removeColorSpansInNode
 } from './utils/dom.js';
 
@@ -507,66 +519,7 @@ export function applyImageSize(img: HTMLElement | null, size?: string | null): v
   img.classList.add(`img-${size}`);
 }
 
-export function ensureAiImageIndex(): void {
-  if (!pagesContainerElement) return;
-  let container = document.getElementById('ai-image-index');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'ai-image-index';
-    container.style.display = 'none';
-  } else if (container.parentNode) {
-    container.parentNode.removeChild(container);
-  }
-  pagesContainerElement.appendChild(container);
-  aiImageIndex = container;
-}
 
-export function getClosestBlockId(element: Element | null): string {
-  if (!element) return '';
-  const block = element.closest('p, h1, h2, h3, h4, h5, h6') as HTMLElement | null;
-  return block ? block.id : '';
-}
-
-export function rebuildFigureMetaStore(): void {
-  if (!pagesContainerElement) return;
-  ensureAiImageIndex();
-  if (!aiImageIndex) return;
-
-  const preservedMetas = new Map<string, HTMLElement[]>();
-  aiImageIndex.querySelectorAll<HTMLElement>('.figure-meta').forEach(meta => {
-    const key = meta.dataset.src || '';
-    if (!preservedMetas.has(key)) {
-      preservedMetas.set(key, []);
-    }
-    preservedMetas.get(key)!.push(meta);
-  });
-  aiImageIndex.innerHTML = '';
-
-  const images = pagesContainerElement.querySelectorAll<HTMLImageElement>('.page-inner img');
-  images.forEach(img => {
-    const key = img.src || '';
-    const candidates = preservedMetas.get(key);
-    let meta: HTMLElement | null = null;
-    if (candidates && candidates.length) {
-      meta = candidates.shift()!;
-    } else {
-      meta = document.createElement('div');
-      meta.className = 'figure-meta';
-      meta.dataset.src = img.src;
-      meta.dataset.title = '';
-      meta.dataset.caption = '';
-      meta.dataset.tag = '';
-    }
-    meta.dataset.anchor = getClosestBlockId(img);
-    if (!meta.dataset.src) {
-      meta.dataset.src = img.src;
-    }
-    meta.dataset.title = meta.dataset.title || '';
-    meta.dataset.caption = meta.dataset.caption || '';
-    meta.dataset.tag = meta.dataset.tag || '';
-    aiImageIndex!.appendChild(meta);
-  });
-}
 
 export function showImageContextMenu(event: MouseEvent, img: HTMLImageElement): void {
   if (!imageContextMenuElement) return;
@@ -680,64 +633,6 @@ function removeExistingImageTitle(img: HTMLImageElement | null): void {
 
 // Phase 2 & 3 Migration: Paragraph Management & Image Insertion & Event Binding
 
-export function renumberParagraphs(): void {
-  const pagesContainer = document.getElementById('pages-container');
-  if (!pagesContainer) return;
-
-  const pages = pagesContainer.querySelectorAll('section.page');
-
-  pages.forEach(page => {
-    let pageNum = page.getAttribute('data-page');
-
-    if (!pageNum) {
-      pageNum = '1';
-    }
-
-    const inner = page.querySelector('.page-inner') as HTMLElement | null;
-    if (!inner) return;
-
-    // --- 修正: 段落が消失してしまった場合のリカバリ ---
-    // 何も入力がない、あるいはすべて消してしまった場合にも、最低1つのPタグを保証する
-    // バックスペース連打で最後の1行のタグまで消えると、以後入力できなくなるのを防ぐ
-    if (!inner.querySelector('p, h1, h2, h3, h4, h5, h6')) {
-      const p = document.createElement('p');
-      p.innerHTML = '<br>'; // カーソルが入れるようにBRを入れる
-      inner.appendChild(p);
-    }
-    // ------------------------------------------------
-
-    let paraIndex = 1;
-
-    // p と h1〜h6 のみ対象
-    inner.querySelectorAll('p, h1, h2, h3, h4, h5, h6').forEach(block => {
-      const el = block as HTMLElement;
-      // 過去バージョンの para-num/para-body を除去
-      el.querySelectorAll('.para-num').forEach(span => span.remove());
-      el.querySelectorAll('.para-body').forEach(body => {
-        while (body.firstChild) {
-          el.insertBefore(body.firstChild, body);
-        }
-        body.remove();
-      });
-
-      // id と data-para を付与
-      el.dataset.para = String(paraIndex);
-      el.id = `p${pageNum}-${paraIndex}`;
-
-      // block.dataset.blockStyle が設定済みならそれを尊重し、
-      // 未設定の場合は mini-text span の有無で判断
-      if (!el.dataset.blockStyle) {
-        const hasMiniTextSpan = el.querySelector(':scope > .mini-text');
-        el.dataset.blockStyle = hasMiniTextSpan ? 'mini-p' : el.tagName.toLowerCase();
-      }
-
-      paraIndex++;
-    });
-  });
-
-  rebuildFigureMetaStore();
-  window.syncToSource();
-}
 
 export function promptDropboxImageUrl(): void {
   const inputUrl = window.prompt('Dropbox画像の共有URLを貼り付けてください。');
@@ -1036,6 +931,13 @@ window.resetHighlightsInSelection = resetHighlightsInSelection;
 window.setHighlightPaletteOpen = setHighlightPaletteOpen;
 window.changeIndent = changeIndent;
 window.setPagesHTML = setPagesHTML;
+
+// Page functions (Restored)
+window.createPage = createPage;
+window.renumberPages = renumberPages;
+window.addPage = addPage;
+window.removePage = removePage;
+window.initPages = initPages;
 window.importFullHTMLText = importFullHTMLText;
 window.handleOpenFile = handleOpenFile;
 window.openWithFilePicker = openWithFilePicker;
@@ -1683,113 +1585,8 @@ window.applyImageTitle = applyImageTitle;
 window.removeExistingImageTitle = removeExistingImageTitle;
 window.updateImageMetaTitle = updateImageMetaTitle;
 
-function createPage(pageNumber: number, contentHTML?: string): HTMLElement {
-  const section = document.createElement('section');
-  section.className = 'page';
-  section.dataset.page = String(pageNumber);
 
-  const inner = document.createElement('div');
-  inner.className = 'page-inner';
-  inner.contentEditable = 'true';
-  inner.innerHTML = contentHTML || '<p>ここに本文を書く</p>';
 
-  section.appendChild(inner);
-  return section;
-}
-
-function renumberPages(): void {
-  if (!pagesContainerElement) return;
-  const pages = pagesContainerElement.querySelectorAll<HTMLElement>('section.page');
-  pages.forEach((page, idx) => {
-    page.dataset.page = String(idx + 1);
-  });
-}
-
-function addPage(): void {
-  if (!pagesContainerElement) return;
-  const pages = Array.from(pagesContainerElement.querySelectorAll<HTMLElement>('section.page'));
-  const newPage = createPage(pages.length + 1, '<p>ここに本文を書く</p>');
-  const currentEditor = window.currentEditor;
-  if (currentEditor) {
-    const currentPage = currentEditor.closest<HTMLElement>('section.page');
-    const currentIndex = currentPage ? pages.indexOf(currentPage) : -1;
-    if (currentPage && currentIndex >= 0 && currentIndex < pages.length - 1) {
-      const referencePage = pages[currentIndex + 1];
-      const insertBeforeNode = referencePage ? referencePage.nextSibling : null;
-      pagesContainerElement.insertBefore(newPage, insertBeforeNode);
-    } else {
-      pagesContainerElement.appendChild(newPage);
-    }
-  } else {
-    pagesContainerElement.appendChild(newPage);
-  }
-
-  const newInner = newPage.querySelector<HTMLElement>('.page-inner');
-  renumberPages();
-  window.renumberParagraphs?.();
-  initPages();
-  if (newInner) {
-    window.setActiveEditor?.(newInner);
-  }
-  ensureAiImageIndex();
-}
-
-function removePage(): void {
-  if (!pagesContainerElement) return;
-  const pages = Array.from(pagesContainerElement.querySelectorAll<HTMLElement>('section.page'));
-  if (pages.length === 0) return;
-
-  let currentEditor = window.currentEditor;
-  if (!currentEditor) {
-    const fallback = pages[pages.length - 1].querySelector<HTMLElement>('.page-inner');
-    currentEditor = fallback;
-  }
-  if (!currentEditor) return;
-
-  const currentPage = currentEditor.closest<HTMLElement>('section.page');
-  if (!currentPage) return;
-  const currentIndex = pages.indexOf(currentPage);
-
-  if (pages.length === 1) {
-    const inner = pages[0].querySelector<HTMLElement>('.page-inner');
-    if (inner) {
-      inner.innerHTML = '<p>ここに本文を書く</p>';
-      window.setActiveEditor?.(inner);
-      window.renumberParagraphs?.();
-    }
-    return;
-  }
-
-  pagesContainerElement.removeChild(currentPage);
-
-  const newInners = pagesContainerElement.querySelectorAll<HTMLElement>('.page-inner');
-  const newIdx = Math.max(0, currentIndex - 1);
-  const newInner = newInners[newIdx] || newInners[0] || null;
-  if (newInner) {
-    window.setActiveEditor?.(newInner);
-  }
-
-  renumberPages();
-  window.renumberParagraphs?.();
-  ensureAiImageIndex();
-}
-
-function initPages(): void {
-  if (!pagesContainerElement) return;
-  const inners = pagesContainerElement.querySelectorAll<HTMLElement>('.page-inner');
-  inners.forEach(inner => {
-    window.bindEditorEvents?.(inner);
-  });
-  if (!window.currentEditor && inners[0]) {
-    window.setActiveEditor?.(inners[0]);
-  }
-}
-
-window.createPage = createPage;
-window.renumberPages = renumberPages;
-window.addPage = addPage;
-window.removePage = removePage;
-window.initPages = initPages;
 
 function bindParagraphMenuListeners(): void {
   if (paragraphTriggerElement) {
@@ -2032,7 +1829,22 @@ export function initEditor() {
 
   ensureAiImageIndex();
   applyPageMargin(currentPageMarginSize);
-  window.initPages?.();
-  window.renumberParagraphs?.();
-  console.log("initEditor() 呼ばれた！");
+  ensureAiImageIndex();
+  applyPageMargin(currentPageMarginSize);
+  console.log("Checking window.initPages:", window.initPages);
+  if (window.initPages) {
+    window.initPages();
+  } else {
+    console.error("window.initPages is MISSING!");
+  }
+
+  if (window.renumberParagraphs) {
+    window.renumberParagraphs();
+  } else {
+    console.error("window.renumberParagraphs is MISSING!");
+  }
+
+  console.log("initEditor() completed.");
 }
+
+console.log("main.ts module evaluated. window.bindEditorEvents:", window.bindEditorEvents);

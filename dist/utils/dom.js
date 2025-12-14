@@ -117,3 +117,9 @@ export function convertParagraphToTag(paragraph, tag) {
     }
     return replacement;
 }
+export function getClosestBlockId(element) {
+    if (!element)
+        return '';
+    const block = element.closest('p, h1, h2, h3, h4, h5, h6');
+    return block ? block.id : '';
+}

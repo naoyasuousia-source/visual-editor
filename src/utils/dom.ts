@@ -122,3 +122,9 @@ export function convertParagraphToTag(paragraph: Element | null, tag: string): H
 
     return replacement;
 }
+
+export function getClosestBlockId(element: Element | null): string {
+    if (!element) return '';
+    const block = element.closest('p, h1, h2, h3, h4, h5, h6') as HTMLElement | null;
+    return block ? block.id : '';
+}

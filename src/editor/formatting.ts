@@ -16,6 +16,69 @@ import {
 // We rely on window.* extension methods for some core side-effects for now
 // to maintain compatibility with the monolithic main.ts behavior during refactoring.
 
+// Import globally available element getter
+import { getPagesContainerElement } from '../globals.js';
+import { rebuildFigureMetaStore } from './image.js';
+
+export function renumberParagraphs(): void {
+    const pagesContainer = getPagesContainerElement();
+    if (!pagesContainer) return;
+
+    const pages = pagesContainer.querySelectorAll('section.page');
+
+    pages.forEach(page => {
+        let pageNum = page.getAttribute('data-page');
+
+        if (!pageNum) {
+            pageNum = '1';
+        }
+
+        const inner = page.querySelector('.page-inner') as HTMLElement | null;
+        if (!inner) return;
+
+        // --- 修正: 段落が消失してしまった場合のリカバリ ---
+        // 何も入力がない、あるいはすべて消してしまった場合にも、最低1つのPタグを保証する
+        // バックスペース連打で最後の1行のタグまで消えると、以後入力できなくなるのを防ぐ
+        if (!inner.querySelector('p, h1, h2, h3, h4, h5, h6')) {
+            const p = document.createElement('p');
+            p.innerHTML = '<br>'; // カーソルが入れるようにBRを入れる
+            inner.appendChild(p);
+        }
+        // ------------------------------------------------
+
+        let paraIndex = 1;
+
+        // p と h1〜h6 のみ対象
+        inner.querySelectorAll('p, h1, h2, h3, h4, h5, h6').forEach(block => {
+            const el = block as HTMLElement;
+            // 過去バージョンの para-num/para-body を除去
+            el.querySelectorAll('.para-num').forEach(span => span.remove());
+            el.querySelectorAll('.para-body').forEach(body => {
+                while (body.firstChild) {
+                    el.insertBefore(body.firstChild, body);
+                }
+                body.remove();
+            });
+
+            // id と data-para を付与
+            el.dataset.para = String(paraIndex);
+            el.id = `p${pageNum}-${paraIndex}`;
+
+            // block.dataset.blockStyle が設定済みならそれを尊重し、
+            // 未設定の場合は mini-text span の有無で判断
+            if (!el.dataset.blockStyle) {
+                const hasMiniTextSpan = el.querySelector(':scope > .mini-text');
+                el.dataset.blockStyle = hasMiniTextSpan ? 'mini-p' : el.tagName.toLowerCase();
+            }
+
+            paraIndex++;
+        });
+    });
+
+    rebuildFigureMetaStore();
+    (window as any).syncToSource?.();
+}
+
 export function normalizeInlineFormatting() {
     const currentEditor = window.currentEditor;
     if (!currentEditor) return;
