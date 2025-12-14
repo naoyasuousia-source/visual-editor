@@ -30,11 +30,12 @@
   3. 注意: `window.toggleBold = toggleBold;` などのグローバル登録は維持する。 (完了)
 - **確認**: ツールバーの各ボタン（B, I, Highlight, Color）が正常に動作するか。 (完了 - ビルド成功)
 
-### Step 4: ファイルIO・その他の置換
+### Step 4: ファイルIO・その他の置換 (完了)
 - **目標**: 残りのファイル操作などを置換し、`main.ts` を「初期化とイベントバインド」のみに特化させる。
 - **作業**:
-  1. `src/utils/file.ts` をインポート。
-  2. 残存するロジックを整理。
+  1. `src/utils/file.ts` および `src/editor/io.ts` をインポート。 (完了)
+  2. `main.ts` から `saveFullHTML` などのファイル操作ロジックを削除・置換。 (完了)
+  3. `buildFullHTML` などの依存関係を解消。 (完了)
 
 ## 安全策
 - 各ステップごとに必ず `npm run build` を実行。
