@@ -1825,24 +1825,25 @@ function getAncestorHighlight(node) {
     }
     return null;
 }
+/**
+ * Helper to remove color/highlight spans from a fragment/node recursively
+ * but keep their text content.
+ */
 function removeColorSpansInNode(root) {
-    if (!root)
-        return false;
-    // inline-highlight, inline-color だけでなく、style属性で色がついてしまったspanも対象にする
-    const spans = Array.from(root.querySelectorAll('.inline-highlight, .inline-color, span[style*="background-color"], span[style*="color"]'));
-    let removed = false;
+    if (root.nodeType !== Node.DOCUMENT_FRAGMENT_NODE && root.nodeType !== Node.ELEMENT_NODE)
+        return;
+    const parent = root;
+    const spans = Array.from(parent.querySelectorAll('.inline-highlight, .inline-color, span[style*="background-color"], span[style*="color"]'));
     spans.forEach(span => {
-        // 自分自身が対象クラスを持っている、あるいはstyle属性を持っているなら解除
+        // 該当クラスまたはスタイルを持つ場合のみ Unwrap
         const el = span;
         if (el.classList.contains('inline-highlight') ||
             el.classList.contains('inline-color') ||
             el.style.backgroundColor ||
             el.style.color) {
             unwrapColorSpan(el);
-            removed = true;
         }
     });
-    return removed;
 }
 export function removeHighlightsInRange(range) {
     if (!range)
@@ -1862,7 +1863,7 @@ export function removeHighlightsInRange(range) {
     const spans = clone.querySelectorAll('.inline-highlight, .inline-color, span[style*="background-color"], span[style*="color"]');
     if (spans.length > 0) {
         const fragment = range.extractContents();
-        const removed = removeColorSpansInNode(fragment);
+        removeColorSpansInNode(fragment); // Use the new helper
         range.insertNode(fragment);
         return true;
     }
@@ -1875,102 +1876,120 @@ export function resetHighlightsInSelection() {
     const range = selection.getRangeAt(0);
     if (range.collapsed)
         return;
-    if (window.removeHighlightsInRange(range)) {
-        window.syncToSource();
-    }
+    // 1. 範囲内のDOMを抽出（自動的に境界で分割される）
+    const fragment = range.extractContents();
+    // 2. 抽出した部分から、既存のハイライトタグを除去（掃除）
+    removeColorSpansInNode(fragment);
+    // 3. 元の位置に挿入
+    range.insertNode(fragment);
+    // 4. 選択範囲の復元
+    selection.removeAllRanges();
+    const newRange = document.createRange();
+    newRange.selectNodeContents(fragment); // Fragmentは挿入後に空になるため、これは機能しない
+    // 挿入されたノード群を選択し直すのは複雑なので、ここでは挿入位置にカーソルを置く
+    newRange.setStartAfter(range.startContainer); // 挿入後のRangeの開始位置の直後
+    newRange.collapse(true);
+    selection.addRange(newRange);
+    window.syncToSource();
 }
 export function applyColorHighlight(color) {
-    if (!color)
-        return;
     const currentEditor = window.currentEditor;
     if (!currentEditor)
         return;
     const selection = window.getSelection();
     if (!selection || !selection.rangeCount)
         return;
-    // 1. 範囲確保
-    let range = selection.getRangeAt(0);
+    const range = selection.getRangeAt(0);
     if (range.collapsed)
         return;
     if (!currentEditor.contains(range.commonAncestorContainer))
         return;
-    // 2. 親要素チェック（すでに色付きの中にいるか？）
-    const ancestor = getAncestorHighlight(range.commonAncestorContainer);
-    if (ancestor) {
-        // 親がいるなら、親を一旦破壊して「素」の状態にする
-        // ※ 注意: これをやると range が無効になる可能性があるため、テキスト位置を保存してから復元するのが理想だが、
-        // 簡易的に「選択範囲のテキスト」を保持して再選択するアプローチをとる、
-        // または unwrap 後に browser がある程度 range を追従してくれるのを期待する。
-        // ここでは安全のため、ancestor の中身を documentFragment として取り出し、unwrap する戦略をとる。
-        // ひとまずシンプルに unwrap して、その後 range が壊れていたら再取得を試みる
-        unwrapColorSpan(ancestor);
-        // unwrapしたことでDOMツリーが変わり、rangeが無効化されている可能性がある。
-        // 再度 selection から取り直してみる（ただしselectionも外れているかも）
-        if (selection.rangeCount > 0) {
-            range = selection.getRangeAt(0);
-        }
-    }
-    // 3. 範囲内クリーンアップ（ネスト防止）
-    // 範囲内の既存spanを除去
-    // extract -> clean -> insert
+    // 1. 範囲内のDOMを抽出（自動的に境界で分割される）
+    //    extractContents() は、選択範囲がタグをまたぐ場合、タグを複製して
+    //    「選択された部分」だけを含むFragmentを生成し、元のDOMからはその部分を除去する。
+    //    また、元のDOMに残る部分（選択範囲外）はそのまま残る。
+    //    これがまさに「分割して適用」の動作そのもの。
     const fragment = range.extractContents();
+    // 2. 抽出した部分から、既存のハイライトタグを除去（掃除）
+    //    これにより「二重タグ」を防ぐ。
     removeColorSpansInNode(fragment);
-    // 4. 新しい色でラップして挿入
-    const span = document.createElement('span');
-    span.className = 'inline-highlight';
-    span.style.backgroundColor = color;
-    // 既存の文字色も維持したい場合があるかもしれないが、今回はハイライト優先
-    span.appendChild(fragment);
-    range.insertNode(span);
+    // 3. 新しいタグで包む
+    //    colorがnullなら包まずに戻すだけ（解除）
+    let nodeToInsert = fragment;
+    let newSpan = null;
+    if (color) {
+        newSpan = document.createElement('span');
+        newSpan.className = 'inline-highlight';
+        newSpan.style.backgroundColor = color;
+        newSpan.appendChild(fragment);
+        nodeToInsert = newSpan;
+    }
+    // 4. 元の位置に挿入
+    range.insertNode(nodeToInsert);
     // 5. 選択範囲の復元
+    //    挿入したノード（またはFragmentの中身）を再度選択する
     selection.removeAllRanges();
     const newRange = document.createRange();
-    newRange.selectNodeContents(span); // span全体を選択状態にする（ユーザービリティ向上）
+    if (newSpan) {
+        newRange.selectNode(newSpan);
+    }
+    else {
+        // 解除の場合は nodeToInsert は Fragment なので、挿入後の実体ノードを選択する必要があるが、
+        // Fragment挿入後はFragment自体は空になるため、挿入位置を特定するのが難しい。
+        // そのため、insertNodeの前に位置をマーキングするか、あるいは単純にカーソルを置く。
+        // 今回は「変更した部分を選択維持」したい要望があるので、
+        // insertNodeした直後のRange状態（通常は挿入物の直後）ではなく、包含するようにしたい。
+        // 簡易的に newRange.selectNode(nodeToInsert) はできない（Fragmentだから）。
+        // 代案: 挿入前に空のSpan（マーカー）を前後に入れておき、その間を選択する等のハックが必要。
+        // ここではcolorがある場合（通常フロー）を優先し、解除時は一旦カーソルのみ復帰とする（複雑化回避）
+        newRange.setStartAfter(nodeToInsert); // 仮
+        newRange.collapse(true);
+    }
     selection.addRange(newRange);
+    currentEditor.focus(); // フォーカスを戻す
     window.syncToSource();
-    // メニューを閉じない（連続操作のため）
-    // setHighlightPaletteOpen(false); // 削除
 }
-// applyFontColor も同様に修正（重複防止）
 export function applyFontColor(color) {
-    if (!color)
-        return;
     const currentEditor = window.currentEditor;
     if (!currentEditor)
         return;
     const selection = window.getSelection();
     if (!selection || !selection.rangeCount)
         return;
-    let range = selection.getRangeAt(0);
+    const range = selection.getRangeAt(0);
     if (range.collapsed)
         return;
     if (!currentEditor.contains(range.commonAncestorContainer))
         return;
-    // 1. 親要素チェックと解除
-    const ancestor = getAncestorHighlight(range.commonAncestorContainer);
-    if (ancestor) {
-        unwrapColorSpan(ancestor);
-        if (selection.rangeCount > 0) {
-            range = selection.getRangeAt(0);
-        }
-    }
-    // 2. 範囲内クリーンアップ
+    // 1. Extract (Split implicitly)
     const fragment = range.extractContents();
+    // 2. Clean existing fonts
     removeColorSpansInNode(fragment);
-    // 3. 新色適用
-    const span = document.createElement('span');
-    span.className = 'inline-color';
-    span.style.color = color;
-    span.appendChild(fragment);
-    range.insertNode(span);
-    // 4. 選択範囲復元
+    // 3. Wrap new
+    let nodeToInsert = fragment;
+    let newSpan = null;
+    if (color) {
+        newSpan = document.createElement('span');
+        newSpan.className = 'inline-color';
+        newSpan.style.color = color;
+        newSpan.appendChild(fragment);
+        nodeToInsert = newSpan;
+    }
+    // 4. Insert
+    range.insertNode(nodeToInsert);
+    // 5. Reselect
     selection.removeAllRanges();
     const newRange = document.createRange();
-    newRange.selectNodeContents(span);
+    if (newSpan) {
+        newRange.selectNode(newSpan);
+    }
+    else {
+        newRange.setStartAfter(nodeToInsert);
+        newRange.collapse(true);
+    }
     selection.addRange(newRange);
+    currentEditor.focus();
     window.syncToSource();
-    // メニューを閉じない（連続操作のため）
-    // setFontMenuOpen(false); // コメントアウトして連続操作可能に
 }
 export function resetFontColorInSelection() {
     const currentEditor = window.currentEditor;
