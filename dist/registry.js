@@ -27,7 +27,11 @@ import { convertParagraphToTag, generateBookmarkId, getClosestBlockId, comparePa
 import { updateToolbarState, updateMarginButtonState } from './ui/toolbar.js';
 import { toggleFileDropdown, closeNestedDropdown, closeFileDropdown, setFontMenuOpen, closeAllFontSubmenus, toggleFontMenu, closeFontMenu, closeFontSubmenu, closeAllParagraphSubmenus, setParagraphMenuOpen, toggleParagraphMenu, closeParagraphMenu, setHighlightPaletteOpen, toggleHighlightPalette } from './ui/menu.js';
 // Functions still in main.ts (exported)
-import { setActiveEditor, getCurrentParagraph, applyPageMargin, updateMarginRule, applyFontFamily, getCaretOffset, insertInlineTabAt, handleInlineTabKey, handleInlineTabBackspace, syncToSource, isRangeInsideCurrentEditor, saveTextSelectionFromEditor, getEffectiveTextRange, addLinkDestination, createLink, removeLink } from './main.js';
+import { setActiveEditor, getCurrentParagraph, syncToSource } from './main.js';
+import { saveTextSelectionFromEditor, getEffectiveTextRange, isRangeInsideCurrentEditor } from './editor/selection.js';
+import { getCaretOffset, insertInlineTabAt, handleInlineTabKey, handleInlineTabBackspace } from './editor/input.js';
+import { applyPageMargin, updateMarginRule, applyFontFamily } from './ui/settings.js';
+import { addLinkDestination, createLink, removeLink } from './editor/links.js';
 import { bindEditorEvents } from './ui/events.js';
 import { computeSelectionStateFromRange, findTextPositionInParagraph, restoreRangeFromSelectionState, findParagraph, placeCaretBefore, placeCaretAfter } from './editor/selection.js';
 import { applyImageSize, showImageContextMenu, closeImageContextMenu, closeImageSubmenu, applyImageTitle, promptDropboxImageUrl, promptWebImageUrl, insertImageAtCursor, openTitleDialog, closeTitleDialog, removeExistingImageTitle, updateImageMetaTitle, ensureAiImageIndex, rebuildFigureMetaStore } from './editor/image.js';

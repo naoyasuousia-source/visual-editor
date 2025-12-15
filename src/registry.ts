@@ -113,21 +113,34 @@ import {
 import {
     setActiveEditor,
     getCurrentParagraph,
-    applyPageMargin,
-    updateMarginRule,
-    applyFontFamily,
+    syncToSource
+} from './main.js';
+
+import {
+    saveTextSelectionFromEditor,
+    getEffectiveTextRange,
+    isRangeInsideCurrentEditor
+} from './editor/selection.js';
+
+import {
     getCaretOffset,
     insertInlineTabAt,
     handleInlineTabKey,
-    handleInlineTabBackspace,
-    syncToSource,
-    isRangeInsideCurrentEditor,
-    saveTextSelectionFromEditor,
-    getEffectiveTextRange,
+    handleInlineTabBackspace
+} from './editor/input.js';
+
+import {
+    applyPageMargin,
+    updateMarginRule,
+    applyFontFamily
+} from './ui/settings.js';
+
+import {
     addLinkDestination,
     createLink,
     removeLink
-} from './main.js';
+} from './editor/links.js';
+
 
 import { bindEditorEvents } from './ui/events.js';
 

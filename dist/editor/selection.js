@@ -127,3 +127,47 @@ export function getCurrentParagraph() {
     }
     return node;
 }
+let lastSelectionState = null;
+export function isRangeInsideCurrentEditor(range) {
+    const currentEditor = window.currentEditor;
+    return !!(currentEditor && range && currentEditor.contains(range.commonAncestorContainer));
+}
+export function saveTextSelectionFromEditor() {
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount)
+        return;
+    const range = selection.getRangeAt(0);
+    if (range.collapsed)
+        return;
+    if (!isRangeInsideCurrentEditor(range))
+        return;
+    const state = computeSelectionStateFromRange(range);
+    if (state) {
+        lastSelectionState = state;
+    }
+}
+export function getEffectiveTextRange() {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount) {
+        const range = selection.getRangeAt(0);
+        if (!range.collapsed && isRangeInsideCurrentEditor(range)) {
+            const state = computeSelectionStateFromRange(range);
+            if (state) {
+                lastSelectionState = state;
+            }
+            return range.cloneRange();
+        }
+    }
+    if (lastSelectionState) {
+        const restored = restoreRangeFromSelectionState(lastSelectionState);
+        if (restored && isRangeInsideCurrentEditor(restored)) {
+            if (selection) {
+                selection.removeAllRanges();
+                selection.addRange(restored);
+            }
+            return restored.cloneRange();
+        }
+        return restoreRangeFromSelectionState(lastSelectionState);
+    }
+    return null;
+}

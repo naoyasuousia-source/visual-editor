@@ -58,8 +58,10 @@ src/
 - `src/ui/toolbar.ts`, `src/ui/menu.ts` を作成し、`main.ts` からロジック移動完了。
 
 
-### Step 10: エントリーポイントの最終清掃 (`src/main.ts`)
+### Step 10: エントリーポイントの最終清掃 (`src/main.ts`) (完了)
 - `main.ts` に残った細かな初期化コードを整理し、完了。
+- `settings.ts`, `links.ts`, `input.ts` 等へロジックを移動。
+
 
 ## 作業ルール
 - **`registry.ts` を常に確認**: 関数を移動したら、必ず `registry.ts` の import パスを修正する。代入行自体は削除しない。
