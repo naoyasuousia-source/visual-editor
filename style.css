@@ -299,6 +299,17 @@ section.page.active {
   background: #f0f0f0;
 }
 
+.image-context-submenu {
+  display: none;
+  flex-direction: column;
+  background: #f9f9f9;
+  border-left: 2px solid #ddd;
+}
+
+.image-context-dropdown.open .image-context-submenu {
+  display: flex;
+}
+
 /* 画像サイズ & 中央揃え */
 .page-inner img {
   display: block;
@@ -374,7 +385,9 @@ section.page.active {
 }
 
 .highlight-control.is-open .highlight-palette,
+.paragraph-chooser:hover .paragraph-panel,
 .paragraph-chooser.is-open .paragraph-panel,
+.font-chooser:hover .font-chooser-panel,
 .font-chooser.is-open .font-chooser-panel {
   display: flex;
 }

@@ -142,6 +142,13 @@ export function initFontChooserControls(): void {
         });
     });
 
+    // Sticky Hover for Font Menu
+    if (fontChooserElement) {
+        fontChooserElement.addEventListener('mouseenter', () => {
+            setFontMenuOpen(true);
+        });
+    }
+
     // Font Family Options
     const fontButtons = document.querySelectorAll<HTMLElement>('.font-family-option');
     fontButtons.forEach(btn => {
@@ -227,6 +234,13 @@ export function bindParagraphMenuListeners(): void {
             }
         });
     });
+
+    // Sticky Hover for Paragraph Menu
+    if (paragraphChooserElement) {
+        paragraphChooserElement.addEventListener('mouseenter', () => {
+            setParagraphMenuOpen(true);
+        });
+    }
 }
 
 // Highlight Palette

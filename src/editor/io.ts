@@ -14,6 +14,7 @@ export function setPagesHTML(html: string): void {
     const pagesContainer = getPagesContainerElement();
     if (pagesContainer) {
         pagesContainer.innerHTML = html;
+        window.currentEditor = null; // Reset current editor as the DOM nodes are new
         window.initPages?.();
         window.renumberParagraphs?.();
         window.ensureAiImageIndex?.();

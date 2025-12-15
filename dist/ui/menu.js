@@ -136,6 +136,12 @@ export function initFontChooserControls() {
             }
         });
     });
+    // Sticky Hover for Font Menu
+    if (fontChooserElement) {
+        fontChooserElement.addEventListener('mouseenter', () => {
+            setFontMenuOpen(true);
+        });
+    }
     // Font Family Options
     const fontButtons = document.querySelectorAll('.font-family-option');
     fontButtons.forEach(btn => {
@@ -218,6 +224,12 @@ export function bindParagraphMenuListeners() {
             }
         });
     });
+    // Sticky Hover for Paragraph Menu
+    if (paragraphChooserElement) {
+        paragraphChooserElement.addEventListener('mouseenter', () => {
+            setParagraphMenuOpen(true);
+        });
+    }
 }
 // Highlight Palette
 export function setHighlightPaletteOpen(open) {
