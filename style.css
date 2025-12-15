@@ -40,7 +40,12 @@ body {
   border-bottom: 1px solid #ccc;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 100;
-  overflow-x: auto;
+  /* overflow-x: auto;  ドロップダウンが見切れるため削除 */
+  overflow: visible;
+  flex-wrap: wrap;
+  /* ボタンが多い場合は折り返す */
+  position: relative;
+  /* メガメニューの基準点 */
 }
 
 #toolbar button {
@@ -64,7 +69,8 @@ body {
 
 /* File Menu & Dropdowns */
 .file-menu {
-  position: relative;
+  position: static;
+  /* 親をstaticにして、子のdropdownをtoolbar全体に広げる */
   display: inline-flex;
   align-items: stretch;
 }
@@ -76,74 +82,99 @@ body {
 
 .file-dropdown {
   position: absolute;
-  top: calc(100% + 4px);
+  top: 100%;
   left: 0;
-  background: #fff;
-  border: 1px solid #aaa;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  right: 0;
+  width: auto;
+  /* Toolbar全幅 */
+  background: #f8f9fa;
+  border-bottom: 1px solid #ccc;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   display: none;
-  flex-direction: column;
-  min-width: 160px;
-  z-index: 10;
-  border-radius: 4px;
-  padding: 4px 0;
+  flex-direction: row;
+  /* 横並び */
+  flex-wrap: wrap;
+  gap: 16px;
+  z-index: 90;
+  border-radius: 0;
+  padding: 12px 16px;
 }
 
 .file-dropdown button {
+  width: auto;
+  border: 1px solid transparent;
+  padding: 8px 12px;
+  border-radius: 4px;
   margin: 0;
-  width: 100%;
-  border: none;
-  border-radius: 0;
   background: none;
   text-align: left;
-  padding: 8px 16px;
 }
 
 .file-dropdown button:hover {
-  background-color: #f0f0f0;
+  background-color: #e9ecef;
+  border-color: #ced4da;
 }
 
+/* ネストされたドロップダウン: 親が開いたら子もスタティックに展開 */
 .nested-dropdown {
   position: relative;
   display: flex;
-  align-items: stretch;
-  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  width: auto;
+  min-width: 200px;
+  border: 1px solid #eee;
+  padding: 8px;
+  background: #fff;
+  border-radius: 4px;
+}
+
+.file-dropdown.open .nested-dropdown,
+.file-menu:hover .nested-dropdown {
+  flex-direction: column;
 }
 
 .nested-trigger {
   width: 100%;
   text-align: left;
+  font-weight: bold;
+  color: #333;
+  background: none;
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 4px;
 }
 
+/* 展開状態では矢印不要 */
 .nested-trigger::after {
-  content: '▸';
-  float: right;
-  color: #999;
+  display: none;
 }
 
 .nested-dropdown-menu {
-  position: absolute;
-  top: -4px;
-  left: 100%;
-  background: #fff;
-  border: 1px solid #aaa;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  display: none;
-  flex-direction: column;
-  min-width: 180px;
-  z-index: 12;
-  border-radius: 4px;
-  padding: 4px 0;
-}
-
-.nested-dropdown:hover .nested-dropdown-menu,
-.nested-dropdown.open .nested-dropdown-menu {
+  /* 常に表示 (Mega Menu風) */
   display: flex;
+  flex-direction: column;
+  position: static;
+  box-shadow: none;
+  border: none;
+  background: transparent;
+  width: 100%;
+  min-width: unset;
+  padding: 0;
+  margin: 0;
 }
 
 .nested-dropdown-menu button {
-  border-bottom: none;
-  padding: 8px 16px;
+  border: none;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+  text-align: left;
+  width: 100%;
+  border-radius: 4px;
+}
+
+.nested-dropdown-menu button:hover {
+  background: #f0f0f0;
 }
 
 /* ページ表示エリア */
@@ -265,50 +296,25 @@ section.page.active {
   background: #f0f0f0;
 }
 
-.image-context-dropdown {
-  position: relative;
-}
-
-.image-context-trigger {
-  width: 100%;
-  background: none;
-  border: none;
-  padding: 8px 16px;
-  text-align: left;
-  cursor: pointer;
-}
-
-.image-context-trigger::after {
-  content: '▸';
-  float: right;
-  color: #999;
-}
-
-.image-context-submenu {
-  position: absolute;
-  top: -4px;
-  left: 100%;
-  background: #fff;
-  border: 1px solid #ccc;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  display: none;
-  flex-direction: column;
-  min-width: 140px;
-  z-index: 1001;
-  border-radius: 6px;
-  padding: 4px 0;
-}
-
-.image-context-dropdown.open .image-context-submenu {
-  display: flex;
-}
-
-/* 画像サイズ */
+/* 画像サイズ & 中央揃え */
 .page-inner img {
   display: block;
   max-width: 100%;
   height: auto;
-  margin: 0.8em 0;
+  margin: 0.8em auto;
+  /* 強制中央 */
+}
+
+.page-inner .figure-inline {
+  display: block;
+  width: 100%;
+  text-align: center;
+  /* ラッパーも中央揃え */
+  margin: 1em 0;
+}
+
+.page-inner .figure-inline img {
+  margin: 0 auto;
 }
 
 .img-xs {
@@ -331,17 +337,10 @@ section.page.active {
   width: 85%;
 }
 
-.page-inner .figure-inline {
-  display: block;
-  width: 100%;
-  text-align: center;
-  margin: 1em 0;
-}
-
 .page-inner .figure-title {
   display: block;
   margin-top: 0.5em;
-  font-size: 0.9em;
+  font-size: 1em;
   color: #666;
 }
 
@@ -495,12 +494,13 @@ dialog .dialog-actions {
   padding-left: 180pt;
 }
 
-/* ぶら下げインデント */
+/* ぶら下げ(hanging-indent)は、padding-leftで設定したインデントを
+   text-indent: -padding-left で相殺し、1行目を左端(0地点)に戻す挙動と定義 */
+
 .page-inner .hanging-indent {
   text-indent: -1em;
 }
 
-/* インデント時のぶら下げ: インデントを維持しつつ1行目を戻す */
 .page-inner .indent-1.hanging-indent {
   padding-left: 36pt;
   text-indent: -36pt;

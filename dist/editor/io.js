@@ -15,16 +15,44 @@ export function setPagesHTML(html) {
 export function importFullHTMLText(text) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(text, 'text/html');
+    // Extract margin setting from style
+    const styleTags = doc.querySelectorAll('style');
+    let marginToApply = '17mm'; // Default
+    styleTags.forEach(style => {
+        const match = style.innerHTML.match(/--page-margin:\s*([^;]+)/);
+        if (match) {
+            marginToApply = match[1].trim();
+        }
+    });
     const container = doc.getElementById('pages-container');
     if (container) {
+        // Restore contenteditable
+        container.querySelectorAll('.page-inner').forEach(pi => {
+            pi.setAttribute('contenteditable', 'true');
+        });
         setPagesHTML(container.innerHTML);
+        // Apply margin
+        if (window.applyPageMargin) {
+            // Find key for value? Or just set property directly?
+            // Helper only takes key 's','m','l'. 
+            // If custom value, we need to manually set it.
+            // For now, let's look up the key.
+            const map = { '12mm': 's', '17mm': 'm', '24mm': 'l' };
+            const sizeKey = map[marginToApply] || 'm';
+            window.applyPageMargin(sizeKey);
+        }
         return true;
     }
     // Fallback: try to find .page elements or just body content if simple
     const pages = doc.querySelectorAll('.page');
     if (pages.length > 0) {
         let html = '';
-        pages.forEach(p => html += p.outerHTML);
+        pages.forEach(p => {
+            const pi = p.querySelector('.page-inner');
+            if (pi)
+                pi.setAttribute('contenteditable', 'true');
+            html += p.outerHTML;
+        });
         setPagesHTML(html);
         return true;
     }
@@ -143,9 +171,11 @@ export async function buildFullHTML() {
     }
     // We can't pass styleTag anymore, pass styleContent string directly
     // note: buildFullHTMLUtil needs update to accept string or we fake a style element
-    // Let's assume we update buildFullHTMLUtil in utils/file.ts to accept string?
-    // Or we create a fake element here.
+    // Get current margin from root style
+    const rootStyle = getComputedStyle(document.documentElement);
+    const currentMargin = rootStyle.getPropertyValue('--page-margin').trim();
+    // Create a fake style element with preserved variables
     const fakeStyle = document.createElement('style');
-    fakeStyle.innerHTML = styleContent;
+    fakeStyle.innerHTML = `:root { --page-margin: ${currentMargin}; } \n` + styleContent;
     return buildFullHTMLUtil(pagesContainer, fakeStyle);
 }
