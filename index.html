@@ -895,23 +895,38 @@
       color: #999;
     }
 
+    /* ぶら下げインデント: インデントなしの場合は1文字戻し */
+    .page-inner .hanging-indent {
+      text-indent: -1em;
+    }
+
+    /* 
+       インデントがある場合のぶら下げ:
+       パディングを維持しつつ、text-indent で1行目を左端(0pt)に戻す。
+       念のため padding-left も明示してインデント消失を防ぐ。
+    */
     .page-inner .indent-1.hanging-indent {
+      padding-left: 36pt;
       text-indent: -36pt;
     }
 
     .page-inner .indent-2.hanging-indent {
+      padding-left: 72pt;
       text-indent: -72pt;
     }
 
     .page-inner .indent-3.hanging-indent {
+      padding-left: 108pt;
       text-indent: -108pt;
     }
 
     .page-inner .indent-4.hanging-indent {
+      padding-left: 144pt;
       text-indent: -144pt;
     }
 
     .page-inner .indent-5.hanging-indent {
+      padding-left: 180pt;
       text-indent: -180pt;
     }
   </style>
