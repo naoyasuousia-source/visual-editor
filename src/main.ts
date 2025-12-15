@@ -87,10 +87,19 @@ import {
 import {
   bindEditorEvents,
   initPageLinkHandler,
-  bindDocumentLevelHandlers,
-  bindToolbarHandlers,
-  bindParagraphMenuListeners
+  bindDocumentLevelHandlers
 } from './ui/events.js';
+
+import {
+  bindToolbarHandlers,
+  updateMarginButtonState
+} from './ui/toolbar.js';
+
+import {
+  initFileMenuControls,
+  initFontChooserControls,
+  bindParagraphMenuListeners
+} from './ui/menu.js';
 
 
 // Note: Window interface extension is now in types.ts. 
@@ -384,88 +393,10 @@ const isImageSizeClass = (value: string | null | undefined): value is ImageSizeC
 let contextTargetImage: HTMLImageElement | null = null;
 let aiImageIndex: HTMLElement | null = null;
 
-export function toggleHangingIndent(shouldHang: boolean): void {
-  const p = getCurrentParagraph();
-  if (!p) return;
-  if (shouldHang) {
-    p.classList.add('hanging-indent');
-  } else {
-    p.classList.remove('hanging-indent');
-  }
-  window.syncToSource();
-  updateToolbarState();
-}
 
 
-export function changeIndent(delta: number): void {
-  const p = getCurrentParagraph();
-  if (!p) return;
-
-  const m = p.className.match(/indent-(\d+)/);
-  let level = m ? parseInt(m[1], 10) : 0;
-
-  level = Math.max(0, Math.min(5, level + delta));
-
-  p.className = p.className.replace(/indent-\d+/, '').trim();
-  if (level > 0) p.classList.add(`indent-${level}`);
-
-  window.syncToSource();
-  updateToolbarState();
-}
 
 
-export function toggleFileDropdown(): void {
-  const element = getFileDropdownElement();
-  if (!element) return;
-  const willOpen = !element.classList.contains('open');
-  if (willOpen) {
-    closeAllMenus('file');
-  }
-  element.classList.toggle('open', willOpen);
-}
-
-export function closeNestedDropdown(): void {
-  getNestedDropdownElements().forEach(dropdown => {
-    dropdown.classList.remove('open');
-    const trigger = dropdown.querySelector<HTMLElement>('.nested-trigger');
-    if (trigger) {
-      trigger.setAttribute('aria-expanded', 'false');
-    }
-  });
-}
-
-export function closeFileDropdown(): void {
-  const element = getFileDropdownElement();
-  if (!element) return;
-  element.classList.remove('open');
-  closeNestedDropdown();
-}
-
-function initFileMenuControls(): void {
-  const fileTrigger = document.querySelector<HTMLElement>('.file-trigger');
-  const nestedTriggers = document.querySelectorAll<HTMLElement>('.nested-trigger');
-
-  if (fileTrigger) {
-    fileTrigger.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      toggleFileDropdown();
-    });
-  }
-
-  nestedTriggers.forEach(trigger => {
-    trigger.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      const dropdown = trigger.closest<HTMLElement>('.nested-dropdown');
-      if (!dropdown) return;
-      const willOpen = !dropdown.classList.contains('open');
-      closeNestedDropdown();
-      dropdown.classList.toggle('open', willOpen);
-      trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-    });
-  });
-}
 
 
 // Phase 2 & 3 Migration: Paragraph Management & Image Insertion & Event Binding
@@ -474,53 +405,12 @@ function initFileMenuControls(): void {
 
 
 
-// Helper: updateToolbarState (Migrated to support bindEditorEvents)
-export function updateToolbarState(): void {
-  const currentEditor = window.currentEditor;
-  if (!currentEditor) return;
-
-  const paragraph = getCurrentParagraph();
-  const toolbar = document.getElementById('toolbar');
-  if (!toolbar) return;
-
-  const hangingIndentCheckbox = toolbar.querySelector('[data-action="hanging-indent"]') as HTMLInputElement | null;
-
-  if (paragraph && hangingIndentCheckbox) {
-    const hasIndent = Array.from(paragraph.classList).some(cls => cls.startsWith('indent-'));
-    const isHanging = paragraph.classList.contains('hanging-indent');
-
-    if (hasIndent) {
-      hangingIndentCheckbox.disabled = false;
-      hangingIndentCheckbox.checked = isHanging;
-    } else {
-      hangingIndentCheckbox.disabled = true;
-      hangingIndentCheckbox.checked = false;
-    }
-  } else if (hangingIndentCheckbox) {
-    hangingIndentCheckbox.disabled = true;
-    hangingIndentCheckbox.checked = false;
-  }
-}
-
-// Helper: applyPendingBlockTag (Migrated since used in bindEditorEvents)
-
 
 // Global Assignments
 window.renumberParagraphs = renumberParagraphs;
-// window.bindEditorEvents = bindEditorEvents; // Moved to registry.ts
 window.promptDropboxImageUrl = promptDropboxImageUrl;
 window.promptWebImageUrl = promptWebImageUrl;
 window.insertImageAtCursor = insertImageAtCursor;
-window.updateToolbarState = updateToolbarState;
-
-window.toggleHangingIndent = toggleHangingIndent;
-window.toggleHighlightPalette = toggleHighlightPalette;
-window.applyColorHighlight = applyColorHighlight;
-window.removeHighlightsInRange = removeHighlightsInRange;
-window.resetHighlightsInSelection = resetHighlightsInSelection;
-window.setHighlightPaletteOpen = setHighlightPaletteOpen;
-window.changeIndent = changeIndent;
-window.setPagesHTML = setPagesHTML;
 
 // Page functions (Restored)
 window.createPage = createPage;
@@ -540,210 +430,9 @@ window.saveFullHTML = saveFullHTML;
 
 
 
-function initFontChooserControls(): void {
-  if (fontChooserTriggerElement) {
-    fontChooserTriggerElement.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      toggleFontMenu();
-    });
-  }
-
-  fontSubmenuTriggerElements.forEach(trigger => {
-    const submenu = trigger.closest<HTMLElement>('.font-submenu');
-    if (!submenu) return;
-    trigger.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      const willOpen = !submenu.classList.contains('is-open');
-      closeAllFontSubmenus();
-      submenu.classList.toggle('is-open', willOpen);
-      trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-      if (willOpen) {
-        setFontMenuOpen(true);
-      }
-    });
-  });
-
-  // Font Family Options
-  const fontButtons = document.querySelectorAll<HTMLElement>('.font-family-option');
-  fontButtons.forEach(btn => {
-    btn.addEventListener('click', (event) => {
-      event.preventDefault();
-      const family = btn.dataset.family;
-      if (family) {
-        applyFontFamily(family);
-        closeFontMenu();
-      }
-    });
-  });
-}
-
-export function updateMarginButtonState(activeSize: string): void {
-  if (!toolbarElement) return;
-  const buttons = toolbarElement.querySelectorAll<HTMLButtonElement>('button[data-action="page-margin"]');
-  buttons.forEach(btn => {
-    btn.setAttribute('aria-pressed', btn.dataset.size === activeSize ? 'true' : 'false');
-  });
-}
-
-
-export function closeAllParagraphSubmenus(): void {
-  if (!paragraphChooserElement) return;
-  paragraphChooserElement.querySelectorAll<HTMLElement>('.paragraph-submenu').forEach(submenu => {
-    submenu.classList.remove('is-open');
-    const trigger = submenu.querySelector<HTMLElement>('.paragraph-submenu-trigger');
-    if (trigger) {
-      trigger.setAttribute('aria-expanded', 'false');
-    }
-  });
-}
-
-export function setParagraphMenuOpen(open: boolean): void {
-  if (!paragraphChooserElement) return;
-  paragraphChooserElement.classList.toggle('is-open', open);
-  if (paragraphTriggerElement) {
-    paragraphTriggerElement.setAttribute('aria-expanded', open ? 'true' : 'false');
-  }
-  if (!open) {
-    closeAllParagraphSubmenus();
-  }
-}
-
-export function toggleParagraphMenu(): void {
-  if (!paragraphChooserElement) return;
-  const willOpen = !paragraphChooserElement.classList.contains('is-open');
-  if (willOpen) {
-    closeAllMenus('paragraph');
-  }
-  setParagraphMenuOpen(willOpen);
-}
-
-export function closeParagraphMenu(): void {
-  setParagraphMenuOpen(false);
-}
-
-const lineHeightSizes = ['s', 'm', 'l'] as const;
-type LineHeightSize = typeof lineHeightSizes[number];
-const isLineHeightSize = (value: string | null | undefined): value is LineHeightSize =>
-  !!value && lineHeightSizes.includes(value as LineHeightSize);
-
-export function syncToSource(): void {
-  if (!pagesContainerElement || !sourceElement) return;
-  sourceElement.value = pagesContainerElement.innerHTML;
-}
-
-export function applyLineHeight(size?: string | null): void {
-  if (!isLineHeightSize(size) || !pagesContainerElement) return;
-  const inners = pagesContainerElement.querySelectorAll<HTMLElement>('.page-inner');
-  inners.forEach(inner => {
-    lineHeightSizes.forEach(sz => inner.classList.remove(`line-height-${sz}`));
-    if (size !== 'm') {
-      inner.classList.add(`line-height-${size}`);
-    }
-  });
-  syncToSource();
-}
 
 
 
-export function applyParagraphAlignment(direction: string): void {
-  if (!direction) return;
-  const currentEditor = window.currentEditor;
-  if (!currentEditor) return;
-  const selection = window.getSelection();
-  if (!selection || !selection.rangeCount) return;
-  const range = selection.getRangeAt(0);
-  if (range.collapsed) return;
-  if (!currentEditor.contains(range.commonAncestorContainer)) return;
-
-  const selectors = 'p, h1, h2, h3, h4, h5, h6';
-  const paragraphs = Array.from(currentEditor.querySelectorAll<HTMLElement>(selectors)).filter(paragraph => {
-    return range.intersectsNode(paragraph);
-  });
-  if (!paragraphs.length) return;
-
-  paragraphs.forEach(paragraph => {
-    const wrapper = ensureParagraphWrapper(paragraph);
-    if (!wrapper) return;
-    alignDirections.forEach(dir => {
-      wrapper.classList.remove(`inline-align-${dir}`);
-    });
-    if (wrapper.classList.contains('figure-inline')) {
-      wrapper.classList.add('inline-align-center');
-    } else {
-      wrapper.classList.add(`inline-align-${direction}`);
-    }
-  });
-
-  // 選択範囲の復元（DOM構造変化により失われるため）
-  if (selection && paragraphs.length > 0) {
-    const first = paragraphs[0];
-    const last = paragraphs[paragraphs.length - 1];
-
-    // ラッパーまたはパラグラフ自体を取得
-    const firstTarget = findParagraphWrapper(first) || first;
-    const lastTarget = findParagraphWrapper(last) || last;
-
-    const newRange = document.createRange();
-    // ざっくりと最初の要素の先頭から最後の要素の末尾までを選択
-    newRange.setStart(firstTarget, 0);
-    // lastTargetの中身を含めるため、childNodesのlengthを使うか、afterを使う
-    // ここでは要素全体を選択するイメージで
-    if (lastTarget.lastChild) {
-      newRange.setEndAfter(lastTarget.lastChild);
-    } else {
-      newRange.setEnd(lastTarget, lastTarget.childNodes.length);
-    }
-
-    selection.removeAllRanges();
-    selection.addRange(newRange);
-  }
-
-  window.syncToSource();
-}
-
-export function getParagraphsInRange(range: Range | null): HTMLElement[] {
-  const currentEditor = window.currentEditor;
-  if (!currentEditor || !range) return [];
-  const selectors = 'p, h1, h2, h3, h4, h5, h6';
-  return Array.from(currentEditor.querySelectorAll<HTMLElement>(selectors)).filter(paragraph => {
-    return range.intersectsNode(paragraph);
-  });
-}
-
-function clearParagraphSpacingClasses(target: HTMLElement | null): void {
-  if (!target) return;
-  paragraphSpacingSizes.forEach(sz => {
-    target.classList.remove(`inline-spacing-${sz}`);
-  });
-}
-
-export function applyParagraphSpacing(size?: string | null): void {
-  if (!isParagraphSpacingSize(size)) return;
-  const currentEditor = window.currentEditor;
-  if (!currentEditor) return;
-  const selection = window.getSelection();
-  if (!selection || !selection.rangeCount) return;
-  const range = selection.getRangeAt(0);
-  if (range.collapsed) return;
-  if (!currentEditor.contains(range.commonAncestorContainer)) return;
-
-  const paragraphs = getParagraphsInRange(range);
-  if (!paragraphs.length) return;
-
-  paragraphs.forEach(paragraph => {
-    const wrapper = ensureParagraphWrapper(paragraph);
-    clearParagraphSpacingClasses(paragraph);
-    clearParagraphSpacingClasses(wrapper);
-    if (size !== 's') {
-      paragraph.classList.add(`inline-spacing-${size}`);
-      if (wrapper) wrapper.classList.add(`inline-spacing-${size}`);
-    }
-  });
-
-  window.syncToSource();
-}
 
 
 // Phase 3: Formatting & Selection Implementation
@@ -868,87 +557,11 @@ export function handleInlineTabBackspace(): boolean {
 }
 
 
-export function setHighlightPaletteOpen(open: boolean): void {
-  if (!highlightControlElement || !highlightButtonElement) return;
-  highlightControlElement.classList.toggle('is-open', open);
-  highlightButtonElement.setAttribute('aria-expanded', open ? 'true' : 'false');
+export function syncToSource(): void {
+  if (!pagesContainerElement || !sourceElement) return;
+  sourceElement.value = pagesContainerElement.innerHTML;
 }
 
-export function toggleHighlightPalette(): void {
-  if (!highlightControlElement) return;
-  const willOpen = !highlightControlElement.classList.contains('is-open');
-  if (willOpen) {
-    closeAllMenus('highlight');
-  }
-  setHighlightPaletteOpen(willOpen);
-}
-
-export function closeAllFontSubmenus(): void {
-  if (!fontChooserElement) return;
-  fontChooserElement.querySelectorAll<HTMLElement>('.font-submenu').forEach(submenu => {
-    submenu.classList.remove('is-open');
-    const trigger = submenu.querySelector<HTMLElement>('.font-submenu-trigger');
-    if (trigger) {
-      trigger.setAttribute('aria-expanded', 'false');
-    }
-  });
-}
-
-export function setFontMenuOpen(open: boolean): void {
-  if (!fontChooserElement) return;
-  fontChooserElement.classList.toggle('is-open', open);
-  if (fontChooserTriggerElement) {
-    fontChooserTriggerElement.setAttribute('aria-expanded', open ? 'true' : 'false');
-  }
-  if (!open) {
-    closeAllFontSubmenus();
-  }
-}
-
-// Helper to close all valid menus
-function closeAllMenus(exclude?: 'font' | 'paragraph' | 'highlight' | 'file'): void {
-  // Note: These functions must be hoisted or defined
-  if (exclude !== 'file' && typeof closeFileDropdown === 'function') closeFileDropdown();
-  if (exclude !== 'font' && typeof closeFontMenu === 'function') {
-    closeFontMenu();
-    if (typeof closeAllFontSubmenus === 'function') closeAllFontSubmenus();
-  }
-  if (exclude !== 'paragraph' && typeof closeParagraphMenu === 'function') closeParagraphMenu();
-  if (exclude !== 'highlight') {
-    if (highlightControlElement) setHighlightPaletteOpen(false);
-  }
-  closeImageContextMenu(); // Context menu should usually close on other interactions
-}
-
-export function toggleFontMenu(): void {
-  if (!fontChooserElement) return;
-  const willOpen = !fontChooserElement.classList.contains('is-open');
-  if (willOpen) {
-    closeAllMenus('font');
-  }
-  setFontMenuOpen(willOpen);
-}
-
-export function closeFontMenu(): void {
-  setFontMenuOpen(false);
-}
-
-export function closeFontSubmenu(type?: string | null): void {
-  if (!fontChooserElement || !type) return;
-  const submenu = fontChooserElement.querySelector<HTMLElement>(`.font-submenu[data-submenu="${type}"]`);
-  if (!submenu) return;
-  submenu.classList.remove('is-open');
-  const trigger = submenu.querySelector<HTMLElement>('.font-submenu-trigger');
-  if (trigger) {
-    trigger.setAttribute('aria-expanded', 'false');
-  }
-}
-
-
-
-
-// Global Assignments
-// Moved to registry.ts
 
 
 
@@ -966,11 +579,7 @@ export function initEditor() {
   initImageContextMenuControls();
   initPageLinkHandler();
   initFontChooserControls();
-  if (typeof (window as any).bindParagraphMenuListeners === 'function') {
-    (window as any).bindParagraphMenuListeners();
-  } else if (typeof bindParagraphMenuListeners === 'function') {
-    bindParagraphMenuListeners();
-  }
+  bindParagraphMenuListeners();
 
   // Ensure file input listener is bound
   const openFileInput = document.getElementById('open-file-input');
@@ -980,16 +589,11 @@ export function initEditor() {
   }
 
   bindDocumentLevelHandlers();
-  if (typeof (window as any).bindToolbarHandlers === 'function') {
-    (window as any).bindToolbarHandlers();
-  } else if (typeof bindToolbarHandlers === 'function') {
-    bindToolbarHandlers();
-  }
+  bindToolbarHandlers();
 
   ensureAiImageIndex();
   applyPageMargin(currentPageMarginSize);
-  ensureAiImageIndex();
-  applyPageMargin(currentPageMarginSize);
+
   console.log("Checking window.initPages:", window.initPages);
   if (window.initPages) {
     window.initPages();

@@ -41,7 +41,13 @@ import {
     removeHighlightsInRange,
     applyBlockElement,
     renumberParagraphs,
-    applyPendingBlockTag
+    applyPendingBlockTag,
+    toggleHangingIndent,
+    changeIndent,
+    applyParagraphAlignment,
+    applyParagraphSpacing,
+    applyLineHeight,
+    getParagraphsInRange
 } from './editor/formatting.js';
 
 import {
@@ -76,41 +82,45 @@ import {
     ensureFigureWrapper
 } from './utils/dom.js';
 
-// Functions still in main.ts (exported)
 import {
-    setActiveEditor,
-    getCurrentParagraph,
     updateToolbarState,
-    toggleHangingIndent,
-    changeIndent,
-    toggleHighlightPalette,
-    setHighlightPaletteOpen,
-    applyPageMargin,
-    updateMarginRule,
-    applyFontFamily,
     updateMarginButtonState,
-    // alignDirections, // Not exported yet
-    applyParagraphAlignment,
-    getParagraphsInRange,
-    applyParagraphSpacing,
-    closeAllFontSubmenus,
+    bindToolbarHandlers
+} from './ui/toolbar.js';
+
+import {
+    toggleFileDropdown,
+    closeNestedDropdown,
+    closeFileDropdown,
+    initFileMenuControls,
     setFontMenuOpen,
+    closeAllFontSubmenus,
     toggleFontMenu,
     closeFontMenu,
     closeFontSubmenu,
+    initFontChooserControls,
     closeAllParagraphSubmenus,
     setParagraphMenuOpen,
     toggleParagraphMenu,
     closeParagraphMenu,
+    bindParagraphMenuListeners,
+    setHighlightPaletteOpen,
+    toggleHighlightPalette,
+    closeAllMenus
+} from './ui/menu.js';
+
+// Functions still in main.ts (exported)
+import {
+    setActiveEditor,
+    getCurrentParagraph,
+    applyPageMargin,
+    updateMarginRule,
+    applyFontFamily,
     getCaretOffset,
     insertInlineTabAt,
     handleInlineTabKey,
     handleInlineTabBackspace,
     syncToSource,
-    applyLineHeight,
-    toggleFileDropdown,
-    closeNestedDropdown,
-    closeFileDropdown,
     isRangeInsideCurrentEditor,
     saveTextSelectionFromEditor,
     getEffectiveTextRange,

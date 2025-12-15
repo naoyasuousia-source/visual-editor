@@ -53,8 +53,10 @@ src/
 - **対象**: `bindEditorEvents`, `bindDocumentLevelHandlers`, `initPageLinkHandler`
 - **目的**: ユーザー入力とロジックの結合部を切り出す。
 
-### Step 9: UIコンポーネントの分離 (`src/ui/*`)
+### Step 9: UIコンポーネントの分離 (`src/ui/*`) (完了)
 - **対象**: ツールバー制御(`toolbar.ts`)、メニュー制御(`menu.ts`)、ダイアログ制御(`dialog.ts`)。
+- `src/ui/toolbar.ts`, `src/ui/menu.ts` を作成し、`main.ts` からロジック移動完了。
+
 
 ### Step 10: エントリーポイントの最終清掃 (`src/main.ts`)
 - `main.ts` に残った細かな初期化コードを整理し、完了。

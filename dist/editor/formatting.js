@@ -364,3 +364,145 @@ export function applyPendingBlockTag(inner) {
     convertParagraphToTag(current, pendingTag);
     inner.dataset.pendingBlockTag = '';
 }
+// --- Moved from main.ts ---
+const alignDirections = ['left', 'center', 'right'];
+const paragraphSpacingSizes = ['xs', 's', 'm', 'l', 'xl'];
+const lineHeightSizes = ['s', 'm', 'l'];
+import { findParagraphWrapper, ensureParagraphWrapper } from '../utils/dom.js';
+export function toggleHangingIndent(shouldHang) {
+    const current = window.getCurrentParagraph?.();
+    if (!current)
+        return;
+    if (shouldHang) {
+        current.classList.add('hanging-indent');
+    }
+    else {
+        current.classList.remove('hanging-indent');
+    }
+    window.syncToSource?.();
+    window.updateToolbarState?.();
+}
+export function changeIndent(delta) {
+    const current = window.getCurrentParagraph?.();
+    if (!current)
+        return;
+    const m = current.className.match(/indent-(\d+)/);
+    let level = m ? parseInt(m[1], 10) : 0;
+    level = Math.max(0, Math.min(5, level + delta));
+    current.className = current.className.replace(/indent-\d+/, '').trim();
+    if (level > 0)
+        current.classList.add(`indent-${level}`);
+    window.syncToSource?.();
+    window.updateToolbarState?.();
+}
+export function applyParagraphAlignment(direction) {
+    if (!direction)
+        return;
+    const currentEditor = window.currentEditor;
+    if (!currentEditor)
+        return;
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount)
+        return;
+    const range = selection.getRangeAt(0);
+    if (range.collapsed)
+        return;
+    if (!currentEditor.contains(range.commonAncestorContainer))
+        return;
+    const selectors = 'p, h1, h2, h3, h4, h5, h6';
+    const paragraphs = Array.from(currentEditor.querySelectorAll(selectors)).filter(paragraph => {
+        return range.intersectsNode(paragraph);
+    });
+    if (!paragraphs.length)
+        return;
+    paragraphs.forEach(paragraph => {
+        const wrapper = ensureParagraphWrapper(paragraph);
+        if (!wrapper)
+            return;
+        alignDirections.forEach(dir => {
+            wrapper.classList.remove(`inline-align-${dir}`);
+        });
+        if (wrapper.classList.contains('figure-inline')) {
+            wrapper.classList.add('inline-align-center');
+        }
+        else {
+            wrapper.classList.add(`inline-align-${direction}`);
+        }
+    });
+    // 選択範囲の復元
+    if (selection && paragraphs.length > 0) {
+        const first = paragraphs[0];
+        const last = paragraphs[paragraphs.length - 1];
+        const firstTarget = findParagraphWrapper(first) || first;
+        const lastTarget = findParagraphWrapper(last) || last;
+        const newRange = document.createRange();
+        newRange.setStart(firstTarget, 0);
+        if (lastTarget.lastChild) {
+            newRange.setEndAfter(lastTarget.lastChild);
+        }
+        else {
+            newRange.setEnd(lastTarget, lastTarget.childNodes.length);
+        }
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+    }
+    window.syncToSource?.();
+}
+export function getParagraphsInRange(range) {
+    const currentEditor = window.currentEditor;
+    if (!currentEditor || !range)
+        return [];
+    const selectors = 'p, h1, h2, h3, h4, h5, h6';
+    return Array.from(currentEditor.querySelectorAll(selectors)).filter(paragraph => {
+        return range.intersectsNode(paragraph);
+    });
+}
+function clearParagraphSpacingClasses(target) {
+    if (!target)
+        return;
+    paragraphSpacingSizes.forEach(sz => {
+        target.classList.remove(`inline-spacing-${sz}`);
+    });
+}
+export function applyParagraphSpacing(size) {
+    const currentEditor = window.currentEditor;
+    if (!currentEditor)
+        return;
+    if (!size || !paragraphSpacingSizes.includes(size))
+        return;
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount)
+        return;
+    const range = selection.getRangeAt(0);
+    if (range.collapsed)
+        return;
+    if (!currentEditor.contains(range.commonAncestorContainer))
+        return;
+    const paragraphs = getParagraphsInRange(range);
+    if (!paragraphs.length)
+        return;
+    paragraphs.forEach(paragraph => {
+        const wrapper = ensureParagraphWrapper(paragraph);
+        clearParagraphSpacingClasses(paragraph);
+        clearParagraphSpacingClasses(wrapper);
+        if (size !== 's') {
+            paragraph.classList.add(`inline-spacing-${size}`);
+            if (wrapper)
+                wrapper.classList.add(`inline-spacing-${size}`);
+        }
+    });
+    window.syncToSource?.();
+}
+export function applyLineHeight(size) {
+    const pagesContainerElement = getPagesContainerElement();
+    if (!size || !lineHeightSizes.includes(size) || !pagesContainerElement)
+        return;
+    const inners = pagesContainerElement.querySelectorAll('.page-inner');
+    inners.forEach(inner => {
+        lineHeightSizes.forEach(sz => inner.classList.remove(`line-height-${sz}`));
+        if (size !== 'm') {
+            inner.classList.add(`line-height-${size}`);
+        }
+    });
+    window.syncToSource?.();
+}

@@ -19,15 +19,15 @@
 // 2. Move those assignments to registry.ts.
 // 3. BUT registry.ts needs access to those functions.
 //    If they are local in main.ts, main.ts must export them.
-import { toggleBold, toggleItalic, toggleUnderline, toggleStrikeThrough, applyInlineScript, toggleSuperscript, toggleSubscript, resetHighlightsInSelection, applyColorHighlight, applyFontColor, resetFontColorInSelection, removeHighlightsInRange, applyBlockElement, renumberParagraphs, applyPendingBlockTag } from './editor/formatting.js';
+import { toggleBold, toggleItalic, toggleUnderline, toggleStrikeThrough, applyInlineScript, toggleSuperscript, toggleSubscript, resetHighlightsInSelection, applyColorHighlight, applyFontColor, resetFontColorInSelection, removeHighlightsInRange, applyBlockElement, renumberParagraphs, applyPendingBlockTag, toggleHangingIndent, changeIndent, applyParagraphAlignment, applyParagraphSpacing, applyLineHeight, getParagraphsInRange } from './editor/formatting.js';
 import { createPage, renumberPages, addPage, removePage, initPages } from './editor/page.js';
 import { saveFullHTML, openWithFilePicker, overwriteCurrentFile, handleOpenFile, setPagesHTML, importFullHTMLText, buildFullHTML } from './editor/io.js';
 // Functions still in main.ts (exported)
 import { convertParagraphToTag, generateBookmarkId, getClosestBlockId, compareParagraphOrder, calculateOffsetWithinNode, isParagraphEmpty, findParagraphWrapper, ensureParagraphWrapper, ensureFigureWrapper } from './utils/dom.js';
+import { updateToolbarState, updateMarginButtonState } from './ui/toolbar.js';
+import { toggleFileDropdown, closeNestedDropdown, closeFileDropdown, setFontMenuOpen, closeAllFontSubmenus, toggleFontMenu, closeFontMenu, closeFontSubmenu, closeAllParagraphSubmenus, setParagraphMenuOpen, toggleParagraphMenu, closeParagraphMenu, setHighlightPaletteOpen, toggleHighlightPalette } from './ui/menu.js';
 // Functions still in main.ts (exported)
-import { setActiveEditor, getCurrentParagraph, updateToolbarState, toggleHangingIndent, changeIndent, toggleHighlightPalette, setHighlightPaletteOpen, applyPageMargin, updateMarginRule, applyFontFamily, updateMarginButtonState, 
-// alignDirections, // Not exported yet
-applyParagraphAlignment, getParagraphsInRange, applyParagraphSpacing, closeAllFontSubmenus, setFontMenuOpen, toggleFontMenu, closeFontMenu, closeFontSubmenu, closeAllParagraphSubmenus, setParagraphMenuOpen, toggleParagraphMenu, closeParagraphMenu, getCaretOffset, insertInlineTabAt, handleInlineTabKey, handleInlineTabBackspace, syncToSource, applyLineHeight, toggleFileDropdown, closeNestedDropdown, closeFileDropdown, isRangeInsideCurrentEditor, saveTextSelectionFromEditor, getEffectiveTextRange, addLinkDestination, createLink, removeLink } from './main.js';
+import { setActiveEditor, getCurrentParagraph, applyPageMargin, updateMarginRule, applyFontFamily, getCaretOffset, insertInlineTabAt, handleInlineTabKey, handleInlineTabBackspace, syncToSource, isRangeInsideCurrentEditor, saveTextSelectionFromEditor, getEffectiveTextRange, addLinkDestination, createLink, removeLink } from './main.js';
 import { bindEditorEvents } from './ui/events.js';
 import { computeSelectionStateFromRange, findTextPositionInParagraph, restoreRangeFromSelectionState, findParagraph, placeCaretBefore, placeCaretAfter } from './editor/selection.js';
 import { applyImageSize, showImageContextMenu, closeImageContextMenu, closeImageSubmenu, applyImageTitle, promptDropboxImageUrl, promptWebImageUrl, insertImageAtCursor, openTitleDialog, closeTitleDialog, removeExistingImageTitle, updateImageMetaTitle, ensureAiImageIndex, rebuildFigureMetaStore } from './editor/image.js';
