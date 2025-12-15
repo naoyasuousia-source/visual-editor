@@ -35,35 +35,61 @@ export function importFullHTMLText(text: string): boolean {
     });
 
     const container = doc.getElementById('pages-container');
-    if (container) {
+    const restoreStructure = (root: Element) => {
         // Restore contenteditable
-        container.querySelectorAll('.page-inner').forEach(pi => {
+        root.querySelectorAll('.page-inner').forEach(pi => {
             pi.setAttribute('contenteditable', 'true');
         });
+        // Restore caret slots for images/figures
+        root.querySelectorAll('.figure-inline, .inline-align-center, .inline-align-left, .inline-align-right').forEach(wrapper => {
+            // Check if it has image but no caret slot
+            if (wrapper.querySelector('img') && !wrapper.querySelector('.caret-slot')) {
+                const slot = document.createElement('span');
+                slot.className = 'caret-slot';
+                slot.contentEditable = 'false';
+                slot.innerHTML = '&#8203;';
+                const br = document.createElement('br');
+
+                // If there's a title, insert before title? Or matching insertImageAtCursor logic?
+                // insertImageAtCursor: wrapper.appendChild(img); wrapper.appendChild(slot); wrapper.appendChild(br);
+                // If title exists, applyImageTitle adds slot before title? 
+                // applyImageTitle: container.appendChild(caretSlot); container.appendChild(br); container.appendChild(titleSpan);
+                // So slot is BEFORE title, AFTER image.
+
+                const title = wrapper.querySelector('.figure-title');
+                if (title) {
+                    wrapper.insertBefore(slot, title);
+                    wrapper.insertBefore(br, title);
+                } else {
+                    wrapper.appendChild(slot);
+                    wrapper.appendChild(br);
+                }
+            }
+        });
+    };
+
+    if (container) {
+        restoreStructure(container);
         setPagesHTML(container.innerHTML);
 
         // Apply margin
         if ((window as any).applyPageMargin) {
-            // Find key for value? Or just set property directly?
-            // Helper only takes key 's','m','l'. 
-            // If custom value, we need to manually set it.
-            // For now, let's look up the key.
             const map: Record<string, string> = { '12mm': 's', '17mm': 'm', '24mm': 'l' };
             const sizeKey = map[marginToApply] || 'm';
             (window as any).applyPageMargin(sizeKey);
         }
         return true;
     }
-    // Fallback: try to find .page elements or just body content if simple
+    // Fallback
     const pages = doc.querySelectorAll('.page');
     if (pages.length > 0) {
         let html = '';
+        const tempContainer = document.createElement('div');
         pages.forEach(p => {
-            const pi = p.querySelector('.page-inner');
-            if (pi) pi.setAttribute('contenteditable', 'true');
-            html += p.outerHTML;
+            tempContainer.appendChild(p.cloneNode(true));
         });
-        setPagesHTML(html);
+        restoreStructure(tempContainer);
+        setPagesHTML(tempContainer.innerHTML);
         return true;
     }
     return false;

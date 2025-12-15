@@ -39,13 +39,12 @@ body {
   background: #f8f9fa;
   border-bottom: 1px solid #ccc;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 100;
-  /* overflow-x: auto;  ドロップダウンが見切れるため削除 */
+  z-index: 1000;
   overflow: visible;
-  flex-wrap: wrap;
-  /* ボタンが多い場合は折り返す */
+  /* ドロップダウンを表示するためvisible */
   position: relative;
-  /* メガメニューの基準点 */
+  flex-wrap: wrap;
+  /* スクロールなしで折り返す */
 }
 
 #toolbar button {
@@ -69,10 +68,15 @@ body {
 
 /* File Menu & Dropdowns */
 .file-menu {
-  position: static;
-  /* 親をstaticにして、子のdropdownをtoolbar全体に広げる */
+  position: relative;
+  /* 元に戻す */
   display: inline-flex;
   align-items: stretch;
+}
+
+.file-menu:hover .file-menu-trigger,
+.file-menu .file-trigger {
+  background: #e0e0e0;
 }
 
 .file-menu:hover .file-dropdown,
@@ -84,93 +88,92 @@ body {
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
-  width: auto;
-  /* Toolbar全幅 */
-  background: #f8f9fa;
-  border-bottom: 1px solid #ccc;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border: 1px solid #aaa;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   display: none;
-  flex-direction: row;
-  /* 横並び */
-  flex-wrap: wrap;
-  gap: 16px;
-  z-index: 90;
-  border-radius: 0;
-  padding: 12px 16px;
+  flex-direction: column;
+  min-width: 180px;
+  z-index: 2000;
+  border-radius: 4px;
+  padding: 4px 0;
 }
 
-.file-dropdown button {
-  width: auto;
-  border: 1px solid transparent;
-  padding: 8px 12px;
-  border-radius: 4px;
-  margin: 0;
+.file-dropdown>button {
+  width: 100%;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 0;
   background: none;
   text-align: left;
 }
 
-.file-dropdown button:hover {
-  background-color: #e9ecef;
-  border-color: #ced4da;
+.file-dropdown>button:hover {
+  background-color: #f0f0f0;
 }
 
-/* ネストされたドロップダウン: 親が開いたら子もスタティックに展開 */
+/* ネストされたドロップダウン: 標準的なサブメニューに戻す */
 .nested-dropdown {
   position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: auto;
-  min-width: 200px;
-  border: 1px solid #eee;
-  padding: 8px;
-  background: #fff;
-  border-radius: 4px;
-}
-
-.file-dropdown.open .nested-dropdown,
-.file-menu:hover .nested-dropdown {
-  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  border: none;
+  padding: 0;
+  background: none;
+  border-radius: 0;
 }
 
 .nested-trigger {
   width: 100%;
   text-align: left;
-  font-weight: bold;
-  color: #333;
+  font-weight: normal;
+  color: inherit;
   background: none;
-  padding: 4px 0;
-  border-bottom: 1px solid #eee;
-  margin-bottom: 4px;
+  padding: 8px 16px;
+  border-bottom: none;
+  margin-bottom: 0;
 }
 
 /* 展開状態では矢印不要 */
 .nested-trigger::after {
-  display: none;
+  content: '▸';
+  float: right;
+  color: #999;
+  display: inline;
+  /* 復活 */
 }
 
 .nested-dropdown-menu {
-  /* 常に表示 (Mega Menu風) */
-  display: flex;
+  position: absolute;
+  top: -4px;
+  left: 100%;
+  background: #fff;
+  border: 1px solid #aaa;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: none;
+  /* デフォルト非表示 */
   flex-direction: column;
-  position: static;
-  box-shadow: none;
-  border: none;
-  background: transparent;
-  width: 100%;
-  min-width: unset;
-  padding: 0;
+  min-width: 180px;
+  z-index: 201;
+  border-radius: 4px;
+  padding: 4px 0;
+  width: auto;
   margin: 0;
+}
+
+.nested-dropdown:hover .nested-dropdown-menu,
+.nested-dropdown.open .nested-dropdown-menu {
+  display: flex;
 }
 
 .nested-dropdown-menu button {
   border: none;
-  padding: 6px 8px;
+  padding: 8px 16px;
   font-size: 0.85rem;
   text-align: left;
   width: 100%;
-  border-radius: 4px;
+  border-radius: 0;
 }
 
 .nested-dropdown-menu button:hover {
@@ -365,7 +368,7 @@ section.page.active {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   padding: 8px;
   gap: 8px;
-  z-index: 200;
+  z-index: 2000;
   border-radius: 6px;
   min-width: max-content;
 }
