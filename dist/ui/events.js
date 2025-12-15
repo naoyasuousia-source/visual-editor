@@ -1,4 +1,4 @@
-import { toggleBold, toggleItalic, toggleUnderline, toggleStrikeThrough, toggleSuperscript, toggleSubscript, applyColorHighlight, applyFontColor, resetFontColorInSelection } from '../editor/formatting.js';
+import { toggleBold, toggleItalic, toggleUnderline, toggleStrikeThrough, toggleSuperscript, toggleSubscript, applyColorHighlight, applyFontColor, resetFontColorInSelection, renumberParagraphs, applyPendingBlockTag } from '../editor/formatting.js';
 // DOM Elements
 const getToolbarElement = () => document.getElementById('toolbar');
 const getPagesContainer = () => document.getElementById('pages-container');
@@ -20,12 +20,8 @@ export function bindEditorEvents(inner) {
     inner.addEventListener('input', (e) => {
         const inputEvent = e;
         if (inputEvent && inputEvent.inputType === 'insertParagraph') {
-            if (window.applyPendingBlockTag) {
-                window.applyPendingBlockTag(inner);
-            }
-            if (window.renumberParagraphs) {
-                window.renumberParagraphs();
-            }
+            applyPendingBlockTag(inner);
+            renumberParagraphs();
         }
         else {
             window.syncToSource?.();

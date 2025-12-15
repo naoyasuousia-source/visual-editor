@@ -3,7 +3,7 @@ import { toggleBold, toggleItalic, toggleUnderline, toggleStrikeThrough, applyIn
 import { saveFullHTML, openWithFilePicker, overwriteCurrentFile, handleOpenFile, setPagesHTML, importFullHTMLText, buildFullHTML } from './editor/io.js';
 import { createPage, renumberPages, addPage, removePage, initPages } from './editor/page.js';
 import { ensureAiImageIndex, closeImageContextMenu, promptDropboxImageUrl, promptWebImageUrl, insertImageAtCursor, initImageContextMenuControls } from './editor/image.js';
-import { convertParagraphToTag, generateBookmarkId, findParagraphWrapper, ensureParagraphWrapper } from './utils/dom.js';
+import { generateBookmarkId, findParagraphWrapper, ensureParagraphWrapper } from './utils/dom.js';
 import { initPageLinkHandler, bindDocumentLevelHandlers, bindToolbarHandlers, bindParagraphMenuListeners } from './ui/events.js';
 // Note: Window interface extension is now in types.ts. 
 // We don't need to redeclare it here if we include types.ts in compilation, 
@@ -374,16 +374,6 @@ export function updateToolbarState() {
     }
 }
 // Helper: applyPendingBlockTag (Migrated since used in bindEditorEvents)
-export function applyPendingBlockTag(inner) {
-    const pendingTag = inner.dataset.pendingBlockTag || inner.dataset.preferredBlockTag || 'p';
-    if (!pendingTag)
-        return;
-    const current = getCurrentParagraph();
-    if (!current)
-        return;
-    convertParagraphToTag(current, pendingTag);
-    inner.dataset.pendingBlockTag = '';
-}
 // Global Assignments
 window.renumberParagraphs = renumberParagraphs;
 // window.bindEditorEvents = bindEditorEvents; // Moved to registry.ts
@@ -391,7 +381,6 @@ window.promptDropboxImageUrl = promptDropboxImageUrl;
 window.promptWebImageUrl = promptWebImageUrl;
 window.insertImageAtCursor = insertImageAtCursor;
 window.updateToolbarState = updateToolbarState;
-window.applyPendingBlockTag = applyPendingBlockTag;
 window.toggleHangingIndent = toggleHangingIndent;
 window.toggleHighlightPalette = toggleHighlightPalette;
 window.applyColorHighlight = applyColorHighlight;

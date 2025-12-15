@@ -503,14 +503,7 @@ export function updateToolbarState(): void {
 }
 
 // Helper: applyPendingBlockTag (Migrated since used in bindEditorEvents)
-export function applyPendingBlockTag(inner: HTMLElement): void {
-  const pendingTag = inner.dataset.pendingBlockTag || inner.dataset.preferredBlockTag || 'p';
-  if (!pendingTag) return;
-  const current = getCurrentParagraph();
-  if (!current) return;
-  convertParagraphToTag(current, pendingTag);
-  inner.dataset.pendingBlockTag = '';
-}
+
 
 // Global Assignments
 window.renumberParagraphs = renumberParagraphs;
@@ -519,7 +512,7 @@ window.promptDropboxImageUrl = promptDropboxImageUrl;
 window.promptWebImageUrl = promptWebImageUrl;
 window.insertImageAtCursor = insertImageAtCursor;
 window.updateToolbarState = updateToolbarState;
-window.applyPendingBlockTag = applyPendingBlockTag;
+
 window.toggleHangingIndent = toggleHangingIndent;
 window.toggleHighlightPalette = toggleHighlightPalette;
 window.applyColorHighlight = applyColorHighlight;

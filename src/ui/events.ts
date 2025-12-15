@@ -14,7 +14,9 @@ import {
     applyColorHighlight,
     applyFontColor,
     resetFontColorInSelection,
-    resetHighlightsInSelection
+    resetHighlightsInSelection,
+    renumberParagraphs,
+    applyPendingBlockTag
 } from '../editor/formatting.js';
 
 // DOM Elements
@@ -41,12 +43,8 @@ export function bindEditorEvents(inner: HTMLElement): void {
     inner.addEventListener('input', (e: Event) => {
         const inputEvent = e as InputEvent;
         if (inputEvent && inputEvent.inputType === 'insertParagraph') {
-            if (window.applyPendingBlockTag) {
-                window.applyPendingBlockTag(inner);
-            }
-            if (window.renumberParagraphs) {
-                window.renumberParagraphs();
-            }
+            applyPendingBlockTag(inner);
+            renumberParagraphs();
         } else {
             window.syncToSource?.();
         }

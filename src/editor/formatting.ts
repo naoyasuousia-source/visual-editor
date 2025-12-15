@@ -399,3 +399,12 @@ function getAncestorHighlight(node: Node | null): HTMLElement | null {
     }
     return null;
 }
+
+export function applyPendingBlockTag(inner: HTMLElement): void {
+    const pendingTag = inner.dataset.pendingBlockTag || inner.dataset.preferredBlockTag || 'p';
+    if (!pendingTag) return;
+    const current = getCurrentParagraph();
+    if (!current) return;
+    convertParagraphToTag(current as HTMLElement, pendingTag);
+    inner.dataset.pendingBlockTag = '';
+}

@@ -40,7 +40,8 @@ import {
     resetFontColorInSelection,
     removeHighlightsInRange,
     applyBlockElement,
-    renumberParagraphs
+    renumberParagraphs,
+    applyPendingBlockTag
 } from './editor/formatting.js';
 
 import {
@@ -80,7 +81,6 @@ import {
     setActiveEditor,
     getCurrentParagraph,
     updateToolbarState,
-    applyPendingBlockTag,
     toggleHangingIndent,
     changeIndent,
     toggleHighlightPalette,

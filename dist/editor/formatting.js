@@ -354,3 +354,13 @@ function getAncestorHighlight(node) {
     }
     return null;
 }
+export function applyPendingBlockTag(inner) {
+    const pendingTag = inner.dataset.pendingBlockTag || inner.dataset.preferredBlockTag || 'p';
+    if (!pendingTag)
+        return;
+    const current = getCurrentParagraph();
+    if (!current)
+        return;
+    convertParagraphToTag(current, pendingTag);
+    inner.dataset.pendingBlockTag = '';
+}

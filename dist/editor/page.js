@@ -1,5 +1,7 @@
 import { getPagesContainerElement } from '../globals.js';
 import { ensureAiImageIndex } from './image.js';
+import { bindEditorEvents } from '../ui/events.js';
+import { renumberParagraphs } from './formatting.js';
 export function createPage(pageNumber, contentHTML) {
     const section = document.createElement('section');
     section.className = 'page';
@@ -26,7 +28,7 @@ export function initPages() {
         return;
     const inners = pagesContainerElement.querySelectorAll('.page-inner');
     inners.forEach(inner => {
-        window.bindEditorEvents?.(inner); // TODO: Move bindEditorEvents to a separate module and import here
+        bindEditorEvents(inner);
     });
     if (!window.currentEditor && inners[0]) {
         window.setActiveEditor?.(inners[0]);
@@ -56,7 +58,7 @@ export function addPage() {
     }
     const newInner = newPage.querySelector('.page-inner');
     renumberPages();
-    window.renumberParagraphs?.(); // This relies on window global, TODO: Import from formatting or where renumberParagraphs lives
+    renumberParagraphs();
     initPages();
     if (newInner) {
         window.setActiveEditor?.(newInner);
@@ -86,7 +88,7 @@ export function removePage() {
         if (inner) {
             inner.innerHTML = '<p>ここに本文を書く</p>';
             window.setActiveEditor?.(inner);
-            window.renumberParagraphs?.();
+            renumberParagraphs();
         }
         return;
     }
@@ -98,6 +100,6 @@ export function removePage() {
         window.setActiveEditor?.(newInner);
     }
     renumberPages();
-    window.renumberParagraphs?.();
+    renumberParagraphs();
     ensureAiImageIndex();
 }
