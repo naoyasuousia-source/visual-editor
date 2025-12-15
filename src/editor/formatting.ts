@@ -10,8 +10,13 @@ import {
 import {
     convertParagraphToTag,
     unwrapColorSpan,
-    removeColorSpansInNode
+    removeColorSpansInNode,
+    findParagraphWrapper,
+    ensureParagraphWrapper
 } from '../utils/dom.js';
+
+import { getCurrentParagraph, syncToSource } from './core.js';
+import { updateToolbarState } from '../ui/toolbar.js';
 
 // We rely on window.* extension methods for some core side-effects for now
 // to maintain compatibility with the monolithic main.ts behavior during refactoring.
@@ -28,7 +33,6 @@ export function renumberParagraphs(): void {
 
     pages.forEach(page => {
         let pageNum = page.getAttribute('data-page');
-
         if (!pageNum) {
             pageNum = '1';
         }
@@ -36,22 +40,16 @@ export function renumberParagraphs(): void {
         const inner = page.querySelector('.page-inner') as HTMLElement | null;
         if (!inner) return;
 
-        // --- 修正: 段落が消失してしまった場合のリカバリ ---
-        // 何も入力がない、あるいはすべて消してしまった場合にも、最低1つのPタグを保証する
-        // バックスペース連打で最後の1行のタグまで消えると、以後入力できなくなるのを防ぐ
         if (!inner.querySelector('p, h1, h2, h3, h4, h5, h6')) {
             const p = document.createElement('p');
-            p.innerHTML = '<br>'; // カーソルが入れるようにBRを入れる
+            p.innerHTML = '<br>';
             inner.appendChild(p);
         }
-        // ------------------------------------------------
 
         let paraIndex = 1;
 
-        // p と h1〜h6 のみ対象
         inner.querySelectorAll('p, h1, h2, h3, h4, h5, h6').forEach(block => {
             const el = block as HTMLElement;
-            // 過去バージョンの para-num/para-body を除去
             el.querySelectorAll('.para-num').forEach(span => span.remove());
             el.querySelectorAll('.para-body').forEach(body => {
                 while (body.firstChild) {
@@ -60,12 +58,9 @@ export function renumberParagraphs(): void {
                 body.remove();
             });
 
-            // id と data-para を付与
             el.dataset.para = String(paraIndex);
             el.id = `p${pageNum}-${paraIndex}`;
 
-            // block.dataset.blockStyle が設定済みならそれを尊重し、
-            // 未設定の場合は mini-text span の有無で判断
             if (!el.dataset.blockStyle) {
                 const hasMiniTextSpan = el.querySelector(':scope > .mini-text');
                 el.dataset.blockStyle = hasMiniTextSpan ? 'mini-p' : el.tagName.toLowerCase();
@@ -76,8 +71,9 @@ export function renumberParagraphs(): void {
     });
 
     rebuildFigureMetaStore();
-    (window as any).syncToSource?.();
+    syncToSource();
 }
+
 
 export function normalizeInlineFormatting() {
     const currentEditor = window.currentEditor;
@@ -104,9 +100,7 @@ function replaceInlineTag(currentEditor: HTMLElement, from: string, to: string):
     });
 }
 
-function getCurrentParagraph(): Element | null {
-    return window.getCurrentParagraph?.() || null;
-}
+
 
 export function toggleBold(): void {
     const currentEditor = window.currentEditor;
@@ -114,7 +108,7 @@ export function toggleBold(): void {
     currentEditor.focus();
     document.execCommand('bold', false, undefined);
     normalizeInlineFormatting();
-    window.syncToSource();
+    syncToSource();
 }
 
 export function toggleItalic(): void {
@@ -123,7 +117,7 @@ export function toggleItalic(): void {
     currentEditor.focus();
     document.execCommand('italic', false, undefined);
     normalizeInlineFormatting();
-    window.syncToSource();
+    syncToSource();
 }
 
 export function toggleUnderline(): void {
@@ -132,7 +126,7 @@ export function toggleUnderline(): void {
     currentEditor.focus();
     document.execCommand('underline', false, undefined);
     normalizeInlineFormatting();
-    window.syncToSource();
+    syncToSource();
 }
 
 export function toggleStrikeThrough(): void {
@@ -161,7 +155,7 @@ export function toggleStrikeThrough(): void {
         }
     }
 
-    window.syncToSource();
+    syncToSource();
 }
 
 export function applyInlineScript(command: string): void {
@@ -170,7 +164,7 @@ export function applyInlineScript(command: string): void {
     if (!currentEditor) return;
     currentEditor.focus();
     document.execCommand(command, false, undefined);
-    window.syncToSource();
+    syncToSource();
 }
 
 export function applyBlockElement(tag: string | null | undefined): void {
@@ -184,7 +178,7 @@ export function applyBlockElement(tag: string | null | undefined): void {
         }
 
         convertParagraphToTag(current, tag);
-        window.renumberParagraphs?.();
+        renumberParagraphs();
 
         if (savedState) {
             const restored = restoreRangeFromSelectionState(savedState);
@@ -194,7 +188,7 @@ export function applyBlockElement(tag: string | null | undefined): void {
             }
         }
 
-        window.syncToSource();
+        syncToSource();
     }
 }
 
@@ -242,7 +236,7 @@ export function applyColorHighlight(color?: string | null): void {
     selection.addRange(newRange);
 
     currentEditor.focus();
-    window.syncToSource();
+    syncToSource();
 }
 
 
@@ -283,7 +277,7 @@ export function applyFontColor(color?: string | null): void {
     selection.addRange(newRange);
 
     currentEditor.focus();
-    window.syncToSource();
+    syncToSource();
 }
 
 export function resetFontColorInSelection(): void {
@@ -307,8 +301,9 @@ export function resetFontColorInSelection(): void {
 
     const normalized = range.cloneRange();
     selection.removeAllRanges();
-    selection.addRange(normalized);
-    window.syncToSource();
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(normalized);
+    syncToSource();
 }
 
 export function removeHighlightsInRange(range: Range): boolean {
@@ -360,7 +355,7 @@ export function resetHighlightsInSelection(): void {
             newRange.setEndAfter(last);
             selection.addRange(newRange);
         }
-        window.syncToSource();
+        syncToSource();
         return;
     }
 
@@ -376,7 +371,7 @@ export function resetHighlightsInSelection(): void {
         newRange.setEndAfter(last);
         selection.addRange(newRange);
     }
-    window.syncToSource();
+    syncToSource();
 }
 
 // Local helper mimicking main.ts logic
@@ -415,22 +410,22 @@ const alignDirections = ['left', 'center', 'right'] as const;
 const paragraphSpacingSizes = ['xs', 's', 'm', 'l', 'xl'] as const;
 const lineHeightSizes = ['s', 'm', 'l'] as const;
 
-import { findParagraphWrapper, ensureParagraphWrapper } from '../utils/dom.js';
+
 
 export function toggleHangingIndent(shouldHang: boolean): void {
-    const current = window.getCurrentParagraph?.();
+    const current = getCurrentParagraph();
     if (!current) return;
     if (shouldHang) {
         current.classList.add('hanging-indent');
     } else {
         current.classList.remove('hanging-indent');
     }
-    window.syncToSource?.();
-    window.updateToolbarState?.();
+    syncToSource();
+    updateToolbarState();
 }
 
 export function changeIndent(delta: number): void {
-    const current = window.getCurrentParagraph?.();
+    const current = getCurrentParagraph();
     if (!current) return;
 
     const m = current.className.match(/indent-(\d+)/);
@@ -441,8 +436,8 @@ export function changeIndent(delta: number): void {
     current.className = current.className.replace(/indent-\d+/, '').trim();
     if (level > 0) current.classList.add(`indent-${level}`);
 
-    window.syncToSource?.();
-    window.updateToolbarState?.();
+    syncToSource();
+    updateToolbarState();
 }
 
 export function applyParagraphAlignment(direction: string): void {
@@ -493,7 +488,7 @@ export function applyParagraphAlignment(direction: string): void {
         selection.addRange(newRange);
     }
 
-    window.syncToSource?.();
+    syncToSource();
 }
 
 export function getParagraphsInRange(range: Range | null): HTMLElement[] {
@@ -536,7 +531,7 @@ export function applyParagraphSpacing(size?: string | null): void {
         }
     });
 
-    window.syncToSource?.();
+    syncToSource();
 }
 
 export function applyLineHeight(size?: string | null): void {
@@ -550,6 +545,6 @@ export function applyLineHeight(size?: string | null): void {
             inner.classList.add(`line-height-${size}`);
         }
     });
-    window.syncToSource?.();
+    syncToSource();
 }
 

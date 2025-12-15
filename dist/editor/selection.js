@@ -112,21 +112,7 @@ export function placeCaretAfter(node) {
         selection.addRange(range);
     }
 }
-export function getCurrentParagraph() {
-    const currentEditor = window.currentEditor;
-    if (!currentEditor)
-        return null;
-    const sel = window.getSelection();
-    if (!sel || !sel.rangeCount)
-        return null;
-    let node = sel.anchorNode;
-    if (!currentEditor.contains(node))
-        return null;
-    while (node && !(node.nodeType === 1 && /^(p|h[1-6]|div)$/i.test(node.nodeName))) {
-        node = node.parentNode;
-    }
-    return node;
-}
+export { getCurrentParagraph } from './core.js';
 let lastSelectionState = null;
 export function isRangeInsideCurrentEditor(range) {
     const currentEditor = window.currentEditor;

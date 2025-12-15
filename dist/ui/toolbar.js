@@ -1,4 +1,11 @@
 import { toggleBold, toggleItalic, toggleUnderline, toggleStrikeThrough, toggleSuperscript, toggleSubscript, applyColorHighlight, applyFontColor, resetFontColorInSelection, resetHighlightsInSelection, toggleHangingIndent, changeIndent, applyParagraphAlignment, applyParagraphSpacing, applyLineHeight, applyBlockElement } from '../editor/formatting.js';
+import { toggleParagraphMenu, toggleHighlightPalette } from './menu.js';
+import { getCurrentParagraph, syncToSource } from '../editor/core.js';
+import { applyFontFamily, applyPageMargin } from './settings.js';
+import { addPage, removePage } from '../editor/page.js';
+import { saveFullHTML, openWithFilePicker, overwriteCurrentFile } from '../editor/io.js';
+import { promptDropboxImageUrl, promptWebImageUrl } from '../editor/image.js';
+import { addLinkDestination, createLink, removeLink } from '../editor/links.js';
 const getToolbarElement = () => document.getElementById('toolbar');
 export function updateMarginButtonState(activeSize) {
     const toolbarElement = getToolbarElement();
@@ -13,7 +20,7 @@ export function updateToolbarState() {
     const currentEditor = window.currentEditor;
     if (!currentEditor)
         return;
-    const paragraph = window.getCurrentParagraph?.();
+    const paragraph = getCurrentParagraph();
     const toolbar = getToolbarElement();
     if (!toolbar)
         return;
@@ -88,8 +95,7 @@ export function bindToolbarHandlers() {
                 toggleSubscript();
                 break;
             case 'highlight':
-                if (window.toggleHighlightPalette)
-                    window.toggleHighlightPalette();
+                toggleHighlightPalette();
                 break;
             case 'highlight-color':
                 applyColorHighlight(btn.dataset.color ?? null);
@@ -104,11 +110,10 @@ export function bindToolbarHandlers() {
                 resetFontColorInSelection();
                 break;
             case 'font-family':
-                window.applyFontFamily?.(btn.dataset.family ?? null);
+                applyFontFamily(btn.dataset.family ?? null);
                 break;
             case 'paragraph-style':
-                if (window.toggleParagraphMenu)
-                    window.toggleParagraphMenu();
+                toggleParagraphMenu();
                 break;
             case 'align-left':
                 applyParagraphAlignment('left');
@@ -130,24 +135,24 @@ export function bindToolbarHandlers() {
                 break;
             case 'indent':
                 changeIndent(1);
-                window.syncToSource?.();
+                syncToSource();
                 break;
             case 'outdent':
                 changeIndent(-1);
-                window.syncToSource?.();
+                syncToSource();
                 break;
             case 'add-page':
-                window.addPage?.();
+                addPage();
                 break;
             case 'remove-page':
-                window.removePage?.();
+                removePage();
                 break;
             case 'save':
-                window.saveFullHTML?.();
+                saveFullHTML();
                 break;
             case 'open':
                 {
-                    const opened = await window.openWithFilePicker?.();
+                    const opened = await openWithFilePicker();
                     const openFileInputElement = document.getElementById('open-file-input');
                     if (!opened && openFileInputElement) {
                         openFileInputElement.value = '';
@@ -156,31 +161,27 @@ export function bindToolbarHandlers() {
                 }
                 break;
             case 'insert-image-dropbox':
-                window.promptDropboxImageUrl?.();
+                promptDropboxImageUrl();
                 break;
             case 'insert-image-web':
-                window.promptWebImageUrl?.();
+                promptWebImageUrl();
                 break;
             case 'page-margin':
                 if (btn.dataset.size) {
-                    if (window.applyPageMargin)
-                        window.applyPageMargin(btn.dataset.size);
+                    applyPageMargin(btn.dataset.size);
                 }
                 break;
             case 'overwrite':
-                await window.overwriteCurrentFile?.();
+                await overwriteCurrentFile();
                 break;
             case 'add-link-destination':
-                if (window.addLinkDestination)
-                    window.addLinkDestination();
+                addLinkDestination();
                 break;
             case 'create-link':
-                if (window.createLink)
-                    window.createLink();
+                createLink();
                 break;
             case 'remove-link':
-                if (window.removeLink)
-                    window.removeLink();
+                removeLink();
                 break;
             default:
                 break;

@@ -20,9 +20,17 @@ import {
 
 import {
     toggleFontMenu,
-    toggleParagraphMenu
-    // will be imported after menu.ts is created, or refer to window for now to avoid circular dependency
+    toggleParagraphMenu,
+    toggleHighlightPalette
 } from './menu.js';
+
+import { getCurrentParagraph, syncToSource } from '../editor/core.js';
+import { applyFontFamily, applyPageMargin } from './settings.js';
+import { addPage, removePage } from '../editor/page.js';
+import { saveFullHTML, openWithFilePicker, overwriteCurrentFile } from '../editor/io.js';
+import { promptDropboxImageUrl, promptWebImageUrl } from '../editor/image.js';
+import { addLinkDestination, createLink, removeLink } from '../editor/links.js';
+
 
 const getToolbarElement = () => document.getElementById('toolbar');
 
@@ -39,7 +47,7 @@ export function updateToolbarState(): void {
     const currentEditor = window.currentEditor;
     if (!currentEditor) return;
 
-    const paragraph = window.getCurrentParagraph?.();
+    const paragraph = getCurrentParagraph();
     const toolbar = getToolbarElement();
     if (!toolbar) return;
 
@@ -118,7 +126,7 @@ export function bindToolbarHandlers(): void {
                 toggleSubscript();
                 break;
             case 'highlight':
-                if (window.toggleHighlightPalette) window.toggleHighlightPalette();
+                toggleHighlightPalette();
                 break;
             case 'highlight-color':
                 applyColorHighlight(btn.dataset.color ?? null);
@@ -133,10 +141,10 @@ export function bindToolbarHandlers(): void {
                 resetFontColorInSelection();
                 break;
             case 'font-family':
-                (window as any).applyFontFamily?.(btn.dataset.family ?? null);
+                applyFontFamily(btn.dataset.family ?? null);
                 break;
             case 'paragraph-style':
-                if (window.toggleParagraphMenu) window.toggleParagraphMenu();
+                toggleParagraphMenu();
                 break;
             case 'align-left':
                 applyParagraphAlignment('left');
@@ -158,24 +166,24 @@ export function bindToolbarHandlers(): void {
                 break;
             case 'indent':
                 changeIndent(1);
-                (window as any).syncToSource?.();
+                syncToSource();
                 break;
             case 'outdent':
                 changeIndent(-1);
-                (window as any).syncToSource?.();
+                syncToSource();
                 break;
             case 'add-page':
-                (window as any).addPage?.();
+                addPage();
                 break;
             case 'remove-page':
-                (window as any).removePage?.();
+                removePage();
                 break;
             case 'save':
-                (window as any).saveFullHTML?.();
+                saveFullHTML();
                 break;
             case 'open':
                 {
-                    const opened = await (window as any).openWithFilePicker?.();
+                    const opened = await openWithFilePicker();
                     const openFileInputElement = document.getElementById('open-file-input') as HTMLInputElement | null;
                     if (!opened && openFileInputElement) {
                         openFileInputElement.value = '';
@@ -184,27 +192,27 @@ export function bindToolbarHandlers(): void {
                 }
                 break;
             case 'insert-image-dropbox':
-                (window as any).promptDropboxImageUrl?.();
+                promptDropboxImageUrl();
                 break;
             case 'insert-image-web':
-                (window as any).promptWebImageUrl?.();
+                promptWebImageUrl();
                 break;
             case 'page-margin':
                 if (btn.dataset.size) {
-                    if (window.applyPageMargin) window.applyPageMargin(btn.dataset.size);
+                    applyPageMargin(btn.dataset.size);
                 }
                 break;
             case 'overwrite':
-                await (window as any).overwriteCurrentFile?.();
+                await overwriteCurrentFile();
                 break;
             case 'add-link-destination':
-                if (window.addLinkDestination) window.addLinkDestination();
+                addLinkDestination();
                 break;
             case 'create-link':
-                if (window.createLink) window.createLink();
+                createLink();
                 break;
             case 'remove-link':
-                if (window.removeLink) window.removeLink();
+                removeLink();
                 break;
             default:
                 break;

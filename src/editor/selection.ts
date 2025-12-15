@@ -116,20 +116,8 @@ export function placeCaretAfter(node: Element | null): void {
     }
 }
 
-export function getCurrentParagraph(): Element | null {
-    const currentEditor = window.currentEditor;
-    if (!currentEditor) return null;
-    const sel = window.getSelection();
-    if (!sel || !sel.rangeCount) return null;
+export { getCurrentParagraph } from './core.js';
 
-    let node = sel.anchorNode;
-    if (!currentEditor.contains(node)) return null;
-
-    while (node && !(node.nodeType === 1 && /^(p|h[1-6]|div)$/i.test(node.nodeName))) {
-        node = node.parentNode;
-    }
-    return node as Element;
-}
 
 let lastSelectionState: SelectionState | null = null;
 
