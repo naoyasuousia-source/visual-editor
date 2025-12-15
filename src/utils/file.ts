@@ -17,7 +17,13 @@ export function buildFullHTML(pagesContainer: HTMLElement, styleTag: HTMLStyleEl
     });
     containerClone.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     // Remove selection markers or helper elements if any
-    containerClone.querySelectorAll('.caret-slot').forEach(el => el.remove());
+    containerClone.querySelectorAll('.caret-slot').forEach(el => {
+        const next = el.nextElementSibling;
+        if (next && next.tagName === 'BR') {
+            next.remove();
+        }
+        el.remove();
+    });
 
     const styleContent = styleTag ? styleTag.innerHTML : '';
 

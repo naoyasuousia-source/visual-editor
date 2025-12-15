@@ -34,25 +34,31 @@ export function importFullHTMLText(text) {
         // Restore caret slots for images/figures
         root.querySelectorAll('.figure-inline, .inline-align-center, .inline-align-left, .inline-align-right').forEach(wrapper => {
             // Check if it has image but no caret slot
-            if (wrapper.querySelector('img') && !wrapper.querySelector('.caret-slot')) {
+            const img = wrapper.querySelector('img');
+            if (img && !wrapper.querySelector('.caret-slot')) {
+                // Remove existing direct child BRs to avoid duplication/misplacement
+                wrapper.querySelectorAll(':scope > br').forEach(br => br.remove());
                 const slot = document.createElement('span');
                 slot.className = 'caret-slot';
                 slot.contentEditable = 'false';
                 slot.innerHTML = '&#8203;';
                 const br = document.createElement('br');
-                // If there's a title, insert before title? Or matching insertImageAtCursor logic?
-                // insertImageAtCursor: wrapper.appendChild(img); wrapper.appendChild(slot); wrapper.appendChild(br);
-                // If title exists, applyImageTitle adds slot before title? 
-                // applyImageTitle: container.appendChild(caretSlot); container.appendChild(br); container.appendChild(titleSpan);
-                // So slot is BEFORE title, AFTER image.
                 const title = wrapper.querySelector('.figure-title');
                 if (title) {
+                    title.setAttribute('contenteditable', 'false');
                     wrapper.insertBefore(slot, title);
                     wrapper.insertBefore(br, title);
                 }
                 else {
                     wrapper.appendChild(slot);
                     wrapper.appendChild(br);
+                }
+            }
+            else {
+                // Ensure existing title is not editable if slot already exists
+                const title = wrapper.querySelector('.figure-title');
+                if (title) {
+                    title.setAttribute('contenteditable', 'false');
                 }
             }
         });
