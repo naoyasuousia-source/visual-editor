@@ -1,32 +1,11 @@
 // Import everything needed from main (or other modules) to expose to window
-// Ideally, main.ts should just import this file.
-// We need to import the functions to be exposed.
-// However, since we are moving things FROM main.ts, eventually we will import FROM other modules.
-// For now, to support the transition, we might need to rely on main.ts exporting them,
-// OR (better) we move the logic out first?
-// Wait, the plan says:
-// 1. Create registry.ts
-// 2. Move window assignments from main.ts to registry.ts
-// 3. Import functions IN registry.ts
-// Since the functions are currently in main.ts, we have a circular dependency issue if we import main.ts here.
-// Core functions are in modules (editor/page.ts, etc.) -> Easy.
-// Local functions in main.ts -> Difficult.
-// Strategy:
-// We will assign to window inside the modules themselves? No, that scatters logic.
-// We want a central registry.
-// Correct approach for Step 1:
-// 1. Identify functions in main.ts that are assigned to window.
-// 2. Move those assignments to registry.ts.
-// 3. BUT registry.ts needs access to those functions.
-//    If they are local in main.ts, main.ts must export them.
+// This file acts as a central registry for global window assignments.
 import { toggleBold, toggleItalic, toggleUnderline, toggleStrikeThrough, applyInlineScript, toggleSuperscript, toggleSubscript, resetHighlightsInSelection, applyColorHighlight, applyFontColor, resetFontColorInSelection, removeHighlightsInRange, applyBlockElement, renumberParagraphs, applyPendingBlockTag, toggleHangingIndent, changeIndent, applyParagraphAlignment, applyParagraphSpacing, applyLineHeight, getParagraphsInRange } from './editor/formatting.js';
 import { createPage, renumberPages, addPage, removePage, initPages } from './editor/page.js';
 import { saveFullHTML, openWithFilePicker, overwriteCurrentFile, handleOpenFile, setPagesHTML, importFullHTMLText, buildFullHTML } from './editor/io.js';
-// Functions still in main.ts (exported)
 import { convertParagraphToTag, generateBookmarkId, getClosestBlockId, compareParagraphOrder, calculateOffsetWithinNode, isParagraphEmpty, findParagraphWrapper, ensureParagraphWrapper, ensureFigureWrapper } from './utils/dom.js';
 import { updateToolbarState, updateMarginButtonState } from './ui/toolbar.js';
 import { toggleFileDropdown, closeNestedDropdown, closeFileDropdown, setFontMenuOpen, closeAllFontSubmenus, toggleFontMenu, closeFontMenu, closeFontSubmenu, closeAllParagraphSubmenus, setParagraphMenuOpen, toggleParagraphMenu, closeParagraphMenu, setHighlightPaletteOpen, toggleHighlightPalette } from './ui/menu.js';
-// Functions still in main.ts (exported)
 import { saveTextSelectionFromEditor, getEffectiveTextRange, isRangeInsideCurrentEditor } from './editor/selection.js';
 import { setActiveEditor, getCurrentParagraph, syncToSource } from './editor/core.js';
 import { getCaretOffset, insertInlineTabAt, handleInlineTabKey, handleInlineTabBackspace } from './editor/input.js';
@@ -142,9 +121,3 @@ window.updateImageMetaTitle = updateImageMetaTitle;
 window.promptDropboxImageUrl = promptDropboxImageUrl;
 window.promptWebImageUrl = promptWebImageUrl;
 window.insertImageAtCursor = insertImageAtCursor;
-// Helper: Paragraph empty check assignment (keeping local in main.ts if not exported, or moving?)
-// isParagraphEmpty is not exported in main.ts, but assigned to window.
-// We can't import it if it's not exported.
-// Sol: Export it in main.ts or defined here?
-// Ideally, move utils to utils/dom.ts.
-// For now, let's assume we will export it from main.ts.

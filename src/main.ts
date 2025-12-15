@@ -1,88 +1,20 @@
 
 import {
-  findParagraph,
-  findTextPositionInParagraph,
-  computeSelectionStateFromRange,
-  restoreRangeFromSelectionState,
-  placeCaretBefore,
-  placeCaretAfter
-} from './editor/selection.js';
-
-import {
-  toggleBold,
-  toggleItalic,
-  toggleUnderline,
-  toggleStrikeThrough,
-  applyInlineScript,
-  toggleSuperscript,
-  toggleSubscript,
-  normalizeInlineFormatting,
-  applyColorHighlight,
-  applyFontColor,
-  resetFontColorInSelection,
-  resetHighlightsInSelection,
-  removeHighlightsInRange,
-  applyBlockElement,
   renumberParagraphs
 } from './editor/formatting.js';
 
 import {
-  AlignDirection,
-  SelectionState,
-  ParagraphPosition,
-  TextPosition
-} from './types.js';
-
-import {
-  saveFullHTML,
-  openWithFilePicker,
-  overwriteCurrentFile,
-  handleOpenFile,
-  setPagesHTML,
-  importFullHTMLText,
-  buildFullHTML
+  handleOpenFile
 } from './editor/io.js';
 
 import {
-  createPage,
-  renumberPages,
-  addPage,
-  removePage,
   initPages
 } from './editor/page.js';
 
 import {
   ensureAiImageIndex,
-  rebuildFigureMetaStore,
-  applyImageSize,
-  applyImageTitle,
-  showImageContextMenu,
-  closeImageContextMenu,
-  closeImageSubmenu,
-  promptDropboxImageUrl,
-  promptWebImageUrl,
-  insertImageAtCursor,
-  initImageContextMenuControls,
-  updateImageMetaTitle,
-  openTitleDialog,
-  closeTitleDialog,
-  removeExistingImageTitle
+  initImageContextMenuControls
 } from './editor/image.js';
-
-import {
-  unwrapColorSpan,
-  removeColorSpansInNode,
-  convertParagraphToTag,
-  calculateOffsetWithinNode,
-  compareParagraphOrder,
-  generateBookmarkId,
-  getClosestBlockId,
-  isParagraphEmpty,
-  findParagraphWrapper,
-  ensureParagraphWrapper,
-  ensureFigureWrapper,
-  removeColorSpansInNode as removeColorSpansInNodeUtil
-} from './utils/dom.js';
 
 import {
   bindEditorEvents,
@@ -91,8 +23,7 @@ import {
 } from './ui/events.js';
 
 import {
-  bindToolbarHandlers,
-  updateMarginButtonState
+  bindToolbarHandlers
 } from './ui/toolbar.js';
 
 import {
@@ -103,50 +34,12 @@ import {
 
 import { applyPageMargin } from './ui/settings.js';
 
-
-// Note: Window interface extension is now in types.ts. 
-// We don't need to redeclare it here if we include types.ts in compilation, 
-// but TS needs to know about it. Since this is an entry point, imports might suffice.
-
 // Phase 1: Core Utilities Implementation
+// (Moved to editor/core.ts and registry.ts)
 
-export function setActiveEditor(inner: HTMLElement | null): void {
-  window.currentEditor = inner;
-  document.querySelectorAll('section.page').forEach(p => p.classList.remove('active'));
-  if (inner) {
-    const page = inner.closest('section.page');
-    if (page) page.classList.add('active');
-  }
-}
-
-export function getCurrentParagraph(): Element | null {
-  const currentEditor = window.currentEditor;
-  if (!currentEditor) return null;
-  const sel = window.getSelection();
-  if (!sel || !sel.rangeCount) return null;
-
-  let node = sel.anchorNode;
-  if (!currentEditor.contains(node)) return null;
-
-  while (node && !(node.nodeType === 1 && /^(p|h[1-6]|div)$/i.test(node.nodeName))) {
-    node = node.parentNode;
-  }
-  return node as Element;
-}
-
-const pagesContainerElement = document.getElementById('pages-container');
-const sourceElement = document.getElementById('source') as HTMLTextAreaElement | null;
-
-export function syncToSource(): void {
-  if (!pagesContainerElement || !sourceElement) return;
-  sourceElement.value = pagesContainerElement.innerHTML;
-}
-
-
-// Main Cleaned Up
 // Phase 3: Formatting & Selection Implementation
-// Imported from editor/formatting.ts
-// Global assignments are now in registry.ts
+// (Imported modules handle logic)
+// (Global assignments are in registry.ts)
 
 export function initEditor() {
   initFileMenuControls();
