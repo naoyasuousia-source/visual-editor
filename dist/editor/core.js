@@ -24,10 +24,3 @@ export function getCurrentParagraph() {
     }
     return node;
 }
-const pagesContainerElement = document.getElementById('pages-container');
-const sourceElement = document.getElementById('source');
-export function syncToSource() {
-    if (!pagesContainerElement || !sourceElement)
-        return;
-    sourceElement.value = pagesContainerElement.innerHTML;
-}

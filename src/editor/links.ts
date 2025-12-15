@@ -1,5 +1,5 @@
 
-import { syncToSource } from './core.js';
+
 import { generateBookmarkId } from '../utils/dom.js';
 
 export function addLinkDestination(): void {
@@ -29,7 +29,7 @@ export function addLinkDestination(): void {
     }
 
     selection.removeAllRanges();
-    syncToSource();
+
 }
 
 export function createLink(): void {
@@ -70,7 +70,7 @@ export function createLink(): void {
 
     document.execCommand('createLink', false, `#${destinationId}`);
     currentEditor.normalize();
-    syncToSource();
+
 }
 
 export function removeLink(): void {
@@ -108,5 +108,5 @@ export function removeLink(): void {
     parent.removeChild(linkToRemove);
     parent.normalize();
 
-    syncToSource();
+
 }

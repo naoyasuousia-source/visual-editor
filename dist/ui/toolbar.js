@@ -1,6 +1,6 @@
 import { toggleBold, toggleItalic, toggleUnderline, toggleStrikeThrough, toggleSuperscript, toggleSubscript, applyColorHighlight, applyFontColor, resetFontColorInSelection, resetHighlightsInSelection, toggleHangingIndent, changeIndent, applyParagraphAlignment, applyParagraphSpacing, applyLineHeight, applyBlockElement } from '../editor/formatting.js';
 import { toggleParagraphMenu, toggleHighlightPalette } from './menu.js';
-import { getCurrentParagraph, syncToSource } from '../editor/core.js';
+import { getCurrentParagraph } from '../editor/core.js';
 import { applyFontFamily, applyPageMargin } from './settings.js';
 import { addPage, removePage } from '../editor/page.js';
 import { saveFullHTML, openWithFilePicker, overwriteCurrentFile } from '../editor/io.js';
@@ -135,11 +135,9 @@ export function bindToolbarHandlers() {
                 break;
             case 'indent':
                 changeIndent(1);
-                syncToSource();
                 break;
             case 'outdent':
                 changeIndent(-1);
-                syncToSource();
                 break;
             case 'add-page':
                 addPage();

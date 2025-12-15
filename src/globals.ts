@@ -21,7 +21,7 @@ export const getParagraphChooserElement = () => document.querySelector<HTMLEleme
 export const getHighlightControlElement = () => document.querySelector<HTMLElement>('.highlight-control');
 
 export const getPagesContainerElement = () => document.getElementById('pages-container');
-export const getSourceElement = () => document.getElementById('source') as HTMLTextAreaElement | null;
+
 export const getOpenFileInputElement = () => document.getElementById('open-file-input') as HTMLInputElement | null;
 export const getImageContextMenuElement = () => document.getElementById('image-context-menu');
 

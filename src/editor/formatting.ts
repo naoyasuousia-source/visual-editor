@@ -15,7 +15,7 @@ import {
     ensureParagraphWrapper
 } from '../utils/dom.js';
 
-import { getCurrentParagraph, syncToSource } from './core.js';
+import { getCurrentParagraph } from './core.js';
 import { updateToolbarState } from '../ui/toolbar.js';
 
 // We rely on window.* extension methods for some core side-effects for now
@@ -71,7 +71,7 @@ export function renumberParagraphs(): void {
     });
 
     rebuildFigureMetaStore();
-    syncToSource();
+
 }
 
 
@@ -108,7 +108,7 @@ export function toggleBold(): void {
     currentEditor.focus();
     document.execCommand('bold', false, undefined);
     normalizeInlineFormatting();
-    syncToSource();
+
 }
 
 export function toggleItalic(): void {
@@ -117,7 +117,7 @@ export function toggleItalic(): void {
     currentEditor.focus();
     document.execCommand('italic', false, undefined);
     normalizeInlineFormatting();
-    syncToSource();
+
 }
 
 export function toggleUnderline(): void {
@@ -126,7 +126,7 @@ export function toggleUnderline(): void {
     currentEditor.focus();
     document.execCommand('underline', false, undefined);
     normalizeInlineFormatting();
-    syncToSource();
+
 }
 
 export function toggleStrikeThrough(): void {
@@ -155,7 +155,7 @@ export function toggleStrikeThrough(): void {
         }
     }
 
-    syncToSource();
+
 }
 
 export function applyInlineScript(command: string): void {
@@ -164,7 +164,7 @@ export function applyInlineScript(command: string): void {
     if (!currentEditor) return;
     currentEditor.focus();
     document.execCommand(command, false, undefined);
-    syncToSource();
+
 }
 
 export function applyBlockElement(tag: string | null | undefined): void {
@@ -188,7 +188,7 @@ export function applyBlockElement(tag: string | null | undefined): void {
             }
         }
 
-        syncToSource();
+
     }
 }
 
@@ -236,7 +236,7 @@ export function applyColorHighlight(color?: string | null): void {
     selection.addRange(newRange);
 
     currentEditor.focus();
-    syncToSource();
+
 }
 
 
@@ -277,7 +277,7 @@ export function applyFontColor(color?: string | null): void {
     selection.addRange(newRange);
 
     currentEditor.focus();
-    syncToSource();
+
 }
 
 export function resetFontColorInSelection(): void {
@@ -303,7 +303,7 @@ export function resetFontColorInSelection(): void {
     selection.removeAllRanges();
     window.getSelection()?.removeAllRanges();
     window.getSelection()?.addRange(normalized);
-    syncToSource();
+
 }
 
 export function removeHighlightsInRange(range: Range): boolean {
@@ -355,7 +355,7 @@ export function resetHighlightsInSelection(): void {
             newRange.setEndAfter(last);
             selection.addRange(newRange);
         }
-        syncToSource();
+
         return;
     }
 
@@ -371,7 +371,7 @@ export function resetHighlightsInSelection(): void {
         newRange.setEndAfter(last);
         selection.addRange(newRange);
     }
-    syncToSource();
+
 }
 
 // Local helper mimicking main.ts logic
@@ -420,7 +420,7 @@ export function toggleHangingIndent(shouldHang: boolean): void {
     } else {
         current.classList.remove('hanging-indent');
     }
-    syncToSource();
+
     updateToolbarState();
 }
 
@@ -436,7 +436,7 @@ export function changeIndent(delta: number): void {
     current.className = current.className.replace(/indent-\d+/, '').trim();
     if (level > 0) current.classList.add(`indent-${level}`);
 
-    syncToSource();
+
     updateToolbarState();
 }
 
@@ -447,13 +447,21 @@ export function applyParagraphAlignment(direction: string): void {
     const selection = window.getSelection();
     if (!selection || !selection.rangeCount) return;
     const range = selection.getRangeAt(0);
-    if (range.collapsed) return;
+    // if (range.collapsed) return; // Allow collapsed range
     if (!currentEditor.contains(range.commonAncestorContainer)) return;
 
-    const selectors = 'p, h1, h2, h3, h4, h5, h6';
-    const paragraphs = Array.from(currentEditor.querySelectorAll<HTMLElement>(selectors)).filter(paragraph => {
-        return range.intersectsNode(paragraph);
-    });
+    // カーソル位置のみの場合でも、現在の段落を取得して適用する
+    let paragraphs: HTMLElement[] = [];
+    if (range.collapsed) {
+        const p = getCurrentParagraph() as HTMLElement | null;
+        if (p) paragraphs.push(p);
+    } else {
+        const selectors = 'p, h1, h2, h3, h4, h5, h6';
+        paragraphs = Array.from(currentEditor.querySelectorAll<HTMLElement>(selectors)).filter(paragraph => {
+            return range.intersectsNode(paragraph);
+        });
+    }
+
     if (!paragraphs.length) return;
 
     paragraphs.forEach(paragraph => {
@@ -488,7 +496,7 @@ export function applyParagraphAlignment(direction: string): void {
         selection.addRange(newRange);
     }
 
-    syncToSource();
+
 }
 
 export function getParagraphsInRange(range: Range | null): HTMLElement[] {
@@ -531,7 +539,7 @@ export function applyParagraphSpacing(size?: string | null): void {
         }
     });
 
-    syncToSource();
+
 }
 
 export function applyLineHeight(size?: string | null): void {
@@ -545,6 +553,6 @@ export function applyLineHeight(size?: string | null): void {
             inner.classList.add(`line-height-${size}`);
         }
     });
-    syncToSource();
+
 }
 

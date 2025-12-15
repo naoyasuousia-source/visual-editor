@@ -27,10 +27,3 @@ export function getCurrentParagraph(): Element | null {
     return node as Element;
 }
 
-const pagesContainerElement = document.getElementById('pages-container');
-const sourceElement = document.getElementById('source') as HTMLTextAreaElement | null;
-
-export function syncToSource(): void {
-    if (!pagesContainerElement || !sourceElement) return;
-    sourceElement.value = pagesContainerElement.innerHTML;
-}

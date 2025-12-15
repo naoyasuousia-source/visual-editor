@@ -1,5 +1,5 @@
 
-import { syncToSource } from './core.js';
+
 
 const INDENT_STEP_PX = 36 * (96 / 72);
 
@@ -58,7 +58,7 @@ export function handleInlineTabKey(): boolean {
     if (delta <= 0) return false;
     const inserted = insertInlineTabAt(range, delta);
     if (inserted) {
-        syncToSource();
+
     }
     return inserted;
 }
@@ -103,6 +103,6 @@ export function handleInlineTabBackspace(): boolean {
     inlineTab.parentNode?.removeChild(inlineTab);
     selection.removeAllRanges();
     selection.addRange(newRange);
-    syncToSource();
+
     return true;
 }

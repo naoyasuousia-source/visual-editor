@@ -5,22 +5,14 @@ const pageMarginValues = { s: '12mm', m: '17mm', l: '24mm' };
 const rootMarginRule = /:root\s*{[^}]*}/;
 let currentPageMarginSize = 'm';
 let currentEditorFontFamily = 'inherit';
-const styleTagElement = document.querySelector('style');
+// DOM Elements
+const getStyleTagElement = () => document.querySelector('style');
 export function updateRootVariables() {
-    if (!styleTagElement)
-        return;
     const marginValue = pageMarginValues[currentPageMarginSize] || '17mm';
-    const formatted = `:root {
-      --page-margin: ${marginValue};
-      --para-number-left: ${paraNumberLeft};
-      --editor-font-family: ${currentEditorFontFamily};
-    }`;
-    if (rootMarginRule.test(styleTagElement.innerHTML)) {
-        styleTagElement.innerHTML = styleTagElement.innerHTML.replace(rootMarginRule, formatted);
-    }
-    else {
-        styleTagElement.innerHTML += '\n' + formatted;
-    }
+    const root = document.documentElement;
+    root.style.setProperty('--page-margin', marginValue);
+    root.style.setProperty('--para-number-left', paraNumberLeft);
+    root.style.setProperty('--editor-font-family', currentEditorFontFamily);
 }
 export function applyPageMargin(size) {
     if (!pageMarginValues[size])

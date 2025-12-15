@@ -1,5 +1,5 @@
 import { buildFullHTML as buildFullHTMLUtil, readTextFromFile } from '../utils/file.js';
-import { getPagesContainerElement, getStyleTagElement, state, } from '../globals.js'; // We might need to make sure globals.js exports these or we use window properties
+import { getPagesContainerElement, state, } from '../globals.js'; // We might need to make sure globals.js exports these or we use window properties
 // We need to access initPages, renumberParagraphs etc.
 // Since they are on window, we can use them.
 // Or we can import them if we move them to a module.
@@ -88,18 +88,12 @@ export async function openWithFilePicker() {
 }
 export async function saveFullHTML() {
     const pagesContainer = getPagesContainerElement();
-    const styleTag = getStyleTagElement();
     if (!pagesContainer)
         return;
     if (state.openedFileHandle) {
-        // We have a handle, try to overwrite? 
-        // Typically 'Save' implies overwrite if handle exists, 
-        // but often web apps split "Save" (overwrite) definitions.
-        // Here we can ask or just download as new if "Save As" behavior is desired.
-        // "Overwrite" feature is separate in the menu? 
-        // The user requirement said `saveFullHTML` triggers download, and `overwriteCurrentFile` uses handle.
+        // Existing handle logic if needed
     }
-    const html = buildFullHTML();
+    const html = await buildFullHTML(); // Now async
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -117,7 +111,8 @@ export async function overwriteCurrentFile() {
     }
     try {
         const writable = await state.openedFileHandle.createWritable();
-        await writable.write(buildFullHTML());
+        const html = await buildFullHTML();
+        await writable.write(html);
         await writable.close();
         alert('上書き保存しました。');
     }
@@ -126,12 +121,31 @@ export async function overwriteCurrentFile() {
         alert('保存に失敗しました。');
     }
 }
-export function buildFullHTML() {
+export async function buildFullHTML() {
     const pagesContainer = getPagesContainerElement();
-    const styleTag = getStyleTagElement();
     if (!pagesContainer)
         return '';
     if (window.renumberParagraphs)
         window.renumberParagraphs();
-    return buildFullHTMLUtil(pagesContainer, styleTag);
+    // Fetch style.css content
+    let styleContent = '';
+    try {
+        const response = await fetch('style.css');
+        if (response.ok) {
+            styleContent = await response.text();
+        }
+        else {
+            console.warn('Failed to fetch style.css for saving');
+        }
+    }
+    catch (e) {
+        console.warn('Error fetching style.css', e);
+    }
+    // We can't pass styleTag anymore, pass styleContent string directly
+    // note: buildFullHTMLUtil needs update to accept string or we fake a style element
+    // Let's assume we update buildFullHTMLUtil in utils/file.ts to accept string?
+    // Or we create a fake element here.
+    const fakeStyle = document.createElement('style');
+    fakeStyle.innerHTML = styleContent;
+    return buildFullHTMLUtil(pagesContainer, fakeStyle);
 }

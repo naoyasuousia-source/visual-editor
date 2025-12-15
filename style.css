@@ -1,0 +1,707 @@
+:root {
+  --page-margin: 17mm;
+  --para-number-left: 6mm;
+  --editor-font-family: inherit;
+  --tab-width: 0px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  background: #e0e0e0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#ai-image-index {
+  display: none;
+}
+
+/* メインコンテナ */
+#left {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ツールバー */
+#toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #ccc;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  overflow-x: auto;
+}
+
+#toolbar button {
+  padding: 6px 12px;
+  margin: 0;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+#toolbar button:hover {
+  background: #f0f0f0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+#toolbar button:active {
+  background: #e0e0e0;
+}
+
+/* File Menu & Dropdowns */
+.file-menu {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.file-menu:hover .file-dropdown,
+.file-dropdown.open {
+  display: flex;
+}
+
+.file-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: #fff;
+  border: 1px solid #aaa;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: none;
+  flex-direction: column;
+  min-width: 160px;
+  z-index: 10;
+  border-radius: 4px;
+  padding: 4px 0;
+}
+
+.file-dropdown button {
+  margin: 0;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  background: none;
+  text-align: left;
+  padding: 8px 16px;
+}
+
+.file-dropdown button:hover {
+  background-color: #f0f0f0;
+}
+
+.nested-dropdown {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.nested-trigger {
+  width: 100%;
+  text-align: left;
+}
+
+.nested-trigger::after {
+  content: '▸';
+  float: right;
+  color: #999;
+}
+
+.nested-dropdown-menu {
+  position: absolute;
+  top: -4px;
+  left: 100%;
+  background: #fff;
+  border: 1px solid #aaa;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: none;
+  flex-direction: column;
+  min-width: 180px;
+  z-index: 12;
+  border-radius: 4px;
+  padding: 4px 0;
+}
+
+.nested-dropdown:hover .nested-dropdown-menu,
+.nested-dropdown.open .nested-dropdown-menu {
+  display: flex;
+}
+
+.nested-dropdown-menu button {
+  border-bottom: none;
+  padding: 8px 16px;
+}
+
+/* ページ表示エリア */
+#pages-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+  overflow-y: auto;
+  background: #525659;
+}
+
+/* A4ページ */
+section.page {
+  position: relative;
+  width: 210mm;
+  min-width: 210mm;
+  min-height: 297mm;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+section.page::after {
+  content: attr(data-page);
+  position: absolute;
+  left: 50%;
+  bottom: 6mm;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #666;
+}
+
+section.page.active {
+  outline: 4px solid rgba(51, 122, 183, 0.5);
+}
+
+/* ページ内編集領域 */
+.page-inner {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: var(--page-margin);
+  position: relative;
+  overflow-y: auto;
+  outline: none;
+  font-family: var(--editor-font-family, inherit);
+  color: #333;
+  line-height: 1.6;
+}
+
+.page-inner p,
+.page-inner h1,
+.page-inner h2,
+.page-inner h3,
+.page-inner h4,
+.page-inner h5,
+.page-inner h6 {
+  margin: 0 0 1em;
+  position: relative;
+  padding-left: 0;
+}
+
+/* 段落番号 */
+.page-inner p[data-para]::before,
+.page-inner h1[data-para]::before,
+.page-inner h2[data-para]::before,
+.page-inner h3[data-para]::before,
+.page-inner h4[data-para]::before,
+.page-inner h5[data-para]::before,
+.page-inner h6[data-para]::before {
+  content: "[" attr(data-para) "]";
+  position: absolute;
+  left: -11mm;
+  top: 0.25em;
+  width: 2.4rem;
+  text-align: right;
+  color: #999;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* 画像コンテキストメニュー */
+.image-context-menu {
+  position: fixed;
+  display: none;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  padding: 4px 0;
+  min-width: 160px;
+  z-index: 1000;
+  border-radius: 6px;
+}
+
+.image-context-menu.open {
+  display: flex;
+}
+
+.image-context-menu button {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.image-context-menu button:hover {
+  background: #f0f0f0;
+}
+
+.image-context-dropdown {
+  position: relative;
+}
+
+.image-context-trigger {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.image-context-trigger::after {
+  content: '▸';
+  float: right;
+  color: #999;
+}
+
+.image-context-submenu {
+  position: absolute;
+  top: -4px;
+  left: 100%;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  display: none;
+  flex-direction: column;
+  min-width: 140px;
+  z-index: 1001;
+  border-radius: 6px;
+  padding: 4px 0;
+}
+
+.image-context-dropdown.open .image-context-submenu {
+  display: flex;
+}
+
+/* 画像サイズ */
+.page-inner img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0.8em 0;
+}
+
+.img-xs {
+  width: 20%;
+}
+
+.img-s {
+  width: 35%;
+}
+
+.img-m {
+  width: 50%;
+}
+
+.img-l {
+  width: 65%;
+}
+
+.img-xl {
+  width: 85%;
+}
+
+.page-inner .figure-inline {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin: 1em 0;
+}
+
+.page-inner .figure-title {
+  display: block;
+  margin-top: 0.5em;
+  font-size: 0.9em;
+  color: #666;
+}
+
+/* その他UIパーツ */
+.highlight-control,
+.paragraph-chooser,
+.font-chooser {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.highlight-palette,
+.paragraph-panel,
+.font-chooser-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  padding: 8px;
+  gap: 8px;
+  z-index: 200;
+  border-radius: 6px;
+  min-width: max-content;
+}
+
+.highlight-control.is-open .highlight-palette,
+.paragraph-chooser.is-open .paragraph-panel,
+.font-chooser.is-open .font-chooser-panel {
+  display: flex;
+}
+
+/* カラーパレット */
+.color-palette,
+.spacing-buttons,
+.align-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.color-swatch-button,
+.highlight-color-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  padding: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+.color-swatch-button::after,
+.highlight-color-button::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 3px;
+  background: currentColor;
+}
+
+/* インデントと行間 */
+.page-inner {
+  line-height: 1.6;
+}
+
+.page-inner.line-height-s {
+  line-height: 1.25;
+}
+
+.page-inner.line-height-l {
+  line-height: 2.0;
+}
+
+.inline-highlight {
+  border-radius: 2px;
+  padding: 2px 0;
+}
+
+.inline-tab {
+  display: inline-block;
+  vertical-align: bottom;
+  height: 1em;
+}
+
+/* ダイアログ */
+dialog {
+  border: none;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  background: #fff;
+  max-width: 400px;
+  width: 100%;
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+dialog .dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.indent-option {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+}
+
+.indent-option label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.indent-option input:disabled+span {
+  color: #999;
+}
+
+/* インデント定義: 36pt = 0.5in = 1.27cm */
+.page-inner .indent-1 {
+  padding-left: 36pt;
+}
+
+.page-inner .indent-2 {
+  padding-left: 72pt;
+}
+
+.page-inner .indent-3 {
+  padding-left: 108pt;
+}
+
+.page-inner .indent-4 {
+  padding-left: 144pt;
+}
+
+.page-inner .indent-5 {
+  padding-left: 180pt;
+}
+
+/* ぶら下げインデント */
+.page-inner .hanging-indent {
+  text-indent: -1em;
+}
+
+/* インデント時のぶら下げ: インデントを維持しつつ1行目を戻す */
+.page-inner .indent-1.hanging-indent {
+  padding-left: 36pt;
+  text-indent: -36pt;
+}
+
+.page-inner .indent-2.hanging-indent {
+  padding-left: 72pt;
+  text-indent: -72pt;
+}
+
+.page-inner .indent-3.hanging-indent {
+  padding-left: 108pt;
+  text-indent: -108pt;
+}
+
+.page-inner .indent-4.hanging-indent {
+  padding-left: 144pt;
+  text-indent: -144pt;
+}
+
+.page-inner .indent-5.hanging-indent {
+  padding-left: 180pt;
+  text-indent: -180pt;
+}
+
+/* Align Helpers */
+.inline-align {
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.inline-align-left {
+  text-align: left;
+}
+
+.inline-align-center {
+  text-align: center;
+}
+
+.inline-align-right {
+  text-align: right;
+}
+
+.page-inner p.inline-spacing-xs,
+.page-inner .inline-align.inline-spacing-xs {
+  margin-bottom: 4px;
+}
+
+.page-inner p.inline-spacing-s,
+.page-inner .inline-align.inline-spacing-s {
+  margin-bottom: 12px;
+}
+
+.page-inner p.inline-spacing-m,
+.page-inner .inline-align.inline-spacing-m {
+  margin-bottom: 20px;
+}
+
+.page-inner p.inline-spacing-l,
+.page-inner .inline-align.inline-spacing-l {
+  margin-bottom: 28px;
+}
+
+.page-inner p.inline-spacing-xl,
+.page-inner .inline-align.inline-spacing-xl {
+  margin-bottom: 36px;
+}
+
+.mini-text {
+  font-size: 8pt;
+}
+
+/* Font Chooser Specifics */
+.font-submenu {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.font-submenu-trigger {
+  width: 100%;
+  border: 1px solid #999;
+  border-radius: 4px;
+  background: #f9f9f9;
+  padding: 6px 10px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.font-submenu-trigger::after {
+  content: '▾';
+  float: right;
+}
+
+.font-submenu.is-open .font-submenu-trigger::after {
+  content: '▴';
+}
+
+.font-submenu-panel {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px #eee;
+}
+
+.font-submenu.is-open .font-submenu-panel {
+  display: flex;
+}
+
+/* Paragraph Chooser Specifics */
+.paragraph-submenu {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.paragraph-submenu-trigger {
+  width: 100%;
+  border: 1px solid #999;
+  border-radius: 4px;
+  background: #f9f9f9;
+  padding: 6px 10px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.paragraph-submenu-trigger::after {
+  content: '▾';
+  float: right;
+}
+
+.paragraph-submenu.is-open .paragraph-submenu-trigger::after {
+  content: '▴';
+}
+
+.paragraph-submenu-panel {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px #eee;
+}
+
+.paragraph-submenu.is-open .paragraph-submenu-panel {
+  display: flex;
+}
+
+.align-icon-button {
+  width: 40px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid #999;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.spacing-button {
+  width: 40px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid #999;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.color-default-button {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 4px;
+  border: 1px solid #999;
+  background: #f5f5f5;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.font-family-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.font-family-option {
+  border: 1px solid #999;
+  border-radius: 4px;
+  background: #f9f9f9;
+  padding: 6px 10px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.85rem;
+}

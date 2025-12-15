@@ -1,6 +1,6 @@
 import { computeSelectionStateFromRange, restoreRangeFromSelectionState } from './selection.js';
 import { convertParagraphToTag, unwrapColorSpan, removeColorSpansInNode, findParagraphWrapper, ensureParagraphWrapper } from '../utils/dom.js';
-import { getCurrentParagraph, syncToSource } from './core.js';
+import { getCurrentParagraph } from './core.js';
 import { updateToolbarState } from '../ui/toolbar.js';
 // We rely on window.* extension methods for some core side-effects for now
 // to maintain compatibility with the monolithic main.ts behavior during refactoring.
@@ -45,7 +45,6 @@ export function renumberParagraphs() {
         });
     });
     rebuildFigureMetaStore();
-    syncToSource();
 }
 export function normalizeInlineFormatting() {
     const currentEditor = window.currentEditor;
@@ -79,7 +78,6 @@ export function toggleBold() {
     currentEditor.focus();
     document.execCommand('bold', false, undefined);
     normalizeInlineFormatting();
-    syncToSource();
 }
 export function toggleItalic() {
     const currentEditor = window.currentEditor;
@@ -88,7 +86,6 @@ export function toggleItalic() {
     currentEditor.focus();
     document.execCommand('italic', false, undefined);
     normalizeInlineFormatting();
-    syncToSource();
 }
 export function toggleUnderline() {
     const currentEditor = window.currentEditor;
@@ -97,7 +94,6 @@ export function toggleUnderline() {
     currentEditor.focus();
     document.execCommand('underline', false, undefined);
     normalizeInlineFormatting();
-    syncToSource();
 }
 export function toggleStrikeThrough() {
     const currentEditor = window.currentEditor;
@@ -121,7 +117,6 @@ export function toggleStrikeThrough() {
             selection.addRange(restored);
         }
     }
-    syncToSource();
 }
 export function applyInlineScript(command) {
     if (!command)
@@ -131,7 +126,6 @@ export function applyInlineScript(command) {
         return;
     currentEditor.focus();
     document.execCommand(command, false, undefined);
-    syncToSource();
 }
 export function applyBlockElement(tag) {
     if (!tag)
@@ -152,7 +146,6 @@ export function applyBlockElement(tag) {
                 selection.addRange(restored);
             }
         }
-        syncToSource();
     }
 }
 export function toggleSuperscript() {
@@ -196,7 +189,6 @@ export function applyColorHighlight(color) {
     }
     selection.addRange(newRange);
     currentEditor.focus();
-    syncToSource();
 }
 export function applyFontColor(color) {
     const currentEditor = window.currentEditor;
@@ -233,7 +225,6 @@ export function applyFontColor(color) {
     }
     selection.addRange(newRange);
     currentEditor.focus();
-    syncToSource();
 }
 export function resetFontColorInSelection() {
     const currentEditor = window.currentEditor;
@@ -261,7 +252,6 @@ export function resetFontColorInSelection() {
     selection.removeAllRanges();
     window.getSelection()?.removeAllRanges();
     window.getSelection()?.addRange(normalized);
-    syncToSource();
 }
 export function removeHighlightsInRange(range) {
     if (!range)
@@ -310,7 +300,6 @@ export function resetHighlightsInSelection() {
             newRange.setEndAfter(last);
             selection.addRange(newRange);
         }
-        syncToSource();
         return;
     }
     const fragment = range.extractContents();
@@ -325,7 +314,6 @@ export function resetHighlightsInSelection() {
         newRange.setEndAfter(last);
         selection.addRange(newRange);
     }
-    syncToSource();
 }
 // Local helper mimicking main.ts logic
 function getAncestorHighlight(node) {
@@ -369,7 +357,6 @@ export function toggleHangingIndent(shouldHang) {
     else {
         current.classList.remove('hanging-indent');
     }
-    syncToSource();
     updateToolbarState();
 }
 export function changeIndent(delta) {
@@ -382,7 +369,6 @@ export function changeIndent(delta) {
     current.className = current.className.replace(/indent-\d+/, '').trim();
     if (level > 0)
         current.classList.add(`indent-${level}`);
-    syncToSource();
     updateToolbarState();
 }
 export function applyParagraphAlignment(direction) {
@@ -395,14 +381,22 @@ export function applyParagraphAlignment(direction) {
     if (!selection || !selection.rangeCount)
         return;
     const range = selection.getRangeAt(0);
-    if (range.collapsed)
-        return;
+    // if (range.collapsed) return; // Allow collapsed range
     if (!currentEditor.contains(range.commonAncestorContainer))
         return;
-    const selectors = 'p, h1, h2, h3, h4, h5, h6';
-    const paragraphs = Array.from(currentEditor.querySelectorAll(selectors)).filter(paragraph => {
-        return range.intersectsNode(paragraph);
-    });
+    // カーソル位置のみの場合でも、現在の段落を取得して適用する
+    let paragraphs = [];
+    if (range.collapsed) {
+        const p = getCurrentParagraph();
+        if (p)
+            paragraphs.push(p);
+    }
+    else {
+        const selectors = 'p, h1, h2, h3, h4, h5, h6';
+        paragraphs = Array.from(currentEditor.querySelectorAll(selectors)).filter(paragraph => {
+            return range.intersectsNode(paragraph);
+        });
+    }
     if (!paragraphs.length)
         return;
     paragraphs.forEach(paragraph => {
@@ -436,7 +430,6 @@ export function applyParagraphAlignment(direction) {
         selection.removeAllRanges();
         selection.addRange(newRange);
     }
-    syncToSource();
 }
 export function getParagraphsInRange(range) {
     const currentEditor = window.currentEditor;
@@ -481,7 +474,6 @@ export function applyParagraphSpacing(size) {
                 wrapper.classList.add(`inline-spacing-${size}`);
         }
     });
-    syncToSource();
 }
 export function applyLineHeight(size) {
     const pagesContainerElement = getPagesContainerElement();
@@ -494,5 +486,4 @@ export function applyLineHeight(size) {
             inner.classList.add(`line-height-${size}`);
         }
     });
-    syncToSource();
 }

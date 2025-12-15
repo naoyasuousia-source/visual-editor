@@ -1,4 +1,3 @@
-import { syncToSource } from './core.js';
 import { generateBookmarkId } from '../utils/dom.js';
 export function addLinkDestination() {
     const currentEditor = window.currentEditor;
@@ -27,7 +26,6 @@ export function addLinkDestination() {
         return;
     }
     selection.removeAllRanges();
-    syncToSource();
 }
 export function createLink() {
     const selection = window.getSelection();
@@ -63,7 +61,6 @@ export function createLink() {
     }
     document.execCommand('createLink', false, `#${destinationId}`);
     currentEditor.normalize();
-    syncToSource();
 }
 export function removeLink() {
     const currentEditor = window.currentEditor;
@@ -97,5 +94,4 @@ export function removeLink() {
     }
     parent.removeChild(linkToRemove);
     parent.normalize();
-    syncToSource();
 }

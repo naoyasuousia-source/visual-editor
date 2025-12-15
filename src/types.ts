@@ -120,6 +120,6 @@ declare global {
         setPagesHTML: (html: string) => void;
         importFullHTMLText: (text: string) => boolean;
         handleOpenFile: (event: Event) => void;
-        buildFullHTML: () => string;
+        buildFullHTML: () => Promise<string>;
     }
 }

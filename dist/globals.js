@@ -15,7 +15,6 @@ export const getFontChooserElement = () => document.querySelector('.font-chooser
 export const getParagraphChooserElement = () => document.querySelector('.paragraph-chooser');
 export const getHighlightControlElement = () => document.querySelector('.highlight-control');
 export const getPagesContainerElement = () => document.getElementById('pages-container');
-export const getSourceElement = () => document.getElementById('source');
 export const getOpenFileInputElement = () => document.getElementById('open-file-input');
 export const getImageContextMenuElement = () => document.getElementById('image-context-menu');
 export const getAiImageIndex = () => {

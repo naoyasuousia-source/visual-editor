@@ -94,7 +94,7 @@ import {
 import {
     setActiveEditor,
     getCurrentParagraph,
-    syncToSource
+
 } from './editor/core.js';
 
 import {
@@ -221,7 +221,7 @@ window.handleInlineTabKey = handleInlineTabKey;
 window.handleInlineTabBackspace = handleInlineTabBackspace;
 
 // UI & Utils
-window.syncToSource = syncToSource;
+
 window.toggleFileDropdown = toggleFileDropdown;
 window.closeNestedDropdown = closeNestedDropdown;
 window.closeFileDropdown = closeFileDropdown;

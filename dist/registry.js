@@ -7,7 +7,7 @@ import { convertParagraphToTag, generateBookmarkId, getClosestBlockId, comparePa
 import { updateToolbarState, updateMarginButtonState } from './ui/toolbar.js';
 import { toggleFileDropdown, closeNestedDropdown, closeFileDropdown, setFontMenuOpen, closeAllFontSubmenus, toggleFontMenu, closeFontMenu, closeFontSubmenu, closeAllParagraphSubmenus, setParagraphMenuOpen, toggleParagraphMenu, closeParagraphMenu, setHighlightPaletteOpen, toggleHighlightPalette } from './ui/menu.js';
 import { saveTextSelectionFromEditor, getEffectiveTextRange, isRangeInsideCurrentEditor } from './editor/selection.js';
-import { setActiveEditor, getCurrentParagraph, syncToSource } from './editor/core.js';
+import { setActiveEditor, getCurrentParagraph, } from './editor/core.js';
 import { getCaretOffset, insertInlineTabAt, handleInlineTabKey, handleInlineTabBackspace } from './editor/input.js';
 import { applyPageMargin, updateMarginRule, applyFontFamily } from './ui/settings.js';
 import { addLinkDestination, createLink, removeLink } from './editor/links.js';
@@ -82,7 +82,6 @@ window.insertInlineTabAt = insertInlineTabAt;
 window.handleInlineTabKey = handleInlineTabKey;
 window.handleInlineTabBackspace = handleInlineTabBackspace;
 // UI & Utils
-window.syncToSource = syncToSource;
 window.toggleFileDropdown = toggleFileDropdown;
 window.closeNestedDropdown = closeNestedDropdown;
 window.closeFileDropdown = closeFileDropdown;
