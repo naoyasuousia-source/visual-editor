@@ -1,5 +1,5 @@
 
-import { syncToSource } from '../main.js';
+import { syncToSource } from './core.js';
 import { generateBookmarkId } from '../utils/dom.js';
 
 export function addLinkDestination(): void {

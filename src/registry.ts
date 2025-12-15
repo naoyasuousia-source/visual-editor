@@ -111,16 +111,16 @@ import {
 
 // Functions still in main.ts (exported)
 import {
-    setActiveEditor,
-    getCurrentParagraph,
-    syncToSource
-} from './main.js';
-
-import {
     saveTextSelectionFromEditor,
     getEffectiveTextRange,
     isRangeInsideCurrentEditor
 } from './editor/selection.js';
+
+import {
+    setActiveEditor,
+    getCurrentParagraph,
+    syncToSource
+} from './editor/core.js';
 
 import {
     getCaretOffset,

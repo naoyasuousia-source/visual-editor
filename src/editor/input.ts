@@ -1,5 +1,5 @@
 
-import { syncToSource } from '../main.js';
+import { syncToSource } from './core.js';
 
 const INDENT_STEP_PX = 36 * (96 / 72);
 
