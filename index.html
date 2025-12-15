@@ -349,14 +349,7 @@
       pointer-events: none;
     }
 
-    /* ぶら下げインデント修正 */
-    .page-inner .hanging-indent {
-      /* 
-          1行目を1文字分(約1em)左に突き出す設定。
-          text-indentをマイナスにし、1行目を左へずらす。
-       */
-      text-indent: -1em;
-    }
+
 
     /* 現在アクティブなページの枠を少し強調 */
     section.page.active {
@@ -373,25 +366,7 @@
       white-space: pre-wrap;
     }
 
-    .page-inner .indent-1 {
-      padding-left: 36pt;
-    }
 
-    .page-inner .indent-2 {
-      padding-left: 72pt;
-    }
-
-    .page-inner .indent-3 {
-      padding-left: 108pt;
-    }
-
-    .page-inner .indent-4 {
-      padding-left: 144pt;
-    }
-
-    .page-inner .indent-5 {
-      padding-left: 180pt;
-    }
 
     /* Highlight palette control */
     .highlight-control {
@@ -893,6 +868,27 @@
 
     .indent-option input:disabled+span {
       color: #999;
+    }
+
+    /* インデント定義 */
+    .page-inner .indent-1 {
+      padding-left: 36pt;
+    }
+
+    .page-inner .indent-2 {
+      padding-left: 72pt;
+    }
+
+    .page-inner .indent-3 {
+      padding-left: 108pt;
+    }
+
+    .page-inner .indent-4 {
+      padding-left: 144pt;
+    }
+
+    .page-inner .indent-5 {
+      padding-left: 180pt;
     }
 
     /* ぶら下げインデント: インデントなしの場合は1文字戻し */
