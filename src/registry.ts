@@ -83,7 +83,6 @@ import {
     applyPendingBlockTag,
     toggleHangingIndent,
     changeIndent,
-    bindEditorEvents,
     toggleHighlightPalette,
     setHighlightPaletteOpen,
     applyPageMargin,
@@ -119,6 +118,8 @@ import {
     createLink,
     removeLink
 } from './main.js';
+
+import { bindEditorEvents } from './ui/events.js';
 
 import {
     computeSelectionStateFromRange,

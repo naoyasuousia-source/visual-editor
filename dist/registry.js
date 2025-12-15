@@ -25,9 +25,10 @@ import { saveFullHTML, openWithFilePicker, overwriteCurrentFile, handleOpenFile,
 // Functions still in main.ts (exported)
 import { convertParagraphToTag, generateBookmarkId, getClosestBlockId, compareParagraphOrder, calculateOffsetWithinNode, isParagraphEmpty, findParagraphWrapper, ensureParagraphWrapper, ensureFigureWrapper } from './utils/dom.js';
 // Functions still in main.ts (exported)
-import { setActiveEditor, getCurrentParagraph, updateToolbarState, applyPendingBlockTag, toggleHangingIndent, changeIndent, bindEditorEvents, toggleHighlightPalette, setHighlightPaletteOpen, applyPageMargin, updateMarginRule, applyFontFamily, updateMarginButtonState, 
+import { setActiveEditor, getCurrentParagraph, updateToolbarState, applyPendingBlockTag, toggleHangingIndent, changeIndent, toggleHighlightPalette, setHighlightPaletteOpen, applyPageMargin, updateMarginRule, applyFontFamily, updateMarginButtonState, 
 // alignDirections, // Not exported yet
 applyParagraphAlignment, getParagraphsInRange, applyParagraphSpacing, closeAllFontSubmenus, setFontMenuOpen, toggleFontMenu, closeFontMenu, closeFontSubmenu, closeAllParagraphSubmenus, setParagraphMenuOpen, toggleParagraphMenu, closeParagraphMenu, getCaretOffset, insertInlineTabAt, handleInlineTabKey, handleInlineTabBackspace, syncToSource, applyLineHeight, toggleFileDropdown, closeNestedDropdown, closeFileDropdown, isRangeInsideCurrentEditor, saveTextSelectionFromEditor, getEffectiveTextRange, addLinkDestination, createLink, removeLink } from './main.js';
+import { bindEditorEvents } from './ui/events.js';
 import { computeSelectionStateFromRange, findTextPositionInParagraph, restoreRangeFromSelectionState, findParagraph, placeCaretBefore, placeCaretAfter } from './editor/selection.js';
 import { applyImageSize, showImageContextMenu, closeImageContextMenu, closeImageSubmenu, applyImageTitle, promptDropboxImageUrl, promptWebImageUrl, insertImageAtCursor, openTitleDialog, closeTitleDialog, removeExistingImageTitle, updateImageMetaTitle, ensureAiImageIndex, rebuildFigureMetaStore } from './editor/image.js';
 // --- Window Assignments ---

@@ -49,7 +49,7 @@ src/
   2. `src/registry.ts` の import 元を `./main.js` から `./editor/image.js` に変更。
 - **注意**: `ensureAiImageIndex` と `rebuildFigureMetaStore` は既に移動済みなので、それらとの整合性を取る。
 
-### Step 8: イベントリスナーの分離 (`src/ui/events.ts`)
+### Step 8: イベントリスナーの分離 (`src/ui/events.ts`) (完了)
 - **対象**: `bindEditorEvents`, `bindDocumentLevelHandlers`, `initPageLinkHandler`
 - **目的**: ユーザー入力とロジックの結合部を切り出す。
 
