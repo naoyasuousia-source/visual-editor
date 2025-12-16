@@ -195,10 +195,13 @@ export function initSidebarToggle() {
     const btn = document.getElementById('sidebar-toggle-btn');
     const nav = document.getElementById('page-navigator');
     if (btn && nav) {
+        // Initialize text based on initial state
+        const isCollapsedInitial = nav.classList.contains('collapsed');
+        btn.textContent = isCollapsedInitial ? 'サムネイル：非表示' : 'サムネイル：表示';
         btn.addEventListener('click', () => {
             const isCollapsed = nav.classList.toggle('collapsed');
             isNavigatorVisible = !isCollapsed; // Toggle visibility state
-            btn.textContent = isCollapsed ? 'Thumbnail: OFF' : 'Thumbnail: ON';
+            btn.textContent = isCollapsed ? 'サムネイル：非表示' : 'サムネイル：表示';
             if (isNavigatorVisible) {
                 updateNavigator(); // Re-render when opened to ensure fresh content
             }
