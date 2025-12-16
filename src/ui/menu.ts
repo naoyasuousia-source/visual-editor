@@ -6,6 +6,21 @@ const getParagraphChooserElement = () => document.querySelector<HTMLElement>('.p
 const getFontChooserElement = () => document.querySelector<HTMLElement>('.font-chooser');
 const getHighlightControlElement = () => document.querySelector<HTMLElement>('.highlight-control');
 
+function isAnyMenuOpen(): boolean {
+    const file = getFileDropdownElement();
+    const font = getFontChooserElement();
+    const para = getParagraphChooserElement();
+    const hl = getHighlightControlElement()?.querySelector('.highlight-palette') as HTMLElement;
+    const view = document.querySelector('.view-dropdown');
+
+    if (file && file.classList.contains('open')) return true;
+    if (font && font.classList.contains('is-open')) return true;
+    if (para && para.classList.contains('is-open')) return true;
+    if (hl && hl.style.display !== 'none' && hl.style.display !== '') return true;
+    if (view && view.classList.contains('open')) return true;
+    return false;
+}
+
 // File Menu
 export function toggleFileDropdown(): void {
     const element = getFileDropdownElement();
@@ -44,6 +59,21 @@ export function initFileMenuControls(): void {
             event.stopPropagation();
             toggleFileDropdown();
         });
+
+        const fileMenu = fileTrigger.closest<HTMLElement>('.file-menu');
+        if (fileMenu) {
+            fileMenu.addEventListener('mouseenter', () => {
+                if (isAnyMenuOpen()) return;
+                // If closed, open it? Use toggleFileDropdown or explicit open?
+                // toggleFileDropdown toggles. If closed, it opens.
+                // But check internal state
+                const element = getFileDropdownElement();
+                if (element && !element.classList.contains('open')) {
+                    closeAllMenus('file');
+                    element.classList.add('open');
+                }
+            });
+        }
     }
 
     nestedTriggers.forEach(trigger => {
@@ -145,6 +175,7 @@ export function initFontChooserControls(): void {
     // Sticky Hover for Font Menu
     if (fontChooserElement) {
         fontChooserElement.addEventListener('mouseenter', () => {
+            if (isAnyMenuOpen()) return;
             setFontMenuOpen(true);
         });
     }
@@ -238,6 +269,7 @@ export function bindParagraphMenuListeners(): void {
     // Sticky Hover for Paragraph Menu
     if (paragraphChooserElement) {
         paragraphChooserElement.addEventListener('mouseenter', () => {
+            if (isAnyMenuOpen()) return;
             setParagraphMenuOpen(true);
         });
     }
@@ -308,6 +340,7 @@ export function initViewMenuControls(): void {
         const viewMenuElement = viewTrigger.closest<HTMLElement>('.view-menu');
         if (viewMenuElement) {
             viewMenuElement.addEventListener('mouseenter', () => {
+                if (isAnyMenuOpen()) return;
                 closeAllMenus('view');
                 viewDropdown.classList.add('open');
             });

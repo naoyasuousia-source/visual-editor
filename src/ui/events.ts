@@ -237,6 +237,21 @@ export function bindDocumentLevelHandlers(): void {
         e.preventDefault();
         e.returnValue = '';
     });
+
+    document.addEventListener('keydown', async (e) => {
+        if (e.ctrlKey || e.metaKey) {
+            if (e.key === 's') {
+                e.preventDefault();
+                await (window as any).overwriteCurrentFile?.();
+            } else if (e.key === 'o') {
+                e.preventDefault();
+                const opened = await (window as any).openWithFilePicker?.();
+                if (!opened) {
+                    document.getElementById('open-file-input')?.click();
+                }
+            }
+        }
+    });
 }
 
 

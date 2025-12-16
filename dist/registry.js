@@ -2,7 +2,7 @@
 // This file acts as a central registry for global window assignments.
 import { toggleBold, toggleItalic, toggleUnderline, toggleStrikeThrough, applyInlineScript, toggleSuperscript, toggleSubscript, resetHighlightsInSelection, applyColorHighlight, applyFontColor, resetFontColorInSelection, removeHighlightsInRange, applyBlockElement, renumberParagraphs, applyPendingBlockTag, toggleHangingIndent, changeIndent, applyParagraphAlignment, applyParagraphSpacing, applyLineHeight, getParagraphsInRange } from './editor/formatting.js';
 import { createPage, renumberPages, addPage, removePage, initPages } from './editor/page.js';
-import { saveFullHTML, openWithFilePicker, overwriteCurrentFile, handleOpenFile, setPagesHTML, importFullHTMLText, buildFullHTML } from './editor/io.js';
+import { saveFullHTML, openWithFilePicker, overwriteCurrentFile, saveAsWithFilePicker, handleOpenFile, setPagesHTML, importFullHTMLText, buildFullHTML } from './editor/io.js';
 import { convertParagraphToTag, generateBookmarkId, getClosestBlockId, compareParagraphOrder, calculateOffsetWithinNode, isParagraphEmpty, findParagraphWrapper, ensureParagraphWrapper, ensureFigureWrapper } from './utils/dom.js';
 import { updateToolbarState, updateMarginButtonState } from './ui/toolbar.js';
 import { toggleFileDropdown, closeNestedDropdown, closeFileDropdown, setFontMenuOpen, closeAllFontSubmenus, toggleFontMenu, closeFontMenu, closeFontSubmenu, closeAllParagraphSubmenus, setParagraphMenuOpen, toggleParagraphMenu, closeParagraphMenu, setHighlightPaletteOpen, toggleHighlightPalette } from './ui/menu.js';
@@ -57,6 +57,7 @@ window.updateMarginButtonState = updateMarginButtonState;
 window.saveFullHTML = saveFullHTML;
 window.openWithFilePicker = openWithFilePicker;
 window.overwriteCurrentFile = overwriteCurrentFile;
+window.saveAsWithFilePicker = saveAsWithFilePicker;
 window.handleOpenFile = handleOpenFile;
 window.importFullHTMLText = importFullHTMLText;
 window.buildFullHTML = buildFullHTML;

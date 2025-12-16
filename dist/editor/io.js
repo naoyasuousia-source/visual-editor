@@ -144,6 +144,33 @@ export async function openWithFilePicker() {
         return true; // Handled (even if cancelled)
     }
 }
+export async function saveAsWithFilePicker() {
+    if (typeof window.showSaveFilePicker !== 'function') {
+        // Fallback to download if API not supported
+        await saveFullHTML();
+        return;
+    }
+    try {
+        const handle = await window.showSaveFilePicker({
+            types: [{
+                    description: 'HTML Files',
+                    accept: { 'text/html': ['.html', '.htm'] }
+                }],
+        });
+        const writable = await handle.createWritable();
+        const html = await buildFullHTML();
+        await writable.write(html);
+        await writable.close();
+        state.openedFileHandle = handle;
+        alert('保存しました。');
+    }
+    catch (err) {
+        if (err.name !== 'AbortError') {
+            console.error('Save As error', err);
+            alert('保存に失敗しました: ' + err.message);
+        }
+    }
+}
 export async function saveFullHTML() {
     const pagesContainer = getPagesContainerElement();
     if (!pagesContainer)

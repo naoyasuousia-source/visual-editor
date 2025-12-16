@@ -3,7 +3,7 @@ import { toggleParagraphMenu, toggleHighlightPalette } from './menu.js';
 import { getCurrentParagraph } from '../editor/core.js';
 import { applyFontFamily, applyPageMargin } from './settings.js';
 import { addPage, removePage } from '../editor/page.js';
-import { saveFullHTML, openWithFilePicker, overwriteCurrentFile } from '../editor/io.js';
+import { saveFullHTML, openWithFilePicker, overwriteCurrentFile, saveAsWithFilePicker } from '../editor/io.js';
 import { promptDropboxImageUrl, promptWebImageUrl } from '../editor/image.js';
 import { addLinkDestination, createLink, removeLink } from '../editor/links.js';
 const getToolbarElement = () => document.getElementById('toolbar');
@@ -147,6 +147,9 @@ export function bindToolbarHandlers() {
                 break;
             case 'save':
                 saveFullHTML();
+                break;
+            case 'save-as':
+                saveAsWithFilePicker();
                 break;
             case 'open':
                 {

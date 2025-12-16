@@ -98,6 +98,7 @@ declare global {
         removePage: () => void;
         saveFullHTML: () => void;
         openWithFilePicker: () => Promise<boolean>;
+        saveAsWithFilePicker: () => Promise<void>;
         promptDropboxImageUrl: () => void;
         promptWebImageUrl: () => void;
         overwriteCurrentFile: () => Promise<void>;

@@ -393,14 +393,12 @@ export function initImageContextMenuControls(): void {
         closeImageContextMenu();
     });
 
+    // Hover handling is done via CSS
     if (imageContextTriggerElement) {
+        // Optional: Keep click for mobile/touch if needed, but for now we follow strict hover instruction
         imageContextTriggerElement.addEventListener('click', (event) => {
             event.preventDefault();
             event.stopPropagation();
-            if (!imageContextDropdownElement) return;
-            const willOpen = !imageContextDropdownElement.classList.contains('open');
-            imageContextDropdownElement.classList.toggle('open', willOpen);
-            imageContextTriggerElement.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
         });
     }
 

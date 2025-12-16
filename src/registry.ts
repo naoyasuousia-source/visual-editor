@@ -37,6 +37,7 @@ import {
     saveFullHTML,
     openWithFilePicker,
     overwriteCurrentFile,
+    saveAsWithFilePicker,
     handleOpenFile,
     setPagesHTML,
     importFullHTMLText,
@@ -193,6 +194,7 @@ window.updateMarginButtonState = updateMarginButtonState;
 window.saveFullHTML = saveFullHTML;
 window.openWithFilePicker = openWithFilePicker;
 window.overwriteCurrentFile = overwriteCurrentFile;
+window.saveAsWithFilePicker = saveAsWithFilePicker;
 window.handleOpenFile = handleOpenFile;
 window.importFullHTMLText = importFullHTMLText;
 window.buildFullHTML = buildFullHTML;

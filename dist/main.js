@@ -2,6 +2,7 @@ import { renumberParagraphs } from './editor/formatting.js';
 import { handleOpenFile } from './editor/io.js';
 import { initPages } from './editor/page.js';
 import { ensureAiImageIndex, initImageContextMenuControls } from './editor/image.js';
+import { updateAiMetaGuide } from './editor/ai-meta.js';
 import { initPageLinkHandler, bindDocumentLevelHandlers } from './ui/events.js';
 import { bindToolbarHandlers } from './ui/toolbar.js';
 import { initFileMenuControls, initViewMenuControls, initFontChooserControls, bindParagraphMenuListeners } from './ui/menu.js';
@@ -37,6 +38,8 @@ export function initEditor() {
     initParagraphJump();
     initSidebarToggle();
     initToolbarJump();
+    // Initialize AI Meta Guide
+    updateAiMetaGuide();
     // Late import of registry to ensure exports are ready
     import('./registry.js')
         .then(() => console.log('Registry loaded'))
