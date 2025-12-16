@@ -882,3 +882,91 @@ dialog .dialog-actions {
   background: #ccc;
   margin: 0 8px;
 }
+
+/* Print / PDF Output Optimized Styles */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  body {
+    background: #fff;
+    overflow: visible;
+    height: auto;
+    width: 100%;
+  }
+
+  /* Hide UI components not needed for print */
+  #toolbar,
+  #page-navigator,
+  #sidebar-toggle-overlay,
+  .file-menu,
+  .view-menu,
+  button,
+  dialog,
+  input[type="file"],
+  #ai-meta-guide,
+  #ai-image-index,
+  ::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Reset layout structure for print flow */
+  #workspace {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  #pages-container {
+    display: block;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    overflow: visible;
+    gap: 0;
+  }
+
+  /* Ensure page exactly matches A4 and breaks correctly */
+  section.page {
+    position: relative;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    outline: none !important;
+    /* Remove active page outline */
+    background: #fff;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  /* Remove break after the last page to avoid empty sheet? 
+     Usually beneficial, but sometimes browser handles it.
+     Let's be explicit if possible. */
+  section.page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  /* Maintain internal layout fidelity */
+  .page-inner {
+    width: 100%;
+    height: 100%;
+    padding: var(--page-margin);
+    overflow: visible;
+  }
+
+  /* Force text selection to be available in PDF readers */
+  /* Note: pointer-events: none on * in print media can sometimes help if overlay issues, but default is usually fine. */
+  .page-inner,
+  .page-inner * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
+}

@@ -181,6 +181,9 @@ export function bindToolbarHandlers() {
             case 'remove-link':
                 removeLink();
                 break;
+            case 'print':
+                window.print();
+                break;
             default:
                 break;
         }
