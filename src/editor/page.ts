@@ -147,6 +147,8 @@ function moveOverflowingContent(pageInner: HTMLElement): void {
         const pagesContainer = getPagesContainerElement();
         if (pagesContainer) {
             const newPage = createPage(Number((pageSection as HTMLElement).dataset.page) + 1, '');
+            const newInner = newPage.querySelector('.page-inner');
+            if (newInner) newInner.innerHTML = '';
             if (nextPage) {
                 pagesContainer.insertBefore(newPage, nextPage);
             } else {
