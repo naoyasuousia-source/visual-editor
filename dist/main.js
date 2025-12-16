@@ -6,6 +6,7 @@ import { initPageLinkHandler, bindDocumentLevelHandlers } from './ui/events.js';
 import { bindToolbarHandlers } from './ui/toolbar.js';
 import { initFileMenuControls, initViewMenuControls, initFontChooserControls, bindParagraphMenuListeners } from './ui/menu.js';
 import { applyPageMargin } from './ui/settings.js';
+import { initNavigator, initParagraphJump } from './ui/navigator.js';
 // Phase 1: Core Utilities Implementation
 // (Moved to editor/core.ts and registry.ts)
 // Phase 3: Formatting & Selection Implementation
@@ -32,6 +33,8 @@ export function initEditor() {
     // Direct initialization instead of window lookup
     initPages();
     renumberParagraphs();
+    initNavigator();
+    initParagraphJump();
     // Late import of registry to ensure exports are ready
     import('./registry.js')
         .then(() => console.log('Registry loaded'))

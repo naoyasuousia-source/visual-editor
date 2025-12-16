@@ -2,6 +2,7 @@ import { getPagesContainerElement } from '../globals.js';
 import { ensureAiImageIndex } from './image.js';
 import { bindEditorEvents } from '../ui/events.js';
 import { renumberParagraphs } from './formatting.js';
+import { updateNavigator } from '../ui/navigator.js';
 
 export function createPage(pageNumber: number, contentHTML?: string): HTMLElement {
     const section = document.createElement('section');
@@ -24,6 +25,7 @@ export function renumberPages(): void {
     pages.forEach((page, idx) => {
         page.dataset.page = String(idx + 1);
     });
+    updateNavigator();
 }
 
 export function initPages(): void {
