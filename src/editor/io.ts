@@ -155,6 +155,36 @@ export async function openWithFilePicker(): Promise<boolean> {
     }
 }
 
+export async function saveAsWithFilePicker(): Promise<void> {
+    if (typeof (window as any).showSaveFilePicker !== 'function') {
+        // Fallback to download if API not supported
+        await saveFullHTML();
+        return;
+    }
+
+    try {
+        const handle = await (window as any).showSaveFilePicker({
+            types: [{
+                description: 'HTML Files',
+                accept: { 'text/html': ['.html', '.htm'] }
+            }],
+        });
+
+        const writable = await handle.createWritable();
+        const html = await buildFullHTML();
+        await writable.write(html);
+        await writable.close();
+
+        state.openedFileHandle = handle;
+        alert('保存しました。');
+    } catch (err: any) {
+        if (err.name !== 'AbortError') {
+            console.error('Save As error', err);
+            alert('保存に失敗しました: ' + err.message);
+        }
+    }
+}
+
 export async function saveFullHTML(): Promise<void> {
     const pagesContainer = getPagesContainerElement();
     if (!pagesContainer) return;
