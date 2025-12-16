@@ -147,6 +147,30 @@ export function initParagraphJump() {
         }
     }
 }
+export function initSidebarToggle() {
+    const btn = document.getElementById('sidebar-toggle-btn');
+    const nav = document.getElementById('page-navigator');
+    if (btn && nav) {
+        btn.addEventListener('click', () => {
+            const isCollapsed = nav.classList.toggle('collapsed');
+            btn.textContent = isCollapsed ? 'Thumbnail: OFF' : 'Thumbnail: ON';
+        });
+    }
+}
+export function initToolbarJump() {
+    const input = document.getElementById('toolbar-jump-input');
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (input.value) {
+                    jumpToParagraph(input.value);
+                    input.value = ''; // Optional: clear after jump
+                }
+            }
+        });
+    }
+}
 function jumpToParagraph(idStr) {
     // Parse "3-5" => "p3-5"
     // Or allow raw "p3-5"
