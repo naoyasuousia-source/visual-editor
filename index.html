@@ -59,9 +59,7 @@
       <button type="button" data-action="italic">I</button>
       <button type="button" data-action="underline">U</button>
       <button type="button" data-action="strike">S</button>
-      <div class="toolbar-separator"></div>
-      <input type="text" id="toolbar-jump-input" placeholder="Jump to... (e.g. 1-1)"
-        title="Enter 'p1-1' or '1-1' to jump">
+      <!-- Jump Input Moved -->
       <div class="highlight-control">
         <button type="button" data-action="highlight" aria-expanded="false">HL</button>
         <div class="highlight-palette" role="group" aria-label="ハイライトカラー">
@@ -242,12 +240,15 @@
       </div>
       <button type="button" data-action="add-page">+Page</button>
       <button type="button" data-action="remove-page">-Page</button>
+      <div style="flex-grow: 1;"></div>
+      <input type="text" id="toolbar-jump-input" placeholder="Jump..." title="Enter 'p1-1' or '1-1' to jump"
+        style="width: 100px;">
     </div>
     <input type="file" id="open-file-input" accept=".html,text/html" style="display:none" />
     <div id="workspace">
       <div id="page-navigator"></div>
       <div id="sidebar-toggle-overlay">
-        <button id="sidebar-toggle-btn">Thumbnail: ON</button>
+        <button id="sidebar-toggle-btn">サムネイル ON/OFF</button>
       </div>
       <div id="pages-container">
         <!-- 初期ページ -->
