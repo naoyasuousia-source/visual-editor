@@ -16,6 +16,8 @@ import {
   initImageContextMenuControls
 } from './editor/image.js';
 
+import { updateAiMetaGuide } from './editor/ai-meta.js';
+
 import {
   bindEditorEvents,
   initPageLinkHandler,
@@ -73,6 +75,9 @@ export function initEditor() {
   initParagraphJump();
   initSidebarToggle();
   initToolbarJump();
+
+  // Initialize AI Meta Guide
+  updateAiMetaGuide();
 
   // Late import of registry to ensure exports are ready
   import('./registry.js')
