@@ -232,6 +232,11 @@ export function bindDocumentLevelHandlers(): void {
             }
         }
     });
+
+    window.addEventListener('beforeunload', (e) => {
+        e.preventDefault();
+        e.returnValue = '';
+    });
 }
 
 

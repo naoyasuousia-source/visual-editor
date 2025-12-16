@@ -76,6 +76,10 @@ export function removePage(): void {
     const pages = Array.from(pagesContainerElement.querySelectorAll<HTMLElement>('section.page'));
     if (pages.length === 0) return;
 
+    if (!window.confirm('現在のページを削除してもよろしいですか？この操作は取り消せません。')) {
+        return;
+    }
+
     let currentEditor = window.currentEditor;
     if (!currentEditor) {
         const fallback = pages[pages.length - 1].querySelector<HTMLElement>('.page-inner');
