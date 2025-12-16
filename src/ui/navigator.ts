@@ -189,29 +189,27 @@ export function initParagraphJump(): void {
 
     const dialog = document.getElementById('paragraph-jump-dialog') as HTMLDialogElement;
     if (dialog) {
-        dialog.addEventListener('close', () => {
-            if (dialog.returnValue === 'go') {
-                const input = document.getElementById('paragraph-jump-input') as HTMLInputElement;
-                if (input && input.value) {
-                    jumpToParagraph(input.value);
+        const input = document.getElementById('paragraph-jump-input') as HTMLInputElement;
+
+        // Enter key to jump
+        if (input) {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (input.value) {
+                        jumpToParagraph(input.value);
+                        dialog.close();
+                    }
                 }
+            });
+        }
+
+        // Click outside to close
+        dialog.addEventListener('click', (e) => {
+            if (e.target === dialog) {
+                dialog.close();
             }
         });
-
-        const goBtn = dialog.querySelector('button[value="go"]');
-        if (goBtn) {
-            goBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                dialog.close('go');
-            });
-        }
-        const cancelBtn = dialog.querySelector('button[value="cancel"]');
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                dialog.close('cancel');
-            });
-        }
     }
 }
 
