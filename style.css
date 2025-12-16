@@ -66,6 +66,32 @@ body {
   background: #e0e0e0;
 }
 
+/* Formatting Button Styles */
+#toolbar button[data-action="bold"] {
+  font-weight: bold;
+}
+
+#toolbar button[data-action="italic"] {
+  font-style: italic;
+  font-family: serif;
+  /* Emphasize italic */
+}
+
+#toolbar button[data-action="underline"] {
+  text-decoration: underline;
+}
+
+#toolbar button[data-action="strike"] {
+  text-decoration: line-through;
+}
+
+#toolbar button[data-action="highlight"] {
+  background: #ffffcc;
+  /* Light yellow background hint */
+  border-color: #e6e600;
+  font-weight: bold;
+}
+
 /* File Menu & Dropdowns */
 .file-menu,
 .view-menu {

@@ -12,12 +12,12 @@
   <div id="left">
     <div id="toolbar">
       <div class="file-menu">
-        <button type="button" class="file-trigger">File ▾</button>
+        <button type="button" class="file-trigger">ファイル ▾</button>
         <div class="file-dropdown" role="menu" aria-label="File options">
           <button type="button" data-action="save">保存</button>
           <button type="button" data-action="save-as">名前を付けて保存</button>
-          <button type="button" data-action="open">ファイルを開く</button>
           <button type="button" data-action="overwrite">上書き保存</button>
+          <button type="button" data-action="open">ファイルを開く</button>
           <button type="button" data-action="print">PDFとして出力</button>
           <div class="nested-dropdown">
             <button type="button" class="nested-trigger" aria-haspopup="menu" aria-expanded="false">ハイパーリンク</button>
@@ -28,8 +28,7 @@
             </div>
           </div>
           <div class="nested-dropdown">
-            <button type="button" class="nested-trigger" aria-haspopup="menu" aria-expanded="false">Insert
-              Image</button>
+            <button type="button" class="nested-trigger" aria-haspopup="menu" aria-expanded="false">画像を挿入</button>
             <div class="nested-dropdown-menu" role="menu">
               <button type="button" data-action="insert-image-dropbox">dropboxから挿入</button>
               <button type="button" data-action="insert-image-web">web上の画像を挿入</button>
@@ -46,7 +45,7 @@
         </div>
       </div>
       <div class="view-menu">
-        <button type="button" class="view-trigger">View ▾</button>
+        <button type="button" class="view-trigger">表示 ▾</button>
         <div class="view-dropdown" role="menu" aria-label="View options">
           <label class="menu-item-label">
             <input type="checkbox" data-action="toggle-page-numbers" checked> ページ番号
@@ -78,8 +77,8 @@
             title="ハイライトを取り消す">取消</button>
         </div>
       </div>
-      <button type="button" data-action="superscript">上付き</button>
-      <button type="button" data-action="subscript">下付き</button>
+      <button type="button" data-action="superscript">X<sup>2</sup></button>
+      <button type="button" data-action="subscript">X<sub>2</sub></button>
       <div class="font-chooser" id="font-chooser">
         <button type="button" class="font-chooser-trigger" aria-haspopup="true" aria-expanded="false">Font ▾</button>
         <div class="font-chooser-panel" role="menu" aria-label="フォント操作">
