@@ -203,20 +203,18 @@ export function bindDocumentLevelHandlers(): void {
 
     document.addEventListener('click', (event) => {
         const target = event.target as HTMLElement | null;
-        const clickedEditor = Boolean(target?.closest('.page-inner'));
-        if (clickedEditor) {
-            const fileMenu = document.querySelector<HTMLElement>('.file-menu');
-            if (fileMenu && target && !fileMenu.contains(target)) {
-                if (window.closeFileDropdown) window.closeFileDropdown();
-            }
-            const paragraphChooserElement = getParagraphChooserElement();
-            if (paragraphChooserElement && target && !paragraphChooserElement.contains(target)) {
-                if (window.closeParagraphMenu) window.closeParagraphMenu();
-            }
-            const fontChooserElement = getFontChooserElement();
-            if (fontChooserElement && target && !fontChooserElement.contains(target)) {
-                if (window.closeFontMenu) window.closeFontMenu();
-            }
+        // Close menus if clicking outside
+        const fileMenu = document.querySelector<HTMLElement>('.file-menu');
+        if (fileMenu && target && !fileMenu.contains(target)) {
+            if (window.closeFileDropdown) window.closeFileDropdown();
+        }
+        const paragraphChooserElement = getParagraphChooserElement();
+        if (paragraphChooserElement && target && !paragraphChooserElement.contains(target)) {
+            if (window.closeParagraphMenu) window.closeParagraphMenu();
+        }
+        const fontChooserElement = getFontChooserElement();
+        if (fontChooserElement && target && !fontChooserElement.contains(target)) {
+            if (window.closeFontMenu) window.closeFontMenu();
         }
         if (window.closeImageContextMenu) window.closeImageContextMenu();
         const highlightControlElement = getHighlightControlElement();
