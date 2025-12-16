@@ -451,13 +451,16 @@ body.hide-para-numbers .page-inner [data-para]::before {
 .paragraph-chooser.is-open .paragraph-panel,
 .font-chooser.is-open .font-chooser-panel {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
 }
 
 /* Submenus (Font/Paragraph) */
 .font-submenu,
 .paragraph-submenu {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .font-submenu-panel,
@@ -466,8 +469,9 @@ body.hide-para-numbers .page-inner [data-para]::before {
   position: absolute;
   top: 100%;
   /* Show below the trigger */
-  left: 10px;
+  left: 0;
   /* Slight indent or aligned */
+  margin-top: 8px;
   background: #fff;
   border: 1px solid #ccc;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
