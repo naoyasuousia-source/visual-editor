@@ -75,8 +75,16 @@
             title="ハイライトを取り消す">取消</button>
         </div>
       </div>
-      <button type="button" data-action="superscript">X<sup>2</sup></button>
-      <button type="button" data-action="subscript">X<sub>2</sub></button>
+      <button type="button" data-action="superscript" title="上付き"><svg viewBox="0 0 24 24" width="20" height="20"
+          fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 20L14 8M14 20L5 8" /><text x="15" y="8" font-size="11" stroke="none" fill="currentColor"
+            font-weight="bold">2</text>
+        </svg></button>
+      <button type="button" data-action="subscript" title="下付き"><svg viewBox="0 0 24 24" width="20" height="20"
+          fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 18L14 6M14 18L5 6" /><text x="15" y="23" font-size="11" stroke="none" fill="currentColor"
+            font-weight="bold">2</text>
+        </svg></button>
       <div class="font-chooser" id="font-chooser">
         <button type="button" class="font-chooser-trigger" aria-haspopup="true" aria-expanded="false">Font ▾</button>
         <div class="font-chooser-panel" role="menu" aria-label="フォント操作">
@@ -241,7 +249,7 @@
       <button type="button" data-action="add-page">+Page</button>
       <button type="button" data-action="remove-page">-Page</button>
       <div style="flex-grow: 1;"></div>
-      <input type="text" id="toolbar-jump-input" placeholder="Jump..." title="Enter 'p1-1' or '1-1' to jump"
+      <input type="text" id="toolbar-jump-input" placeholder="〇-〇へジャンプ" title="Enter 'p1-1' or '1-1' to jump"
         style="width: 100px;">
     </div>
     <input type="file" id="open-file-input" accept=".html,text/html" style="display:none" />
