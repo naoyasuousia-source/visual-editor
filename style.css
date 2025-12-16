@@ -794,6 +794,29 @@ dialog .dialog-actions {
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: transform 0.1s, border-color 0.1s;
+  overflow: hidden;
+  /* Ensure scaled content doesn't overflow */
+}
+
+.miniature-page {
+  width: 210mm;
+  height: 297mm;
+  transform: scale(0.15);
+  /* Approx 118px / 794px */
+  transform-origin: top left;
+  background: #fff;
+  pointer-events: none;
+  /* Prevent interaction with mini content */
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Adjust mini-page content spacing for readability if needed, or leave verbatim */
+.miniature-page .page-inner {
+  height: 100%;
+  overflow: hidden;
 }
 
 .nav-thumbnail:hover {

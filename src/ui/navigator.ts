@@ -1,15 +1,19 @@
-
 import { getPagesContainerElement } from '../globals.js';
 
+let isNavigatorVisible = true;
+let mutationObserver: MutationObserver | null = null;
+let contentObserver: MutationObserver | null = null;
+
 export function updateNavigator(): void {
+    if (!isNavigatorVisible) return;
+
     const navigator = document.getElementById('page-navigator');
     const pagesContainer = getPagesContainerElement();
     if (!navigator || !pagesContainer) return;
 
-    // Current page mapping
-    // We want to preserve scroll position if possible? 
-    // Rebuilding completely is easiest for synchronization.
+    // Preserve scroll position logic could be added here if needed
 
+    // Rebuild thumbnails (Simple rebuild is safest for index sync)
     navigator.innerHTML = '';
 
     const pages = pagesContainer.querySelectorAll<HTMLElement>('section.page');
@@ -23,6 +27,27 @@ export function updateNavigator(): void {
             thumb.classList.add('active');
         }
 
+        // --- Visual Thumbnail Content ---
+        const miniature = document.createElement('div');
+        miniature.className = 'miniature-page';
+
+        const inner = page.querySelector<HTMLElement>('.page-inner');
+        if (inner) {
+            const clone = inner.cloneNode(true) as HTMLElement;
+            // Remove IDs to avoid duplicates in DOM
+            const cachedParams = [];
+            const elementsWithId = clone.querySelectorAll('[id]');
+            elementsWithId.forEach(el => el.removeAttribute('id'));
+
+            // Should potentiall remove contenteditable
+            clone.contentEditable = 'false';
+
+            miniature.appendChild(clone);
+        }
+
+        thumb.appendChild(miniature);
+        // --------------------------------
+
         const label = document.createElement('div');
         label.className = 'nav-thumbnail-number';
         label.textContent = String(pageNum);
@@ -31,13 +56,9 @@ export function updateNavigator(): void {
 
         thumb.addEventListener('click', () => {
             page.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            // Optionally set active editor/focus?
-            // Maybe focusing the first paragraph in that page
             const inner = page.querySelector<HTMLElement>('.page-inner');
             if (inner) {
                 if (window.setActiveEditor) window.setActiveEditor(inner);
-                // Don't necessarily focus, maybe just scroll. 
-                // If user wants to edit, they click. Focus might jump scroll weirdly.
             }
         });
 
@@ -45,53 +66,81 @@ export function updateNavigator(): void {
     });
 }
 
-export function initNavigator(): void {
-    // Initial call
-    updateNavigator();
+function updateThumbnailContent(pageIndex: number): void {
+    if (!isNavigatorVisible) return;
+    const navigator = document.getElementById('page-navigator');
+    const pagesContainer = getPagesContainerElement();
+    if (!navigator || !pagesContainer) return;
 
-    // We might want to listen to scroll events to update 'active' thumbnail highlighting?
-    // Current 'active' class on page depends on setActiveEditor which is called on interaction.
-    // If we want scroll-spy behavior, we need an IntersectionObserver.
+    const page = pagesContainer.querySelectorAll('section.page')[pageIndex] as HTMLElement;
+    const thumb = navigator.children[pageIndex] as HTMLElement;
+
+    if (page && thumb) {
+        const miniature = thumb.querySelector('.miniature-page');
+        if (miniature) {
+            miniature.innerHTML = '';
+            const inner = page.querySelector<HTMLElement>('.page-inner');
+            if (inner) {
+                const clone = inner.cloneNode(true) as HTMLElement;
+                const elementsWithId = clone.querySelectorAll('[id]');
+                elementsWithId.forEach(el => el.removeAttribute('id'));
+                clone.contentEditable = 'false';
+                miniature.appendChild(clone);
+            }
+        }
+    }
+}
+
+export function initNavigator(): void {
+    updateNavigator();
 
     const pagesContainer = getPagesContainerElement();
     if (!pagesContainer) return;
 
-    // Simple observer for active page visibility
-    const observer = new IntersectionObserver((entries) => {
-        // Find the page that is most visible
-        // Actually, logic usually is 'first crossing threshold' or 'highest intersection ratio'.
-        // Let's just update the highlight based on window.currentEditor mainly, 
-        // but if we want scroll tracking:
+    // Observer for DOM structure changes (page add/remove)
+    mutationObserver = new MutationObserver((mutations) => {
+        let shouldFullRebuild = false;
 
-        // entries.forEach(entry => {
-        //    if (entry.isIntersecting) {
-        //        // Highlighting corresponding thumbnail
-        //    }
-        // });
-
-        // Ideally we sync 'active' class from DOM changes.
-        // Since setActiveEditor adds 'active' class to section.page, 
-        // we can just use MutationObserver on pagesContainer?
-
-    }, { threshold: 0.5 });
-
-    // pages.forEach(p => observer.observe(p));
-
-    // Observer for DOM changes (page add/remove, active class change)
-    // Actually updateNavigator is called manually on add/remove page.
-    // We just need to handle 'active' class toggle.
-
-    const mutationObserver = new MutationObserver((mutations) => {
-        let shouldUpdate = false;
         mutations.forEach(m => {
             if (m.type === 'childList') {
-                shouldUpdate = true;
+                // Check if direct child of pagesContainer (i.e. section.page added/removed)
+                // or if it's deeper.
+                if (m.target === pagesContainer) {
+                    shouldFullRebuild = true;
+                } else {
+                    // Content change within a page
+                    // Find which page changed
+                    const target = m.target as Node;
+                    const parent = target.nodeType === Node.ELEMENT_NODE ? target as Element : target.parentElement;
+                    const page = parent?.closest('section.page');
+                    if (page) {
+                        // Optimize: Update only that thumbnail?
+                        // Getting index...
+                        const pages = Array.from(pagesContainer.children);
+                        const index = pages.indexOf(page);
+                        if (index >= 0) {
+                            updateThumbnailContent(index);
+                        }
+                    }
+                }
+
             } else if (m.type === 'attributes' && m.attributeName === 'class') {
-                // Update active state visuals only
                 updateNavigatorActiveState();
+            } else if (m.type === 'characterData') {
+                // Text changed
+                const target = m.target;
+                const page = target.parentElement?.closest('section.page');
+                if (page) {
+                    const pages = Array.from(pagesContainer.children);
+                    const index = pages.indexOf(page);
+                    if (index >= 0) {
+                        updateThumbnailContent(index);
+                    }
+                }
             }
         });
-        if (shouldUpdate) {
+
+        if (shouldFullRebuild) {
             updateNavigator();
         }
     });
@@ -100,7 +149,8 @@ export function initNavigator(): void {
         childList: true,
         subtree: true,
         attributes: true,
-        attributeFilter: ['class']
+        attributeFilter: ['class'],
+        characterData: true
     });
 }
 
@@ -110,6 +160,7 @@ function updateNavigatorActiveState(): void {
     if (!navigator || !pagesContainer) return;
 
     const pages = pagesContainer.querySelectorAll('section.page');
+    // Force rebuild if length mismatch? No, just safe index access.
     const thumbnails = navigator.querySelectorAll('.nav-thumbnail');
 
     pages.forEach((page, index) => {
@@ -117,8 +168,6 @@ function updateNavigatorActiveState(): void {
         if (!thumb) return;
         if (page.classList.contains('active')) {
             thumb.classList.add('active');
-            // Scroll navigator to show active thumbnail
-            // thumb.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         } else {
             thumb.classList.remove('active');
         }
@@ -149,8 +198,6 @@ export function initParagraphJump(): void {
             }
         });
 
-        // Handle explicit button clicks if method="dialog" doesn't automatically set returnValue correct on all browsers?
-        // Usually <button value="go"> works.
         const goBtn = dialog.querySelector('button[value="go"]');
         if (goBtn) {
             goBtn.addEventListener('click', (e) => {
@@ -174,7 +221,12 @@ export function initSidebarToggle(): void {
     if (btn && nav) {
         btn.addEventListener('click', () => {
             const isCollapsed = nav.classList.toggle('collapsed');
+            isNavigatorVisible = !isCollapsed; // Toggle visibility state
             btn.textContent = isCollapsed ? 'Thumbnail: OFF' : 'Thumbnail: ON';
+
+            if (isNavigatorVisible) {
+                updateNavigator(); // Re-render when opened to ensure fresh content
+            }
         });
     }
 }
@@ -187,7 +239,7 @@ export function initToolbarJump(): void {
                 e.preventDefault();
                 if (input.value) {
                     jumpToParagraph(input.value);
-                    input.value = ''; // Optional: clear after jump
+                    input.value = '';
                 }
             }
         });
@@ -195,8 +247,6 @@ export function initToolbarJump(): void {
 }
 
 function jumpToParagraph(idStr: string): void {
-    // Parse "3-5" => "p3-5"
-    // Or allow raw "p3-5"
     let targetId = idStr.trim();
     if (/^\d+-\d+$/.test(targetId)) {
         targetId = 'p' + targetId;
@@ -205,7 +255,6 @@ function jumpToParagraph(idStr: string): void {
     const target = document.getElementById(targetId);
     if (target) {
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // Try to focus
         if (target.getAttribute('contenteditable') === 'true' || target.isContentEditable) {
             const range = document.createRange();
             const sel = window.getSelection();
@@ -213,6 +262,7 @@ function jumpToParagraph(idStr: string): void {
             range.collapse(true);
             sel?.removeAllRanges();
             sel?.addRange(range);
+            target.focus();
         } else {
             target.focus();
         }
