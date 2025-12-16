@@ -82,9 +82,7 @@ body {
   background: #e0e0e0;
 }
 
-.file-menu:hover .file-dropdown,
 .file-dropdown.open,
-.view-menu:hover .view-dropdown,
 .view-dropdown.open {
   display: flex;
 }
@@ -424,9 +422,7 @@ body.hide-para-numbers .page-inner [data-para]::before {
 }
 
 .highlight-control.is-open .highlight-palette,
-.paragraph-chooser:hover .paragraph-panel,
 .paragraph-chooser.is-open .paragraph-panel,
-.font-chooser:hover .font-chooser-panel,
 .font-chooser.is-open .font-chooser-panel {
   display: flex;
 }
