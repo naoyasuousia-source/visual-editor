@@ -205,5 +205,12 @@ export function bindDocumentLevelHandlers() {
             if (window.setHighlightPaletteOpen)
                 window.setHighlightPaletteOpen(false);
         }
+        const viewMenu = document.querySelector('.view-menu');
+        if (viewMenu && target && !viewMenu.contains(target)) {
+            const viewDropdown = viewMenu.querySelector('.view-dropdown');
+            if (viewDropdown && viewDropdown.classList.contains('open')) {
+                viewDropdown.classList.remove('open');
+            }
+        }
     });
 }

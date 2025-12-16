@@ -24,6 +24,7 @@ import { updateToolbarState } from '../ui/toolbar.js';
 // Import globally available element getter
 import { getPagesContainerElement } from '../globals.js';
 import { rebuildFigureMetaStore } from './image.js';
+import { updateAiMetaGuide } from './ai-meta.js';
 
 export function renumberParagraphs(): void {
     const pagesContainer = getPagesContainerElement();
@@ -61,13 +62,6 @@ export function renumberParagraphs(): void {
             el.dataset.para = String(paraIndex);
             el.id = `p${pageNum}-${paraIndex}`;
 
-            const tag = el.tagName.toLowerCase();
-            const semanticMap: Record<string, string> = {
-                'h1': 'heading-1', 'h2': 'heading-2', 'h3': 'heading-3',
-                'p': 'paragraph', 'ul': 'list', 'ol': 'ordered-list', 'li': 'list-item'
-            };
-            el.dataset.semanticType = semanticMap[tag] || 'block';
-
             if (!el.dataset.blockStyle) {
                 const hasMiniTextSpan = el.querySelector(':scope > .mini-text');
                 el.dataset.blockStyle = hasMiniTextSpan ? 'mini-p' : el.tagName.toLowerCase();
@@ -78,6 +72,7 @@ export function renumberParagraphs(): void {
     });
 
     rebuildFigureMetaStore();
+    updateAiMetaGuide();
 
 }
 

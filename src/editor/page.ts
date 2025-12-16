@@ -11,7 +11,7 @@ export function createPage(pageNumber: number, contentHTML?: string): HTMLElemen
     const inner = document.createElement('div');
     inner.className = 'page-inner';
     inner.contentEditable = 'true';
-    inner.innerHTML = contentHTML || '<p>ここに本文を書く</p>';
+    inner.innerHTML = contentHTML || '<p><br></p>';
 
     section.appendChild(inner);
     return section;
@@ -42,7 +42,7 @@ export function addPage(): void {
     const pagesContainerElement = getPagesContainerElement();
     if (!pagesContainerElement) return;
     const pages = Array.from(pagesContainerElement.querySelectorAll<HTMLElement>('section.page'));
-    const newPage = createPage(pages.length + 1, '<p>ここに本文を書く</p>');
+    const newPage = createPage(pages.length + 1, '<p><br></p>');
     const currentEditor = window.currentEditor;
     if (currentEditor) {
         const currentPage = currentEditor.closest<HTMLElement>('section.page');
@@ -88,7 +88,7 @@ export function removePage(): void {
     if (pages.length === 1) {
         const inner = pages[0].querySelector<HTMLElement>('.page-inner');
         if (inner) {
-            inner.innerHTML = '<p>ここに本文を書く</p>';
+            inner.innerHTML = '<p><br></p>';
             window.setActiveEditor?.(inner);
             renumberParagraphs();
         }

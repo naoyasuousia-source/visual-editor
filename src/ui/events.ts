@@ -223,6 +223,14 @@ export function bindDocumentLevelHandlers(): void {
         if (highlightControlElement && target && !highlightControlElement.contains(target)) {
             if (window.setHighlightPaletteOpen) window.setHighlightPaletteOpen(false);
         }
+
+        const viewMenu = document.querySelector<HTMLElement>('.view-menu');
+        if (viewMenu && target && !viewMenu.contains(target)) {
+            const viewDropdown = viewMenu.querySelector('.view-dropdown');
+            if (viewDropdown && viewDropdown.classList.contains('open')) {
+                viewDropdown.classList.remove('open');
+            }
+        }
     });
 }
 
