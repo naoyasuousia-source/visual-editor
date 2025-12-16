@@ -101,5 +101,86 @@ export function removePage() {
     }
     renumberPages();
     renumberParagraphs();
+    renumberParagraphs();
     ensureAiImageIndex();
+}
+export function checkPageOverflow(pageInner) {
+    if (!pageInner)
+        return;
+    // Buffer of 1px
+    if (pageInner.scrollHeight > pageInner.clientHeight + 1) {
+        moveOverflowingContent(pageInner);
+    }
+}
+function moveOverflowingContent(pageInner) {
+    const pageSection = pageInner.closest('section.page');
+    if (!pageSection)
+        return;
+    const children = Array.from(pageInner.children);
+    if (children.length === 0)
+        return;
+    const limit = pageInner.clientHeight;
+    let splitIndex = -1;
+    for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        if (child.offsetTop + child.offsetHeight > limit) {
+            splitIndex = i;
+            break;
+        }
+    }
+    if (splitIndex === -1) {
+        splitIndex = children.length - 1;
+    }
+    const nodesToMove = children.slice(splitIndex);
+    if (nodesToMove.length === 0)
+        return;
+    let nextPage = pageSection.nextElementSibling;
+    if (!nextPage || !nextPage.classList.contains('page')) {
+        const pagesContainer = getPagesContainerElement();
+        if (pagesContainer) {
+            const newPage = createPage(Number(pageSection.dataset.page) + 1, '');
+            if (nextPage) {
+                pagesContainer.insertBefore(newPage, nextPage);
+            }
+            else {
+                pagesContainer.appendChild(newPage);
+            }
+            nextPage = newPage;
+            initPages();
+        }
+    }
+    const nextInner = nextPage.querySelector('.page-inner');
+    if (!nextInner)
+        return;
+    const selection = window.getSelection();
+    let anchorNode = null;
+    let anchorOffset = 0;
+    if (selection && selection.rangeCount > 0) {
+        anchorNode = selection.anchorNode;
+        anchorOffset = selection.anchorOffset;
+    }
+    if (nextInner.firstChild) {
+        nodesToMove.reverse().forEach(node => {
+            nextInner.insertBefore(node, nextInner.firstChild);
+        });
+    }
+    else {
+        nodesToMove.forEach(node => {
+            nextInner.appendChild(node);
+        });
+    }
+    if (anchorNode && nodesToMove.some(n => n.contains(anchorNode))) {
+        if (window.setActiveEditor)
+            window.setActiveEditor(nextInner);
+        if (selection) {
+            const newRange = document.createRange();
+            newRange.setStart(anchorNode, anchorOffset);
+            newRange.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+        }
+        nextInner.focus();
+    }
+    renumberParagraphs();
+    checkPageOverflow(nextInner);
 }

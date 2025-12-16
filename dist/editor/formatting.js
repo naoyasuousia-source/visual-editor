@@ -37,6 +37,12 @@ export function renumberParagraphs() {
             });
             el.dataset.para = String(paraIndex);
             el.id = `p${pageNum}-${paraIndex}`;
+            const tag = el.tagName.toLowerCase();
+            const semanticMap = {
+                'h1': 'heading-1', 'h2': 'heading-2', 'h3': 'heading-3',
+                'p': 'paragraph', 'ul': 'list', 'ol': 'ordered-list', 'li': 'list-item'
+            };
+            el.dataset.semanticType = semanticMap[tag] || 'block';
             if (!el.dataset.blockStyle) {
                 const hasMiniTextSpan = el.querySelector(':scope > .mini-text');
                 el.dataset.blockStyle = hasMiniTextSpan ? 'mini-p' : el.tagName.toLowerCase();

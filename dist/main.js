@@ -4,7 +4,7 @@ import { initPages } from './editor/page.js';
 import { ensureAiImageIndex, initImageContextMenuControls } from './editor/image.js';
 import { initPageLinkHandler, bindDocumentLevelHandlers } from './ui/events.js';
 import { bindToolbarHandlers } from './ui/toolbar.js';
-import { initFileMenuControls, initFontChooserControls, bindParagraphMenuListeners } from './ui/menu.js';
+import { initFileMenuControls, initViewMenuControls, initFontChooserControls, bindParagraphMenuListeners } from './ui/menu.js';
 import { applyPageMargin } from './ui/settings.js';
 // Phase 1: Core Utilities Implementation
 // (Moved to editor/core.ts and registry.ts)
@@ -13,6 +13,7 @@ import { applyPageMargin } from './ui/settings.js';
 // (Global assignments are in registry.ts)
 export function initEditor() {
     initFileMenuControls();
+    initViewMenuControls();
     initImageContextMenuControls();
     initPageLinkHandler();
     initFontChooserControls();

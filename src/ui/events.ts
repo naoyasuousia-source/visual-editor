@@ -19,6 +19,8 @@ import {
     applyPendingBlockTag
 } from '../editor/formatting.js';
 
+import { checkPageOverflow } from '../editor/page.js';
+
 // DOM Elements
 const getToolbarElement = () => document.getElementById('toolbar');
 const getPagesContainer = () => document.getElementById('pages-container');
@@ -45,9 +47,8 @@ export function bindEditorEvents(inner: HTMLElement): void {
         if (inputEvent && inputEvent.inputType === 'insertParagraph') {
             applyPendingBlockTag(inner);
             renumberParagraphs();
-        } else {
-            window.syncToSource?.();
         }
+        checkPageOverflow(inner);
     });
 
     const updateStateWithDelay = () => setTimeout(() => {

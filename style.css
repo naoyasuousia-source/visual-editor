@@ -67,7 +67,8 @@ body {
 }
 
 /* File Menu & Dropdowns */
-.file-menu {
+.file-menu,
+.view-menu {
   position: relative;
   /* 元に戻す */
   display: inline-flex;
@@ -75,16 +76,21 @@ body {
 }
 
 .file-menu:hover .file-menu-trigger,
-.file-menu .file-trigger {
+.file-menu .file-trigger,
+.view-menu:hover .view-menu-trigger,
+.view-menu .view-trigger {
   background: #e0e0e0;
 }
 
 .file-menu:hover .file-dropdown,
-.file-dropdown.open {
+.file-dropdown.open,
+.view-menu:hover .view-dropdown,
+.view-dropdown.open {
   display: flex;
 }
 
-.file-dropdown {
+.file-dropdown,
+.view-dropdown {
   position: absolute;
   top: 100%;
   left: 0;
@@ -99,13 +105,27 @@ body {
   padding: 4px 0;
 }
 
-.file-dropdown>button {
+.file-dropdown>button,
+.view-dropdown>button {
   width: 100%;
   border: none;
   padding: 8px 16px;
   border-radius: 0;
   background: none;
   text-align: left;
+}
+
+.menu-item-label {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  cursor: pointer;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.menu-item-label:hover {
+  background: #f0f0f0;
 }
 
 .file-dropdown>button:hover {
@@ -264,7 +284,16 @@ section.page.active {
   font-weight: 400;
   line-height: 1;
   user-select: none;
+  user-select: none;
   pointer-events: none;
+}
+
+body.hide-page-numbers section.page::after {
+  display: none;
+}
+
+body.hide-para-numbers .page-inner [data-para]::before {
+  display: none;
 }
 
 /* 画像コンテキストメニュー */

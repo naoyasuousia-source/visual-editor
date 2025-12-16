@@ -28,7 +28,6 @@ declare global {
         ensureFigureWrapper: (paragraph: Element | null) => HTMLElement | null;
         convertParagraphToTag: (paragraph: Element | null, tag: string) => HTMLElement | null;
         currentEditor: HTMLElement | null;
-        syncToSource: () => void;
         generateBookmarkId: () => string;
         getCaretOffset: (range: Range) => number;
         insertInlineTabAt: (range: Range, width: number) => boolean;

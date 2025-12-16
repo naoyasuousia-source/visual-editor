@@ -358,7 +358,6 @@ export function applyImageTitle() {
         container.appendChild(titleSpan);
     }
     updateImageMetaTitle(contextTargetImage, rawTitle);
-    window.syncToSource?.();
 }
 export function initImageContextMenuControls() {
     const pagesContainerElement = getPagesContainerElement();

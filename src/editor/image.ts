@@ -370,7 +370,6 @@ export function applyImageTitle(): void {
     }
 
     updateImageMetaTitle(contextTargetImage, rawTitle);
-    (window as any).syncToSource?.();
 }
 
 export function initImageContextMenuControls(): void {

@@ -274,4 +274,42 @@ export function closeAllMenus(exclude) {
         setHighlightPaletteOpen(false);
     }
     window.closeImageContextMenu?.();
+    const viewDropdown = document.querySelector('.view-dropdown');
+    if (exclude !== 'view' && viewDropdown) {
+        viewDropdown.classList.remove('open');
+    }
+}
+export function initViewMenuControls() {
+    const viewTrigger = document.querySelector('.view-trigger');
+    const viewDropdown = document.querySelector('.view-dropdown');
+    if (viewTrigger && viewDropdown) {
+        viewTrigger.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const willOpen = !viewDropdown.classList.contains('open');
+            if (willOpen) {
+                closeAllMenus('view');
+            }
+            viewDropdown.classList.toggle('open', willOpen);
+        });
+        const viewMenuElement = viewTrigger.closest('.view-menu');
+        if (viewMenuElement) {
+            viewMenuElement.addEventListener('mouseenter', () => {
+                closeAllMenus('view');
+                viewDropdown.classList.add('open');
+            });
+        }
+    }
+    const pageNumCheckbox = document.querySelector('input[data-action="toggle-page-numbers"]');
+    if (pageNumCheckbox) {
+        pageNumCheckbox.addEventListener('change', () => {
+            document.body.classList.toggle('hide-page-numbers', !pageNumCheckbox.checked);
+        });
+    }
+    const paraNumCheckbox = document.querySelector('input[data-action="toggle-para-numbers"]');
+    if (paraNumCheckbox) {
+        paraNumCheckbox.addEventListener('change', () => {
+            document.body.classList.toggle('hide-para-numbers', !paraNumCheckbox.checked);
+        });
+    }
 }

@@ -28,6 +28,7 @@ import {
 
 import {
   initFileMenuControls,
+  initViewMenuControls,
   initFontChooserControls,
   bindParagraphMenuListeners
 } from './ui/menu.js';
@@ -43,6 +44,7 @@ import { applyPageMargin } from './ui/settings.js';
 
 export function initEditor() {
   initFileMenuControls();
+  initViewMenuControls();
   initImageContextMenuControls();
   initPageLinkHandler();
   initFontChooserControls();
