@@ -157,6 +157,12 @@ export function initFontChooserControls() {
         const submenu = trigger.closest('.font-submenu');
         if (!submenu)
             return;
+        // Hover to open
+        submenu.addEventListener('mouseenter', () => {
+            closeAllFontSubmenus();
+            submenu.classList.add('is-open');
+            trigger.setAttribute('aria-expanded', 'true');
+        });
         trigger.addEventListener('click', (event) => {
             event.preventDefault();
             event.stopPropagation();
@@ -247,6 +253,12 @@ export function bindParagraphMenuListeners() {
         const submenu = trigger.closest('.paragraph-submenu');
         if (!submenu)
             return;
+        // Hover to open
+        submenu.addEventListener('mouseenter', () => {
+            closeAllParagraphSubmenus();
+            submenu.classList.add('is-open');
+            trigger.setAttribute('aria-expanded', 'true');
+        });
         trigger.addEventListener('click', (event) => {
             event.preventDefault();
             event.stopPropagation();

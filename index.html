@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8" />
-  <title>Multi-page A4 Editor</title>
+  <title>Visual HTML Editor</title>
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -83,8 +83,11 @@
         <button type="button" class="font-chooser-trigger" aria-haspopup="true" aria-expanded="false">Font ▾</button>
         <div class="font-chooser-panel" role="menu" aria-label="フォント操作">
           <div class="font-submenu" data-submenu="block-element">
-            <button type="button" class="font-submenu-trigger" aria-haspopup="true"
-              aria-expanded="false">ブロック要素</button>
+            <button type="button" class="font-submenu-trigger" aria-haspopup="true" aria-expanded="false"
+              title="ブロック要素"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <path d="M4 6h16M4 12h16M4 18h10" />
+              </svg></button>
             <div class="font-submenu-panel" role="menu">
               <div class="spacing-buttons">
                 <button type="button" class="spacing-button" data-action="block-element" data-tag="h1"
@@ -101,8 +104,12 @@
             </div>
           </div>
           <div class="font-submenu" data-submenu="font-color">
-            <button type="button" class="font-submenu-trigger" aria-haspopup="true"
-              aria-expanded="false">フォントカラー</button>
+            <button type="button" class="font-submenu-trigger" aria-haspopup="true" aria-expanded="false"
+              title="フォントカラー"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <path d="M12 3L5 20h2l1-4h8l1 4h2L12 3zm-3 11l3-8 3 8H9z" />
+                <path d="M22 20h-4H6H2" stroke-width="3" />
+              </svg></button>
             <div class="font-submenu-panel" role="menu">
               <div class="color-palette" role="group" aria-label="フォントカラー">
                 <button type="button" class="color-default-button" data-action="font-color-default" title="デフォルトカラー"
@@ -123,8 +130,9 @@
             </div>
           </div>
           <div class="font-submenu" data-submenu="font-family">
-            <button type="button" class="font-submenu-trigger" aria-haspopup="true"
-              aria-expanded="false">フォントファミリー</button>
+            <button type="button" class="font-submenu-trigger" aria-haspopup="true" aria-expanded="false"
+              title="フォントファミリー"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><text x="4" y="20"
+                  font-family="serif" font-size="20">A</text></svg></button>
             <div class="font-submenu-panel" role="menu">
               <div class="font-family-list">
                 <button type="button" class="font-family-option" data-action="font-family"
@@ -156,8 +164,13 @@
         <button type="button" class="paragraph-trigger" aria-haspopup="true" aria-expanded="false">段落スタイル ▾</button>
         <div class="paragraph-panel" role="menu" aria-label="段落スタイル">
           <div class="paragraph-submenu" data-submenu="align">
-            <button type="button" class="paragraph-submenu-trigger" aria-haspopup="true"
-              aria-expanded="false">Align</button>
+            <button type="button" class="paragraph-submenu-trigger" aria-haspopup="true" aria-expanded="false"
+              title="配置"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <line x1="4" y1="6" x2="20" y2="6" />
+                <line x1="4" y1="12" x2="14" y2="12" />
+                <line x1="4" y1="18" x2="20" y2="18" />
+              </svg></button>
             <div class="paragraph-submenu-panel" role="menu">
               <div class="align-buttons">
                 <button type="button" class="align-icon-button" data-action="align-left" title="左揃え"
@@ -170,8 +183,11 @@
             </div>
           </div>
           <div class="paragraph-submenu" data-submenu="spacing">
-            <button type="button" class="paragraph-submenu-trigger" aria-haspopup="true"
-              aria-expanded="false">段落下の余白</button>
+            <button type="button" class="paragraph-submenu-trigger" aria-haspopup="true" aria-expanded="false"
+              title="段落下の余白"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <path d="M4 6h16M4 18h16M12 9v6M9 12l3 3 3-3" />
+              </svg></button>
             <div class="paragraph-submenu-panel" role="menu">
               <div class="spacing-buttons">
                 <button type="button" class="spacing-button" data-action="paragraph-spacing" data-size="xs"
@@ -188,8 +204,11 @@
             </div>
           </div>
           <div class="paragraph-submenu" data-submenu="line-height">
-            <button type="button" class="paragraph-submenu-trigger" aria-haspopup="true"
-              aria-expanded="false">行間</button>
+            <button type="button" class="paragraph-submenu-trigger" aria-haspopup="true" aria-expanded="false"
+              title="行間"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <path d="M6 5h14M6 12h14M6 19h14M2 5v14" />
+              </svg></button>
             <div class="paragraph-submenu-panel" role="menu">
               <div class="spacing-buttons">
                 <button type="button" class="spacing-button" data-action="line-height" data-size="s"
@@ -202,12 +221,15 @@
             </div>
           </div>
           <div class="paragraph-submenu" data-submenu="indent">
-            <button type="button" class="paragraph-submenu-trigger" aria-haspopup="true"
-              aria-expanded="false">インデント</button>
+            <button type="button" class="paragraph-submenu-trigger" aria-haspopup="true" aria-expanded="false"
+              title="インデント"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <path d="M4 6h16M4 12h16M4 18h16M8 12l4-4v8z" />
+              </svg></button>
             <div class="paragraph-submenu-panel" role="menu">
               <div class="spacing-buttons">
-                <button type="button" class="spacing-button" data-action="indent">インデント＋</button>
-                <button type="button" class="spacing-button" data-action="outdent">インデントー</button>
+                <button type="button" class="spacing-button" data-action="indent">＋</button>
+                <button type="button" class="spacing-button" data-action="outdent">ー</button>
               </div>
               <div class="indent-option">
                 <label>

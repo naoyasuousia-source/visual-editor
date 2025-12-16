@@ -451,6 +451,39 @@ body.hide-para-numbers .page-inner [data-para]::before {
 .paragraph-chooser.is-open .paragraph-panel,
 .font-chooser.is-open .font-chooser-panel {
   display: flex;
+  flex-direction: column;
+}
+
+/* Submenus (Font/Paragraph) */
+.font-submenu,
+.paragraph-submenu {
+  position: relative;
+}
+
+.font-submenu-panel,
+.paragraph-submenu-panel {
+  display: none;
+  position: absolute;
+  top: 100%;
+  /* Show below the trigger */
+  left: 10px;
+  /* Slight indent or aligned */
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  padding: 8px;
+  gap: 8px;
+  z-index: 3000;
+  /* Higher than parent panel */
+  border-radius: 6px;
+  min-width: max-content;
+}
+
+/* Open State for Submenus */
+.font-submenu.is-open .font-submenu-panel,
+.paragraph-submenu.is-open .paragraph-submenu-panel {
+  display: block;
+  /* Content decides layout */
 }
 
 /* カラーパレット */
