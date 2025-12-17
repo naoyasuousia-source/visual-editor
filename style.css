@@ -617,6 +617,27 @@ dialog label {
   font-size: 0.9rem;
   color: #555;
   font-weight: 500;
+  font-weight: 500;
+}
+
+dialog fieldset {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 0;
+}
+
+dialog fieldset legend {
+  font-size: 0.85rem;
+  color: #666;
+  padding: 0 4px;
+}
+
+dialog fieldset label {
+  flex-direction: row;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 4px;
 }
 
 dialog input[type="text"] {
