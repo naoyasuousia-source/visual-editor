@@ -86,8 +86,37 @@ export function bindEditorEvents(inner: HTMLElement): void {
         }
     }, true); // Use capture phase
 
+    let isComposing = false;
+    let compositionEndTs = 0;
+
+    inner.addEventListener('compositionstart', () => {
+        isComposing = true;
+    });
+
+    inner.addEventListener('compositionend', () => {
+        isComposing = false;
+        compositionEndTs = Date.now();
+    });
+
     inner.addEventListener('keydown', (e: KeyboardEvent) => {
-        if (e.isComposing) return;
+        // Robust IME check:
+        // 1. e.isComposing captures most modern browsers during composition.
+        // 2. keyCode 229 is the standard fallback for IME processing.
+        // 3. We also check our manual isComposing flag.
+        if (e.isComposing || e.keyCode === 229 || isComposing) {
+            return;
+        }
+
+        // Fix for Safari/Chrome "Enter" after IME confirm:
+        // If Enter is pressed very shortly after composition ends, it's likely the "Confirm" enter,
+        // which the browser might propagate as a normal KeyDown. We should ignore this to prevent
+        // unwanted paragraph splits or double-enters.
+        if (e.key === 'Enter' && (Date.now() - compositionEndTs < 50)) {
+            // Prevent the default browser action (newline) AND our custom logic
+            e.preventDefault();
+            return;
+        }
+
         const selection = window.getSelection();
         if (!selection || !selection.rangeCount) return;
 
