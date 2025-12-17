@@ -103,7 +103,7 @@ export function updateImageMetaTag(img: HTMLImageElement | null, rawTag: string)
 export function openCaptionDialog(): void {
     if (!contextTargetImage) return;
     const dialog = document.getElementById('image-caption-dialog') as HTMLDialogElement | null;
-    const input = document.getElementById('image-caption-input') as HTMLInputElement | null;
+    const input = document.getElementById('image-caption-input') as HTMLTextAreaElement | null;
     if (!dialog || !input) return;
 
     const meta = getMetaForImage(contextTargetImage);
@@ -128,7 +128,7 @@ export function closeCaptionDialog(): void {
 }
 
 export function applyImageCaption(): void {
-    const input = document.getElementById('image-caption-input') as HTMLInputElement | null;
+    const input = document.getElementById('image-caption-input') as HTMLTextAreaElement | null;
     if (contextTargetImage && input) {
         updateImageMetaCaption(contextTargetImage, input.value);
     }
@@ -483,7 +483,7 @@ export function initImageContextMenuControls(): void {
     const imageCaptionApplyButtonElement = document.querySelector<HTMLElement>('[data-action="apply-image-caption"]');
     const imageCaptionCancelButtonElement = document.querySelector<HTMLElement>('[data-action="cancel-image-caption"]');
     const imageCaptionDialogElement = document.getElementById('image-caption-dialog') as HTMLDialogElement | null;
-    const imageCaptionInputElement = document.getElementById('image-caption-input') as HTMLInputElement | null;
+    const imageCaptionInputElement = document.getElementById('image-caption-input') as HTMLTextAreaElement | null;
 
     // Tag Elements
     const imageTagApplyButtonElement = document.querySelector<HTMLElement>('[data-action="apply-image-tag"]');
@@ -505,7 +505,7 @@ export function initImageContextMenuControls(): void {
     // --- Caption Input Enter Key ---
     if (imageCaptionInputElement) {
         imageCaptionInputElement.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
+            if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
                 applyImageCaption();
                 closeCaptionDialog();

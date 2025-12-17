@@ -486,7 +486,7 @@ export function initImageContextMenuControls() {
     // --- Caption Input Enter Key ---
     if (imageCaptionInputElement) {
         imageCaptionInputElement.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
+            if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
                 applyImageCaption();
                 closeCaptionDialog();
