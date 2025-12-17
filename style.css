@@ -833,8 +833,8 @@ dialog .dialog-actions {
 /* Ensure text doesn't wrap and cause height issues */
 .font-submenu[data-submenu="block-element"] .current-block-label {
   white-space: nowrap;
-  font-size: 10px !important;
-  /* Reduced to ~60% of standard (16px * 0.6) */
+  font-size: 0.85rem !important;
+  /* Match spacing-button size */
   margin-right: 2px !important;
   overflow: hidden;
   text-overflow: ellipsis;
