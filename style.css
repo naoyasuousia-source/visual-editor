@@ -306,12 +306,15 @@ section.page {
   position: relative;
   width: 210mm;
   min-width: 210mm;
+  /* Strict A4 dimensions to guarantee ratio regardless of browser support */
+  height: 297mm;
   min-height: 297mm;
   background: #fff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   box-sizing: border-box;
   overflow: hidden;
   margin: 0 auto;
+  /* 中央配置 */
 }
 
 section.page::after {
@@ -1091,8 +1094,10 @@ dialog .dialog-actions {
 .nav-thumbnail {
   background: #fff;
   border: 1px solid #ccc;
-  aspect-ratio: 210 / 297;
   width: 100%;
+  /* Padding hack for aspect ratio 1:1.4142 (A4) - Robust fallback */
+  height: 0;
+  padding-bottom: 141.42%;
   position: relative;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
