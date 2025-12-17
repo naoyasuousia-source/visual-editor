@@ -405,15 +405,15 @@ body.hide-para-numbers .page-inner [data-para]::before {
 }
 
 .page-inner .figure-inline {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
-  text-align: center;
-  /* ラッパーも中央揃え */
   margin: 1em 0;
 }
 
 .page-inner .figure-inline img {
-  margin: 0 auto;
+  margin: 0;
 }
 
 .img-xs {
@@ -438,9 +438,15 @@ body.hide-para-numbers .page-inner [data-para]::before {
 
 .page-inner .figure-title {
   display: block;
-  margin-top: 0.1em;
+  margin-top: -0.5em;
   font-size: 1em;
   color: #666;
+  line-height: normal;
+}
+
+.page-inner .figure-inline .caret-slot {
+  font-size: 0;
+  line-height: 0;
 }
 
 .page-inner img.has-border {
