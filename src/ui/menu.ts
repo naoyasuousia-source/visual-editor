@@ -128,7 +128,13 @@ export function setFontMenuOpen(open: boolean): void {
     if (trigger) {
         trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
-    if (!open) {
+    if (open) {
+        // Adjust position of the main panel
+        const panel = fontChooserElement.querySelector<HTMLElement>('.font-chooser-panel');
+        if (panel) {
+            adjustMenuPosition(panel);
+        }
+    } else {
         closeAllFontSubmenus();
     }
 }
@@ -262,7 +268,13 @@ export function setParagraphMenuOpen(open: boolean): void {
     if (paragraphTriggerElement) {
         paragraphTriggerElement.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
-    if (!open) {
+    if (open) {
+        // Adjust position of the main panel
+        const panel = paragraphChooserElement.querySelector<HTMLElement>('.paragraph-panel');
+        if (panel) {
+            adjustMenuPosition(panel);
+        }
+    } else {
         closeAllParagraphSubmenus();
     }
 }
@@ -349,6 +361,9 @@ export function setHighlightPaletteOpen(open: boolean): void {
     const palette = highlightControlElement.querySelector<HTMLElement>('.highlight-palette');
     if (palette) {
         palette.style.display = '';
+        if (open) {
+            adjustMenuPosition(palette);
+        }
     }
 
     const trigger = highlightControlElement.querySelector<HTMLElement>('[data-action="highlight"]');

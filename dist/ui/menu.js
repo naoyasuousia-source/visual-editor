@@ -122,7 +122,14 @@ export function setFontMenuOpen(open) {
     if (trigger) {
         trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
-    if (!open) {
+    if (open) {
+        // Adjust position of the main panel
+        const panel = fontChooserElement.querySelector('.font-chooser-panel');
+        if (panel) {
+            adjustMenuPosition(panel);
+        }
+    }
+    else {
         closeAllFontSubmenus();
     }
 }
@@ -252,7 +259,14 @@ export function setParagraphMenuOpen(open) {
     if (paragraphTriggerElement) {
         paragraphTriggerElement.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
-    if (!open) {
+    if (open) {
+        // Adjust position of the main panel
+        const panel = paragraphChooserElement.querySelector('.paragraph-panel');
+        if (panel) {
+            adjustMenuPosition(panel);
+        }
+    }
+    else {
         closeAllParagraphSubmenus();
     }
 }
@@ -332,6 +346,9 @@ export function setHighlightPaletteOpen(open) {
     const palette = highlightControlElement.querySelector('.highlight-palette');
     if (palette) {
         palette.style.display = '';
+        if (open) {
+            adjustMenuPosition(palette);
+        }
     }
     const trigger = highlightControlElement.querySelector('[data-action="highlight"]');
     if (trigger) {
