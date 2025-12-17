@@ -368,6 +368,16 @@ export function initImageContextMenuControls() {
     const imageTitleApplyButtonElement = document.querySelector('[data-action="apply-image-title"]');
     const imageTitleCancelButtonElement = document.querySelector('[data-action="cancel-image-title"]');
     const imageTitleDialogElement = document.getElementById('image-title-dialog');
+    const imageTitleInputElement = document.getElementById('image-title-input');
+    if (imageTitleInputElement) {
+        imageTitleInputElement.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                applyImageTitle();
+                closeTitleDialog();
+            }
+        });
+    }
     document.addEventListener('contextmenu', (event) => {
         const target = event.target;
         const img = target?.closest('img');

@@ -381,6 +381,17 @@ export function initImageContextMenuControls(): void {
     const imageTitleApplyButtonElement = document.querySelector<HTMLElement>('[data-action="apply-image-title"]');
     const imageTitleCancelButtonElement = document.querySelector<HTMLElement>('[data-action="cancel-image-title"]');
     const imageTitleDialogElement = document.getElementById('image-title-dialog') as HTMLDialogElement | null;
+    const imageTitleInputElement = document.getElementById('image-title-input') as HTMLInputElement | null;
+
+    if (imageTitleInputElement) {
+        imageTitleInputElement.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                applyImageTitle();
+                closeTitleDialog();
+            }
+        });
+    }
 
     document.addEventListener('contextmenu', (event) => {
         const target = event.target as HTMLElement | null;
