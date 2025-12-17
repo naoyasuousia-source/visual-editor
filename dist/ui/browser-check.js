@@ -1,31 +1,64 @@
 export function checkBrowserSupport() {
     const ua = navigator.userAgent;
-    // Check for Chrome or Edge (Chromium based)
-    // Edge includes 'Edg'
-    // Chrome includes 'Chrome' but Safari also includes 'Chrome' often, but strict check:
-    // Chrome UA: "Mozilla/5.0 ... Chrome/XX.X ... Safari/XX.X"
-    // Edge UA: "Mozilla/5.0 ... Chrome/XX.X ... Safari/XX.X Edg/XX.X"
-    // Safari UA: "Mozilla/5.0 ... Version/XX.X Safari/XX.X" (No Chrome usually, or if so, very specific)
-    // Simplest robust check for Chrome/Edge vs others:
-    // If it has "Edg", it is Edge.
-    // If it has "Chrome" AND NOT "Edg" AND NOT "OPR" => Chrome.
-    // BUT user asked to warn if NOT Chrome OR Edge.
-    // So valid set = { Chrome, Edge }
+    const vendor = navigator.vendor || '';
+    // Robust Detection:
+    // Chrome/Edge (Chromium): usually have "Google Inc." as vendor (even Edge mostly, or empty).
+    // Safari: "Apple Computer, Inc."
+    // We want to ALLOW Chrome or Edge.
+    // We want to WARN for Safari, Firefox.
     const isEdge = /Edg/.test(ua);
+    // Chrome Check: Must have "Chrome" in UA, and optionally "Google Inc." in vendor if available.
+    // Safari UA on Mac *does not* contain "Chrome".
     const isChrome = /Chrome/.test(ua) && !/Edg/.test(ua) && !/OPR/.test(ua);
-    // Relaxed check: Many Chromium browsers like Brave use Chrome UA.
-    // If user specifically wants valid "Chrome or Edge", usually they mean Chromium engine.
-    // Safari does NOT have 'Chrome' in standard UA string on Desktop.
-    // Firefox does NOT have 'Chrome'.
-    const isSupported = isEdge || /Chrome/.test(ua);
-    // Note: This 'isSupported' might include Opera (OPR) or Brave. 
-    // Usually acceptable as they are Chromium. 
-    // If specific strictness is needed, use:
-    // const isSupported = isEdge || ( /Chrome/.test(ua) && !/OPR/.test(ua) );
+    // Vendor check for safety: Apple vendor implies Safari (usually).
+    const isApple = /Apple Computer/.test(vendor);
+    // Final decision:
+    // If it's Edge, OK.
+    // If it's Chrome AND NOT Apple (some wrappers might be weird), OK.
+    let isSupported = isEdge || (isChrome && !isApple);
+    // Force warning if it looks like Safari
+    if (ua.includes('Safari') && !ua.includes('Chrome') && !ua.includes('Edg')) {
+        isSupported = false;
+    }
     if (!isSupported) {
         const dialog = document.getElementById('browser-warning-dialog');
         if (dialog) {
-            dialog.showModal();
+            // Fallback for older browsers (older Safari) that don't support <dialog> or showModal
+            if (typeof dialog.showModal === 'function') {
+                dialog.showModal();
+            }
+            else {
+                // Manual fallback
+                dialog.setAttribute('open', 'true');
+                dialog.style.display = 'block';
+                dialog.style.position = 'fixed';
+                dialog.style.top = '50%';
+                dialog.style.left = '50%';
+                dialog.style.transform = 'translate(-50%, -50%)';
+                dialog.style.zIndex = '9999';
+                dialog.style.background = 'white';
+                dialog.style.border = '1px solid #ccc';
+                dialog.style.boxShadow = '0 0 20px rgba(0,0,0,0.5)';
+                // Also add a backdrop if possible (manual)
+                const backdrop = document.createElement('div');
+                backdrop.style.position = 'fixed';
+                backdrop.style.top = '0';
+                backdrop.style.left = '0';
+                backdrop.style.width = '100%';
+                backdrop.style.height = '100%';
+                backdrop.style.background = 'rgba(0,0,0,0.5)';
+                backdrop.style.zIndex = '9998';
+                document.body.appendChild(backdrop);
+                // Allow closing
+                const closeBtn = dialog.querySelector('button[type="submit"]');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        dialog.style.display = 'none';
+                        document.body.removeChild(backdrop);
+                    });
+                }
+            }
         }
     }
 }
