@@ -111,10 +111,7 @@ body {
 }
 
 #toolbar button[data-action="highlight"] {
-  background: #ffffcc;
-  /* Light yellow background hint */
-  border-color: #e6e600;
-  font-weight: bold;
+  /* Standard icon style */
 }
 
 /* File Menu & Dropdowns */
@@ -772,28 +769,75 @@ dialog .dialog-actions {
   gap: 4px;
 }
 
+/* Main Toolbar Triggers (Font / Paragraph) to match 36px height of other buttons */
+.font-chooser-trigger,
+.paragraph-trigger {
+  height: 36px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  min-width: 80px;
+  /* Ensure some width */
+}
+
+.font-chooser-trigger:hover,
+.paragraph-trigger:hover {
+  background: #f0f0f0;
+}
+
 .font-submenu-trigger {
-  width: 100%;
+  /* Common trigger styles - aiming for Square-ish for icons, Wide for Block Element */
+  height: 36px;
+  /* Match standard button height */
+  box-sizing: border-box;
   border: 1px solid #ccc;
   /* Slightly lighter border */
   border-radius: 4px;
   background: #fff;
   /* White background for cleaner look */
-  padding: 8px 10px;
-  /* More comfortable padding */
+  padding: 4px;
+  /* Reduced padding to fit 36px height comfortably */
   cursor: pointer;
   text-align: left;
   font-size: 0.9rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  /* Space between content and icon if any */
+  justify-content: center;
+  /* Center content by default (for icons) */
   transition: background-color 0.2s, box-shadow 0.2s;
+  min-width: 36px;
+  /* At least square */
 }
 
 .font-submenu-trigger:hover {
   background: #f0f0f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Specific style for Block Element Trigger (Wide with text) */
+.font-submenu[data-submenu="block-element"] .font-submenu-trigger {
+  justify-content: space-between;
+  /* Space out Text and Arrow */
+  padding: 0 8px;
+  min-width: 90px;
+  /* Wide enough for text */
+}
+
+/* Ensure text doesn't wrap and cause height issues */
+.font-submenu[data-submenu="block-element"] .current-block-label {
+  white-space: nowrap;
+  font-size: 11px !important;
+  /* Slightly smaller as requested */
+  margin-right: 2px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Remove CSS generated arrows as we are handling icons/labels manually or via unified design */
@@ -817,6 +861,10 @@ dialog .dialog-actions {
   /* More prominent shadow */
   margin-top: 4px;
   /* Closer to trigger */
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 3000;
 }
 
 .font-submenu.is-open .font-submenu-panel {
@@ -833,10 +881,13 @@ dialog .dialog-actions {
 
 .paragraph-submenu-trigger {
   width: 100%;
+  height: 36px;
+  /* Match height */
+  box-sizing: border-box;
   border: 1px solid #ccc;
   border-radius: 4px;
   background: #fff;
-  padding: 8px 10px;
+  padding: 0 10px;
   cursor: pointer;
   text-align: left;
   font-size: 0.9rem;
