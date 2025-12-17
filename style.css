@@ -438,7 +438,7 @@ body.hide-para-numbers .page-inner [data-para]::before {
 
 .page-inner .figure-title {
   display: block;
-  margin-top: -0.5em;
+  margin-top: 0;
   font-size: 1em;
   color: #666;
   line-height: normal;
