@@ -160,11 +160,10 @@ export function initParagraphJump() {
     document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'j') {
             e.preventDefault();
-            const dialog = document.getElementById('paragraph-jump-dialog');
-            const input = document.getElementById('paragraph-jump-input');
-            if (dialog && input) {
-                input.value = '';
-                dialog.showModal();
+            const input = document.getElementById('toolbar-jump-input');
+            if (input) {
+                input.focus();
+                input.select();
             }
         }
     });

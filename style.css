@@ -88,7 +88,8 @@ body {
   box-sizing: border-box;
   border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 10px;
+  font-size: 8px;
+  /* 0.8x of 10px */
 }
 
 /* Zoom Controls */
@@ -188,7 +189,8 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   display: none;
   flex-direction: column;
-  min-width: 180px;
+  min-width: 220px;
+  /* 少し広げる */
   z-index: 2000;
   border-radius: 4px;
   padding: 4px 0;
@@ -202,6 +204,16 @@ body {
   border-radius: 0;
   background: none;
   text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.shortcut-key {
+  color: #999;
+  font-size: 0.85em;
+  margin-left: 12px;
+  font-weight: normal;
 }
 
 .menu-item-label {

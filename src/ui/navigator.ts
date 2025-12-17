@@ -178,11 +178,10 @@ export function initParagraphJump(): void {
     document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'j') {
             e.preventDefault();
-            const dialog = document.getElementById('paragraph-jump-dialog') as HTMLDialogElement;
-            const input = document.getElementById('paragraph-jump-input') as HTMLInputElement;
-            if (dialog && input) {
-                input.value = '';
-                dialog.showModal();
+            const input = document.getElementById('toolbar-jump-input') as HTMLInputElement;
+            if (input) {
+                input.focus();
+                input.select();
             }
         }
     });
