@@ -8,7 +8,7 @@ function isAnyMenuOpen() {
     const file = getFileDropdownElement();
     const font = getFontChooserElement();
     const para = getParagraphChooserElement();
-    const hl = getHighlightControlElement()?.querySelector('.highlight-palette');
+    const hlControl = getHighlightControlElement();
     const view = document.querySelector('.view-dropdown');
     if (file && file.classList.contains('open'))
         return true;
@@ -16,7 +16,7 @@ function isAnyMenuOpen() {
         return true;
     if (para && para.classList.contains('is-open'))
         return true;
-    if (hl && hl.style.display !== 'none' && hl.style.display !== '')
+    if (hlControl && hlControl.classList.contains('is-open'))
         return true;
     if (view && view.classList.contains('open'))
         return true;
@@ -285,11 +285,13 @@ export function setHighlightPaletteOpen(open) {
     const highlightControlElement = getHighlightControlElement();
     if (!highlightControlElement)
         return;
+    highlightControlElement.classList.toggle('is-open', open);
+    // Clear inline display style so CSS class takes precedence
     const palette = highlightControlElement.querySelector('.highlight-palette');
-    const trigger = highlightControlElement.querySelector('[data-action="highlight"]');
     if (palette) {
-        palette.style.display = open ? 'grid' : 'none';
+        palette.style.display = '';
     }
+    const trigger = highlightControlElement.querySelector('[data-action="highlight"]');
     if (trigger) {
         trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
@@ -298,9 +300,7 @@ export function toggleHighlightPalette() {
     const highlightControlElement = getHighlightControlElement();
     if (!highlightControlElement)
         return;
-    const palette = highlightControlElement.querySelector('.highlight-palette');
-    // Check computed style or current state
-    const isOpen = palette ? palette.style.display !== 'none' : false;
+    const isOpen = highlightControlElement.classList.contains('is-open');
     if (!isOpen) {
         closeAllMenus('highlight');
         setHighlightPaletteOpen(true);

@@ -10,13 +10,13 @@ function isAnyMenuOpen(): boolean {
     const file = getFileDropdownElement();
     const font = getFontChooserElement();
     const para = getParagraphChooserElement();
-    const hl = getHighlightControlElement()?.querySelector('.highlight-palette') as HTMLElement;
+    const hlControl = getHighlightControlElement();
     const view = document.querySelector('.view-dropdown');
 
     if (file && file.classList.contains('open')) return true;
     if (font && font.classList.contains('is-open')) return true;
     if (para && para.classList.contains('is-open')) return true;
-    if (hl && hl.style.display !== 'none' && hl.style.display !== '') return true;
+    if (hlControl && hlControl.classList.contains('is-open')) return true;
     if (view && view.classList.contains('open')) return true;
     return false;
 }
@@ -295,11 +295,16 @@ export function bindParagraphMenuListeners(): void {
 export function setHighlightPaletteOpen(open: boolean): void {
     const highlightControlElement = getHighlightControlElement();
     if (!highlightControlElement) return;
+
+    highlightControlElement.classList.toggle('is-open', open);
+
+    // Clear inline display style so CSS class takes precedence
     const palette = highlightControlElement.querySelector<HTMLElement>('.highlight-palette');
-    const trigger = highlightControlElement.querySelector<HTMLElement>('[data-action="highlight"]');
     if (palette) {
-        palette.style.display = open ? 'grid' : 'none';
+        palette.style.display = '';
     }
+
+    const trigger = highlightControlElement.querySelector<HTMLElement>('[data-action="highlight"]');
     if (trigger) {
         trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
@@ -308,9 +313,8 @@ export function setHighlightPaletteOpen(open: boolean): void {
 export function toggleHighlightPalette(): void {
     const highlightControlElement = getHighlightControlElement();
     if (!highlightControlElement) return;
-    const palette = highlightControlElement.querySelector<HTMLElement>('.highlight-palette');
-    // Check computed style or current state
-    const isOpen = palette ? palette.style.display !== 'none' : false;
+
+    const isOpen = highlightControlElement.classList.contains('is-open');
     if (!isOpen) {
         closeAllMenus('highlight');
         setHighlightPaletteOpen(true);
