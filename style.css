@@ -84,12 +84,12 @@ body {
 
 #toolbar-jump-input {
   height: 36px;
-  padding: 0 8px;
+  padding: 0 1px;
   box-sizing: border-box;
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 8px;
-  /* 0.8x of 10px */
+  letter-spacing: -1.5px;
 }
 
 /* Zoom Controls */
