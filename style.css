@@ -295,6 +295,7 @@ section.page.active {
   overflow-y: auto;
   outline: none;
   font-family: var(--editor-font-family, inherit);
+  font-size: 10.5pt;
   color: #333;
   line-height: 1.6;
 }
