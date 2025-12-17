@@ -20,6 +20,11 @@ export function checkBrowserSupport() {
     if (ua.includes('Safari') && !ua.includes('Chrome') && !ua.includes('Edg')) {
         isSupported = false;
     }
+    // Mobile Check: Fail if mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    if (isMobile) {
+        isSupported = false;
+    }
     if (!isSupported) {
         const dialog = document.getElementById('browser-warning-dialog');
         if (dialog) {
