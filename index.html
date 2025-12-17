@@ -421,6 +421,27 @@
 
 
 
+    <dialog id="browser-warning-dialog" aria-labelledby="browser-warning-label">
+      <form method="dialog">
+        <p id="browser-warning-label"
+          style="color: #d9534f; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          推奨ブラウザのお知らせ
+        </p>
+        <div class="dialog-content" style="text-align: center; line-height: 1.6;">
+          <p>このツールはGoogle Chrome・Microsoft Edgeに最適化されています。<br>他ブラウザでは正しく動作しない場合があります。</p>
+        </div>
+        <div class="dialog-actions" style="justify-content: center;">
+          <button type="submit">閉じる</button>
+        </div>
+      </form>
+    </dialog>
+
     <script type="module">
       import { initEditor } from "./dist/main.js";
       initEditor();

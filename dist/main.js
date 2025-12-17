@@ -13,7 +13,9 @@ import { initNavigator, initParagraphJump, initSidebarToggle, initToolbarJump } 
 // Phase 3: Formatting & Selection Implementation
 // (Imported modules handle logic)
 // (Global assignments are in registry.ts)
+import { checkBrowserSupport } from './ui/browser-check.js';
 export function initEditor() {
+    checkBrowserSupport();
     initFileMenuControls();
     initViewMenuControls();
     initImageContextMenuControls();
