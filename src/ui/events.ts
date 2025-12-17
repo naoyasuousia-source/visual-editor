@@ -87,6 +87,7 @@ export function bindEditorEvents(inner: HTMLElement): void {
     }, true); // Use capture phase
 
     inner.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.isComposing) return;
         const selection = window.getSelection();
         if (!selection || !selection.rangeCount) return;
 
