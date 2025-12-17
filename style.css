@@ -1326,12 +1326,178 @@ dialog .dialog-actions {
   border-radius: 4px;
 }
 
-.help-content {
-  color: #333;
-  line-height: 1.6;
-  font-size: 0.95rem;
-  max-height: 60vh;
+/* Rich Hint Dialog Styles */
+#help-dialog {
+  max-width: 700px;
+  width: 95%;
+  padding: 0;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+#help-dialog[open] {
+  display: flex;
+}
+
+#help-dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+}
+
+.hint-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.hint-header h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0891b2;
+  margin: 0;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-button:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.hint-body {
+  padding: 24px;
   overflow-y: auto;
-  padding-right: 8px;
-  /* Scrollbar space */
+  flex: 1;
+  color: #374151;
+  font-family: 'Inter', sans-serif;
+}
+
+.hint-section {
+  margin-bottom: 24px;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 24px;
+}
+
+.hint-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.hint-intro {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 12px;
+}
+
+.hint-desc {
+  font-size: 1rem;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.hint-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0891b2;
+  margin: 0 0 16px 0;
+}
+
+.hint-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .hint-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.hint-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.hint-step img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #22d3ee;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.hint-step p {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.hint-pdf-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.hint-pdf-btn {
+  background-color: #dc2626;
+  color: white;
+  font-weight: 600;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.hint-pdf-btn:hover {
+  background-color: #b91c1c;
+}
+
+.hint-footer {
+  background-color: #f9fafb;
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.hint-links {
+  display: flex;
+  gap: 16px;
+}
+
+.hint-links a {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s;
+}
+
+.hint-links a:hover {
+  color: #0891b2;
 }

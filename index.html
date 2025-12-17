@@ -408,13 +408,66 @@
 
     <dialog id="help-dialog" aria-labelledby="help-dialog-label">
       <form method="dialog">
-        <p id="help-dialog-label">使い方・ヒント</p>
-        <div class="help-content">
-          <!-- コンテンツは後で追加 -->
-          <p>（ここに使い方の説明が入ります）</p>
+        <div class="hint-header">
+          <h1 id="help-dialog-label">真のAI編集アシスト体験へ</h1>
+          <button type="submit" class="close-button" aria-label="閉じる">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
         </div>
-        <div class="dialog-actions">
-          <button type="submit">閉じる</button>
+
+        <div class="hint-body">
+          <section class="hint-section">
+            <p class="hint-intro">生成AIがdocx、pdfのページ区切りや段落番号を把握できず、快適な編集アシストができないという問題を解決します。</p>
+            <p class="hint-desc">
+              本エディターで保存したHTMLファイルをアップロードすると、ページ・段落構成を完全に生成AIと共有できます。
+              これにより、AIは文書の構造（例: 3ページ目の第5段落）を正確に認識し、高度な編集提案が可能になります。
+            </p>
+          </section>
+
+          <section class="hint-section">
+            <h2 class="hint-title">生成AI連携方法 (4-Step Workflow)</h2>
+            <div class="hint-grid">
+              <div class="hint-step">
+                <img src="https://placehold.co/150x80/22d3ee/164e63?text=1.保存" alt="Googleドライブに保存">
+                <p>1. Googleドライブに保存</p>
+              </div>
+              <div class="hint-step">
+                <img src="https://placehold.co/150x80/22d3ee/164e63?text=2.アップ" alt="ドライブからアップロード">
+                <p>2. ドライブからアップロード</p>
+              </div>
+              <div class="hint-step">
+                <img src="https://placehold.co/150x80/22d3ee/164e63?text=3.提案" alt="AIが編集提案">
+                <p>3. AIがページ・段落指定で編集提案</p>
+              </div>
+              <div class="hint-step">
+                <img src="https://placehold.co/150x80/22d3ee/164e63?text=4.上書き" alt="編集して上書き保存">
+                <p>4. 編集→上書き保存で再共有</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="hint-section">
+            <h2 class="hint-title">PDF出力</h2>
+            <div class="hint-pdf-box">
+              <button type="button" class="hint-pdf-btn">PDFに保存</button>
+              <p class="hint-desc">
+                高品質なPDFを保証します。「PDFに保存」を選択し、必ず<span
+                  style="font-weight: 700; color: #dc2626;">「背景のグラフィックをON」</span>にして出力してください。
+                印刷・袋綴じを意識した編集、上質紙での出力にも最適です。
+              </p>
+            </div>
+          </section>
+        </div>
+
+        <div class="hint-footer">
+          <div class="hint-links">
+            <a href="#">免責事項</a>
+            <a href="#">利用規約</a>
+            <a href="#">プライバシーポリシー</a>
+          </div>
+          <p>&copy; 2025 [直也のサービス名]</p>
         </div>
       </form>
     </dialog>
