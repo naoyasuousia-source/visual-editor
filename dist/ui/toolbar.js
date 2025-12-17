@@ -41,6 +41,35 @@ export function updateToolbarState() {
         hangingIndentCheckbox.disabled = true;
         hangingIndentCheckbox.checked = false;
     }
+    // Update Block Element Button
+    if (paragraph) {
+        const blockType = paragraph.dataset.blockStyle || paragraph.tagName.toLowerCase();
+        let label = '本文';
+        switch (blockType) {
+            case 'h1':
+                label = '見出し１';
+                break;
+            case 'h2':
+                label = '見出し２';
+                break;
+            case 'h3':
+                label = '見出し３';
+                break;
+            case 'p':
+                label = '本文';
+                break;
+            case 'mini-p':
+                label = 'サブテキスト';
+                break;
+            default:
+                label = '本文';
+                break;
+        }
+        const labelSpan = toolbar.querySelector('.font-submenu[data-submenu="block-element"] .current-block-label');
+        if (labelSpan) {
+            labelSpan.textContent = label;
+        }
+    }
 }
 export function bindToolbarHandlers() {
     const toolbarElement = getToolbarElement();
