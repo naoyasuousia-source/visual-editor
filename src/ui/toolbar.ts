@@ -239,8 +239,33 @@ export function bindToolbarHandlers(): void {
             case 'print':
                 window.print();
                 break;
+            case 'zoom-in':
+                if (currentZoomLevel < 2.0) {
+                    currentZoomLevel = parseFloat((currentZoomLevel + 0.1).toFixed(1));
+                    updateZoom();
+                }
+                break;
+            case 'zoom-out':
+                if (currentZoomLevel > 0.5) {
+                    currentZoomLevel = parseFloat((currentZoomLevel - 0.1).toFixed(1));
+                    updateZoom();
+                }
+                break;
             default:
                 break;
         }
     });
+}
+let currentZoomLevel = 1.0;
+
+function updateZoom(): void {
+    const display = document.getElementById('zoom-level-display');
+    const container = document.getElementById('pages-container');
+    if (display) {
+        display.textContent = `${Math.round(currentZoomLevel * 100)}%`;
+    }
+    if (container) {
+        // use CSS zoom property for layout scaling
+        (container.style as any).zoom = currentZoomLevel;
+    }
 }
