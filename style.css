@@ -826,15 +826,15 @@ dialog .dialog-actions {
   justify-content: space-between;
   /* Space out Text and Arrow */
   padding: 0 8px;
-  min-width: 90px;
-  /* Wide enough for text */
+  min-width: 110px;
+  /* Increased from 90px to fit text */
 }
 
 /* Ensure text doesn't wrap and cause height issues */
 .font-submenu[data-submenu="block-element"] .current-block-label {
   white-space: nowrap;
-  font-size: 11px !important;
-  /* Slightly smaller as requested */
+  font-size: 10px !important;
+  /* Reduced to ~60% of standard (16px * 0.6) */
   margin-right: 2px !important;
   overflow: hidden;
   text-overflow: ellipsis;
