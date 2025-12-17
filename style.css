@@ -1273,9 +1273,53 @@ dialog .dialog-actions {
 
   /* Force text selection to be available in PDF readers */
   /* Note: pointer-events: none on * in print media can sometimes help if overlay issues, but default is usually fine. */
+
   .page-inner,
   .page-inner * {
     user-select: text !important;
     -webkit-user-select: text !important;
   }
+}
+
+/* Help Button & Dialog */
+#help-trigger {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+}
+
+.help-content {
+  color: #333;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 8px;
+  /* Scrollbar space */
+}
+
+
+/* Help Button & Dialog */
+#help-trigger {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+}
+
+.help-content {
+  color: #333;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 8px;
+  /* Scrollbar space */
 }

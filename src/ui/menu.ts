@@ -488,3 +488,25 @@ export function initHighlightMenuControls(): void {
         });
     }
 }
+
+export function initHelpDialog(): void {
+    const helpTrigger = document.getElementById('help-trigger');
+    const helpDialog = document.getElementById('help-dialog') as HTMLDialogElement;
+
+    if (helpTrigger && helpDialog) {
+        helpTrigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            helpDialog.showModal();
+        });
+
+        // Close when clicking outside
+        helpDialog.addEventListener('click', (e) => {
+            const rect = helpDialog.getBoundingClientRect();
+            const isInDialog = (rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+                rect.left <= e.clientX && e.clientX <= rect.left + rect.width);
+            if (!isInDialog) {
+                helpDialog.close();
+            }
+        });
+    }
+}
