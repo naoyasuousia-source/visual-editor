@@ -354,7 +354,8 @@ export function applyImageTitle() {
         titleSpan.appendChild(titleContent);
         const container = wrapper || paragraph;
         container.appendChild(caretSlot);
-        container.appendChild(br);
+        // BR removed to reduce gap between image and title
+        // container.appendChild(br);
         container.appendChild(titleSpan);
     }
     updateImageMetaTitle(contextTargetImage, rawTitle);
@@ -398,6 +399,12 @@ export function initImageContextMenuControls() {
                 applyImageSize(contextTargetImage, size);
                 closeImageContextMenu();
                 contextTargetImage = null;
+                return;
+            }
+            if (action === 'image-border') {
+                if (contextTargetImage) {
+                    contextTargetImage.classList.toggle('has-border');
+                }
                 return;
             }
             if (action === 'image-title') {
