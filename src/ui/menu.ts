@@ -6,6 +6,35 @@ const getParagraphChooserElement = () => document.querySelector<HTMLElement>('.p
 const getFontChooserElement = () => document.querySelector<HTMLElement>('.font-chooser');
 const getHighlightControlElement = () => document.querySelector<HTMLElement>('.highlight-control');
 
+function adjustMenuPosition(submenu: HTMLElement): void {
+    // Reset to default to measure natural size/position
+    submenu.style.left = '';
+    submenu.style.right = '';
+
+    const rect = submenu.getBoundingClientRect();
+    const windowWidth = window.innerWidth;
+
+    // Check if it overflows the right edge
+    if (rect.right > windowWidth) {
+        // If it overflows, align to the right of the parent
+        submenu.style.left = 'auto';
+        submenu.style.right = '100%';
+        // Note: 'right: 100%' generally puts it to the left of the parent if parent is relatively positioned.
+        // Let's check CSS. .font-submenu is flex/relative. 
+        // If we want it to open to the LEFT side of the trigger, we might need different logic.
+        // Usually submenus open to the right (left: 100%).
+        // To open to the left, we'd want right: 100% relative to the parent.
+
+        // However, standard dropdowns might just need to shift. 
+        // Let's try attempting to align right edge with viewport or parent.
+        // Simple 'flip' to left side:
+        submenu.style.left = 'auto';
+        submenu.style.right = '100%'; // Position on the left side of the trigger
+
+        // Check if that causes left overflow? (Rare for submenus unless very wide and very left)
+    }
+}
+
 function isAnyMenuOpen(): boolean {
     const file = getFileDropdownElement();
     const font = getFontChooserElement();
@@ -165,6 +194,11 @@ export function initFontChooserControls(): void {
             closeAllFontSubmenus();
             submenu.classList.add('is-open');
             trigger.setAttribute('aria-expanded', 'true');
+            // Adjust position
+            const panel = submenu.querySelector<HTMLElement>('.font-submenu-panel');
+            if (panel) {
+                adjustMenuPosition(panel);
+            }
         });
 
         trigger.addEventListener('click', (event) => {
@@ -176,6 +210,10 @@ export function initFontChooserControls(): void {
             trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
             if (willOpen) {
                 setFontMenuOpen(true);
+                const panel = submenu.querySelector<HTMLElement>('.font-submenu-panel');
+                if (panel) {
+                    adjustMenuPosition(panel);
+                }
             }
         });
     });
@@ -267,6 +305,11 @@ export function bindParagraphMenuListeners(): void {
             closeAllParagraphSubmenus();
             submenu.classList.add('is-open');
             trigger.setAttribute('aria-expanded', 'true');
+            // Adjust position
+            const panel = submenu.querySelector<HTMLElement>('.paragraph-submenu-panel');
+            if (panel) {
+                adjustMenuPosition(panel);
+            }
         });
 
         trigger.addEventListener('click', (event) => {
@@ -278,6 +321,10 @@ export function bindParagraphMenuListeners(): void {
             trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
             if (willOpen) {
                 setParagraphMenuOpen(true);
+                const panel = submenu.querySelector<HTMLElement>('.paragraph-submenu-panel');
+                if (panel) {
+                    adjustMenuPosition(panel);
+                }
             }
         });
     });
