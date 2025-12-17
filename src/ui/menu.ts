@@ -6,6 +6,39 @@ const getParagraphChooserElement = () => document.querySelector<HTMLElement>('.p
 const getFontChooserElement = () => document.querySelector<HTMLElement>('.font-chooser');
 const getHighlightControlElement = () => document.querySelector<HTMLElement>('.highlight-control');
 
+function adjustMenuPositionSafe(submenu: HTMLElement): void {
+    // Reset to default to measure natural size/position
+    submenu.style.left = '';
+    submenu.style.right = '';
+
+    const rect = submenu.getBoundingClientRect();
+    const windowWidth = window.innerWidth;
+
+    // Check if it overflows the right edge
+    if (rect.right > windowWidth) {
+        const container = submenu.offsetParent as HTMLElement;
+        if (!container) return; // Should not happen for visible elements
+
+        const containerRect = container.getBoundingClientRect();
+        // If we align right edge to container right edge (right: 0), 
+        // the left edge relative to viewport will be: containerRect.right - rect.width
+        const proposedLeft = containerRect.right - rect.width;
+
+        if (proposedLeft < 0) {
+            // Flipping causes left overflow. Force fit to window left.
+            // submenu.style.left should be relative to container left.
+            // We want (containerRect.left + style.left) = 0
+            // style.left = -containerRect.left
+            submenu.style.left = `${-containerRect.left}px`;
+            submenu.style.right = 'auto';
+        } else {
+            // Safe to align right
+            submenu.style.left = 'auto';
+            submenu.style.right = '0';
+        }
+    }
+}
+
 function adjustMenuPosition(submenu: HTMLElement): void {
     // Reset to default to measure natural size/position
     submenu.style.left = '';
@@ -132,7 +165,7 @@ export function setFontMenuOpen(open: boolean): void {
         // Adjust position of the main panel
         const panel = fontChooserElement.querySelector<HTMLElement>('.font-chooser-panel');
         if (panel) {
-            adjustMenuPosition(panel);
+            adjustMenuPositionSafe(panel);
         }
     } else {
         closeAllFontSubmenus();
@@ -203,7 +236,7 @@ export function initFontChooserControls(): void {
             // Adjust position
             const panel = submenu.querySelector<HTMLElement>('.font-submenu-panel');
             if (panel) {
-                adjustMenuPosition(panel);
+                adjustMenuPositionSafe(panel);
             }
         });
 
@@ -218,7 +251,7 @@ export function initFontChooserControls(): void {
                 setFontMenuOpen(true);
                 const panel = submenu.querySelector<HTMLElement>('.font-submenu-panel');
                 if (panel) {
-                    adjustMenuPosition(panel);
+                    adjustMenuPositionSafe(panel);
                 }
             }
         });
@@ -272,7 +305,7 @@ export function setParagraphMenuOpen(open: boolean): void {
         // Adjust position of the main panel
         const panel = paragraphChooserElement.querySelector<HTMLElement>('.paragraph-panel');
         if (panel) {
-            adjustMenuPosition(panel);
+            adjustMenuPositionSafe(panel);
         }
     } else {
         closeAllParagraphSubmenus();
@@ -320,7 +353,7 @@ export function bindParagraphMenuListeners(): void {
             // Adjust position
             const panel = submenu.querySelector<HTMLElement>('.paragraph-submenu-panel');
             if (panel) {
-                adjustMenuPosition(panel);
+                adjustMenuPositionSafe(panel);
             }
         });
 
@@ -335,7 +368,7 @@ export function bindParagraphMenuListeners(): void {
                 setParagraphMenuOpen(true);
                 const panel = submenu.querySelector<HTMLElement>('.paragraph-submenu-panel');
                 if (panel) {
-                    adjustMenuPosition(panel);
+                    adjustMenuPositionSafe(panel);
                 }
             }
         });
@@ -362,7 +395,7 @@ export function setHighlightPaletteOpen(open: boolean): void {
     if (palette) {
         palette.style.display = '';
         if (open) {
-            adjustMenuPosition(palette);
+            adjustMenuPositionSafe(palette);
         }
     }
 

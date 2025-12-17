@@ -4,6 +4,36 @@ const getNestedDropdownElements = () => document.querySelectorAll('.nested-dropd
 const getParagraphChooserElement = () => document.querySelector('.paragraph-chooser');
 const getFontChooserElement = () => document.querySelector('.font-chooser');
 const getHighlightControlElement = () => document.querySelector('.highlight-control');
+function adjustMenuPositionSafe(submenu) {
+    // Reset to default to measure natural size/position
+    submenu.style.left = '';
+    submenu.style.right = '';
+    const rect = submenu.getBoundingClientRect();
+    const windowWidth = window.innerWidth;
+    // Check if it overflows the right edge
+    if (rect.right > windowWidth) {
+        const container = submenu.offsetParent;
+        if (!container)
+            return; // Should not happen for visible elements
+        const containerRect = container.getBoundingClientRect();
+        // If we align right edge to container right edge (right: 0), 
+        // the left edge relative to viewport will be: containerRect.right - rect.width
+        const proposedLeft = containerRect.right - rect.width;
+        if (proposedLeft < 0) {
+            // Flipping causes left overflow. Force fit to window left.
+            // submenu.style.left should be relative to container left.
+            // We want (containerRect.left + style.left) = 0
+            // style.left = -containerRect.left
+            submenu.style.left = `${-containerRect.left}px`;
+            submenu.style.right = 'auto';
+        }
+        else {
+            // Safe to align right
+            submenu.style.left = 'auto';
+            submenu.style.right = '0';
+        }
+    }
+}
 function adjustMenuPosition(submenu) {
     // Reset to default to measure natural size/position
     submenu.style.left = '';
@@ -126,7 +156,7 @@ export function setFontMenuOpen(open) {
         // Adjust position of the main panel
         const panel = fontChooserElement.querySelector('.font-chooser-panel');
         if (panel) {
-            adjustMenuPosition(panel);
+            adjustMenuPositionSafe(panel);
         }
     }
     else {
@@ -196,7 +226,7 @@ export function initFontChooserControls() {
             // Adjust position
             const panel = submenu.querySelector('.font-submenu-panel');
             if (panel) {
-                adjustMenuPosition(panel);
+                adjustMenuPositionSafe(panel);
             }
         });
         trigger.addEventListener('click', (event) => {
@@ -210,7 +240,7 @@ export function initFontChooserControls() {
                 setFontMenuOpen(true);
                 const panel = submenu.querySelector('.font-submenu-panel');
                 if (panel) {
-                    adjustMenuPosition(panel);
+                    adjustMenuPositionSafe(panel);
                 }
             }
         });
@@ -263,7 +293,7 @@ export function setParagraphMenuOpen(open) {
         // Adjust position of the main panel
         const panel = paragraphChooserElement.querySelector('.paragraph-panel');
         if (panel) {
-            adjustMenuPosition(panel);
+            adjustMenuPositionSafe(panel);
         }
     }
     else {
@@ -308,7 +338,7 @@ export function bindParagraphMenuListeners() {
             // Adjust position
             const panel = submenu.querySelector('.paragraph-submenu-panel');
             if (panel) {
-                adjustMenuPosition(panel);
+                adjustMenuPositionSafe(panel);
             }
         });
         trigger.addEventListener('click', (event) => {
@@ -322,7 +352,7 @@ export function bindParagraphMenuListeners() {
                 setParagraphMenuOpen(true);
                 const panel = submenu.querySelector('.paragraph-submenu-panel');
                 if (panel) {
-                    adjustMenuPosition(panel);
+                    adjustMenuPositionSafe(panel);
                 }
             }
         });
@@ -347,7 +377,7 @@ export function setHighlightPaletteOpen(open) {
     if (palette) {
         palette.style.display = '';
         if (open) {
-            adjustMenuPosition(palette);
+            adjustMenuPositionSafe(palette);
         }
     }
     const trigger = highlightControlElement.querySelector('[data-action="highlight"]');
