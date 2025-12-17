@@ -369,6 +369,34 @@
       </form>
     </dialog>
 
+    <dialog id="image-caption-dialog" aria-labelledby="image-caption-dialog-label">
+      <form method="dialog">
+        <p id="image-caption-dialog-label">画像キャプション</p>
+        <label for="image-caption-input">
+          キャプション
+          <input type="text" id="image-caption-input" name="image-caption-input" placeholder="キャプションを入力" />
+        </label>
+        <div class="dialog-actions">
+          <button type="button" data-action="cancel-image-caption">キャンセル</button>
+          <button type="button" data-action="apply-image-caption">適用</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="image-tag-dialog" aria-labelledby="image-tag-dialog-label">
+      <form method="dialog">
+        <p id="image-tag-dialog-label">画像タグ</p>
+        <label for="image-tag-input">
+          タグ (カンマ区切り)
+          <input type="text" id="image-tag-input" name="image-tag-input" placeholder="A,B,C" />
+        </label>
+        <div class="dialog-actions">
+          <button type="button" data-action="cancel-image-tag">キャンセル</button>
+          <button type="button" data-action="apply-image-tag">適用</button>
+        </div>
+      </form>
+    </dialog>
+
 
 
     <script type="module">

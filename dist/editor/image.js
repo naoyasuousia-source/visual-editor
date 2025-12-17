@@ -66,16 +66,109 @@ export function rebuildFigureMetaStore() {
         aiImageIndex.appendChild(meta);
     });
 }
-export function updateImageMetaTitle(img, rawTitle) {
+function getMetaForImage(img) {
     ensureAiImageIndex();
     const aiImageIndex = state.aiImageIndex;
-    if (!img || !aiImageIndex)
-        return;
+    if (!aiImageIndex)
+        return undefined;
     let meta = Array.from(aiImageIndex.querySelectorAll('.figure-meta')).find(m => m.dataset.src === img.src);
     if (!meta) {
         rebuildFigureMetaStore();
         meta = Array.from(aiImageIndex.querySelectorAll('.figure-meta')).find(m => m.dataset.src === img.src);
     }
+    return meta;
+}
+export function updateImageMetaCaption(img, rawCaption) {
+    if (!img)
+        return;
+    const meta = getMetaForImage(img);
+    if (meta) {
+        meta.dataset.caption = rawCaption || '';
+    }
+}
+export function updateImageMetaTag(img, rawTag) {
+    if (!img)
+        return;
+    const meta = getMetaForImage(img);
+    if (meta) {
+        meta.dataset.tag = rawTag || '';
+    }
+}
+export function openCaptionDialog() {
+    if (!contextTargetImage)
+        return;
+    const dialog = document.getElementById('image-caption-dialog');
+    const input = document.getElementById('image-caption-input');
+    if (!dialog || !input)
+        return;
+    const meta = getMetaForImage(contextTargetImage);
+    input.value = meta?.dataset.caption || '';
+    if (typeof dialog.showModal === 'function') {
+        dialog.showModal();
+    }
+    else {
+        dialog.setAttribute('open', '');
+    }
+    input.focus();
+}
+export function closeCaptionDialog() {
+    const dialog = document.getElementById('image-caption-dialog');
+    if (!dialog)
+        return;
+    if (typeof dialog.close === 'function') {
+        dialog.close();
+    }
+    else {
+        dialog.removeAttribute('open');
+    }
+}
+export function applyImageCaption() {
+    const input = document.getElementById('image-caption-input');
+    if (contextTargetImage && input) {
+        updateImageMetaCaption(contextTargetImage, input.value);
+    }
+}
+export function openTagDialog() {
+    if (!contextTargetImage)
+        return;
+    const dialog = document.getElementById('image-tag-dialog');
+    const input = document.getElementById('image-tag-input');
+    if (!dialog || !input)
+        return;
+    const meta = getMetaForImage(contextTargetImage);
+    input.value = meta?.dataset.tag || '';
+    if (typeof dialog.showModal === 'function') {
+        dialog.showModal();
+    }
+    else {
+        dialog.setAttribute('open', '');
+    }
+    input.focus();
+}
+export function closeTagDialog() {
+    const dialog = document.getElementById('image-tag-dialog');
+    if (!dialog)
+        return;
+    if (typeof dialog.close === 'function') {
+        dialog.close();
+    }
+    else {
+        dialog.removeAttribute('open');
+    }
+}
+export function applyImageTag() {
+    const input = document.getElementById('image-tag-input');
+    if (contextTargetImage && input) {
+        let val = input.value;
+        const tags = val.split(/[,\u3001]/).map(t => t.trim()).filter(t => t.length > 0);
+        val = tags.join(',');
+        updateImageMetaTag(contextTargetImage, val);
+    }
+}
+export function updateImageMetaTitle(img, rawTitle) {
+    if (!img)
+        return;
+    const meta = getMetaForImage(img);
     if (meta) {
         meta.dataset.title = rawTitle || '';
     }
@@ -365,10 +458,22 @@ export function initImageContextMenuControls() {
     const imageContextMenuElement = document.getElementById('image-context-menu');
     const imageContextTriggerElement = document.querySelector('.image-context-trigger');
     const imageContextDropdownElement = document.querySelector('.image-context-dropdown');
+    // Title Elements
     const imageTitleApplyButtonElement = document.querySelector('[data-action="apply-image-title"]');
     const imageTitleCancelButtonElement = document.querySelector('[data-action="cancel-image-title"]');
     const imageTitleDialogElement = document.getElementById('image-title-dialog');
     const imageTitleInputElement = document.getElementById('image-title-input');
+    // Caption Elements
+    const imageCaptionApplyButtonElement = document.querySelector('[data-action="apply-image-caption"]');
+    const imageCaptionCancelButtonElement = document.querySelector('[data-action="cancel-image-caption"]');
+    const imageCaptionDialogElement = document.getElementById('image-caption-dialog');
+    const imageCaptionInputElement = document.getElementById('image-caption-input');
+    // Tag Elements
+    const imageTagApplyButtonElement = document.querySelector('[data-action="apply-image-tag"]');
+    const imageTagCancelButtonElement = document.querySelector('[data-action="cancel-image-tag"]');
+    const imageTagDialogElement = document.getElementById('image-tag-dialog');
+    const imageTagInputElement = document.getElementById('image-tag-input');
+    // --- Title Input Enter Key ---
     if (imageTitleInputElement) {
         imageTitleInputElement.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
@@ -377,6 +482,64 @@ export function initImageContextMenuControls() {
                 closeTitleDialog();
             }
         });
+    }
+    // --- Caption Input Enter Key ---
+    if (imageCaptionInputElement) {
+        imageCaptionInputElement.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                applyImageCaption();
+                closeCaptionDialog();
+            }
+        });
+    }
+    // --- Tag Input Enter Key ---
+    if (imageTagInputElement) {
+        imageTagInputElement.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                applyImageTag();
+                closeTagDialog();
+            }
+        });
+    }
+    // --- Caption Dialog Buttons ---
+    if (imageCaptionApplyButtonElement) {
+        imageCaptionApplyButtonElement.addEventListener('click', (event) => {
+            event.preventDefault();
+            applyImageCaption();
+            closeCaptionDialog();
+        });
+    }
+    if (imageCaptionCancelButtonElement) {
+        imageCaptionCancelButtonElement.addEventListener('click', (event) => {
+            event.preventDefault();
+            closeCaptionDialog();
+        });
+    }
+    // --- Tag Dialog Buttons ---
+    if (imageTagApplyButtonElement) {
+        imageTagApplyButtonElement.addEventListener('click', (event) => {
+            event.preventDefault();
+            applyImageTag();
+            closeTagDialog();
+        });
+    }
+    if (imageTagCancelButtonElement) {
+        imageTagCancelButtonElement.addEventListener('click', (event) => {
+            event.preventDefault();
+            closeTagDialog();
+        });
+    }
+    // --- Dialog Cancel Events ---
+    if (imageTitleDialogElement) {
+        imageTitleDialogElement.addEventListener('cancel', (e) => { e.preventDefault(); closeTitleDialog(); });
+    }
+    if (imageCaptionDialogElement) {
+        imageCaptionDialogElement.addEventListener('cancel', (e) => { e.preventDefault(); closeCaptionDialog(); });
+    }
+    if (imageTagDialogElement) {
+        imageTagDialogElement.addEventListener('cancel', (e) => { e.preventDefault(); closeTagDialog(); });
     }
     document.addEventListener('contextmenu', (event) => {
         const target = event.target;
@@ -420,6 +583,16 @@ export function initImageContextMenuControls() {
             if (action === 'image-title') {
                 closeImageContextMenu();
                 openTitleDialog();
+                return;
+            }
+            if (action === 'image-caption') {
+                closeImageContextMenu();
+                openCaptionDialog();
+                return;
+            }
+            if (action === 'image-tag') {
+                closeImageContextMenu();
+                openTagDialog();
                 return;
             }
             closeImageContextMenu();
