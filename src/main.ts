@@ -32,7 +32,8 @@ import {
   initFileMenuControls,
   initViewMenuControls,
   initFontChooserControls,
-  bindParagraphMenuListeners
+  bindParagraphMenuListeners,
+  initHighlightMenuControls
 } from './ui/menu.js';
 
 import { applyPageMargin } from './ui/settings.js';
@@ -52,6 +53,7 @@ export function initEditor() {
   initPageLinkHandler();
   initFontChooserControls();
   bindParagraphMenuListeners();
+  initHighlightMenuControls();
 
   // Ensure file input listener is bound
   const openFileInput = document.getElementById('open-file-input');

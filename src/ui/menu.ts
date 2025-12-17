@@ -381,3 +381,15 @@ export function initViewMenuControls(): void {
         });
     }
 }
+
+export function initHighlightMenuControls(): void {
+    const highlightControlElement = getHighlightControlElement();
+    if (highlightControlElement) {
+        highlightControlElement.addEventListener('mouseenter', () => {
+            const anyOpen = isAnyMenuOpen();
+            if (anyOpen) return;
+            closeAllMenus('highlight');
+            setHighlightPaletteOpen(true);
+        });
+    }
+}

@@ -5,7 +5,7 @@ import { ensureAiImageIndex, initImageContextMenuControls } from './editor/image
 import { updateAiMetaGuide } from './editor/ai-meta.js';
 import { initPageLinkHandler, bindDocumentLevelHandlers } from './ui/events.js';
 import { bindToolbarHandlers } from './ui/toolbar.js';
-import { initFileMenuControls, initViewMenuControls, initFontChooserControls, bindParagraphMenuListeners } from './ui/menu.js';
+import { initFileMenuControls, initViewMenuControls, initFontChooserControls, bindParagraphMenuListeners, initHighlightMenuControls } from './ui/menu.js';
 import { applyPageMargin } from './ui/settings.js';
 import { initNavigator, initParagraphJump, initSidebarToggle, initToolbarJump } from './ui/navigator.js';
 // Phase 1: Core Utilities Implementation
@@ -20,6 +20,7 @@ export function initEditor() {
     initPageLinkHandler();
     initFontChooserControls();
     bindParagraphMenuListeners();
+    initHighlightMenuControls();
     // Ensure file input listener is bound
     const openFileInput = document.getElementById('open-file-input');
     if (openFileInput) {
