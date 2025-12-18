@@ -456,12 +456,28 @@
 
         <div class="hint-footer">
           <div class="hint-links">
-            <a href="#">免責事項</a>
-            <a href="#">利用規約</a>
-            <a href="#">プライバシーポリシー</a>
-            <a href="#">お問い合わせ</a>
+            <a href="#" data-action="sub-help">免責事項</a>
+            <a href="#" data-action="sub-help">利用規約</a>
+            <a href="#" data-action="sub-help">プライバシーポリシー</a>
+            <a href="#" data-action="sub-help">お問い合わせ</a>
           </div>
-          <p>&copy; 2025 AI-Link Editor</p>
+          <p class="copyright-text">&copy; 2025 AI-Link Editor</p>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="sub-help-dialog" aria-labelledby="sub-help-dialog-label">
+      <form method="dialog">
+        <div class="hint-header">
+          <h1 id="sub-help-dialog-label">詳細情報</h1>
+          <button type="submit" class="close-button" aria-label="閉じる">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="hint-body">
+          <p>こちらには今後、固有の内容が追加される予定です。</p>
         </div>
       </form>
     </dialog>

@@ -1463,6 +1463,11 @@ dialog .dialog-actions {
   color: #6b7280;
 }
 
+.copyright-text {
+  font-size: 0.6em;
+  margin: 0;
+}
+
 .hint-links {
   display: flex;
   gap: 16px;

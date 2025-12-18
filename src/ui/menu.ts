@@ -492,6 +492,7 @@ export function initHighlightMenuControls(): void {
 export function initHelpDialog(): void {
     const helpTrigger = document.getElementById('help-trigger');
     const helpDialog = document.getElementById('help-dialog') as HTMLDialogElement;
+    const subHelpDialog = document.getElementById('sub-help-dialog') as HTMLDialogElement;
 
     if (helpTrigger && helpDialog) {
         helpTrigger.addEventListener('click', (e) => {
@@ -499,13 +500,41 @@ export function initHelpDialog(): void {
             helpDialog.showModal();
         });
 
-        // Close when clicking outside
+        // Close when clicking outside helpDialog
         helpDialog.addEventListener('click', (e) => {
             const rect = helpDialog.getBoundingClientRect();
             const isInDialog = (rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
                 rect.left <= e.clientX && e.clientX <= rect.left + rect.width);
             if (!isInDialog) {
                 helpDialog.close();
+            }
+        });
+
+        // Handle sub-help links inside helpDialog
+        const subHelpLinks = helpDialog.querySelectorAll('[data-action="sub-help"]');
+        subHelpLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (subHelpDialog) {
+                    const title = (link as HTMLElement).innerText;
+                    const subHelpTitleEl = document.getElementById('sub-help-dialog-label');
+                    if (subHelpTitleEl) {
+                        subHelpTitleEl.innerText = title;
+                    }
+                    subHelpDialog.showModal();
+                }
+            });
+        });
+    }
+
+    if (subHelpDialog) {
+        // Close when clicking outside subHelpDialog
+        subHelpDialog.addEventListener('click', (e) => {
+            const rect = subHelpDialog.getBoundingClientRect();
+            const isInDialog = (rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+                rect.left <= e.clientX && e.clientX <= rect.left + rect.width);
+            if (!isInDialog) {
+                subHelpDialog.close();
             }
         });
     }
