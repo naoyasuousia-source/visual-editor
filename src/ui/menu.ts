@@ -516,10 +516,47 @@ export function initHelpDialog(): void {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 if (subHelpDialog) {
-                    const title = (link as HTMLElement).innerText;
+                    const type = (link as HTMLElement).innerText;
                     const subHelpTitleEl = document.getElementById('sub-help-dialog-label');
-                    if (subHelpTitleEl) {
-                        subHelpTitleEl.innerText = title;
+                    const subHelpContentEl = document.getElementById('sub-help-content');
+
+                    if (subHelpTitleEl) subHelpTitleEl.innerText = type;
+
+                    if (subHelpContentEl) {
+                        let content = '';
+                        switch (type) {
+                            case '免責事項':
+                                content = `
+                                    <p>・本ツールおよび生成AIによって提案される内容は、その正確性、正当性、有用性、完全性等について、明示的か黙示的かを問わず何ら保証するものではありません。</p>
+                                    <p>・本ツールを利用した結果として生じた直接的・間接的な損害、および生成AIが生成した回答の誤謬に基づくトラブル等について、当方は一切の責任を負いません。</p>
+                                    <p>・利用者は、最新のデータ保存やバックアップを含め、自身の責任において本ツールと生成AIの結果を最終的に確認・修正するものとします。</p>
+                                `;
+                                break;
+                            case '利用規約':
+                                content = `
+                                    <p>・本ツールは、PC版のGoogle ChromeまたはMicrosoft Edge環境での利用を前提として最適化されています。</p>
+                                    <p>・利用者は、本ツールのリバースエンジニアリング、不正アクセス、または他者の著作権を侵害する目的での利用を行わないものとします。</p>
+                                    <p>・本エディタで作成・保存されたドキュメントの著作権は、原則として作成した利用者に帰属します。</p>
+                                    <p>・当方は、予告なく本ツールの機能変更、アップデート、または提供の停止を行う権利を有します。</p>
+                                `;
+                                break;
+                            case 'プライバシーポリシー':
+                                content = `
+                                    <p>・本ツールは「ローカル完結型」または「ユーザー指定ストレージ（Googleドライブ等）への保存」を基本としており、作成されたドキュメントの内容が当方の管理するサーバーへ自動的に送信・収集されることはありません。</p>
+                                    <p>・生成AI機能を利用して外部AIサービス（ChatGPT等）へデータを送信する場合、そのデータの取り扱いは各AIサービス提供元のプライバシーポリシーに従います。送信する情報の選別は利用者の責任で行ってください。</p>
+                                    <p>・本ブラウザツールでは、設定の保持や利便性向上のためにブラウザのローカルストレージを利用する場合があります。</p>
+                                `;
+                                break;
+                            case 'お問い合わせ':
+                                content = `
+                                    <p>本ツールは現在、試作版として提供されています。不具合報告や機能の改善要望、ビジネスに関するお問い合わせは、開発チームの連絡窓口（リポジトリのIssueや指定の連絡先）までお願いいたします。</p>
+                                    <p>※個人開発・試作プロジェクトのため、回答にお時間をいただく場合や、すべての要望にお応えできない場合があります。あらかじめご了承ください。</p>
+                                `;
+                                break;
+                            default:
+                                content = '<p>詳細情報は現在準備中です。</p>';
+                        }
+                        subHelpContentEl.innerHTML = content;
                     }
                     subHelpDialog.showModal();
                 }
