@@ -1419,39 +1419,15 @@ dialog .dialog-actions {
   margin: 0 0 16px 0;
 }
 
-.hint-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  align-items: start;
+.hint-workflow-container {
+  width: 100%;
+  margin: 16px 0;
 }
 
-@media (max-width: 640px) {
-  .hint-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.hint-step {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  text-align: left;
-}
-
-.hint-step img {
+.hint-workflow-img {
   width: 100%;
   height: auto;
-  border-radius: 8px;
-  border: 1px solid #22d3ee;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.hint-step p {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0;
+  display: block;
 }
 
 .hint-pdf-box {
