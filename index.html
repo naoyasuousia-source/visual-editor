@@ -293,8 +293,11 @@
         <span id="zoom-level-display">100%</span>
         <button type="button" data-action="zoom-in" title="拡大">＋</button>
       </div>
-      <input type="text" id="toolbar-jump-input" placeholder="（例：1-1）へジャンプ　[ctrl+J]"
-        title="Enter 'p1-1' or '1-1' to jump" style="width: 200px;">
+      <div class="jump-widget">
+        <label for="toolbar-jump-input">ジャンプ機能　[ ctrl+J ]</label>
+        <input type="text" id="toolbar-jump-input" placeholder='（例：1-1　または　"本文中に含まれる文字列"'
+          title="段落番号(例:1-1)または検索したい文字列を入力してください">
+      </div>
       <button type="button" id="help-trigger" title="使い方・ヒント" aria-label="ヘルプ">
         <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.25"
           stroke-linecap="round" stroke-linejoin="round" style="display: block;">

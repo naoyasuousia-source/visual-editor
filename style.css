@@ -84,15 +84,7 @@ body {
   background: #e0e0e0;
 }
 
-#toolbar-jump-input {
-  height: 36px;
-  padding: 0 1px;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 8px;
-  letter-spacing: -1.5px;
-}
+/* Old style removed */
 
 /* Zoom Controls */
 .zoom-controls {
@@ -1165,12 +1157,52 @@ dialog .dialog-actions {
   opacity: 0.3;
 }
 
-#toolbar-jump-input {
-  width: 100px;
-  padding: 4px 8px;
-  font-size: 0.9rem;
+/* Jump Widget */
+.jump-widget {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  margin-right: 8px;
+  gap: 0;
+  height: 36px;
+  /* Match toolbar button height */
   border: 1px solid #ccc;
   border-radius: 4px;
+  background-color: #fff;
+  padding: 2px 6px;
+  box-sizing: border-box;
+  width: 220px;
+}
+
+.jump-widget label {
+  font-size: 7pt;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  color: #333;
+  cursor: text;
+  padding: 0;
+  font-weight: bold;
+}
+
+#toolbar-jump-input {
+  width: 100%;
+  height: auto;
+  padding: 0;
+  font-size: 7pt;
+  letter-spacing: -0.5px;
+  border: none;
+  border-radius: 0;
+  box-sizing: border-box;
+  background-color: transparent;
+  line-height: 1.2;
+  outline: none;
+}
+
+#toolbar-jump-input::placeholder {
+  color: #999;
+  font-size: 7pt;
+  opacity: 1;
 }
 
 /* Search Highlights */
