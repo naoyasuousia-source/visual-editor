@@ -3,7 +3,7 @@
 // Since `saveFullHTML` and `openWithFilePicker` rely heavily on global state and DOM,
 // we might keep them in a higher level module or refactor to accept arguments.
 // For now, let's move the logic that can be isolated.
-export function buildFullHTML(pagesContainer, styleTag) {
+export function buildFullHTML(pagesContainer, styleTag, isWordMode = false) {
     if (!pagesContainer)
         return '';
     // Clone to remove contenteditable/active classes
@@ -22,6 +22,7 @@ export function buildFullHTML(pagesContainer, styleTag) {
         el.remove();
     });
     const styleContent = styleTag ? styleTag.innerHTML : '';
+    const bodyClass = isWordMode ? ' class="mode-word"' : '';
     return `<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -30,7 +31,7 @@ export function buildFullHTML(pagesContainer, styleTag) {
 ${styleContent}
 </style>
 </head>
-<body>
+<body${bodyClass}>
 <div id="pages-container">
 ${containerClone.innerHTML}
 </div>

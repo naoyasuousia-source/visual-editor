@@ -221,14 +221,33 @@ export function bindToolbarHandlers(): void {
             case 'save-as':
                 saveAsWithFilePicker();
                 break;
-            case 'open':
+            case 'open-html':
                 {
                     const opened = await openWithFilePicker();
-                    const openFileInputElement = document.getElementById('open-file-input') as HTMLInputElement | null;
-                    if (!opened && openFileInputElement) {
-                        openFileInputElement.value = '';
-                        openFileInputElement.click();
+                    if (!opened) {
+                        const openFileInputElement = document.getElementById('open-file-input') as HTMLInputElement | null;
+                        if (openFileInputElement) {
+                            openFileInputElement.value = '';
+                            openFileInputElement.click();
+                        }
                     }
+                }
+                break;
+            case 'open-docx':
+                {
+                    // Placeholder for Word import
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.docx';
+                    input.style.display = 'none';
+                    input.addEventListener('change', async (e) => {
+                        const target = e.target as HTMLInputElement;
+                        if (target.files && target.files[0]) {
+                            // (window as any).importDocx?.(target.files[0]);
+                            alert('Wordファイルのインポート機能は現在準備中です。');
+                        }
+                    });
+                    input.click();
                 }
                 break;
             case 'insert-image-dropbox':

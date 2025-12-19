@@ -117,6 +117,8 @@ import {
     removeLink
 } from './editor/links.js';
 
+import { getMode, switchMode } from './core/router.js';
+
 
 import { bindEditorEvents } from './ui/events.js';
 
@@ -264,4 +266,8 @@ window.updateImageMetaTitle = updateImageMetaTitle;
 window.promptDropboxImageUrl = promptDropboxImageUrl;
 window.promptWebImageUrl = promptWebImageUrl;
 window.insertImageAtCursor = insertImageAtCursor;
+
+// Router
+(window as any).getMode = getMode;
+(window as any).switchMode = switchMode;
 

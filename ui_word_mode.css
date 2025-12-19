@@ -77,16 +77,20 @@ body.mode-word .highlight-control,
 body.mode-word .font-chooser,
 body.mode-word .paragraph-chooser,
 body.mode-word .nested-dropdown,
-body.mode-word .zoom-controls,
-/* Entire container to avoid "vertical white thing" */
 body.mode-word [data-action="highlight"],
-body.mode-word [data-action="zoom-in"],
-body.mode-word [data-action="zoom-out"],
 body.mode-word [data-action="add-page"],
 body.mode-word [data-action="remove-page"],
-body.mode-word #zoom-level-display,
 body.mode-word #add-page-btn,
 body.mode-word #remove-page-btn {
+    display: none !important;
+}
+
+/* Modal Mode Visibility */
+body.mode-word .standard-only {
+    display: none !important;
+}
+
+body:not(.mode-word) .word-only {
     display: none !important;
 }
 

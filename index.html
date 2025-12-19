@@ -24,7 +24,8 @@
           <button type="button" data-action="save">保存<span class="shortcut-key">ctrl+S</span></button>
           <button type="button" data-action="save-as">名前を付けて保存</button>
           <button type="button" data-action="overwrite">上書き保存<span class="shortcut-key">ctrl+S</span></button>
-          <button type="button" data-action="open">ファイルを開く<span class="shortcut-key">ctrl+O</span></button>
+          <button type="button" data-action="open-html">HTMLファイルを開く<span class="shortcut-key">ctrl+O</span></button>
+          <button type="button" data-action="open-docx" class="word-only">Wordファイル(docx)を開く</button>
           <button type="button" data-action="print">PDFとして出力</button>
           <div class="nested-dropdown">
             <button type="button" class="nested-trigger" aria-haspopup="menu" aria-expanded="false">ハイパーリンク</button>
@@ -324,9 +325,12 @@
         <button type="button" data-action="zoom-in" title="拡大">＋</button>
       </div>
       <div class="jump-widget">
-        <label for="toolbar-jump-input">ジャンプ機能　[ ctrl+J ]</label>
-        <input type="text" id="toolbar-jump-input" placeholder='（例：1-1　または　"本文中に含まれる文字列"）'
+        <label for="toolbar-jump-input" class="standard-only">ジャンプ機能　[ ctrl+J ]</label>
+        <label for="toolbar-jump-input-word" class="word-only">ジャンプ機能　[ ctrl+J ]</label>
+        <input type="text" id="toolbar-jump-input" class="standard-only" placeholder='（例：1-1　または　"本文中に含まれる文字列"）'
           title="段落番号(例:1-1)または検索したい文字列を入力してください">
+        <input type="text" id="toolbar-jump-input-word" class="word-only" placeholder='（例：15　または　"本文中に含まれる文字列"）'
+          title="段落番号(例:15)または検索したい文字列を入力してください">
       </div>
       <button type="button" id="mode-switch" title="編集モード切替">
         <span class="mode-text-std">標準モード</span>
@@ -381,9 +385,13 @@
     <dialog id="paragraph-jump-dialog">
       <form method="dialog" class="dialog-form">
         <p>段落へジャンプ</p>
-        <label>
+        <label class="standard-only">
           段落番号 (例: 1-1):
           <input type="text" id="paragraph-jump-input" placeholder="p-n">
+        </label>
+        <label class="word-only">
+          段落番号 (例: 15):
+          <input type="text" id="paragraph-jump-input-word" placeholder="p-n">
         </label>
         <div class="dialog-actions" style="display:none"></div>
       </form>
@@ -470,7 +478,7 @@
             </div>
           </section>
 
-          <section class="hint-section">
+          <section class="hint-section standard-only">
             <h2 class="hint-title">PDF出力</h2>
             <div class="hint-pdf-box">
               <div class="pdf-icon-container" title="PDF出力">
@@ -486,6 +494,26 @@
                 エディタ上のレイアウトを維持したPDF出力が可能です。印刷ダイアログで<span
                   style="color: #dc2626; font-weight: bold;">「PDFに保存」</span>を選択し、必ず<span
                   style="color: #dc2626; font-weight: bold;">「背景のグラフィック」</span>をONにして出力してください。
+              </p>
+            </div>
+          </section>
+
+          <section class="hint-section word-only">
+            <h2 class="hint-title">Word互換機能</h2>
+            <div class="hint-pdf-box">
+              <div class="pdf-icon-container" title="Word互換">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#0891b2" stroke-width="1.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <path d="M9 12h6"></path>
+                  <path d="M9 16h6"></path>
+                </svg>
+              </div>
+              <p class="hint-desc" style="text-align: left;">
+                Wordへの貼り付けは、エディタ上で<span style="color: #dc2626; font-weight: bold;">Ctrl+A → Ctrl+C</span>を行い、Word側で<span
+                  style="color: #dc2626; font-weight: bold;">Ctrl+V</span>で貼り付けてください。<br>
+                Wordファイルを読み込む場合は、「Wordファイル(docx)を開く」メニューからインポートしてください。
               </p>
             </div>
           </section>

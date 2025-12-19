@@ -6,7 +6,7 @@
 // we might keep them in a higher level module or refactor to accept arguments.
 // For now, let's move the logic that can be isolated.
 
-export function buildFullHTML(pagesContainer: HTMLElement, styleTag: HTMLStyleElement | null): string {
+export function buildFullHTML(pagesContainer: HTMLElement, styleTag: HTMLStyleElement | null, isWordMode: boolean = false): string {
     if (!pagesContainer) return '';
 
     // Clone to remove contenteditable/active classes
@@ -26,6 +26,7 @@ export function buildFullHTML(pagesContainer: HTMLElement, styleTag: HTMLStyleEl
     });
 
     const styleContent = styleTag ? styleTag.innerHTML : '';
+    const bodyClass = isWordMode ? ' class="mode-word"' : '';
 
     return `<!DOCTYPE html>
 <html lang="ja">
@@ -35,7 +36,7 @@ export function buildFullHTML(pagesContainer: HTMLElement, styleTag: HTMLStyleEl
 ${styleContent}
 </style>
 </head>
-<body>
+<body${bodyClass}>
 <div id="pages-container">
 ${containerClone.innerHTML}
 </div>

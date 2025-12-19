@@ -11,6 +11,7 @@ import { setActiveEditor, getCurrentParagraph, } from './editor/core.js';
 import { getCaretOffset, insertInlineTabAt, handleInlineTabKey, handleInlineTabBackspace } from './editor/input.js';
 import { applyPageMargin, updateMarginRule, applyFontFamily } from './ui/settings.js';
 import { addLinkDestination, createLink, removeLink } from './editor/links.js';
+import { getMode, switchMode } from './core/router.js';
 import { bindEditorEvents } from './ui/events.js';
 import { computeSelectionStateFromRange, findTextPositionInParagraph, restoreRangeFromSelectionState, findParagraph, placeCaretBefore, placeCaretAfter } from './editor/selection.js';
 import { applyImageSize, showImageContextMenu, closeImageContextMenu, closeImageSubmenu, applyImageTitle, promptDropboxImageUrl, promptWebImageUrl, insertImageAtCursor, openTitleDialog, closeTitleDialog, removeExistingImageTitle, updateImageMetaTitle, ensureAiImageIndex, rebuildFigureMetaStore } from './editor/image.js';
@@ -121,3 +122,6 @@ window.updateImageMetaTitle = updateImageMetaTitle;
 window.promptDropboxImageUrl = promptDropboxImageUrl;
 window.promptWebImageUrl = promptWebImageUrl;
 window.insertImageAtCursor = insertImageAtCursor;
+// Router
+window.getMode = getMode;
+window.switchMode = switchMode;

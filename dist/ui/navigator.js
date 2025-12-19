@@ -161,7 +161,9 @@ export function initParagraphJump() {
     document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'j') {
             e.preventDefault();
-            const input = document.getElementById('toolbar-jump-input');
+            const isWord = window.getMode?.() === 'word';
+            const inputId = isWord ? 'toolbar-jump-input-word' : 'toolbar-jump-input';
+            const input = document.getElementById(inputId);
             if (input) {
                 input.focus();
                 input.select();
@@ -171,18 +173,21 @@ export function initParagraphJump() {
     const dialog = document.getElementById('paragraph-jump-dialog');
     if (dialog) {
         const input = document.getElementById('paragraph-jump-input');
+        const inputWord = document.getElementById('paragraph-jump-input-word');
         // Enter key to jump
-        if (input) {
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (input.value) {
-                        jumpToParagraph(input.value);
-                        dialog.close();
+        [input, inputWord].forEach(inp => {
+            if (inp) {
+                inp.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (inp.value) {
+                            jumpToParagraph(inp.value);
+                            dialog.close();
+                        }
                     }
-                }
-            });
-        }
+                });
+            }
+        });
         // Click outside to close
         dialog.addEventListener('click', (e) => {
             if (e.target === dialog) {
@@ -209,30 +214,43 @@ export function initSidebarToggle() {
     }
 }
 export function initToolbarJump() {
-    const input = document.getElementById('toolbar-jump-input');
-    if (input) {
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                if (input.value) {
-                    jumpToParagraph(input.value);
-                    // input.value = ''; // Don't clear immediately so user knows what they searched?
-                    // Actually, if we jump, maybe clearing is fine.
+    const inputs = ['toolbar-jump-input', 'toolbar-jump-input-word'];
+    inputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (input.value) {
+                        jumpToParagraph(input.value);
+                    }
                 }
-            }
-        });
-    }
+            });
+        }
+    });
 }
 function jumpToParagraph(idStr) {
     let targetId = idStr.trim();
     // Always clear previous searches first
     clearSearchHighlights();
-    if (/^\d+-\d+$/.test(targetId)) {
-        targetId = 'p' + targetId;
+    const isWord = window.getMode?.() === 'word';
+    if (isWord) {
+        if (/^\d+$/.test(targetId)) {
+            targetId = 'p' + targetId;
+        }
+        else {
+            // In Word mode, if it's not a pure number, we treat it as text search (down below)
+            // or we could check for 'p' prefix.
+            if (!targetId.startsWith('p')) {
+                // If it's not a number and not p-prefixed, we'll fall through to text search.
+            }
+        }
     }
-    else if (/^\d+$/.test(targetId) && window.getMode?.() === 'word') {
-        // In Word Mode, support jumping with just a number (e.g. "1" -> "p1")
-        targetId = 'p' + targetId;
+    else {
+        // Standard Mode
+        if (/^\d+-\d+$/.test(targetId)) {
+            targetId = 'p' + targetId;
+        }
     }
     const target = document.getElementById(targetId);
     if (target) {

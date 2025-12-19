@@ -1,5 +1,6 @@
 import { buildFullHTML as buildFullHTMLUtil, readTextFromFile } from '../utils/file.js';
-import { getPagesContainerElement, state, } from '../globals.js'; // We might need to make sure globals.js exports these or we use window properties
+import { getPagesContainerElement, state, } from '../globals.js';
+import { getMode } from '../core/router.js';
 // We need to access initPages, renumberParagraphs etc.
 // Since they are on window, we can use them.
 // Or we can import them if we move them to a module.
@@ -16,6 +17,13 @@ export function setPagesHTML(html) {
 export function importFullHTMLText(text) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(text, 'text/html');
+    // Constraint: Word mode can only open Word mode files
+    if (getMode() === 'word') {
+        if (!doc.body.classList.contains('mode-word')) {
+            alert('標準モードで作成されたファイルはWordモードでは開けません。');
+            return false;
+        }
+    }
     // Extract margin setting from style
     const styleTags = doc.querySelectorAll('style');
     let marginToApply = '17mm'; // Default
@@ -233,5 +241,6 @@ export async function buildFullHTML() {
     // Create a fake style element with preserved variables
     const fakeStyle = document.createElement('style');
     fakeStyle.innerHTML = `:root { --page-margin: ${currentMargin}; } \n` + styleContent;
-    return buildFullHTMLUtil(pagesContainer, fakeStyle);
+    const isWordMode = getMode() === 'word';
+    return buildFullHTMLUtil(pagesContainer, fakeStyle, isWordMode);
 }
