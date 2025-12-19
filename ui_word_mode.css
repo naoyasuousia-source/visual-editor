@@ -15,14 +15,15 @@ body:not(.mode-word) .word-only {
 /* 2. Layout Transformation */
 body.mode-word #pages-container {
     background-color: #e0e0e0 !important;
-    padding: 40px 0 0 0 !important;
-    /* Top space only */
+    padding: 24px 0 !important;
+    /* Add some top/bottom buffer outside the page */
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     overflow-y: auto !important;
     position: relative;
     height: 100% !important;
+    box-sizing: border-box !important;
 }
 
 body.mode-word section.page {
@@ -32,8 +33,6 @@ body.mode-word section.page {
     height: auto !important;
     min-height: 297mm !important;
     /* Fixed A4 Minimum */
-    flex-grow: 1;
-    /* Stretch to fill but grow with content */
     margin: 0 !important;
     padding: 0 !important;
     border: none !important;
@@ -44,14 +43,12 @@ body.mode-word section.page {
     z-index: 1;
 }
 
-/* Guard against existing pseudo-elements */
-body.mode-word #pages-container::before,
-body.mode-word #pages-container::after {
+/* Remove Pagination Indicators & Sidebar */
+body.mode-word #page-navigator,
+body.mode-word #sidebar-toggle-overlay,
+body.mode-word #sidebar-toggle-btn,
+body.mode-word #ai-image-index {
     display: none !important;
-}
-
-body.mode-word section.page.active {
-    outline: none !important;
 }
 
 body.mode-word section.page::after {
@@ -62,20 +59,16 @@ body.mode-word section.page::after {
 body.mode-word .page-inner {
     padding: 40px 17mm !important;
     height: auto !important;
+    /* Formula: Total Height = A4(297mm) + ContentLength */
+    /* Implementation: Constant padding-bottom ensures this additive property. */
+    /* To make minimal height exactly 297mm, we subtract top padding from base A4. */
+    padding-bottom: calc(297mm - 40px) !important;
     min-height: 297mm !important;
-    /* Match page min-height */
     overflow: visible !important;
     width: 100% !important;
     box-sizing: border-box !important;
     outline: none !important;
-}
-
-/* Hide Pagination Indicators & Sidebar */
-body.mode-word #page-navigator,
-body.mode-word #sidebar-toggle-overlay,
-body.mode-word #sidebar-toggle-btn,
-body.mode-word #ai-image-index {
-    display: none !important;
+    background: #fff !important;
 }
 
 /* 3. Toolbar Simplification */
@@ -121,7 +114,7 @@ body.mode-word div.word-only.block-layout {
 
 .word-hint-desc-group {
     padding-top: 2.8rem;
-    /* One level below title, next to SVG */
+    /* Correctly one level below the title, aligning with SVG */
 }
 
 /* Specific File Menu Items to hide */
