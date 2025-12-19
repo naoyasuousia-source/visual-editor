@@ -69,13 +69,15 @@ body {
 #toolbar button[data-action="strike"],
 #toolbar button[data-action="highlight"],
 #toolbar button[data-action="superscript"],
-#toolbar button[data-action="subscript"] {
+#toolbar button[data-action="subscript"],
+#help-trigger {
   width: 36px;
   height: 36px;
-  padding: 0;
+  padding: 0 !important;
   display: inline-flex;
   justify-content: center;
   align-items: center;
+  box-sizing: border-box;
 }
 
 #toolbar button:active {
@@ -1310,18 +1312,6 @@ dialog .dialog-actions {
   /* Scrollbar space */
 }
 
-
-/* Help Button & Dialog */
-#help-trigger {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 4px;
-}
-
 /* Rich Hint Dialog Styles */
 #help-dialog {
   max-width: 700px;
@@ -1362,12 +1352,21 @@ dialog .dialog-actions {
   border: none;
   color: #9ca3af;
   cursor: pointer;
-  padding: 4px;
+  padding: 0;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   transition: all 0.2s;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.close-button svg {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
 }
 
 .close-button:hover {
