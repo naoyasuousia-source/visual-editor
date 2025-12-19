@@ -1,96 +1,159 @@
-/* Mode Switch Button */
-#mode-switch {
-    width: auto !important;
-    padding: 0 12px !important;
-    font-size: 0.85rem;
-    font-weight: bold;
-    color: #555;
-    min-width: 90px;
-}
+/* 
+  Word Compatible Mode Styles
+  This file is active only when <body> has .mode-word class.
+*/
 
-#mode-switch .mode-text-std,
-#mode-switch .mode-text-word {
-    display: none;
-}
-
-/* Default (Standard) or Explicit Standard */
-body:not(.mode-word) #mode-switch .mode-text-std {
-    display: inline;
-}
-
-/* Word Mode Active */
-body.mode-word #mode-switch .mode-text-word {
-    display: inline;
-    color: #0288d1;
-}
-
-/* ----------------------------------------------------------------
-   Word Compatible Mode (Draft View)
-   ---------------------------------------------------------------- */
-
-/* 1. Hide unsupported/irrelevant UI elements */
-body.mode-word [data-action="add-page"],
-body.mode-word [data-action="remove-page"],
-body.mode-word #page-navigator,
-body.mode-word #sidebar-toggle-overlay {
+/* 1. Base UI Visibility Control */
+body.mode-word .standard-only {
     display: none !important;
 }
 
-/* Hide specific Nested Dropdowns in File Menu via :has() (Chrome/Edge) */
-/* "Images" menu */
-body.mode-word .nested-dropdown:has([data-action="insert-image-dropbox"]) {
+body:not(.mode-word) .word-only {
     display: none !important;
 }
 
-/* "Margins" menu */
-body.mode-word .nested-dropdown:has([data-action="page-margin"]) {
-    display: none !important;
-}
-
-/* 2. Layout Changes - Continuous Scroll "Draft" Look */
+/* 2. Layout Transformation (Remove Page Concept but keep A4-width feeling) */
 body.mode-word #pages-container {
-    background: #ffffff;
-    padding: 40px 15%;
-    /* Centered text column feeling */
-    gap: 0;
-    align-items: stretch;
-    /* Fill width */
-}
-
-/* Reset Page Card Style */
-body.mode-word .page {
-    width: 100% !important;
-    max-width: none !important;
-    height: auto !important;
-    min-height: auto;
-    margin: 0 !important;
+    background: #e0e0e0 !important;
+    /* Side gray background */
     padding: 0 !important;
-    box-shadow: none !important;
-    border: none;
-    background: transparent;
-
-    /* Visual separator for pages in draft mode - subtle dashed line */
-    border-bottom: 1px dashed #ccc;
-    border-radius: 0;
+    /* Remove top/bottom gray */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    overflow-y: auto !important;
 }
 
-/* Hide separator for the last page */
-body.mode-word .page:last-child {
-    border-bottom: none;
+body.mode-word section.page {
+    width: 210mm !important;
+    /* A4 Width */
+    min-width: 210mm !important;
+    max-width: 210mm !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    /* Ensure it fills the height or grows */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1) !important;
+    margin: 0 !important;
+    /* Remove margins for continuous feel */
+    padding: 0 !important;
+    border: none !important;
+    overflow: visible !important;
+    background: #fff !important;
+}
+
+body.mode-word section.page::after {
+    content: none !important;
+    /* Hide page numbers */
 }
 
 body.mode-word .page-inner {
-    /* Reset Fixed Dimensions */
-    width: 100% !important;
+    padding: 40px 17mm !important;
+    /* Standard-like margins */
     height: auto !important;
-    padding: 20px 0 !important;
-    /* Just vertical padding */
-    box-sizing: border-box;
+    min-height: 100vh !important;
     overflow: visible !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
 
-/* Adjust zoom behavior if needed - but zoom works on #pages-container usually? 
-   No, usually on .page. 
-   If zoom transform is applied to .page, it might get tricky with width:100%. 
-   Let's assume zoom logic (scale) still applies effectively or might need check.
-*/
+/* Hide Pagination Indicators & Sidebar */
+body.mode-word #page-navigator,
+body.mode-word #sidebar-toggle-overlay,
+body.mode-word #sidebar-toggle-btn,
+body.mode-word #ai-image-index {
+    display: none !important;
+}
+
+/* 3. Toolbar Simplification */
+body.mode-word #toolbar {
+    justify-content: flex-start;
+    gap: 12px;
+    padding-left: 20px;
+}
+
+/* Hide Specific Menus & Buttons */
+body.mode-word .view-menu,
+body.mode-word .highlight-control,
+body.mode-word .font-chooser,
+body.mode-word .paragraph-chooser,
+body.mode-word .nested-dropdown,
+body.mode-word .zoom-controls,
+/* Entire container to avoid "vertical white thing" */
+body.mode-word [data-action="highlight"],
+body.mode-word [data-action="zoom-in"],
+body.mode-word [data-action="zoom-out"],
+body.mode-word [data-action="add-page"],
+body.mode-word [data-action="remove-page"],
+body.mode-word #zoom-level-display,
+body.mode-word #add-page-btn,
+body.mode-word #remove-page-btn {
+    display: none !important;
+}
+
+/* Specific File Menu Items to hide */
+body.mode-word .file-dropdown [data-action="export-pdf"],
+body.mode-word .file-dropdown [data-action="save-as-pdf"],
+body.mode-word .file-dropdown [data-action="print"],
+body.mode-word .file-dropdown .nested-trigger,
+body.mode-word .file-dropdown .menu-item-label,
+body.mode-word .file-dropdown hr {
+    display: none !important;
+}
+
+/* Word Mode Only Component Display */
+body.mode-word .word-only {
+    display: inline-flex !important;
+    align-items: stretch;
+    gap: 8px;
+}
+
+/* Block Element Selector for Word Mode */
+body.mode-word .word-block-selector {
+    background: #fff;
+    /* Changed from gray to white */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 0 12px;
+    font-size: 14px;
+    height: 36px;
+    box-sizing: border-box;
+    cursor: pointer;
+    outline: none;
+    font-family: inherit;
+}
+
+body.mode-word .word-block-selector:hover {
+    background-color: #f0f0f0;
+}
+
+/* 4. Mode Switch Button Styling */
+#mode-switch {
+    order: 99;
+    margin-left: auto;
+    border: 1px solid #ddd;
+    background: #fff;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#mode-switch:hover {
+    background: #f0f0f0;
+}
+
+body.mode-word #mode-switch .mode-text-std {
+    display: inline;
+}
+
+body.mode-word #mode-switch .mode-text-word {
+    display: none;
+}
+
+body:not(.mode-word) #mode-switch .mode-text-std {
+    display: none;
+}
+
+body:not(.mode-word) #mode-switch .mode-text-word {
+    display: inline;
+}

@@ -1,4 +1,5 @@
 import { getParagraphChooserElement, getFontChooserElement, getHighlightControlElement } from '../globals.js';
+import { applyBlockElement } from '../editor/formatting.js';
 import { switchMode, getMode } from '../core/router.js';
 // DOM Elements
 const getFileDropdownElement = () => document.querySelector('.file-dropdown');
@@ -445,9 +446,31 @@ export function initViewMenuControls() {
         });
     }
     const paraNumCheckbox = document.querySelector('input[data-action="toggle-para-numbers"]');
+    const wordParaNumCheckbox = document.getElementById('word-toggle-para-numbers');
     if (paraNumCheckbox) {
         paraNumCheckbox.addEventListener('change', () => {
-            document.body.classList.toggle('hide-para-numbers', !paraNumCheckbox.checked);
+            const checked = paraNumCheckbox.checked;
+            document.body.classList.toggle('hide-para-numbers', !checked);
+            if (wordParaNumCheckbox)
+                wordParaNumCheckbox.checked = checked;
+        });
+    }
+}
+export function initWordToolbarControls() {
+    const wordParaNumCheckbox = document.getElementById('word-toggle-para-numbers');
+    const stdParaNumCheckbox = document.querySelector('input[data-action="toggle-para-numbers"]');
+    if (wordParaNumCheckbox) {
+        wordParaNumCheckbox.addEventListener('change', () => {
+            const checked = wordParaNumCheckbox.checked;
+            document.body.classList.toggle('hide-para-numbers', !checked);
+            if (stdParaNumCheckbox)
+                stdParaNumCheckbox.checked = checked;
+        });
+    }
+    const wordBlockSelector = document.getElementById('word-block-selector');
+    if (wordBlockSelector) {
+        wordBlockSelector.addEventListener('change', () => {
+            applyBlockElement(wordBlockSelector.value);
         });
     }
 }

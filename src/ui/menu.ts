@@ -4,6 +4,7 @@ import {
     getFontChooserElement,
     getHighlightControlElement
 } from '../globals.js';
+import { applyBlockElement } from '../editor/formatting.js';
 import { switchMode, getMode } from '../core/router.js';
 
 // DOM Elements
@@ -474,9 +475,33 @@ export function initViewMenuControls(): void {
     }
 
     const paraNumCheckbox = document.querySelector<HTMLInputElement>('input[data-action="toggle-para-numbers"]');
+    const wordParaNumCheckbox = document.getElementById('word-toggle-para-numbers') as HTMLInputElement | null;
+
     if (paraNumCheckbox) {
         paraNumCheckbox.addEventListener('change', () => {
-            document.body.classList.toggle('hide-para-numbers', !paraNumCheckbox.checked);
+            const checked = paraNumCheckbox.checked;
+            document.body.classList.toggle('hide-para-numbers', !checked);
+            if (wordParaNumCheckbox) wordParaNumCheckbox.checked = checked;
+        });
+    }
+}
+
+export function initWordToolbarControls(): void {
+    const wordParaNumCheckbox = document.getElementById('word-toggle-para-numbers') as HTMLInputElement | null;
+    const stdParaNumCheckbox = document.querySelector<HTMLInputElement>('input[data-action="toggle-para-numbers"]');
+
+    if (wordParaNumCheckbox) {
+        wordParaNumCheckbox.addEventListener('change', () => {
+            const checked = wordParaNumCheckbox.checked;
+            document.body.classList.toggle('hide-para-numbers', !checked);
+            if (stdParaNumCheckbox) stdParaNumCheckbox.checked = checked;
+        });
+    }
+
+    const wordBlockSelector = document.getElementById('word-block-selector') as HTMLSelectElement | null;
+    if (wordBlockSelector) {
+        wordBlockSelector.addEventListener('change', () => {
+            applyBlockElement(wordBlockSelector.value);
         });
     }
 }

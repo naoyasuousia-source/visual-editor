@@ -3,6 +3,7 @@ import { ensureAiImageIndex } from './image.js';
 import { bindEditorEvents } from '../ui/events.js';
 import { renumberParagraphs } from './formatting.js';
 import { updateNavigator } from '../ui/navigator.js';
+import { getMode } from '../core/router.js';
 
 export function createPage(pageNumber: number, contentHTML?: string): HTMLElement {
     const section = document.createElement('section');
@@ -118,6 +119,7 @@ export function removePage(): void {
 
 export function checkPageOverflow(pageInner: HTMLElement): void {
     if (!pageInner) return;
+    if (getMode() === 'word') return; // Word mode: no page concept, no overflow logic
     // Buffer of 1px
     if (pageInner.scrollHeight > pageInner.clientHeight + 1) {
         moveOverflowingContent(pageInner);

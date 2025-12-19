@@ -6,6 +6,7 @@ import { addPage, removePage } from '../editor/page.js';
 import { saveFullHTML, openWithFilePicker, overwriteCurrentFile, saveAsWithFilePicker } from '../editor/io.js';
 import { promptDropboxImageUrl, promptWebImageUrl } from '../editor/image.js';
 import { addLinkDestination, createLink, removeLink } from '../editor/links.js';
+import { getMode } from '../core/router.js';
 import { getToolbarElement } from '../globals.js';
 export function updateMarginButtonState(activeSize) {
     const toolbarElement = getToolbarElement();
@@ -69,6 +70,12 @@ export function updateToolbarState() {
         if (labelSpan) {
             labelSpan.textContent = label;
         }
+        const wordBlockSelector = document.getElementById('word-block-selector');
+        if (wordBlockSelector) {
+            // Map label back to tag if needed, or just use blockType
+            const wordTag = blockType === 'mini-p' ? 'h6' : blockType;
+            wordBlockSelector.value = wordTag;
+        }
     }
 }
 export function bindToolbarHandlers() {
@@ -104,6 +111,14 @@ export function bindToolbarHandlers() {
             event.stopPropagation();
         }
         const action = btn.dataset.action;
+        // Restriction check for Word Mode
+        if (getMode() === 'word') {
+            const forbiddenActions = ['insert-image-dropbox', 'insert-image-web', 'add-link-destination', 'create-link', 'remove-link'];
+            if (action && forbiddenActions.includes(action)) {
+                alert('Word互換モードでは、画像、リンク、表の挿入は利用できません。');
+                return;
+            }
+        }
         switch (action) {
             case 'bold':
                 toggleBold();

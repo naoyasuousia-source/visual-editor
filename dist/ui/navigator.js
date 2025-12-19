@@ -230,6 +230,10 @@ function jumpToParagraph(idStr) {
     if (/^\d+-\d+$/.test(targetId)) {
         targetId = 'p' + targetId;
     }
+    else if (/^\d+$/.test(targetId) && window.getMode?.() === 'word') {
+        // In Word Mode, support jumping with just a number (e.g. "1" -> "p1")
+        targetId = 'p' + targetId;
+    }
     const target = document.getElementById(targetId);
     if (target) {
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });

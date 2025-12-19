@@ -8,16 +8,18 @@ import { updateToolbarState } from '../ui/toolbar.js';
 import { getPagesContainerElement } from '../globals.js';
 import { rebuildFigureMetaStore } from './image.js';
 import { updateAiMetaGuide } from './ai-meta.js';
+import { getMode } from '../core/router.js';
 export function renumberParagraphs() {
     const pagesContainer = getPagesContainerElement();
     if (!pagesContainer)
         return;
     const pages = pagesContainer.querySelectorAll('section.page');
+    const isWordMode = getMode() === 'word';
+    let globalParaIndex = 1;
     pages.forEach(page => {
         let pageNum = page.getAttribute('data-page');
-        if (!pageNum) {
+        if (!pageNum)
             pageNum = '1';
-        }
         const inner = page.querySelector('.page-inner');
         if (!inner)
             return;
@@ -26,7 +28,7 @@ export function renumberParagraphs() {
             p.innerHTML = '<br>';
             inner.appendChild(p);
         }
-        let paraIndex = 1;
+        let pageParaIndex = 1;
         inner.querySelectorAll('p, h1, h2, h3, h4, h5, h6').forEach(block => {
             const el = block;
             el.querySelectorAll('.para-num').forEach(span => span.remove());
@@ -36,12 +38,19 @@ export function renumberParagraphs() {
                 }
                 body.remove();
             });
-            el.dataset.para = String(paraIndex);
-            el.id = `p${pageNum}-${paraIndex}`;
+            if (isWordMode) {
+                el.dataset.para = String(globalParaIndex);
+                el.id = `p${globalParaIndex}`;
+                globalParaIndex++;
+            }
+            else {
+                el.dataset.para = String(pageParaIndex);
+                el.id = `p${pageNum}-${pageParaIndex}`;
+                pageParaIndex++;
+            }
             if (!el.dataset.blockStyle) {
                 el.dataset.blockStyle = el.tagName.toLowerCase();
             }
-            paraIndex++;
         });
     });
     rebuildFigureMetaStore();
