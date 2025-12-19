@@ -12,35 +12,17 @@ body:not(.mode-word) .word-only {
     display: none !important;
 }
 
-/* 2. Layout Transformation (Remove Page Concept but keep A4-width feeling) */
+/* 2. Layout Transformation */
 body.mode-word #pages-container {
     background-color: #e0e0e0 !important;
-    background-image: linear-gradient(to right,
-            rgba(0, 0, 0, 0) calc(50% - 105mm),
-            #fff calc(50% - 105mm),
-            #fff calc(50% + 105mm),
-            rgba(0, 0, 0, 0) calc(50% + 105mm)) !important;
-    padding: 0 !important;
+    padding: 40px 0 0 0 !important;
+    /* Top space only */
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     overflow-y: auto !important;
     position: relative;
-}
-
-/* Side shadows that go on forever */
-body.mode-word #pages-container::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: -100000px;
-    /* Infinite-ish */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 210mm;
-    box-shadow: 10px 0 10px -5px rgba(0, 0, 0, 0.1), -10px 0 10px -5px rgba(0, 0, 0, 0.1);
-    z-index: 0;
-    pointer-events: none;
+    height: 100% !important;
 }
 
 body.mode-word section.page {
@@ -48,23 +30,28 @@ body.mode-word section.page {
     min-width: 210mm !important;
     max-width: 210mm !important;
     height: auto !important;
-    min-height: 100vh !important;
+    min-height: 297mm !important;
+    /* Fixed A4 Minimum */
     flex-grow: 1;
+    /* Stretch to fill but grow with content */
     margin: 0 !important;
     padding: 0 !important;
     border: none !important;
     outline: none !important;
-    /* No blue focus frame */
     overflow: visible !important;
-    background: transparent !important;
-    /* Let container gradient/before show through */
-    box-shadow: none !important;
+    background: #fff !important;
+    box-shadow: 10px 0 10px -5px rgba(0, 0, 0, 0.1), -10px 0 10px -5px rgba(0, 0, 0, 0.1) !important;
     z-index: 1;
+}
+
+/* Guard against existing pseudo-elements */
+body.mode-word #pages-container::before,
+body.mode-word #pages-container::after {
+    display: none !important;
 }
 
 body.mode-word section.page.active {
     outline: none !important;
-    /* Final override for blue frame */
 }
 
 body.mode-word section.page::after {
@@ -75,12 +62,12 @@ body.mode-word section.page::after {
 body.mode-word .page-inner {
     padding: 40px 17mm !important;
     height: auto !important;
-    min-height: 100vh !important;
+    min-height: 297mm !important;
+    /* Match page min-height */
     overflow: visible !important;
     width: 100% !important;
     box-sizing: border-box !important;
     outline: none !important;
-    /* Remove blue focus frame */
 }
 
 /* Hide Pagination Indicators & Sidebar */
@@ -112,21 +99,13 @@ body.mode-word #remove-page-btn {
     display: none !important;
 }
 
-/* Modal Mode Visibility */
-body.mode-word .standard-only {
-    display: none !important;
-}
-
-body:not(.mode-word) .word-only {
-    display: none !important;
-}
-
 /* Fix block elements with .word-only */
 body.mode-word section.word-only,
 body.mode-word div.word-only.block-layout {
     display: block !important;
 }
 
+/* Hint Dialog Word Mode Layout */
 .word-hint-container {
     display: flex;
     gap: 32px;
@@ -137,13 +116,12 @@ body.mode-word div.word-only.block-layout {
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* SVG centered under Title */
     min-width: max-content;
 }
 
 .word-hint-desc-group {
-    padding-top: 2.2rem;
-    /* "一段下がったところ" next to SVG */
+    padding-top: 2.8rem;
+    /* One level below title, next to SVG */
 }
 
 /* Specific File Menu Items to hide */
@@ -166,7 +144,6 @@ body.mode-word .word-only {
 /* Block Element Selector for Word Mode */
 body.mode-word .word-block-selector {
     background: #fff;
-    /* Changed from gray to white */
     border: 1px solid #ccc;
     border-radius: 4px;
     padding: 0 12px;
