@@ -154,10 +154,6 @@ body {
   text-decoration: line-through;
 }
 
-#toolbar button[data-action="highlight"] {
-  /* Standard icon style */
-}
-
 /* File Menu & Dropdowns */
 .file-menu,
 .view-menu {
@@ -1483,13 +1479,62 @@ dialog .dialog-actions {
   color: #0891b2;
 }
 
+#sub-help-dialog {
+  max-width: 500px;
+  width: 90%;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+#sub-help-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+#sub-help-dialog form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .hint-body.is-small {
-  font-size: 0.5em;
-  /* ユーザーの「半分にして」という要望に合わせて0.5emに設定 */
+  font-size: 11pt !important;
   max-height: 400px;
   overflow-y: auto;
-  line-height: 1.5;
+  line-height: 1.4;
   padding: 16px;
   background: #fdfdfd;
   border-radius: 4px;
+}
+
+.hint-body.is-small * {
+  font-size: 11pt !important;
+}
+
+#sub-help-dialog-label {
+  font-size: 1.5em;
+  /* 1.5倍 */
+  font-weight: 800;
+  color: #0891b2;
+}
+
+.hint-body.is-small {
+  text-align: left !important;
+  /* 本文は確実に左揃え */
+}
+
+.hint-body.is-small .section-title {
+  text-align: center !important;
+  /* 条文見出しのみ中央揃え */
+  display: block;
+  margin: 1.5em 0 0.8em 0;
+  font-weight: 800;
+  font-size: 1.1em;
+}
+
+.hint-body.is-small p {
+  text-align: left !important;
+  margin-bottom: 0.8em;
 }
