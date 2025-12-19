@@ -14,14 +14,33 @@ body:not(.mode-word) .word-only {
 
 /* 2. Layout Transformation (Remove Page Concept but keep A4-width feeling) */
 body.mode-word #pages-container {
-    background: #e0e0e0 !important;
-    /* Side gray background */
+    background-color: #e0e0e0 !important;
+    background-image: linear-gradient(to right,
+            rgba(0, 0, 0, 0) calc(50% - 105mm),
+            #fff calc(50% - 105mm),
+            #fff calc(50% + 105mm),
+            rgba(0, 0, 0, 0) calc(50% + 105mm)) !important;
     padding: 0 !important;
-    /* Remove top/bottom gray */
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     overflow-y: auto !important;
+    position: relative;
+}
+
+/* Side shadows that go on forever */
+body.mode-word #pages-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: -100000px;
+    /* Infinite-ish */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 210mm;
+    box-shadow: 10px 0 10px -5px rgba(0, 0, 0, 0.1), -10px 0 10px -5px rgba(0, 0, 0, 0.1);
+    z-index: 0;
+    pointer-events: none;
 }
 
 body.mode-word section.page {
@@ -31,16 +50,21 @@ body.mode-word section.page {
     height: auto !important;
     min-height: 100vh !important;
     flex-grow: 1;
-    /* Extend to bottom */
-    box-shadow: 10px 0 10px -5px rgba(0, 0, 0, 0.1), -10px 0 10px -5px rgba(0, 0, 0, 0.1) !important;
-    /* Side shadows only */
     margin: 0 !important;
     padding: 0 !important;
     border: none !important;
     outline: none !important;
-    /* Remove any potential blue focus frame */
+    /* No blue focus frame */
     overflow: visible !important;
-    background: #fff !important;
+    background: transparent !important;
+    /* Let container gradient/before show through */
+    box-shadow: none !important;
+    z-index: 1;
+}
+
+body.mode-word section.page.active {
+    outline: none !important;
+    /* Final override for blue frame */
 }
 
 body.mode-word section.page::after {
@@ -103,11 +127,23 @@ body.mode-word div.word-only.block-layout {
     display: block !important;
 }
 
-.word-only-column {
+.word-hint-container {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+}
+
+.word-hint-title-group {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    align-items: center;
+    /* SVG centered under Title */
+    min-width: max-content;
+}
+
+.word-hint-desc-group {
+    padding-top: 2.2rem;
+    /* "一段下がったところ" next to SVG */
 }
 
 /* Specific File Menu Items to hide */
