@@ -952,7 +952,8 @@ dialog .dialog-actions {
   /* Removed bold */
 }
 
-#toolbar-jump-input {
+#toolbar-jump-input,
+#toolbar-jump-input-word {
   width: 100%;
   height: auto;
   padding: 0;
@@ -968,7 +969,8 @@ dialog .dialog-actions {
   color: #000;
 }
 
-#toolbar-jump-input::placeholder {
+#toolbar-jump-input::placeholder,
+#toolbar-jump-input-word::placeholder {
   color: #999;
   font-size: 7pt;
   opacity: 1;

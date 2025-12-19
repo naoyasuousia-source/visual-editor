@@ -156,16 +156,34 @@ body.mode-word .word-block-selector:hover {
 #mode-switch {
     order: 99;
     margin-left: auto;
-    border: 1px solid #ddd;
-    background: #fff;
-    padding: 4px 12px;
-    border-radius: 4px;
-    font-weight: bold;
+    border: none !important;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: 0.8em !important;
     cursor: pointer;
+    color: #fff !important;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+body:not(.mode-word) #mode-switch {
+    background: #2b579a !important;
+    /* Word Blue */
+}
+
+body.mode-word #mode-switch {
+    background: #f39c12 !important;
+    /* Soft Orange */
 }
 
 #mode-switch:hover {
-    background: #f0f0f0;
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+#mode-switch:active {
+    transform: translateY(0);
 }
 
 body.mode-word #mode-switch .mode-text-std {
