@@ -106,28 +106,70 @@ function replaceInlineTag(currentEditor: HTMLElement, from: string, to: string):
 export function toggleBold(): void {
     const currentEditor = window.currentEditor;
     if (!currentEditor) return;
+
+    const selection = window.getSelection();
+    let savedState: SelectionState | null = null;
+    if (selection && selection.rangeCount > 0) {
+        savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
+    }
+
     currentEditor.focus();
     document.execCommand('bold', false, undefined);
     normalizeInlineFormatting();
 
+    if (savedState) {
+        const restored = restoreRangeFromSelectionState(savedState);
+        if (restored && selection) {
+            selection.removeAllRanges();
+            selection.addRange(restored);
+        }
+    }
 }
 
 export function toggleItalic(): void {
     const currentEditor = window.currentEditor;
     if (!currentEditor) return;
+
+    const selection = window.getSelection();
+    let savedState: SelectionState | null = null;
+    if (selection && selection.rangeCount > 0) {
+        savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
+    }
+
     currentEditor.focus();
     document.execCommand('italic', false, undefined);
     normalizeInlineFormatting();
 
+    if (savedState) {
+        const restored = restoreRangeFromSelectionState(savedState);
+        if (restored && selection) {
+            selection.removeAllRanges();
+            selection.addRange(restored);
+        }
+    }
 }
 
 export function toggleUnderline(): void {
     const currentEditor = window.currentEditor;
     if (!currentEditor) return;
+
+    const selection = window.getSelection();
+    let savedState: SelectionState | null = null;
+    if (selection && selection.rangeCount > 0) {
+        savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
+    }
+
     currentEditor.focus();
     document.execCommand('underline', false, undefined);
     normalizeInlineFormatting();
 
+    if (savedState) {
+        const restored = restoreRangeFromSelectionState(savedState);
+        if (restored && selection) {
+            selection.removeAllRanges();
+            selection.addRange(restored);
+        }
+    }
 }
 
 export function toggleStrikeThrough(): void {

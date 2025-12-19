@@ -76,25 +76,61 @@ export function toggleBold() {
     const currentEditor = window.currentEditor;
     if (!currentEditor)
         return;
+    const selection = window.getSelection();
+    let savedState = null;
+    if (selection && selection.rangeCount > 0) {
+        savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
+    }
     currentEditor.focus();
     document.execCommand('bold', false, undefined);
     normalizeInlineFormatting();
+    if (savedState) {
+        const restored = restoreRangeFromSelectionState(savedState);
+        if (restored && selection) {
+            selection.removeAllRanges();
+            selection.addRange(restored);
+        }
+    }
 }
 export function toggleItalic() {
     const currentEditor = window.currentEditor;
     if (!currentEditor)
         return;
+    const selection = window.getSelection();
+    let savedState = null;
+    if (selection && selection.rangeCount > 0) {
+        savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
+    }
     currentEditor.focus();
     document.execCommand('italic', false, undefined);
     normalizeInlineFormatting();
+    if (savedState) {
+        const restored = restoreRangeFromSelectionState(savedState);
+        if (restored && selection) {
+            selection.removeAllRanges();
+            selection.addRange(restored);
+        }
+    }
 }
 export function toggleUnderline() {
     const currentEditor = window.currentEditor;
     if (!currentEditor)
         return;
+    const selection = window.getSelection();
+    let savedState = null;
+    if (selection && selection.rangeCount > 0) {
+        savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
+    }
     currentEditor.focus();
     document.execCommand('underline', false, undefined);
     normalizeInlineFormatting();
+    if (savedState) {
+        const restored = restoreRangeFromSelectionState(savedState);
+        if (restored && selection) {
+            selection.removeAllRanges();
+            selection.addRange(restored);
+        }
+    }
 }
 export function toggleStrikeThrough() {
     const currentEditor = window.currentEditor;
