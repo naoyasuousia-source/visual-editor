@@ -174,12 +174,11 @@ body.hide-para-numbers .page-inner [data-para]::before {
   width: 85%;
 }
 
+/* .figure-title: Removed custom font/color styles to list block tag control style (e.g. h6) */
 .page-inner .figure-title {
-  display: block;
-  margin-top: 0;
-  font-size: 1em;
-  color: #666;
-  line-height: normal;
+  display: inline;
+  /* blockからinlineへ変更（横並びや自然な配置のため） */
+  margin: 0;
 }
 
 .page-inner .figure-inline .caret-slot {
@@ -317,9 +316,7 @@ body.hide-para-numbers .page-inner [data-para]::before {
   margin-bottom: 36px;
 }
 
-.mini-text {
-  font-size: 8pt;
-}
+/* Removed .mini-text */
 
 
 

@@ -63,8 +63,7 @@ export function renumberParagraphs(): void {
             el.id = `p${pageNum}-${paraIndex}`;
 
             if (!el.dataset.blockStyle) {
-                const hasMiniTextSpan = el.querySelector(':scope > .mini-text');
-                el.dataset.blockStyle = hasMiniTextSpan ? 'mini-p' : el.tagName.toLowerCase();
+                el.dataset.blockStyle = el.tagName.toLowerCase();
             }
 
             paraIndex++;

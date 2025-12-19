@@ -357,9 +357,10 @@ export function openTitleDialog(): void {
         imageTitleInputElement.select();
     }
     const figureTitleSpan = block.querySelector<HTMLElement>('.figure-title');
-    const hasMiniTextInTitle = !!figureTitleSpan?.querySelector('.mini-text');
-    const isBlockStyleMini = block.dataset.blockStyle === 'mini-p';
-    const fontValue = (isBlockStyleMini || hasMiniTextInTitle) ? 'mini' : 'default';
+    const hasH6InTitle = !!figureTitleSpan?.querySelector('h6'); // Or if title itself is H6? No, title is span.
+    // Logic: if block itself is h6, then font is mini.
+    const isBlockH6 = block.tagName.toLowerCase() === 'h6';
+    const fontValue = isBlockH6 ? 'mini' : 'default';
     imageTitleFontRadios.forEach(radio => {
         radio.checked = radio.value === fontValue;
     });
@@ -430,8 +431,18 @@ export function applyImageTitle(): void {
     if (!paragraph) return;
 
     const isMini = fontSize === 'mini';
-    paragraph.dataset.blockStyle = isMini ? 'mini-p' : 'p';
-    const wrapper = ensureFigureWrapper(paragraph);
+    const targetTag = isMini ? 'h6' : 'p';
+
+    let targetParagraph = paragraph;
+    if (paragraph.tagName.toLowerCase() !== targetTag) {
+        const newBlock = convertParagraphToTag(paragraph, targetTag);
+        if (newBlock) targetParagraph = newBlock;
+    }
+
+    // Clear legacy style if exists
+    targetParagraph.removeAttribute('data-block-style');
+
+    const wrapper = ensureFigureWrapper(targetParagraph);
     removeExistingImageTitle(contextTargetImage);
 
     if (rawTitle) {
@@ -441,16 +452,7 @@ export function applyImageTitle(): void {
         caretSlot.contentEditable = 'false';
         caretSlot.innerHTML = '&#8203;';
 
-        let titleContent: Node;
-        if (isMini) {
-            const miniSpan = document.createElement('span');
-            miniSpan.className = 'mini-text';
-            miniSpan.style.fontSize = '8pt';
-            miniSpan.textContent = rawTitle;
-            titleContent = miniSpan;
-        } else {
-            titleContent = document.createTextNode(rawTitle);
-        }
+        const titleContent = document.createTextNode(rawTitle);
 
         const titleSpan = document.createElement('span');
         titleSpan.className = 'figure-title';

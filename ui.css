@@ -5,6 +5,13 @@
   --tab-width: 0px;
 }
 
+h6 {
+  margin: 0;
+  font-size: 0.67em;
+  /* ブラウザ標準に従うが明示 */
+  font-weight: bold;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -597,9 +604,7 @@ dialog .dialog-actions {
   text-align: right;
 }
 
-.mini-text {
-  font-size: 8pt;
-}
+/* Removed .mini-text and custom h6 overrides if any were here */
 
 /* Font Chooser Specifics */
 .font-submenu {
