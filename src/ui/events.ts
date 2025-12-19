@@ -193,6 +193,29 @@ export function bindEditorEvents(inner: HTMLElement): void {
             }
         }
     });
+
+    // 画像ペーストの禁止
+    inner.addEventListener('paste', (e: ClipboardEvent) => {
+        const clipboardData = e.clipboardData;
+        if (!clipboardData) return;
+
+        // 1. ファイルとしての画像ペーストをチェック
+        const items = clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                e.preventDefault();
+                alert('画像のペーストは利用できません。ツールバーの「ファイルを挿入」メニューから画像を追加してください。');
+                return;
+            }
+        }
+
+        // 2. HTML形式での画像（Webサイト等からのコピー）をチェック
+        const html = clipboardData.getData('text/html');
+        if (html && /<img\s+/i.test(html)) {
+            e.preventDefault();
+            alert('画像を含むコンテンツのペーストは利用できません。');
+        }
+    });
 }
 
 export function initPageLinkHandler(): void {
