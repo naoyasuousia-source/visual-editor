@@ -41,7 +41,8 @@ import {
     handleOpenFile,
     setPagesHTML,
     importFullHTMLText,
-    buildFullHTML
+    buildFullHTML,
+    importDocx
 } from './editor/io.js';
 
 
@@ -200,6 +201,7 @@ window.saveAsWithFilePicker = saveAsWithFilePicker;
 window.handleOpenFile = handleOpenFile;
 window.importFullHTMLText = importFullHTMLText;
 window.buildFullHTML = buildFullHTML;
+window.importDocx = importDocx;
 
 // Fonts & Paragraph Style
 window.applyFontFamily = applyFontFamily;

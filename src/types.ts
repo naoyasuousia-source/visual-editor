@@ -121,5 +121,6 @@ declare global {
         importFullHTMLText: (text: string) => boolean;
         handleOpenFile: (event: Event) => void;
         buildFullHTML: () => Promise<string>;
+        importDocx: (file: File) => Promise<boolean>;
     }
 }

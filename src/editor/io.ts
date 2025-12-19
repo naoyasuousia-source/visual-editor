@@ -263,3 +263,72 @@ export async function buildFullHTML(): Promise<string> {
 
     return buildFullHTMLUtil(pagesContainer, fakeStyle, isWordMode);
 }
+
+export async function importDocx(file: File): Promise<boolean> {
+    if (!(window as any).mammoth) {
+        alert('Mammoth.jsが読み込まれていません。');
+        return false;
+    }
+
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const options = {
+            styleMap: [
+                "u => u"
+            ],
+            // Mammoth convertImages handles images. We want to skip them.
+            convertImage: (window as any).mammoth.images.inline(() => {
+                return {}; // Return empty to effectively skip? 
+                // Better yet: we strip tags later.
+            })
+        };
+
+        const result = await (window as any).mammoth.convertToHtml({ arrayBuffer: arrayBuffer }, options);
+        let html = result.value;
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
+        const root = doc.querySelector('div');
+        if (root) {
+            // 1. Remove unwanted tags (Links, Images, Tables, etc.)
+            root.querySelectorAll('a, img, table, picture, audio, video').forEach(el => el.remove());
+
+            // 2. Normalize block structure (Wrap stray nodes, Convert DIVs)
+            const children = Array.from(root.childNodes);
+            let currentParagraph: HTMLElement | null = null;
+
+            children.forEach(node => {
+                const isBlock = node.nodeType === Node.ELEMENT_NODE &&
+                    ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV', 'SECTION'].includes((node as Element).tagName);
+
+                if (isBlock) {
+                    currentParagraph = null;
+                    if (['DIV', 'SECTION'].includes((node as Element).tagName)) {
+                        const p = document.createElement('p');
+                        while (node.firstChild) p.appendChild(node.firstChild);
+                        root.replaceChild(p, node);
+                    }
+                } else if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim() === '') {
+                    // Skip empty text nodes
+                } else {
+                    // Stray inline node or non-empty text
+                    if (!currentParagraph) {
+                        currentParagraph = document.createElement('p');
+                        root.insertBefore(currentParagraph, node);
+                    }
+                    currentParagraph.appendChild(node);
+                }
+            });
+
+            // 3. Inject and trigger automatic renumbering/normalization
+            const pagesContainerHTML = `<section class="page" data-page="1"><div class="page-inner" contenteditable="true">${root.innerHTML}</div></section>`;
+            setPagesHTML(pagesContainerHTML);
+            return true;
+        }
+        return false;
+    } catch (err) {
+        console.error('Word import error:', err);
+        alert('Wordファイルのインポート中にエラーが発生しました。');
+        return false;
+    }
+}

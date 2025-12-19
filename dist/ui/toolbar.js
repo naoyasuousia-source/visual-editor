@@ -209,7 +209,7 @@ export function bindToolbarHandlers() {
                 break;
             case 'open-docx':
                 {
-                    // Placeholder for Word import
+                    // Word import
                     const input = document.createElement('input');
                     input.type = 'file';
                     input.accept = '.docx';
@@ -217,8 +217,10 @@ export function bindToolbarHandlers() {
                     input.addEventListener('change', async (e) => {
                         const target = e.target;
                         if (target.files && target.files[0]) {
-                            // (window as any).importDocx?.(target.files[0]);
-                            alert('Wordファイルのインポート機能は現在準備中です。');
+                            const success = await window.importDocx?.(target.files[0]);
+                            if (success) {
+                                console.log('Docx imported successfully');
+                            }
                         }
                     });
                     input.click();
