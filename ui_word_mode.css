@@ -1,0 +1,96 @@
+/* Mode Switch Button */
+#mode-switch {
+    width: auto !important;
+    padding: 0 12px !important;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #555;
+    min-width: 90px;
+}
+
+#mode-switch .mode-text-std,
+#mode-switch .mode-text-word {
+    display: none;
+}
+
+/* Default (Standard) or Explicit Standard */
+body:not(.mode-word) #mode-switch .mode-text-std {
+    display: inline;
+}
+
+/* Word Mode Active */
+body.mode-word #mode-switch .mode-text-word {
+    display: inline;
+    color: #0288d1;
+}
+
+/* ----------------------------------------------------------------
+   Word Compatible Mode (Draft View)
+   ---------------------------------------------------------------- */
+
+/* 1. Hide unsupported/irrelevant UI elements */
+body.mode-word [data-action="add-page"],
+body.mode-word [data-action="remove-page"],
+body.mode-word #page-navigator,
+body.mode-word #sidebar-toggle-overlay {
+    display: none !important;
+}
+
+/* Hide specific Nested Dropdowns in File Menu via :has() (Chrome/Edge) */
+/* "Images" menu */
+body.mode-word .nested-dropdown:has([data-action="insert-image-dropbox"]) {
+    display: none !important;
+}
+
+/* "Margins" menu */
+body.mode-word .nested-dropdown:has([data-action="page-margin"]) {
+    display: none !important;
+}
+
+/* 2. Layout Changes - Continuous Scroll "Draft" Look */
+body.mode-word #pages-container {
+    background: #ffffff;
+    padding: 40px 15%;
+    /* Centered text column feeling */
+    gap: 0;
+    align-items: stretch;
+    /* Fill width */
+}
+
+/* Reset Page Card Style */
+body.mode-word .page {
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: auto;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none;
+    background: transparent;
+
+    /* Visual separator for pages in draft mode - subtle dashed line */
+    border-bottom: 1px dashed #ccc;
+    border-radius: 0;
+}
+
+/* Hide separator for the last page */
+body.mode-word .page:last-child {
+    border-bottom: none;
+}
+
+body.mode-word .page-inner {
+    /* Reset Fixed Dimensions */
+    width: 100% !important;
+    height: auto !important;
+    padding: 20px 0 !important;
+    /* Just vertical padding */
+    box-sizing: border-box;
+    overflow: visible !important;
+}
+
+/* Adjust zoom behavior if needed - but zoom works on #pages-container usually? 
+   No, usually on .page. 
+   If zoom transform is applied to .page, it might get tricky with width:100%. 
+   Let's assume zoom logic (scale) still applies effectively or might need check.
+*/

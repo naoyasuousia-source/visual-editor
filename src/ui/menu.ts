@@ -4,6 +4,7 @@ import {
     getFontChooserElement,
     getHighlightControlElement
 } from '../globals.js';
+import { switchMode, getMode } from '../core/router.js';
 
 // DOM Elements
 const getFileDropdownElement = () => document.querySelector<HTMLElement>('.file-dropdown');
@@ -631,4 +632,16 @@ export function initHelpDialog(): void {
             }
         });
     }
+}
+
+export function initModeSwitch(): void {
+    const btn = document.getElementById('mode-switch');
+    if (!btn) return;
+
+    btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const current = getMode();
+        const next = current === 'standard' ? 'word' : 'standard';
+        switchMode(next);
+    });
 }

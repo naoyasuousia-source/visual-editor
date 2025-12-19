@@ -48,8 +48,10 @@ import { initNavigator, initParagraphJump, initSidebarToggle, initToolbarJump } 
 // (Global assignments are in registry.ts)
 
 import { checkBrowserSupport } from './ui/browser-check.js';
+import { initRouter } from './core/router.js';
 
 export function initEditor() {
+  initRouter();
   checkBrowserSupport();
   initFileMenuControls();
   initViewMenuControls();
