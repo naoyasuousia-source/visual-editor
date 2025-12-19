@@ -46,6 +46,5 @@ export function initEditor() {
     updateAiMetaGuide();
     // Late import of registry to ensure exports are ready
     import('./registry.js')
-        .then(() => { })
         .catch(err => console.error('Failed to load registry', err));
 }

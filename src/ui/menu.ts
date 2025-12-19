@@ -287,7 +287,6 @@ export function initFontChooserControls(): void {
 export function closeAllParagraphSubmenus(): void {
     const paragraphChooserElement = getParagraphChooserElement();
     if (!paragraphChooserElement) return;
-
     paragraphChooserElement.querySelectorAll<HTMLElement>('.paragraph-submenu').forEach(submenu => {
         submenu.classList.remove('is-open');
         const trigger = submenu.querySelector<HTMLElement>('.paragraph-submenu-trigger');

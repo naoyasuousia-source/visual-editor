@@ -112,7 +112,6 @@ export async function handleOpenFile(event: Event): Promise<void> {
                 // Determine margin size from content if possible, or reset
                 // For now, we keep current margin or set to default 'm'
                 state.openedFileHandle = null; // Reset handle as we opened via input
-
             } else {
                 alert('有効なページデータが見つかりませんでした。');
             }
