@@ -1,4 +1,5 @@
 import { getParagraphChooserElement, getFontChooserElement, getHighlightControlElement } from '../globals.js';
+import { switchMode, getMode } from '../core/router.js';
 // DOM Elements
 const getFileDropdownElement = () => document.querySelector('.file-dropdown');
 const getNestedDropdownElements = () => document.querySelectorAll('.nested-dropdown');
@@ -595,4 +596,15 @@ export function initHelpDialog() {
             }
         });
     }
+}
+export function initModeSwitch() {
+    const btn = document.getElementById('mode-switch');
+    if (!btn)
+        return;
+    btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const current = getMode();
+        const next = current === 'standard' ? 'word' : 'standard';
+        switchMode(next);
+    });
 }

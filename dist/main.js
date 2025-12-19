@@ -5,7 +5,7 @@ import { ensureAiImageIndex, initImageContextMenuControls } from './editor/image
 import { updateAiMetaGuide } from './editor/ai-meta.js';
 import { initPageLinkHandler, bindDocumentLevelHandlers } from './ui/events.js';
 import { bindToolbarHandlers } from './ui/toolbar.js';
-import { initFileMenuControls, initViewMenuControls, initFontChooserControls, bindParagraphMenuListeners, initHighlightMenuControls, initHelpDialog } from './ui/menu.js';
+import { initFileMenuControls, initViewMenuControls, initFontChooserControls, bindParagraphMenuListeners, initHighlightMenuControls, initHelpDialog, initModeSwitch } from './ui/menu.js';
 import { applyPageMargin } from './ui/settings.js';
 import { initNavigator, initParagraphJump, initSidebarToggle, initToolbarJump } from './ui/navigator.js';
 // Phase 1: Core Utilities Implementation
@@ -14,7 +14,9 @@ import { initNavigator, initParagraphJump, initSidebarToggle, initToolbarJump } 
 // (Imported modules handle logic)
 // (Global assignments are in registry.ts)
 import { checkBrowserSupport } from './ui/browser-check.js';
+import { initRouter } from './core/router.js';
 export function initEditor() {
+    initRouter();
     checkBrowserSupport();
     initFileMenuControls();
     initViewMenuControls();
@@ -24,6 +26,7 @@ export function initEditor() {
     bindParagraphMenuListeners();
     initHighlightMenuControls();
     initHelpDialog();
+    initModeSwitch();
     // Ensure file input listener is bound
     const openFileInput = document.getElementById('open-file-input');
     if (openFileInput) {
