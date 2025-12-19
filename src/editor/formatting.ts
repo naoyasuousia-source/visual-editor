@@ -4,7 +4,8 @@ import {
 
 import {
     computeSelectionStateFromRange,
-    restoreRangeFromSelectionState
+    restoreRangeFromSelectionState,
+    getCurrentParagraph
 } from './selection.js';
 
 import {
@@ -15,17 +16,41 @@ import {
     ensureParagraphWrapper
 } from '../utils/dom.js';
 
-import { getCurrentParagraph } from './core.js';
 import { updateToolbarState } from '../ui/toolbar.js';
-
-// We rely on window.* extension methods for some core side-effects for now
-// to maintain compatibility with the monolithic main.ts behavior during refactoring.
-
-// Import globally available element getter
 import { getPagesContainerElement } from '../globals.js';
 import { rebuildFigureMetaStore } from './image.js';
 import { updateAiMetaGuide } from './ai-meta.js';
 import { getMode } from '../core/router.js';
+
+const ALIGN_DIRECTIONS = ['left', 'center', 'right'] as const;
+
+const PARAGRAPH_SPACING_SIZES = ['xs', 's', 'm', 'l', 'xl'] as const;
+const LINE_HEIGHT_SIZES = ['s', 'm', 'l'] as const;
+
+/**
+ * Executes a formatting command and restores the selection.
+ */
+function execWithSelectionRestore(action: () => void): void {
+    const currentEditor = window.currentEditor;
+    if (!currentEditor) return;
+
+    const selection = window.getSelection();
+    let savedState: SelectionState | null = null;
+    if (selection && selection.rangeCount > 0) {
+        savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
+    }
+
+    currentEditor.focus();
+    action();
+
+    if (savedState) {
+        const restored = restoreRangeFromSelectionState(savedState);
+        if (restored && selection) {
+            selection.removeAllRanges();
+            selection.addRange(restored);
+        }
+    }
+}
 
 export function renumberParagraphs(): void {
     const pagesContainer = getPagesContainerElement();
@@ -36,12 +61,11 @@ export function renumberParagraphs(): void {
     let globalParaIndex = 1;
 
     pages.forEach(page => {
-        let pageNum = page.getAttribute('data-page');
-        if (!pageNum) pageNum = '1';
-
+        const pageNum = page.getAttribute('data-page') || '1';
         const inner = page.querySelector('.page-inner') as HTMLElement | null;
         if (!inner) return;
 
+        // Ensure there is at least one paragraph
         if (!inner.querySelector('p, h1, h2, h3, h4, h5, h6')) {
             const p = document.createElement('p');
             p.innerHTML = '<br>';
@@ -49,16 +73,8 @@ export function renumberParagraphs(): void {
         }
 
         let pageParaIndex = 1;
-
         inner.querySelectorAll('p, h1, h2, h3, h4, h5, h6').forEach(block => {
             const el = block as HTMLElement;
-            el.querySelectorAll('.para-num').forEach(span => span.remove());
-            el.querySelectorAll('.para-body').forEach(body => {
-                while (body.firstChild) {
-                    el.insertBefore(body.firstChild, body);
-                }
-                body.remove();
-            });
 
             if (isWordMode) {
                 el.dataset.para = String(globalParaIndex);
@@ -78,9 +94,7 @@ export function renumberParagraphs(): void {
 
     rebuildFigureMetaStore();
     updateAiMetaGuide();
-
 }
-
 
 export function normalizeInlineFormatting() {
     const currentEditor = window.currentEditor;
@@ -107,104 +121,32 @@ function replaceInlineTag(currentEditor: HTMLElement, from: string, to: string):
     });
 }
 
-
-
 export function toggleBold(): void {
-    const currentEditor = window.currentEditor;
-    if (!currentEditor) return;
-
-    const selection = window.getSelection();
-    let savedState: SelectionState | null = null;
-    if (selection && selection.rangeCount > 0) {
-        savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
-    }
-
-    currentEditor.focus();
-    document.execCommand('bold', false, undefined);
-    normalizeInlineFormatting();
-
-    if (savedState) {
-        const restored = restoreRangeFromSelectionState(savedState);
-        if (restored && selection) {
-            selection.removeAllRanges();
-            selection.addRange(restored);
-        }
-    }
+    execWithSelectionRestore(() => {
+        document.execCommand('bold', false, undefined);
+        normalizeInlineFormatting();
+    });
 }
 
 export function toggleItalic(): void {
-    const currentEditor = window.currentEditor;
-    if (!currentEditor) return;
-
-    const selection = window.getSelection();
-    let savedState: SelectionState | null = null;
-    if (selection && selection.rangeCount > 0) {
-        savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
-    }
-
-    currentEditor.focus();
-    document.execCommand('italic', false, undefined);
-    normalizeInlineFormatting();
-
-    if (savedState) {
-        const restored = restoreRangeFromSelectionState(savedState);
-        if (restored && selection) {
-            selection.removeAllRanges();
-            selection.addRange(restored);
-        }
-    }
+    execWithSelectionRestore(() => {
+        document.execCommand('italic', false, undefined);
+        normalizeInlineFormatting();
+    });
 }
 
 export function toggleUnderline(): void {
-    const currentEditor = window.currentEditor;
-    if (!currentEditor) return;
-
-    const selection = window.getSelection();
-    let savedState: SelectionState | null = null;
-    if (selection && selection.rangeCount > 0) {
-        savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
-    }
-
-    currentEditor.focus();
-    document.execCommand('underline', false, undefined);
-    normalizeInlineFormatting();
-
-    if (savedState) {
-        const restored = restoreRangeFromSelectionState(savedState);
-        if (restored && selection) {
-            selection.removeAllRanges();
-            selection.addRange(restored);
-        }
-    }
+    execWithSelectionRestore(() => {
+        document.execCommand('underline', false, undefined);
+        normalizeInlineFormatting();
+    });
 }
 
 export function toggleStrikeThrough(): void {
-    const currentEditor = window.currentEditor;
-    if (!currentEditor) return;
-
-    // 1. 選択範囲を保存
-    const selection = window.getSelection();
-    let savedState: SelectionState | null = null;
-    if (selection && selection.rangeCount > 0) {
-        savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
-    }
-
-    currentEditor.focus();
-    document.execCommand('strikeThrough', false, undefined);
-
-    // 2. タグ正規化（これがDOMを置換して選択を壊す原因）
-    normalizeInlineFormatting();
-
-    // 3. 選択範囲を復元
-    if (savedState) {
-        const restored = restoreRangeFromSelectionState(savedState);
-        if (restored && selection) {
-            selection.removeAllRanges();
-            selection.addRange(restored);
-        }
-    }
-
-
+    execWithSelectionRestore(() => {
+        document.execCommand('strikeThrough', false, undefined);
+        normalizeInlineFormatting();
+    });
 }
 
 export function applyInlineScript(command: string): void {
@@ -213,32 +155,17 @@ export function applyInlineScript(command: string): void {
     if (!currentEditor) return;
     currentEditor.focus();
     document.execCommand(command, false, undefined);
-
 }
 
 export function applyBlockElement(tag: string | null | undefined): void {
     if (!tag) return;
     const current = getCurrentParagraph();
-    if (current) {
-        const selection = window.getSelection();
-        let savedState: SelectionState | null = null;
-        if (selection && selection.rangeCount > 0) {
-            savedState = computeSelectionStateFromRange(selection.getRangeAt(0));
-        }
+    if (!current) return;
 
+    execWithSelectionRestore(() => {
         convertParagraphToTag(current, tag);
         renumberParagraphs();
-
-        if (savedState) {
-            const restored = restoreRangeFromSelectionState(savedState);
-            if (restored && selection) {
-                selection.removeAllRanges();
-                selection.addRange(restored);
-            }
-        }
-
-
-    }
+    });
 }
 
 export function toggleSuperscript(): void {
@@ -283,11 +210,8 @@ export function applyColorHighlight(color?: string | null): void {
         newRange.collapse(true);
     }
     selection.addRange(newRange);
-
     currentEditor.focus();
-
 }
-
 
 export function applyFontColor(color?: string | null): void {
     const currentEditor = window.currentEditor;
@@ -324,9 +248,7 @@ export function applyFontColor(color?: string | null): void {
         newRange.collapse(true);
     }
     selection.addRange(newRange);
-
     currentEditor.focus();
-
 }
 
 export function resetFontColorInSelection(): void {
@@ -350,31 +272,23 @@ export function resetFontColorInSelection(): void {
 
     const normalized = range.cloneRange();
     selection.removeAllRanges();
-    window.getSelection()?.removeAllRanges();
     window.getSelection()?.addRange(normalized);
-
 }
 
 export function removeHighlightsInRange(range: Range): boolean {
     if (!range) return false;
 
-    // 1. 範囲がハイライト要素の内側にある場合、親を分割して「裸」にする必要がある
     const ancestor = getAncestorHighlight(range.commonAncestorContainer);
     if (ancestor) {
-        // 親がいる場合は親を剥がす
         unwrapColorSpan(ancestor);
-        // unwrapするとDOM構造が変わるので、rangeの再取得が必要になるケースがあるが、
-        // ここでは単純に「解除した」としてtrueを返す
-        // (完全に正確な範囲復元は複雑だが、今回の要件では「掃除」ができればよい)
         return true;
     }
 
-    // 2. 範囲内のハイライト要素を除去
     const clone = range.cloneContents();
     const spans = clone.querySelectorAll('.inline-highlight, .inline-color, span[style*="background-color"], span[style*="color"]');
     if (spans.length > 0) {
         const fragment = range.extractContents();
-        removeColorSpansInNode(fragment); // Use the new helper
+        removeColorSpansInNode(fragment);
         range.insertNode(fragment);
         return true;
     }
@@ -388,10 +302,6 @@ export function resetHighlightsInSelection(): void {
     const range = selection.getRangeAt(0);
     if (range.collapsed) return;
 
-    // 1. Ancestor check
-    // We need getAncestorHighlight logic here. 
-    // Since it's internal in main.ts, we should have moved it to utils/dom? 
-    // It depends on currentEditor. We can implement a DOM util that takes a boundary.
     const ancestor = getAncestorHighlight(range.commonAncestorContainer);
     if (ancestor) {
         const first = ancestor.firstChild;
@@ -404,7 +314,6 @@ export function resetHighlightsInSelection(): void {
             newRange.setEndAfter(last);
             selection.addRange(newRange);
         }
-
         return;
     }
 
@@ -420,10 +329,8 @@ export function resetHighlightsInSelection(): void {
         newRange.setEndAfter(last);
         selection.addRange(newRange);
     }
-
 }
 
-// Local helper mimicking main.ts logic
 function getAncestorHighlight(node: Node | null): HTMLElement | null {
     let curr = node;
     const editor = window.currentEditor;
@@ -453,14 +360,6 @@ export function applyPendingBlockTag(inner: HTMLElement): void {
     inner.dataset.pendingBlockTag = '';
 }
 
-// --- Moved from main.ts ---
-
-const alignDirections = ['left', 'center', 'right'] as const;
-const paragraphSpacingSizes = ['xs', 's', 'm', 'l', 'xl'] as const;
-const lineHeightSizes = ['s', 'm', 'l'] as const;
-
-
-
 export function toggleHangingIndent(shouldHang: boolean): void {
     const current = getCurrentParagraph();
     if (!current) return;
@@ -469,22 +368,19 @@ export function toggleHangingIndent(shouldHang: boolean): void {
     } else {
         current.classList.remove('hanging-indent');
     }
-
     updateToolbarState();
 }
 
 export function changeIndent(delta: number): void {
-    const current = getCurrentParagraph();
+    const current = getCurrentParagraph() as HTMLElement | null;
     if (!current) return;
 
     const m = current.className.match(/indent-(\d+)/);
     let level = m ? parseInt(m[1], 10) : 0;
-
     level = Math.max(0, Math.min(5, level + delta));
 
     current.className = current.className.replace(/indent-\d+/, '').trim();
     if (level > 0) current.classList.add(`indent-${level}`);
-
 
     updateToolbarState();
 }
@@ -496,10 +392,8 @@ export function applyParagraphAlignment(direction: string): void {
     const selection = window.getSelection();
     if (!selection || !selection.rangeCount) return;
     const range = selection.getRangeAt(0);
-    // if (range.collapsed) return; // Allow collapsed range
     if (!currentEditor.contains(range.commonAncestorContainer)) return;
 
-    // カーソル位置のみの場合でも、現在の段落を取得して適用する
     let paragraphs: HTMLElement[] = [];
     if (range.collapsed) {
         const p = getCurrentParagraph() as HTMLElement | null;
@@ -516,7 +410,7 @@ export function applyParagraphAlignment(direction: string): void {
     paragraphs.forEach(paragraph => {
         const wrapper = ensureParagraphWrapper(paragraph);
         if (!wrapper) return;
-        alignDirections.forEach(dir => {
+        ALIGN_DIRECTIONS.forEach(dir => {
             wrapper.classList.remove(`inline-align-${dir}`);
         });
         if (wrapper.classList.contains('figure-inline')) {
@@ -526,7 +420,6 @@ export function applyParagraphAlignment(direction: string): void {
         }
     });
 
-    // 選択範囲の復元
     if (selection && paragraphs.length > 0) {
         const first = paragraphs[0];
         const last = paragraphs[paragraphs.length - 1];
@@ -544,8 +437,6 @@ export function applyParagraphAlignment(direction: string): void {
         selection.removeAllRanges();
         selection.addRange(newRange);
     }
-
-
 }
 
 export function getParagraphsInRange(range: Range | null): HTMLElement[] {
@@ -559,7 +450,7 @@ export function getParagraphsInRange(range: Range | null): HTMLElement[] {
 
 function clearParagraphSpacingClasses(target: HTMLElement | null): void {
     if (!target) return;
-    paragraphSpacingSizes.forEach(sz => {
+    PARAGRAPH_SPACING_SIZES.forEach(sz => {
         target.classList.remove(`inline-spacing-${sz}`);
     });
 }
@@ -567,7 +458,7 @@ function clearParagraphSpacingClasses(target: HTMLElement | null): void {
 export function applyParagraphSpacing(size?: string | null): void {
     const currentEditor = window.currentEditor;
     if (!currentEditor) return;
-    if (!size || !paragraphSpacingSizes.includes(size as any)) return;
+    if (!size || !PARAGRAPH_SPACING_SIZES.includes(size as any)) return;
 
     const selection = window.getSelection();
     if (!selection || !selection.rangeCount) return;
@@ -587,21 +478,18 @@ export function applyParagraphSpacing(size?: string | null): void {
             if (wrapper) wrapper.classList.add(`inline-spacing-${size}`);
         }
     });
-
-
 }
 
 export function applyLineHeight(size?: string | null): void {
     const pagesContainerElement = getPagesContainerElement();
-    if (!size || !lineHeightSizes.includes(size as any) || !pagesContainerElement) return;
+    if (!size || !LINE_HEIGHT_SIZES.includes(size as any) || !pagesContainerElement) return;
 
     const inners = pagesContainerElement.querySelectorAll<HTMLElement>('.page-inner');
     inners.forEach(inner => {
-        lineHeightSizes.forEach(sz => inner.classList.remove(`line-height-${sz}`));
+        LINE_HEIGHT_SIZES.forEach(sz => inner.classList.remove(`line-height-${sz}`));
         if (size !== 'm') {
             inner.classList.add(`line-height-${size}`);
         }
     });
-
 }
 

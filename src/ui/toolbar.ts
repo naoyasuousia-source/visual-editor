@@ -44,6 +44,15 @@ export function updateMarginButtonState(activeSize: string): void {
     });
 }
 
+
+const BLOCK_LABEL_MAP: Record<string, string> = {
+    'h1': '見出し１',
+    'h2': '見出し２',
+    'h3': '見出し３',
+    'p': '本文',
+    'mini-p': 'サブテキスト'
+};
+
 export function updateToolbarState(): void {
     const currentEditor = window.currentEditor;
     if (!currentEditor) return;
@@ -55,8 +64,8 @@ export function updateToolbarState(): void {
     const hangingIndentCheckbox = toolbar.querySelector('[data-action="hanging-indent"]') as HTMLInputElement | null;
 
     if (paragraph && hangingIndentCheckbox) {
-        const hasIndent = Array.from(paragraph.classList).some(cls => cls.startsWith('indent-'));
-        const isHanging = paragraph.classList.contains('hanging-indent');
+        const hasIndent = Array.from((paragraph as HTMLElement).classList).some(cls => cls.startsWith('indent-'));
+        const isHanging = (paragraph as HTMLElement).classList.contains('hanging-indent');
 
         if (hasIndent) {
             hangingIndentCheckbox.disabled = false;
@@ -73,15 +82,7 @@ export function updateToolbarState(): void {
     // Update Block Element Button
     if (paragraph) {
         const blockType = (paragraph as HTMLElement).dataset.blockStyle || paragraph.tagName.toLowerCase();
-        let label = '本文';
-        switch (blockType) {
-            case 'h1': label = '見出し１'; break;
-            case 'h2': label = '見出し２'; break;
-            case 'h3': label = '見出し３'; break;
-            case 'p': label = '本文'; break;
-            case 'mini-p': label = 'サブテキスト'; break;
-            default: label = '本文'; break;
-        }
+        const label = BLOCK_LABEL_MAP[blockType] || '本文';
 
         const labelSpan = toolbar.querySelector('.font-submenu[data-submenu="block-element"] .current-block-label');
         if (labelSpan) {
@@ -90,12 +91,12 @@ export function updateToolbarState(): void {
 
         const wordBlockSelector = document.getElementById('word-block-selector') as HTMLSelectElement | null;
         if (wordBlockSelector) {
-            // Map label back to tag if needed, or just use blockType
             const wordTag = blockType === 'mini-p' ? 'h6' : blockType;
             wordBlockSelector.value = wordTag;
         }
     }
 }
+
 
 export function bindToolbarHandlers(): void {
     const toolbarElement = getToolbarElement();
