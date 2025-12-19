@@ -2,6 +2,7 @@ import { getPagesContainerElement, state } from '../globals.js';
 import { getClosestBlockId, isParagraphEmpty, ensureFigureWrapper, convertParagraphToTag } from '../utils/dom.js';
 import { renumberParagraphs } from './formatting.js';
 import { findParagraph, placeCaretBefore, getCurrentParagraph } from './selection.js';
+import { getMode } from '../core/router.js';
 
 // Internal module state
 let contextTargetImage: HTMLImageElement | null = null;
@@ -15,6 +16,8 @@ const isImageSizeClass = (value: string | null | undefined): value is ImageSizeC
 export function ensureAiImageIndex(): void {
     const pagesContainerElement = getPagesContainerElement();
     if (!pagesContainerElement) return;
+    if (getMode() === 'word') return;
+
     let container = document.getElementById('ai-image-index');
     if (!container) {
         container = document.createElement('div');

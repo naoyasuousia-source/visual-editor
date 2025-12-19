@@ -290,8 +290,15 @@ export async function importDocx(file: File): Promise<boolean> {
         const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
         const root = doc.querySelector('div');
         if (root) {
-            // 1. Remove unwanted tags (Links, Images, Tables, etc.)
-            root.querySelectorAll('a, img, table, picture, audio, video').forEach(el => el.remove());
+            // 1. Remove unwanted tags (Images, Tables, etc. completely)
+            root.querySelectorAll('img, table, picture, audio, video').forEach(el => el.remove());
+            // Unwrap links (keep text)
+            root.querySelectorAll('a').forEach(a => {
+                while (a.firstChild) {
+                    a.parentNode?.insertBefore(a.firstChild, a);
+                }
+                a.remove();
+            });
 
             // 2. Normalize block structure (Wrap stray nodes, Convert DIVs)
             const children = Array.from(root.childNodes);

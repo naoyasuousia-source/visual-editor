@@ -20,6 +20,7 @@ import {
 } from '../editor/formatting.js';
 
 import { checkPageOverflow } from '../editor/page.js';
+import { getMode } from '../core/router.js';
 
 // DOM Elements
 const getToolbarElement = () => document.getElementById('toolbar');
@@ -169,7 +170,9 @@ export function bindEditorEvents(inner: HTMLElement): void {
             inner.dataset.pendingBlockTag = candidate;
         } else if (e.key === 'Tab') {
             e.preventDefault();
-            if (window.handleInlineTabKey) window.handleInlineTabKey();
+            if (getMode() !== 'word') {
+                if (window.handleInlineTabKey) window.handleInlineTabKey();
+            }
         } else if (e.key === 'Backspace') {
             const blocks = inner.querySelectorAll('p, h1, h2, h3, h4, h5, h6');
             if (blocks.length === 1) {

@@ -25,6 +25,10 @@ export function buildFullHTML(pagesContainer: HTMLElement, styleTag: HTMLStyleEl
         el.remove();
     });
 
+    if (isWordMode) {
+        containerClone.querySelectorAll('#ai-image-index').forEach(el => el.remove());
+    }
+
     const styleContent = styleTag ? styleTag.innerHTML : '';
     const bodyClass = isWordMode ? ' class="mode-word"' : '';
 

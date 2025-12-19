@@ -21,6 +21,9 @@ export function buildFullHTML(pagesContainer, styleTag, isWordMode = false) {
         }
         el.remove();
     });
+    if (isWordMode) {
+        containerClone.querySelectorAll('#ai-image-index').forEach(el => el.remove());
+    }
     const styleContent = styleTag ? styleTag.innerHTML : '';
     const bodyClass = isWordMode ? ' class="mode-word"' : '';
     return `<!DOCTYPE html>

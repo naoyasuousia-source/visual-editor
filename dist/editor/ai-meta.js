@@ -1,4 +1,5 @@
 import { getPagesContainerElement } from '../globals.js';
+import { getMode } from '../core/router.js';
 export function updateAiMetaGuide() {
     const pagesContainer = getPagesContainerElement();
     if (!pagesContainer)
@@ -11,9 +12,19 @@ export function updateAiMetaGuide() {
         // Insert at the top of pages container
         pagesContainer.insertBefore(metaGuide, pagesContainer.firstChild);
     }
-    // AIへのインストラクションを記述
-    // ここでは単純なテキストとして、このエディタの構造を説明する
-    const guideText = `
+    const isWordMode = getMode() === 'word';
+    let guideText = '';
+    if (isWordMode) {
+        guideText = `
+<!-- AI ASSISTANT GUIDE
+This HTML structure represents a continuous document (Word Mode).
+- Paragraphs have simple sequential IDs like "p1", "p2", etc.
+- Use these IDs to locate specific paragraphs when assisting the user.
+-->
+`;
+    }
+    else {
+        guideText = `
 <!-- AI ASSISTANT GUIDE
 This HTML structure represents a paginated document.
 - <section class="page"> represents a physical A4 page.
@@ -23,5 +34,6 @@ This HTML structure represents a paginated document.
 Use the IDs to locate specific paragraphs when assisting the user.
 -->
 `;
+    }
     metaGuide.innerHTML = guideText;
 }
