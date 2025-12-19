@@ -1170,7 +1170,8 @@ dialog .dialog-actions {
   border: 1px solid #ccc;
   border-radius: 4px;
   background-color: #fff;
-  padding: 2px 6px;
+  padding: 0 6px;
+  /* Reduced vertical padding */
   box-sizing: border-box;
   width: 220px;
 }
@@ -1178,25 +1179,29 @@ dialog .dialog-actions {
 .jump-widget label {
   font-size: 7pt;
   letter-spacing: -0.5px;
-  line-height: 1.2;
-  color: #333;
+  line-height: 1.55;
+  color: #999;
+  /* Thin color */
   cursor: text;
   padding: 0;
-  font-weight: bold;
+  font-weight: normal;
+  /* Removed bold */
 }
 
 #toolbar-jump-input {
   width: 100%;
   height: auto;
   padding: 0;
-  font-size: 7pt;
+  font-size: 11pt;
+  /* User request */
   letter-spacing: -0.5px;
   border: none;
   border-radius: 0;
   box-sizing: border-box;
   background-color: transparent;
-  line-height: 1.2;
+  line-height: 1;
   outline: none;
+  color: #000;
 }
 
 #toolbar-jump-input::placeholder {
