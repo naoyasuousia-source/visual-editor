@@ -1,4 +1,5 @@
 import { getPagesContainerElement } from '../globals.js';
+import { clearSearchHighlights, highlightSearchMatches } from '../utils/search.js';
 
 let isNavigatorVisible = true;
 let mutationObserver: MutationObserver | null = null;
@@ -240,7 +241,8 @@ export function initToolbarJump(): void {
                 e.preventDefault();
                 if (input.value) {
                     jumpToParagraph(input.value);
-                    input.value = '';
+                    // input.value = ''; // Don't clear immediately so user knows what they searched?
+                    // Actually, if we jump, maybe clearing is fine.
                 }
             }
         });
@@ -249,6 +251,10 @@ export function initToolbarJump(): void {
 
 function jumpToParagraph(idStr: string): void {
     let targetId = idStr.trim();
+
+    // Always clear previous searches first
+    clearSearchHighlights();
+
     if (/^\d+-\d+$/.test(targetId)) {
         targetId = 'p' + targetId;
     }
@@ -268,6 +274,25 @@ function jumpToParagraph(idStr: string): void {
             target.focus();
         }
     } else {
-        alert('指定された段落が見つかりません: ' + targetId);
+        // Try searching text in the pages
+        const pages = document.querySelectorAll('.page-inner');
+        const firstMatch = highlightSearchMatches(idStr.trim(), pages);
+
+        if (firstMatch) {
+            firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Auto-clear highlights on next interaction
+            const autoClear = () => {
+                clearSearchHighlights();
+                document.removeEventListener('mousedown', autoClear);
+                document.removeEventListener('keydown', autoClear);
+            };
+            setTimeout(() => {
+                document.addEventListener('mousedown', autoClear);
+                document.addEventListener('keydown', autoClear);
+            }, 1000);
+        } else {
+            alert('指定された段落または文字列が見つかりません: ' + idStr);
+        }
     }
 }
