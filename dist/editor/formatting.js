@@ -51,8 +51,8 @@ export function normalizeInlineFormatting() {
     const currentEditor = window.currentEditor;
     if (!currentEditor)
         return;
-    replaceInlineTag(currentEditor, 'strong', 'b');
-    replaceInlineTag(currentEditor, 'em', 'i');
+    replaceInlineTag(currentEditor, 'b', 'strong');
+    replaceInlineTag(currentEditor, 'i', 'em');
     replaceInlineTag(currentEditor, 'strike', 's');
     replaceInlineTag(currentEditor, 'del', 's');
 }
