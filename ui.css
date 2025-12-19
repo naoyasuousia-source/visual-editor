@@ -1,0 +1,1355 @@
+:root {
+  --page-margin: 17mm;
+  --para-number-left: 6mm;
+  --editor-font-family: inherit;
+  --tab-width: 0px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  background: #e0e0e0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#ai-image-index {
+  display: none;
+}
+
+/* メインコンテナ */
+#left {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ツールバー */
+#toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #ccc;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  overflow: visible;
+  /* ドロップダウンを表示するためvisible */
+  position: relative;
+  flex-wrap: wrap;
+  /* スクロールなしで折り返す */
+}
+
+#toolbar button {
+  padding: 6px 12px;
+  margin: 0;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+#toolbar button:hover {
+  background: #f0f0f0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Formatting Buttons: Equal Size */
+#toolbar button[data-action="bold"],
+#toolbar button[data-action="italic"],
+#toolbar button[data-action="underline"],
+#toolbar button[data-action="strike"],
+#toolbar button[data-action="highlight"],
+#toolbar button[data-action="superscript"],
+#toolbar button[data-action="subscript"],
+#help-trigger {
+  width: 36px;
+  height: 36px;
+  padding: 0 !important;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+#toolbar button:active {
+  background: #e0e0e0;
+}
+
+
+
+/* Zoom Controls */
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 2px;
+  margin-right: 12px;
+  height: 36px;
+  box-sizing: border-box;
+}
+
+#toolbar .zoom-controls button {
+  border: none;
+  background: transparent;
+  width: 28px;
+  height: 28px;
+  font-weight: bold;
+  font-size: 16px;
+  color: #555;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+}
+
+#toolbar .zoom-controls button:hover {
+  background: #f0f0f0;
+  box-shadow: none;
+}
+
+#zoom-level-display {
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 44px;
+  text-align: center;
+  user-select: none;
+  color: #333;
+}
+
+/* Formatting Button Styles */
+#toolbar button[data-action="bold"] {
+  font-weight: bold;
+}
+
+#toolbar button[data-action="italic"] {
+  font-style: italic;
+  font-family: serif;
+  /* Emphasize italic */
+}
+
+#toolbar button[data-action="underline"] {
+  text-decoration: underline;
+}
+
+#toolbar button[data-action="strike"] {
+  text-decoration: line-through;
+}
+
+/* File Menu & Dropdowns */
+.file-menu,
+.view-menu {
+  position: relative;
+  /* 元に戻す */
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.file-menu:hover .file-menu-trigger,
+.file-menu .file-trigger,
+.view-menu:hover .view-menu-trigger,
+.view-menu .view-trigger {
+  background: #e0e0e0;
+}
+
+.file-dropdown.open,
+.view-dropdown.open {
+  display: flex;
+}
+
+.file-dropdown,
+.view-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #fff;
+  border: 1px solid #aaa;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: none;
+  flex-direction: column;
+  min-width: 220px;
+  /* 少し広げる */
+  z-index: 2000;
+  border-radius: 4px;
+  padding: 4px 0;
+}
+
+.file-dropdown>button,
+.view-dropdown>button {
+  width: 100%;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 0;
+  background: none;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.shortcut-key {
+  color: #999;
+  font-size: 0.85em;
+  margin-left: 12px;
+  font-weight: normal;
+}
+
+.menu-item-label {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  cursor: pointer;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.menu-item-label:hover {
+  background: #f0f0f0;
+}
+
+.file-dropdown>button:hover {
+  background-color: #f0f0f0;
+}
+
+/* ネストされたドロップダウン: 標準的なサブメニューに戻す */
+.nested-dropdown {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  border: none;
+  padding: 0;
+  background: none;
+  border-radius: 0;
+}
+
+.nested-trigger {
+  width: 100%;
+  text-align: left;
+  font-weight: normal;
+  color: inherit;
+  background: none;
+  padding: 8px 16px;
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+/* 展開状態では矢印不要 */
+.nested-trigger::after {
+  content: '▸';
+  float: right;
+  color: #999;
+  display: inline;
+  /* 復活 */
+}
+
+.nested-dropdown-menu {
+  position: absolute;
+  top: -4px;
+  left: 100%;
+  background: #fff;
+  border: 1px solid #aaa;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: none;
+  /* デフォルト非表示 */
+  flex-direction: column;
+  min-width: 180px;
+  z-index: 201;
+  border-radius: 4px;
+  padding: 4px 0;
+  width: auto;
+  margin: 0;
+}
+
+.nested-dropdown:hover .nested-dropdown-menu,
+.nested-dropdown.open .nested-dropdown-menu {
+  display: flex;
+}
+
+.nested-dropdown-menu button {
+  border: none;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  text-align: left;
+  width: 100%;
+  border-radius: 0;
+}
+
+.nested-dropdown-menu button:hover {
+  background: #f0f0f0;
+}
+
+/* ページ表示エリア */
+#pages-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+  overflow-y: auto;
+  background: #525659;
+}
+
+
+
+/* 画像コンテキストメニュー */
+.image-context-menu {
+  position: fixed;
+  display: none;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  padding: 4px 0;
+  min-width: 160px;
+  z-index: 1000;
+  border-radius: 6px;
+}
+
+.image-context-menu.open {
+  display: flex;
+}
+
+.image-context-menu button {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.image-context-menu button:hover {
+  background: #f0f0f0;
+}
+
+.image-context-dropdown {
+  position: relative;
+}
+
+.image-context-submenu {
+  display: none;
+  flex-direction: column;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  position: absolute;
+  left: 100%;
+  top: 0;
+  white-space: nowrap;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+  min-width: 100px;
+}
+
+/* Show on hover */
+.image-context-dropdown:hover .image-context-submenu {
+  display: flex;
+}
+
+
+
+/* その他UIパーツ */
+.highlight-control,
+.paragraph-chooser,
+.font-chooser {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.highlight-palette,
+.paragraph-panel,
+.font-chooser-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  padding: 8px;
+  gap: 8px;
+  z-index: 2000;
+  border-radius: 6px;
+  min-width: max-content;
+}
+
+.highlight-control.is-open .highlight-palette,
+.paragraph-chooser.is-open .paragraph-panel,
+.font-chooser.is-open .font-chooser-panel {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+/* Submenus (Font/Paragraph) */
+.font-submenu,
+.paragraph-submenu {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.font-submenu-panel,
+.paragraph-submenu-panel {
+  display: none;
+  position: absolute;
+  top: 100%;
+  /* Show below the trigger */
+  left: 0;
+  /* Slight indent or aligned */
+  margin-top: 8px;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  padding: 8px;
+  gap: 8px;
+  z-index: 3000;
+  /* Higher than parent panel */
+  border-radius: 6px;
+  min-width: max-content;
+}
+
+/* Open State for Submenus */
+.font-submenu.is-open .font-submenu-panel,
+.paragraph-submenu.is-open .paragraph-submenu-panel {
+  display: block;
+  /* Content decides layout */
+}
+
+/* カラーパレット */
+.color-palette,
+.spacing-buttons,
+.align-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.color-swatch-button,
+.highlight-color-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  padding: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+.color-swatch-button::after,
+.highlight-color-button::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 3px;
+  background: currentColor;
+}
+
+
+
+/* ダイアログ */
+/* Stylish Dialog */
+dialog {
+  border: none;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  background: #ffffff;
+  max-width: 360px;
+  width: 90%;
+  animation: dialogShow 0.2s ease-out;
+}
+
+@keyframes dialogShow {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.3);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: sans-serif;
+}
+
+dialog p {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+dialog label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #555;
+  font-weight: 500;
+  font-weight: 500;
+}
+
+dialog fieldset {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 0;
+}
+
+dialog fieldset legend {
+  font-size: 0.85rem;
+  color: #666;
+  padding: 0 4px;
+}
+
+dialog fieldset label {
+  flex-direction: row;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+
+dialog input[type="text"] {
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background: #f8fafc;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+dialog input[type="text"]:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+dialog .dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.indent-option {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+}
+
+.indent-option label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.indent-option input:disabled+span {
+  color: #999;
+}
+
+/* Align Helpers */
+.inline-align {
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.inline-align-left {
+  text-align: left;
+}
+
+.inline-align-center {
+  text-align: center;
+}
+
+.inline-align-right {
+  text-align: right;
+}
+
+.mini-text {
+  font-size: 8pt;
+}
+
+/* Font Chooser Specifics */
+.font-submenu {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Main Toolbar Triggers (Font / Paragraph) to match 36px height of other buttons */
+.font-chooser-trigger,
+.paragraph-trigger {
+  height: 36px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  min-width: 80px;
+  /* Ensure some width */
+}
+
+.font-chooser-trigger:hover,
+.paragraph-trigger:hover {
+  background: #f0f0f0;
+}
+
+.font-submenu-trigger {
+  /* Common trigger styles - aiming for Square-ish for icons, Wide for Block Element */
+  height: 36px;
+  /* Match standard button height */
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  /* Slightly lighter border */
+  border-radius: 4px;
+  background: #fff;
+  /* White background for cleaner look */
+  padding: 4px;
+  /* Reduced padding to fit 36px height comfortably */
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Center content by default (for icons) */
+  transition: background-color 0.2s, box-shadow 0.2s;
+  min-width: 36px;
+  /* At least square */
+}
+
+.font-submenu-trigger:hover {
+  background: #f0f0f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Specific style for Block Element Trigger (Wide with text) */
+.font-submenu[data-submenu="block-element"] .font-submenu-trigger {
+  justify-content: space-between;
+  /* Space out Text and Arrow */
+  padding: 0 8px;
+  min-width: 110px;
+  /* Increased from 90px to fit text */
+}
+
+/* Ensure text doesn't wrap and cause height issues */
+.font-submenu[data-submenu="block-element"] .current-block-label {
+  white-space: nowrap;
+  font-size: 0.85rem !important;
+  /* Match spacing-button size */
+  margin-right: 2px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Remove CSS generated arrows as we are handling icons/labels manually or via unified design */
+.font-submenu-trigger::after {
+  content: none;
+}
+
+.font-submenu.is-open .font-submenu-trigger::after {
+  content: none;
+}
+
+.font-submenu-panel {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  /* More prominent shadow */
+  margin-top: 4px;
+  /* Closer to trigger */
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 3000;
+}
+
+.font-submenu.is-open .font-submenu-panel {
+  display: flex;
+}
+
+/* Paragraph Chooser Specifics */
+.paragraph-submenu {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.paragraph-submenu-trigger {
+  width: 100%;
+  height: 36px;
+  /* Match height */
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  padding: 0 10px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.paragraph-submenu-trigger:hover {
+  background: #f0f0f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.paragraph-submenu-trigger::after {
+  content: none;
+}
+
+.paragraph-submenu.is-open .paragraph-submenu-trigger::after {
+  content: none;
+}
+
+.paragraph-submenu-panel {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-top: 4px;
+}
+
+.paragraph-submenu.is-open .paragraph-submenu-panel {
+  display: flex;
+}
+
+.align-icon-button {
+  width: 40px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid #999;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.spacing-button {
+  width: 40px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid #999;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+/* Fix for Block Element buttons to allow text to fit horizontally */
+.spacing-button[data-action="block-element"] {
+  width: auto;
+  min-width: 80px;
+  padding: 0 8px;
+}
+
+.color-default-button {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 4px;
+  border: 1px solid #999;
+  background: #f5f5f5;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.font-family-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.font-family-option {
+  border: 1px solid #999;
+  border-radius: 4px;
+  background: #f9f9f9;
+  padding: 6px 10px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+/* Workspace (Sidebar + Editor) */
+#workspace {
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+}
+
+/* Page Navigator Sidebar */
+#page-navigator {
+  width: 150px;
+  background: #e0e0e0;
+  border-right: 1px solid #ccc;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px;
+  padding-bottom: 50px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex-shrink: 0;
+  box-shadow: inset -2px 0 5px rgba(0, 0, 0, 0.05);
+  transition: width 0.3s ease;
+}
+
+#page-navigator.collapsed {
+  width: 0;
+  padding: 0;
+  overflow: hidden;
+  border-right: none;
+}
+
+.nav-thumbnail {
+  background: #fff;
+  border: 1px solid #ccc;
+  width: 100%;
+  /* Padding hack for aspect ratio 1:1.4142 (A4) - Robust fallback */
+  height: 0;
+  padding-bottom: 141.42%;
+  position: relative;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.1s, border-color 0.1s;
+  overflow: hidden;
+  /* Ensure scaled content doesn't overflow */
+}
+
+.miniature-page {
+  width: 210mm;
+  height: 297mm;
+  transform: scale(0.15);
+  /* Approx 118px / 794px */
+  transform-origin: top left;
+  background: #fff;
+  pointer-events: none;
+  /* Prevent interaction with mini content */
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Adjust mini-page content spacing for readability if needed, or leave verbatim */
+.miniature-page .page-inner {
+  height: 100%;
+  overflow: hidden;
+}
+
+.nav-thumbnail:hover {
+  transform: scale(1.02);
+  border-color: #999;
+}
+
+.nav-thumbnail.active {
+  border: 2px solid #337ab7;
+  box-shadow: 0 0 6px rgba(51, 122, 183, 0.6);
+}
+
+.nav-thumbnail-number {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+  color: #ddd;
+  font-weight: bold;
+  pointer-events: none;
+  font-family: sans-serif;
+}
+
+.nav-thumbnail.active .nav-thumbnail-number {
+  color: #337ab7;
+  opacity: 0.3;
+}
+
+/* Jump Widget */
+.jump-widget {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  margin-right: 8px;
+  gap: 0;
+  height: 36px;
+  /* Match toolbar button height */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  padding: 0 6px;
+  /* Reduced vertical padding */
+  box-sizing: border-box;
+  width: 220px;
+}
+
+.jump-widget label {
+  font-size: 7pt;
+  letter-spacing: -0.5px;
+  line-height: 1.55;
+  color: #999;
+  /* Thin color */
+  cursor: text;
+  padding: 0;
+  font-weight: normal;
+  /* Removed bold */
+}
+
+#toolbar-jump-input {
+  width: 100%;
+  height: auto;
+  padding: 0;
+  font-size: 11pt;
+  /* User request */
+  letter-spacing: -0.5px;
+  border: none;
+  border-radius: 0;
+  box-sizing: border-box;
+  background-color: transparent;
+  line-height: 1;
+  outline: none;
+  color: #000;
+}
+
+#toolbar-jump-input::placeholder {
+  color: #999;
+  font-size: 7pt;
+  opacity: 1;
+}
+
+/* Search Highlights */
+.search-match {
+  background-color: #f1c40f;
+  /* Vibrant yellow */
+  color: #000;
+  font-weight: bold;
+  border-radius: 2px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.search-match.current {
+  background-color: #e67e22;
+  /* Vibrant orange */
+  color: #fff;
+  transform: scale(1.1);
+  box-shadow: 0 0 8px rgba(230, 126, 34, 0.6);
+  z-index: 10;
+}
+
+#sidebar-toggle-overlay {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 100;
+}
+
+#sidebar-toggle-btn {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+#sidebar-toggle-btn:hover {
+  background: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.toolbar-separator {
+  width: 1px;
+  height: 24px;
+  background: #ccc;
+  margin: 0 8px;
+}
+
+/* Print / PDF Output Optimized Styles */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  body {
+    background: #fff;
+    overflow: visible;
+    height: auto;
+    width: 100%;
+  }
+
+  /* Hide UI components not needed for print */
+  #toolbar,
+  #page-navigator,
+  #sidebar-toggle-overlay,
+  .file-menu,
+  .view-menu,
+  button,
+  dialog,
+  input[type="file"],
+  #ai-meta-guide,
+  #ai-image-index,
+  ::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Reset layout structure for print flow */
+  #workspace {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  #pages-container {
+    display: block;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    overflow: visible;
+    gap: 0;
+  }
+
+  /* Ensure page exactly matches A4 and breaks correctly */
+  section.page {
+    position: relative;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    outline: none !important;
+    /* Remove active page outline */
+    background: #fff;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  /* Remove break after the last page to avoid empty sheet? 
+     Usually beneficial, but sometimes browser handles it.
+     Let's be explicit if possible. */
+  section.page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  /* Maintain internal layout fidelity */
+  .page-inner {
+    width: 100%;
+    height: 100%;
+    padding: var(--page-margin);
+    overflow: visible;
+  }
+
+  /* Force text selection to be available in PDF readers */
+  /* Note: pointer-events: none on * in print media can sometimes help if overlay issues, but default is usually fine. */
+
+  .page-inner,
+  .page-inner * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
+}
+
+/* Help Button & Dialog */
+#help-trigger {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+}
+
+.help-content {
+  color: #333;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 8px;
+  /* Scrollbar space */
+}
+
+/* Rich Hint Dialog Styles */
+#help-dialog {
+  max-width: 700px;
+  width: 95%;
+  padding: 0;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+#help-dialog[open] {
+  display: flex;
+}
+
+#help-dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+}
+
+.hint-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.hint-header h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0891b2;
+  margin: 0;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.close-button svg {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.close-button:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.hint-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  color: #374151;
+  font-family: 'Inter', sans-serif;
+}
+
+.hint-section {
+  margin-bottom: 24px;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 24px;
+}
+
+.hint-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.hint-intro {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 12px;
+}
+
+.hint-desc {
+  font-size: 1rem;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.hint-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0891b2;
+  margin: 0 0 16px 0;
+}
+
+.hint-workflow-container {
+  width: 100%;
+  margin: 16px 0;
+}
+
+.hint-workflow-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.hint-pdf-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.hint-pdf-btn {
+  background-color: #dc2626;
+  color: white;
+  font-weight: 600;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.hint-pdf-btn:hover {
+  background-color: #b91c1c;
+}
+
+.hint-footer {
+  background-color: #f9fafb;
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.7em;
+  color: #6b7280;
+}
+
+.copyright-text {
+  font-size: 0.6em;
+  margin: 0;
+}
+
+.hint-links {
+  display: flex;
+  gap: 16px;
+}
+
+.hint-links a {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s;
+}
+
+.hint-links a:hover {
+  color: #0891b2;
+}
+
+#sub-help-dialog {
+  max-width: 500px;
+  width: 90%;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+#sub-help-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+#sub-help-dialog form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.hint-body.is-small {
+  font-size: 11pt !important;
+  max-height: 400px;
+  overflow-y: auto;
+  line-height: 1.4;
+  padding: 16px;
+  background: #fdfdfd;
+  border-radius: 4px;
+}
+
+.hint-body.is-small * {
+  font-size: 11pt !important;
+}
+
+#sub-help-dialog-label {
+  font-size: 1.5em;
+  /* 1.5倍 */
+  font-weight: 800;
+  color: #0891b2;
+}
+
+.hint-body.is-small {
+  text-align: left !important;
+  /* 本文は確実に左揃え */
+}
+
+.hint-body.is-small .section-title {
+  text-align: center !important;
+  /* 条文見出しのみ中央揃え */
+  display: block;
+  margin: 1.5em 0 0.8em 0;
+  font-weight: 800;
+  font-size: 1.1em;
+}
+
+.hint-body.is-small p {
+  text-align: left !important;
+  margin-bottom: 0.8em;
+}

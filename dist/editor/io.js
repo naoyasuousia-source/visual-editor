@@ -214,7 +214,7 @@ export async function buildFullHTML() {
     // Fetch style.css content
     let styleContent = '';
     try {
-        const response = await fetch('style.css');
+        const response = await fetch('content.css');
         if (response.ok) {
             styleContent = await response.text();
         }

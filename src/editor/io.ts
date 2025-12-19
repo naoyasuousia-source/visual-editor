@@ -229,7 +229,7 @@ export async function buildFullHTML(): Promise<string> {
     // Fetch style.css content
     let styleContent = '';
     try {
-        const response = await fetch('style.css');
+        const response = await fetch('content.css');
         if (response.ok) {
             styleContent = await response.text();
         } else {
