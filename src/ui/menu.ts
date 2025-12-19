@@ -577,9 +577,18 @@ export function initHelpDialog(): void {
                                 `;
                                 break;
                             case 'お問い合わせ':
+                                subHelpContentEl.classList.add('is-small');
                                 content = `
-                                    <p>本ツールは現在、試作版として提供されています。不具合報告や機能の改善要望、ビジネスに関するお問い合わせは、開発チームの連絡窓口（リポジトリのIssueや指定の連絡先）までお願いいたします。</p>
-                                    <p>※個人開発・試作プロジェクトのため、回答にお時間をいただく場合や、すべての要望にお応えできない場合があります。あらかじめご了承ください。</p>
+                                    <p>本サービスに関するお問い合わせは、以下のフォームより受け付けております。</p>
+                                    <p><a href="https://docs.google.com/forms/d/e/1FAIpQLSddSA-8kVE7vKqJvlFJ2W07pBUmiDh-cqymT_KbHUmIoO3jvw/viewform?usp=dialog" target="_blank" style="color: #0891b2; text-decoration: underline;">お問い合わせフォーム</a></p>
+                                    <p><strong>【お問い合わせの例】</strong></p>
+                                    <p>・ローカルキット（完全版）の購入に関するご質問</p>
+                                    <p>・バグ報告、改善要望</p>
+                                    <p>・取材、お仕事のご依頼</p>
+                                    <p><strong>【注意事項（あらかじめご了承ください）】</strong></p>
+                                    <p>・開発者が個人で運営しているため、返信には数日〜1週間ほどお時間をいただく場合があります。</p>
+                                    <p>・内容によっては返信を差し控えさせていただくことがございます。</p>
+                                    <p>・ブラウザの操作方法やPC自体の使い方など、本サービスに直接関係のないサポートは行っておりません。</p>
                                 `;
                                 break;
                             default:

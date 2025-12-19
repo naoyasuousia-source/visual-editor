@@ -1484,8 +1484,8 @@ dialog .dialog-actions {
 }
 
 .hint-body.is-small {
-  font-size: 11pt;
-  /* ユーザーの要望に合わせて11ptに設定 */
+  font-size: 0.5em;
+  /* ユーザーの「半分にして」という要望に合わせて0.5emに設定 */
   max-height: 400px;
   overflow-y: auto;
   line-height: 1.5;
