@@ -17,6 +17,38 @@ export function clearSearchHighlights(): void {
 }
 
 /**
+ * Counts the number of matches for the query in the given containers.
+ */
+export function countSearchMatches(query: string, containers: NodeListOf<Element> | Element[]): number {
+    if (!query || query.length < 1) return 0;
+
+    let count = 0;
+    const lowerQuery = query.toLowerCase();
+
+    containers.forEach(container => {
+        // Find all elements that might contain text (excluding our own highlight spans)
+        const elements = [container, ...Array.from(container.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, span:not(.search-match)'))];
+
+        elements.forEach(el => {
+            // Process text nodes of this element only
+            const childNodes = Array.from(el.childNodes);
+            for (const node of childNodes) {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    const text = node.nodeValue || '';
+                    let idx = text.toLowerCase().indexOf(lowerQuery);
+                    while (idx !== -1) {
+                        count++;
+                        idx = text.toLowerCase().indexOf(lowerQuery, idx + 1);
+                    }
+                }
+            }
+        });
+    });
+
+    return count;
+}
+
+/**
  * Highlights matches of the query in the given containers.
  * Returns the first highlighted element.
  */

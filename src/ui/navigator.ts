@@ -1,5 +1,5 @@
 import { getPagesContainerElement } from '../globals.js';
-import { clearSearchHighlights, highlightSearchMatches } from '../utils/search.js';
+import { clearSearchHighlights, countSearchMatches, highlightSearchMatches } from '../utils/search.js';
 
 let isNavigatorVisible = true;
 let mutationObserver: MutationObserver | null = null;
@@ -276,23 +276,30 @@ function jumpToParagraph(idStr: string): void {
     } else {
         // Try searching text in the pages
         const pages = document.querySelectorAll('.page-inner');
-        const firstMatch = highlightSearchMatches(idStr.trim(), pages);
+        const count = countSearchMatches(targetId, pages);
 
-        if (firstMatch) {
-            firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-            // Auto-clear highlights on next interaction
-            const autoClear = () => {
-                clearSearchHighlights();
-                document.removeEventListener('mousedown', autoClear);
-                document.removeEventListener('keydown', autoClear);
-            };
-            setTimeout(() => {
-                document.addEventListener('mousedown', autoClear);
-                document.addEventListener('keydown', autoClear);
-            }, 1000);
-        } else {
+        if (count === 0) {
             alert('指定された段落または文字列が見つかりません: ' + idStr);
+        } else if (count > 1) {
+            alert(`該当箇所が複数あります（${count}箇所）。検索条件を詳しくしてください。`);
+        } else {
+            // Exactly 1 match
+            const firstMatch = highlightSearchMatches(targetId, pages);
+
+            if (firstMatch) {
+                firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Auto-clear highlights on next interaction
+                const autoClear = () => {
+                    clearSearchHighlights();
+                    document.removeEventListener('mousedown', autoClear);
+                    document.removeEventListener('keydown', autoClear);
+                };
+                setTimeout(() => {
+                    document.addEventListener('mousedown', autoClear);
+                    document.addEventListener('keydown', autoClear);
+                }, 1000);
+            }
         }
     }
 }
