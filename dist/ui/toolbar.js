@@ -6,7 +6,7 @@ import { addPage, removePage } from '../editor/page.js';
 import { saveFullHTML, openWithFilePicker, overwriteCurrentFile, saveAsWithFilePicker } from '../editor/io.js';
 import { promptDropboxImageUrl, promptWebImageUrl } from '../editor/image.js';
 import { addLinkDestination, createLink, removeLink } from '../editor/links.js';
-const getToolbarElement = () => document.getElementById('toolbar');
+import { getToolbarElement } from '../globals.js';
 export function updateMarginButtonState(activeSize) {
     const toolbarElement = getToolbarElement();
     if (!toolbarElement)

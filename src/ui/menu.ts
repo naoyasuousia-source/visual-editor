@@ -1,10 +1,14 @@
 
+import {
+    getParagraphChooserElement,
+    getFontChooserElement,
+    getHighlightControlElement
+} from '../globals.js';
+
 // DOM Elements
 const getFileDropdownElement = () => document.querySelector<HTMLElement>('.file-dropdown');
 const getNestedDropdownElements = () => document.querySelectorAll<HTMLElement>('.nested-dropdown');
-const getParagraphChooserElement = () => document.querySelector<HTMLElement>('.paragraph-chooser');
-const getFontChooserElement = () => document.querySelector<HTMLElement>('.font-chooser');
-const getHighlightControlElement = () => document.querySelector<HTMLElement>('.highlight-control');
+
 
 function adjustMenuPositionSafe(submenu: HTMLElement): void {
     // Reset to default to measure natural size/position
@@ -283,7 +287,7 @@ export function initFontChooserControls(): void {
 export function closeAllParagraphSubmenus(): void {
     const paragraphChooserElement = getParagraphChooserElement();
     if (!paragraphChooserElement) return;
-    console.log("closeAllParagraphSubmenus called"); // DEBUG
+
     paragraphChooserElement.querySelectorAll<HTMLElement>('.paragraph-submenu').forEach(submenu => {
         submenu.classList.remove('is-open');
         const trigger = submenu.querySelector<HTMLElement>('.paragraph-submenu-trigger');

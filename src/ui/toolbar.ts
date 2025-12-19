@@ -32,7 +32,7 @@ import { promptDropboxImageUrl, promptWebImageUrl } from '../editor/image.js';
 import { addLinkDestination, createLink, removeLink } from '../editor/links.js';
 
 
-const getToolbarElement = () => document.getElementById('toolbar');
+import { getToolbarElement } from '../globals.js';
 
 export function updateMarginButtonState(activeSize: string): void {
     const toolbarElement = getToolbarElement();

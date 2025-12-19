@@ -88,8 +88,8 @@ export function initEditor() {
 
   // Late import of registry to ensure exports are ready
   import('./registry.js')
-    .then(() => console.log('Registry loaded'))
+
     .catch(err => console.error('Failed to load registry', err));
 
-  console.log("initEditor() completed.");
+
 }
