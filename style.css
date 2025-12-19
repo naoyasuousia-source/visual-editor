@@ -1482,3 +1482,14 @@ dialog .dialog-actions {
 .hint-links a:hover {
   color: #0891b2;
 }
+
+.hint-body.is-small {
+  font-size: 11pt;
+  /* ユーザーの要望に合わせて11ptに設定 */
+  max-height: 400px;
+  overflow-y: auto;
+  line-height: 1.5;
+  padding: 16px;
+  background: #fdfdfd;
+  border-radius: 4px;
+}
