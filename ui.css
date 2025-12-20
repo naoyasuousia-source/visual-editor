@@ -54,6 +54,26 @@ body {
   /* スクロールなしで折り返す */
 }
 
+/* App Logo */
+.app-logo {
+  display: flex;
+  align-items: center;
+  margin-right: 4px;
+  user-select: none;
+  pointer-events: none;
+}
+
+.app-logo img {
+  height: 42px;
+  /* Increased from 28px (1.5x) */
+  width: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  /* Added roundness */
+  /* Subtle glow to make the logo pop */
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.15));
+}
+
 #toolbar button {
   padding: 6px 12px;
   margin: 0;
@@ -1461,29 +1481,50 @@ dialog .dialog-actions {
   background: #fff7ed;
   border: 1px dashed #fdba74;
   border-radius: 12px;
-  padding: 20px;
+  padding: 4px 16px 16px 16px;
+  /* さらにつめました */
   margin-bottom: 24px;
   text-align: center;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+}
+
+.thanks-header {
+  margin-bottom: 8px;
 }
 
 .thanks-title {
   color: #c2410c;
-  font-size: 1.1rem;
-  font-weight: 800;
-  margin-bottom: 8px;
+  font-size: 1.2rem;
+  /* 少し大きく */
+  font-weight: 900;
+  margin-bottom: 2px;
+  letter-spacing: 0.1em;
+  font-style: italic;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.8), 2px 2px 4px rgba(194, 65, 12, 0.2);
+  font-family: 'serif';
+  /* セリフ体で特別感を演出 */
 }
 
 .thanks-note {
-  font-size: 0.75rem;
+  font-size: 0.6rem;
+  /* 0.75remの0.8倍 */
   color: #9a3412;
-  margin-bottom: 12px;
+  margin-bottom: 0;
   line-height: 1.4;
 }
 
 .thanks-names {
-  font-size: 1rem;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #1a1a1a;
+  padding-bottom: 10px;
+  /* 下側に少し余裕を */
 }
 
 .donate-actions {

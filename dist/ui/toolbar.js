@@ -250,7 +250,16 @@ export function bindToolbarHandlers() {
                 removeLink();
                 break;
             case 'print':
-                window.print();
+                {
+                    window.print();
+                    // 印刷ダイアログが終わった後に（少し遅延を挟んで）ポップアップを表示
+                    setTimeout(() => {
+                        const donateDialog = document.getElementById('donate-dialog');
+                        if (donateDialog) {
+                            donateDialog.showModal();
+                        }
+                    }, 500);
+                }
                 break;
             case 'zoom-in':
                 if (currentZoomLevel < 2.0) {
