@@ -340,7 +340,7 @@
         <span class="mode-text-std">標準モードに切替</span>
         <span class="mode-text-word">Word互換モードに切替</span>
       </button>
-      <button type="button" id="help-trigger" title="使い方・ヒント" aria-label="ヘルプ">
+      <button type="button" id="help-trigger" title="ヒント・規約" aria-label="ヘルプ">
         <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.25"
           stroke-linecap="round" stroke-linejoin="round" style="display: block;">
           <circle cx="12" cy="12" r="10"></circle>
@@ -466,11 +466,14 @@
       <form method="dialog">
         <div class="hint-header">
           <h1 id="help-dialog-label">真のAI編集アシスト体験へ</h1>
-          <button type="submit" class="close-button" aria-label="閉じる">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" id="dev-profile-link" class="header-link-button">開発者プロフィール 👤</button>
+            <button type="submit" class="close-button" aria-label="閉じる">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div class="hint-body">
@@ -600,7 +603,7 @@
             </a>
           </div>
 
-          <div class="profile-section">
+          <div class="profile-section" id="donate-profile-section">
             <h2 class="profile-title"><span class="icon">👤</span>制作者プロフィール</h2>
             <p class="profile-text">
               1999年生まれ。埼玉県出身。東京大学農学部卒。在学中に自律神経失調症を患い、卒業後は「東大卒ニート」として療養生活を送る。現在は回復し、フリーランスのボイストレーナーをしながら、AIを駆使した開発に挑戦中。

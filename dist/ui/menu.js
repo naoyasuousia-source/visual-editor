@@ -490,6 +490,7 @@ export function initHelpDialog() {
     const helpTrigger = document.getElementById('help-trigger');
     const helpDialog = document.getElementById('help-dialog');
     const subHelpDialog = document.getElementById('sub-help-dialog');
+    const donateDialog = document.getElementById('donate-dialog');
     if (helpTrigger && helpDialog) {
         helpTrigger.addEventListener('click', (e) => {
             e.preventDefault();
@@ -526,32 +527,25 @@ export function initHelpDialog() {
                                     <p class="section-title"><strong>第1条（適用）</strong></p>
                                     <p>本規約は、ユーザーと当方との間の本サービスの利用に関わる一切の関係に適用されるものとします。<br>
                                 当方は本サービスに関し、本規約のほか、各種の規定（以下「個別規定」）をすることがあります。これら個別規定はその名称のいかんに関わらず、本規約の一部を構成するものとします。</p>
-
                                     <p class="section-title"><strong>第2条（サービスの内容およびデータの管理）</strong></p>
                                     <p>本サービスは、ブラウザ上で動作するフロントエンド完結型の文書エディタです。<br>本サービスは、ユーザーが入力したデータをサーバー上に保存する機能を有しておりません。データはユーザーのブラウザのローカルストレージまたは端末内にのみ保存されます。
                                     <br>ユーザーは、自己の責任においてデータのバックアップを行うものとします。</p>
-
                                     <p class="section-title"><strong>第3条（禁止事項）</strong></p><p> ユーザーは、本サービスの利用にあたり、以下の行為をしてはなりません。
                                     <br>・本サービスの運営を妨害するおそれのある行為。
                                     <br>・本サービスの逆コンパイル、逆アセンブル、リバースエンジニアリング等、ソースコードを解析する行為。
                                     <br>・その他、当方が不適切と判断する行為。</p>
-
                                     <p class="section-title"><strong>第4条（本サービスの提供の停止等）</strong></p>
                                     <p>当方は、以下のいずれかの事由があると判断した場合、ユーザーに事前に通知することなく本サービスの全部または一部の提供を停止または中断することができるものとします。</p>
                                     <p>・本サービスに係るシステムの保守点検または更新を行う場合。<br>
                                     ・サーバーまたは通信回線等が事故により停止した場合。<br>
-                                    ・その他、当方が本サービスの提供が困難と判断した場合。</p>
+                                    ・その他, 当方が本サービスの提供が困難と判断した場合。</p>
                                     <p>当方は、本サービスの提供の停止または中断により、ユーザーまたは第三者が被ったいかなる不利益または損害についても、一切の責任を負わないものとします。</p>
-
                                     <p class="section-title"><strong>第5条（免責事項）</strong></p>
                                     <p>当方は、本サービスに事実上または法律上の瑕疵（信頼性、正確性、特定の目的への適合性、セキュリティなどに関する欠陥、エラーやバグ、権利侵害等）がないことを明示的にも黙示的にも保証しておりません。</p>
-                                    <p>当方は、本サービスに起因してユーザーに生じたあらゆる損害について一切の責任を負いません。特に、本サービスの利用中に発生したデータの破損、消失、またはファイルが閲覧不能になったことによる損害について、当方は復旧の義務および賠償の責任を負わないものとします。</p>
+                                    <p>当方は, 本サービスに起因してユーザーに生じたあらゆる損害について一切の責任を負いません。特に, 本サービスの利用中に発生したデータの破損、消失、またはファイルが閲覧不能になったことによる損害について, 当方は復旧の義務および賠償の責任を負わないものとします。</p>
                                     <p>ユーザーと他のユーザーまたは第三者との間において生じた取引、連絡または紛争等について、当方は一切責任を負いません。</p>
-
                                     <p class="section-title"><strong>第6条（サービス内容の変更等）</strong></p><p>当方は、ユーザーに通知することなく、本サービスの内容を変更しまたは本サービスの提供を中止することができるものとし、これによってユーザーに生じた損害について一切の責任を負いません。</p>
-
                                     <p class="section-title"><strong>第7条（利用規約の変更）</strong></p><p>当方は、必要と判断した場合には、ユーザーに通知することなくいつでも本規約を変更することができるものとします。なお、本規約の変更後、本サービスの利用を開始した場合には、当該ユーザーは変更後の規約に同意したものとみなします。</p>
-
                                     <p class="section-title"><strong>第8条（準拠法・裁判管轄）</strong></p>
                                     <p>本規約の解釈にあたっては、日本法を準拠法とします。<br>
                                     本サービスに関して紛争が生じた場合には、当方の居住地を管轄する裁判所を専属的合意管轄とします。</p>
@@ -562,24 +556,18 @@ export function initHelpDialog() {
                                 subHelpContentEl.classList.add('is-small');
                                 content = `
                                     <p>当方は、本サービス「AI-Link Editor」において、ユーザーの個人情報の取扱いについて、以下のとおりプライバシーポリシー（以下「本ポリシー」）を定めます。</p>
-
                                     <p class="section-title"><strong>第1条（個人情報の収集について）</strong></p>
                                     <p>・入力データの非収集: 本サービスは、ユーザーがエディタに入力したテキスト、作成したファイル等のデータをサーバーに送信または保存することはありません。すべての処理はユーザーのブラウザ上（ローカル環境）で完結します。<br>
                                     ・自動的に収集される情報: サービスの改善および利用状況分析のため、Cookie（クッキー）やGoogleアナリティクス等のアクセス解析ツールを使用し、匿名化されたトラフィックデータを収集することがあります。これには個人を特定する情報は含まれません。</p>
-
                                     <p class="section-title"><strong>第2条（お問い合わせ情報の管理）</strong></p>
                                     <p>ユーザーからのお問い合わせ時に提供いただいた氏名やメールアドレス等の情報は、お問い合わせへの回答および必要な情報の連絡にのみ利用し、適切に管理いたします。</p>
-
                                     <p class="section-title"><strong>第3条（個人情報の第三者提供）</strong></p>
                                     <p>当方は、法令に基づき開示が必要な場合を除き、ユーザーの同意を得ることなく個人情報を第三者に提供することはありません。</p>
-
                                     <p class="section-title"><strong>第4条（個人情報の安全管理）</strong></p>
                                     <p>当方は、収集した情報の漏洩、滅失または毀損の防止、その他収集した情報の適切な管理のために必要な措置を講じます。</p>
-
                                     <p class="section-title"><strong>第5条（プライバシーポリシーの変更）</strong></p>
                                     <p>本ポリシーの内容は、法令その他本ポリシーに別段の定めのある事項を除いて、ユーザーに通知することなく変更することができるものとします。<br>
                                     当方が別途定める場合を除いて、変更後のプライバシーポリシーは、本ウェブサイトに掲載したときから効力を生じるものとします。</p>
-
                                     <p>以上</p>
                                 `;
                                 break;
@@ -635,6 +623,23 @@ export function initHelpDialog() {
             if (!isInDialog) {
                 subHelpDialog.close();
             }
+        });
+    }
+    // Developer Profile Link in Help Dialog
+    const devProfileLink = document.getElementById('dev-profile-link');
+    if (devProfileLink && helpDialog && donateDialog) {
+        devProfileLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            helpDialog.close();
+            donateDialog.showModal();
+
+            // ダイアログ内の特定要素までスクロール
+            setTimeout(() => {
+                const target = document.getElementById('donate-profile-section');
+                if (target) {
+                    target.scrollIntoView({ behavior: 'instant', block: 'start' });
+                }
+            }, 100);
         });
     }
 }
