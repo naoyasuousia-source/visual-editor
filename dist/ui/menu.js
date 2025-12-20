@@ -598,6 +598,24 @@ export function initHelpDialog() {
                                     <p>・ブラウザの操作方法やPC自体の使い方など、本サービスに直接関係のないサポートは行っておりません。</p>
                                 `;
                                 break;
+                            case '特定商取引法に基づく表記':
+                                subHelpContentEl.classList.add('is-small', 'is-legal');
+                                content = `
+                                    <table class="legal-table">
+                                        <tr><th>販売業者</th><td>請求をいただいた際、遅滞なく開示いたします。</td></tr>
+                                        <tr><th>代表責任者</th><td>曽我部 直也</td></tr>
+                                        <tr><th>所在地</th><td>請求をいただいた際、遅滞なく開示いたします。</td></tr>
+                                        <tr><th>電話番号</th><td>請求をいただいた際、遅滞なく開示いたします。</td></tr>
+                                        <tr><th>メールアドレス</th><td>（symphoneer.87@gmail.com）</td></tr>
+                                        <tr><th>販売価格</th><td>各支援ページ（Stripe決済画面）に表示される金額に基づきます。</td></tr>
+                                        <tr><th>商品代金以外の必要料金</th><td>なし（インターネット接続料金等の通信費用はユーザー負担となります）</td></tr>
+                                        <tr><th>支払方法</th><td>クレジットカード決済、Apple Pay、Link（Stripeを利用）</td></tr>
+                                        <tr><th>支払時期</th><td>クレジットカード決済：決済時（即時）</td></tr>
+                                        <tr><th>商品の引き渡し時期</th><td>決済完了後、即時（ツール自体は既に公開されているため）。</td></tr>
+                                        <tr><th>返品・交換・キャンセル</th><td>サービスの性質上、決済完了後の返品・返金・キャンセルには応じられません。</td></tr>
+                                    </table>
+                                `;
+                                break;
                             default:
                                 content = '<p>詳細情報は現在準備中です。</p>';
                         }
