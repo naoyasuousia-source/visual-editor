@@ -1481,8 +1481,7 @@ dialog .dialog-actions {
   background: #fff7ed;
   border: 1px dashed #fdba74;
   border-radius: 12px;
-  padding: 4px 16px 16px 16px;
-  /* さらにつめました */
+  padding: 5pt 16px 16px 16px;
   margin-bottom: 24px;
   text-align: center;
   min-height: 140px;
@@ -1497,14 +1496,13 @@ dialog .dialog-actions {
 .thanks-title {
   color: #c2410c;
   font-size: 1.2rem;
-  /* 少し大きく */
   font-weight: 900;
+  margin-top: 0;
   margin-bottom: 2px;
   letter-spacing: 0.1em;
   font-style: italic;
   text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.8), 2px 2px 4px rgba(194, 65, 12, 0.2);
   font-family: 'serif';
-  /* セリフ体で特別感を演出 */
 }
 
 .thanks-note {
