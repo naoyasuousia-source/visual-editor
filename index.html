@@ -320,8 +320,25 @@
           </div>
         </div>
       </div>
-      <button type="button" data-action="add-page">+Page</button>
-      <button type="button" data-action="remove-page">-Page</button>
+      <div class="page-controls">
+        <button type="button" data-action="add-page" title="ページを追加">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+        </button>
+        <button type="button" data-action="remove-page" title="現在のページを削除">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+        </button>
+      </div>
       <div class="zoom-controls">
         <button type="button" data-action="zoom-out" title="縮小">－</button>
         <span id="zoom-level-display">100%</span>
