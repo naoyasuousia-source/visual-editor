@@ -648,4 +648,22 @@ export function initModeSwitch() {
         const next = current === 'standard' ? 'word' : 'standard';
         switchMode(next);
     });
+    // Donate Dialog
+    const donateTrigger = document.getElementById('donate-trigger');
+    const donateDialog = document.getElementById('donate-dialog');
+    if (donateTrigger && donateDialog) {
+        donateTrigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            donateDialog.showModal();
+        });
+        // Close when clicking outside
+        donateDialog.addEventListener('click', (e) => {
+            const rect = donateDialog.getBoundingClientRect();
+            const isInDialog = (rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+                rect.left <= e.clientX && e.clientX <= rect.left + rect.width);
+            if (!isInDialog) {
+                donateDialog.close();
+            }
+        });
+    }
 }

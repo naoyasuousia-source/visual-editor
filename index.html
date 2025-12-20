@@ -345,13 +345,13 @@
           <line x1="12" y1="17" x2="12.01" y2="17"></line>
         </svg>
       </button>
-      <a href="https://donate.stripe.com/28E5kFakIfEre910Z01sQ00" target="_blank" id="donate-link" title="開発を応援する">
+      <button type="button" id="donate-trigger" title="開発を応援する">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
           <path
             d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
         </svg>
         <span>開発を応援</span>
-      </a>
+      </button>
     </div>
     <input type="file" id="open-file-input" accept=".html,text/html" style="display:none" />
     <div id="workspace">
@@ -561,6 +561,60 @@
     </dialog>
 
 
+
+    <dialog id="donate-dialog" aria-labelledby="donate-dialog-label">
+      <form method="dialog">
+        <div class="hint-header">
+          <h1 id="donate-dialog-label">AI-Link Editorを応援しませんか？</h1>
+          <button type="submit" class="close-button" aria-label="閉じる">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="hint-body">
+          <p class="donate-intro">
+            いつもご利用ありがとうございます！
+            このAI-Link Editorは、「快適なAIアシスト編集環境を提供したい」という想いから、個人で開発・運営しています。
+            開発経費や維持費は皆様の温かいご支援で支えられており、おかげで「全機能・完全無料」を継続できています。
+            もしこのツールがあなたの役に立ったら、エディタを気に入っていただけたら、開発の継続を応援していただけると、サービス改善・向上の励みになります！
+          </p>
+
+          <div class="thanks-box">
+            <h2 class="thanks-title">Special Thanks</h2>
+            <p class="thanks-note">（ご支援いただいた方は、感謝を込めてアプリ内にお名前を掲載させていただきます！ ※決済画面の入力欄に、ご希望のハンドルネームをご記入ください。）</p>
+            <div class="thanks-names">
+              <span class="thanks-name">ha-chan 様</span>
+            </div>
+          </div>
+
+          <div class="donate-actions">
+            <a href="https://donate.stripe.com/28E5kFakIfEre910Z01sQ00" target="_blank" class="donate-button">
+              <span class="donate-button-main">500円〜（コーヒー1杯分程度）寄付を行う</span>
+              <span class="donate-button-sub">※安全な決済システム（Stripe）へ移動します。</span>
+            </a>
+          </div>
+
+          <div class="profile-section">
+            <h2 class="profile-title"><span class="icon">👤</span>制作者プロフィール</h2>
+            <p class="profile-text">
+              1999年生まれ。埼玉県出身。東京大学農学部卒。在学中に自律神経失調症を患い、卒業後は「東大卒ニート」として療養生活を送る。現在は回復し、フリーランスのボイストレーナーをしながら、AIを駆使した開発に挑戦中。
+              無類のyasu（Acid Black Cherry）好き。人生のテーマは「本質に向き合うこと」。
+            </p>
+          </div>
+
+          <div class="story-section">
+            <h2 class="story-title"><span class="icon">💡</span>開発の経緯</h2>
+            <p class="story-text">
+              理系出身なのに、突然「経済学を学びたい！」と思い立ったのが始まりでした。
+              ChatGPTと協力してまとめテキストを作ろうとしたのですが、既存のWordやPDFではAIが「何ページ目のどこを編集しているか」を正確に把握できず、スムーズに連携できないことにイライラ……。
+              「だったら、AIが迷わない専用エディタを自分で作ればいいじゃん！」と決意。
+              プログラミング未経験でしたが、ChatGPTやGeminiを相棒に、二人三脚でこのアプリを形にしました。
+            </p>
+          </div>
+        </div>
+      </form>
+    </dialog>
 
     <dialog id="browser-warning-dialog" aria-labelledby="browser-warning-label">
       <form method="dialog">
