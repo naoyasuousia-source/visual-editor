@@ -154,8 +154,6 @@ body.mode-word .word-block-selector:hover {
 
 /* 4. Mode Switch Button Styling */
 #mode-switch {
-    order: 99;
-    margin-left: auto;
     border: none !important;
     padding: 6px 16px;
     border-radius: 6px;

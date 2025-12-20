@@ -322,7 +322,6 @@
       </div>
       <button type="button" data-action="add-page">+Page</button>
       <button type="button" data-action="remove-page">-Page</button>
-      <div style="flex-grow: 1;"></div>
       <div class="zoom-controls">
         <button type="button" data-action="zoom-out" title="縮小">－</button>
         <span id="zoom-level-display">100%</span>
@@ -336,25 +335,27 @@
         <input type="text" id="toolbar-jump-input-word" class="word-only" placeholder='（例：15　または　"本文中に含まれる文字列"）'
           title="段落番号(例:15)または検索したい文字列を入力してください">
       </div>
-      <button type="button" id="mode-switch" title="編集モード切替">
-        <span class="mode-text-std">標準モードに切替</span>
-        <span class="mode-text-word">Word互換モードに切替</span>
-      </button>
-      <button type="button" id="help-trigger" title="ヒント・規約" aria-label="ヘルプ">
-        <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.25"
-          stroke-linecap="round" stroke-linejoin="round" style="display: block;">
-          <circle cx="12" cy="12" r="10"></circle>
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-          <line x1="12" y1="17" x2="12.01" y2="17"></line>
-        </svg>
-      </button>
-      <button type="button" id="donate-trigger" title="開発を応援する">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-          <path
-            d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-        </svg>
-        <span>開発を応援</span>
-      </button>
+      <div id="toolbar-right-group">
+        <button type="button" id="mode-switch" title="編集モード切替">
+          <span class="mode-text-std">標準モードに切替</span>
+          <span class="mode-text-word">Word互換モードに切替</span>
+        </button>
+        <button type="button" id="help-trigger" title="ヒント・規約" aria-label="ヘルプ">
+          <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.25"
+            stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </button>
+        <button type="button" id="donate-trigger" title="開発を応援する">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+            <path
+              d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+          </svg>
+          <span>開発を応援</span>
+        </button>
+      </div>
     </div>
     <input type="file" id="open-file-input" accept=".html,text/html" style="display:none" />
     <div id="workspace">
@@ -483,6 +484,10 @@
               本エディターで保存したHTMLファイルをアップロードすると、ページ・段落構成を完全に生成AIと共有できます。
               これにより、AIアシストによる、快適でスピーディーな編集が可能になります。
             </p>
+            <p class="hint-desc" style="text-align: left; font-size: 0.7em; margin-top: 8px;">
+              <span style="color: #dc2626; ">※現在β版につき、全機能を無料で公開中です！</span><br>
+              皆さんのフィードバックを元に改善していきたいので、ぜひ今のうちに使い倒してみてください。
+            </p>
           </section>
 
           <section class="hint-section">
@@ -544,7 +549,7 @@
             <a href="#" data-action="sub-help">お問い合わせ</a>
             <a href="#" data-action="sub-help">特定商取引法に基づく表記</a>
           </div>
-          <p class="copyright-text">&copy; 2025 AI-Link Editor</p>
+          <p class="copyright-text">&copy; 2025 AI-Link Editor&nbsp;&nbsp;β版</p>
         </div>
       </form>
     </dialog>
@@ -604,7 +609,7 @@
           </div>
 
           <div class="profile-section" id="donate-profile-section">
-            <h2 class="profile-title"><span class="icon">👤</span>制作者プロフィール</h2>
+            <h2 class="profile-title"><span class="icon">👤</span>開発者プロフィール</h2>
             <p class="profile-text">
               1999年生まれ。埼玉県出身。東京大学農学部卒。在学中に自律神経失調症を患い、卒業後は「東大卒ニート」として療養生活を送る。現在は回復し、フリーランスのボイストレーナーをしながら、AIを駆使した開発に挑戦中。
               無類のyasu（Acid Black Cherry）好き。人生のテーマは「本質に向き合うこと」。

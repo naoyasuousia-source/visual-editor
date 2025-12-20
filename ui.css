@@ -107,8 +107,22 @@ body {
   box-sizing: border-box;
 }
 
+#help-trigger {
+  order: 999;
+}
+
 #toolbar button:active {
   background: #e0e0e0;
+}
+
+#toolbar-right-group {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  /* ウィンドウ幅が狭いときに右揃えのまま折り返し */
 }
 
 /* Support Development Button */
@@ -1491,6 +1505,11 @@ dialog .dialog-actions {
 
 #donate-dialog .hint-body {
   padding: 24px;
+}
+
+#donate-dialog .hint-header h1 {
+  font-size: 1.725rem;
+  /* 1.5rem * 1.15 */
 }
 
 .donate-intro {

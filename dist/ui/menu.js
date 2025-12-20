@@ -577,8 +577,8 @@ export function initHelpDialog() {
                                     <p>本サービスに関するお問い合わせは、以下のフォームより受け付けております。</p>
                                     <p><a href="https://docs.google.com/forms/d/e/1FAIpQLSddSA-8kVE7vKqJvlFJ2W07pBUmiDh-cqymT_KbHUmIoO3jvw/viewform?usp=dialog" target="_blank" style="color: #0891b2; text-decoration: underline;">お問い合わせフォーム</a></p>
                                     <p><strong>【お問い合わせの例】</strong></p>
-                                    <p>・ローカルキット（完全版）の購入に関するご質問</p>
                                     <p>・バグ報告、改善要望</p>
+                                    <p>・ソースコードの販売について（企業向け）</p>
                                     <p>・取材、お仕事のご依頼</p>
                                     <p><strong>【注意事項（あらかじめご了承ください）】</strong></p>
                                     <p>・開発者が個人で運営しているため、返信には数日〜1週間ほどお時間をいただく場合があります。</p>
