@@ -7,34 +7,20 @@ export default defineConfig({
       global: true,
       options: {
         compact: true,
-        controlFlowFlattening: true,
-        controlFlowFlatteningThreshold: 0.75,
-        deadCodeInjection: true,
-        deadCodeInjectionThreshold: 0.4,
+        controlFlowFlattening: false, // 複雑化を回避
+        deadCodeInjection: false, // デッドコード注入を回避
         debugProtection: false,
         debugProtectionInterval: 0,
         disableConsoleOutput: true,
         identifierNamesGenerator: 'hexadecimal',
         log: false,
-        numbersToExpressions: true,
+        numbersToExpressions: false, // 数式の変換を回避
         renameGlobals: false,
-        selfDefending: true,
+        selfDefending: false, // 防御機構を解除
         simplify: true,
-        splitStrings: true,
-        splitStringsChunkLength: 10,
-        stringArray: true,
-        stringArrayCallsTransform: true,
-        stringArrayCallsTransformThreshold: 0.75,
-        stringArrayEncoding: ['rc4'],
-        stringArrayIndexShift: true,
-        stringArrayRotate: true,
-        stringArrayShuffle: true,
-        stringArrayWrappersCount: 2,
-        stringArrayWrappersChainedCalls: true,
-        stringArrayWrappersParametersMaxCount: 4,
-        stringArrayWrappersType: 'function',
-        stringArrayThreshold: 0.75,
-        transformObjectKeys: true,
+        splitStrings: false, // 文字列分割を解除
+        stringArray: false, // 文字列配列化を解除（これがパス解決エラーの主原因になりやすい）
+        transformObjectKeys: false, // オブジェクトキーの変換を解除
         unicodeEscapeSequence: false
       },
     }),
