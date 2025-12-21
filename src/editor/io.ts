@@ -6,6 +6,8 @@ import {
     state,
 } from '../globals.js';
 import { getMode } from '../core/router.js';
+import mammoth from 'mammoth';
+import contentCssText from '../styles/content.css?raw';
 
 // We need to access initPages, renumberParagraphs etc.
 // Since they are on window, we can use them.
@@ -197,11 +199,8 @@ export async function saveFullHTML(): Promise<void> {
     const pagesContainer = getPagesContainerElement();
     if (!pagesContainer) return;
 
-    if (state.openedFileHandle) {
-        // Existing handle logic if needed
-    }
 
-    const html = await buildFullHTML(); // Now async
+    const html = await buildFullHTML();
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -235,18 +234,8 @@ export async function buildFullHTML(): Promise<string> {
     if (!pagesContainer) return '';
     if (window.renumberParagraphs) window.renumberParagraphs();
 
-    // Fetch style.css content
-    let styleContent = '';
-    try {
-        const response = await fetch('content.css');
-        if (response.ok) {
-            styleContent = await response.text();
-        } else {
-            console.warn('Failed to fetch style.css for saving');
-        }
-    } catch (e) {
-        console.warn('Error fetching style.css', e);
-    }
+    // Use imported CSS string directly
+    const styleContent = contentCssText;
 
     // We can't pass styleTag anymore, pass styleContent string directly
     // note: buildFullHTMLUtil needs update to accept string or we fake a style element
@@ -265,10 +254,6 @@ export async function buildFullHTML(): Promise<string> {
 }
 
 export async function importDocx(file: File): Promise<boolean> {
-    if (!(window as any).mammoth) {
-        alert('Mammoth.jsが読み込まれていません。');
-        return false;
-    }
 
     try {
         const arrayBuffer = await file.arrayBuffer();
@@ -277,13 +262,12 @@ export async function importDocx(file: File): Promise<boolean> {
                 "u => u"
             ],
             // Mammoth convertImages handles images. We want to skip them.
-            convertImage: (window as any).mammoth.images.inline(() => {
-                return {}; // Return empty to effectively skip? 
-                // Better yet: we strip tags later.
+            convertImage: mammoth.images.inline(() => {
+                return {};
             })
         };
 
-        const result = await (window as any).mammoth.convertToHtml({ arrayBuffer: arrayBuffer }, options);
+        const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer }, options);
         let html = result.value;
 
         const parser = new DOMParser();

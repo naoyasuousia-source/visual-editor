@@ -205,7 +205,6 @@ window.importDocx = importDocx;
 
 // Fonts & Paragraph Style
 window.applyFontFamily = applyFontFamily;
-// window.alignDirections = alignDirections;
 window.applyParagraphAlignment = applyParagraphAlignment;
 window.getParagraphsInRange = getParagraphsInRange;
 window.applyParagraphSpacing = applyParagraphSpacing;
