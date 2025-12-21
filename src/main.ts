@@ -38,6 +38,7 @@ import {
   bindParagraphMenuListeners,
   initHighlightMenuControls,
   initHelpDialog,
+  initDonateDialog,
   initModeSwitch,
   initWordToolbarControls
 } from './ui/menu';
@@ -66,6 +67,7 @@ export function initEditor() {
   bindParagraphMenuListeners();
   initHighlightMenuControls();
   initHelpDialog();
+  initDonateDialog();
   initModeSwitch();
   initWordToolbarControls();
 

@@ -508,14 +508,31 @@ export function initHelpDialog(): void {
                 if (subHelpTitleEl) subHelpTitleEl.innerText = type;
 
                 if (subHelpContentEl) {
-                    subHelpContentEl.classList.remove('is-small');
+                    subHelpContentEl.classList.remove('is-small', 'is-legal');
                     const content = HELP_CONTENT[type] || '<p>詳細情報は現在準備中です。</p>';
                     if (type !== '詳細情報') subHelpContentEl.classList.add('is-small');
+                    if (type === '特定商取引法に基づく表記') subHelpContentEl.classList.add('is-legal');
                     subHelpContentEl.innerHTML = content;
                 }
                 subHelpDialog.showModal();
             });
         });
+
+        // 開発者プロフィールリンク (help-dialog内)
+        const devProfileLink = document.getElementById('dev-profile-link');
+        const donateDialog = document.getElementById('donate-dialog') as HTMLDialogElement;
+        if (devProfileLink && donateDialog) {
+            devProfileLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                helpDialog.close();
+                donateDialog.showModal();
+                // プロフィールセクションへスクロール
+                const profileSection = document.getElementById('donate-profile-section');
+                if (profileSection) {
+                    profileSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        }
     }
 
     if (subHelpDialog) {
@@ -525,6 +542,27 @@ export function initHelpDialog(): void {
                 rect.left <= e.clientX && e.clientX <= rect.left + rect.width);
             if (!isInDialog) {
                 subHelpDialog.close();
+            }
+        });
+    }
+}
+
+export function initDonateDialog(): void {
+    const donateTrigger = document.getElementById('donate-trigger');
+    const donateDialog = document.getElementById('donate-dialog') as HTMLDialogElement;
+
+    if (donateTrigger && donateDialog) {
+        donateTrigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            donateDialog.showModal();
+        });
+
+        donateDialog.addEventListener('click', (e) => {
+            const rect = donateDialog.getBoundingClientRect();
+            const isInDialog = (rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+                rect.left <= e.clientX && e.clientX <= rect.left + rect.width);
+            if (!isInDialog) {
+                donateDialog.close();
             }
         });
     }

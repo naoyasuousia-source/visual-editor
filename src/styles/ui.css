@@ -1658,3 +1658,35 @@ dialog .dialog-actions {
 .icon {
   font-size: 1.2rem;
 }
+
+/* Legal Information Styling */
+.hint-body.is-legal {
+  color: #888 !important;
+  /* 少し薄く */
+  font-size: calc(11pt * 0.7) !important;
+  /* フォントサイズ0.7倍 */
+}
+
+.hint-body.is-legal * {
+  color: inherit !important;
+  font-size: inherit !important;
+}
+
+.legal-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.legal-table th,
+.legal-table td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+
+.legal-table th {
+  width: 35%;
+  font-weight: bold;
+}

@@ -62,12 +62,26 @@ export const HELP_CONTENT: Record<string, string> = {
         <p>本サービスに関するお問い合わせは、以下のフォームより受け付けております。</p>
         <p><a href="https://docs.google.com/forms/d/e/1FAIpQLSddSA-8kVE7vKqJvlFJ2W07pBUmiDh-cqymT_KbHUmIoO3jvw/viewform?usp=dialog" target="_blank" style="color: #0891b2; text-decoration: underline;">お問い合わせフォーム</a></p>
         <p><strong>【お問い合わせの例】</strong></p>
-        <p>・ローカルキット（完全版）の購入に関するご質問</p>
         <p>・バグ報告、改善要望</p>
+        <p>・ソースコードの販売について（企業向け）</p>
         <p>・取材、お仕事のご依頼</p>
         <p><strong>【注意事項（あらかじめご了承ください）】</strong></p>
         <p>・開発者が個人で運営しているため、返信には数日〜1週間ほどお時間をいただく場合があります。</p>
         <p>・内容によっては返信を差し控えさせていただくことがございます。</p>
         <p>・ブラウザの操作方法やPC自体の使い方など、本サービスに直接関係のないサポートは行っておりません。</p>
+    `,
+    '特定商取引法に基づく表記': `
+        <table class="legal-table">
+            <tr><th>販売業者</th><td>個人のため、請求をいただいた際、遅滞なく開示いたします。</td></tr>
+            <tr><th>代表責任者</th><td>曽我部 直也</td></tr>
+            <tr><th>所在地</th><td>個人のため、請求をいただいた際、遅滞なく開示いたします。</td></tr>
+            <tr><th>電話番号</th><td>個人のため、請求をいただいた際、遅滞なく開示いたします。</td></tr>
+            <tr><th>メールアドレス</th><td>symphoneer.87@gmail.com</td></tr>
+            <tr><th>販売価格</th><td>各支援ページ（Stripe決済画面）に表示される金額に基づきます。</td></tr>
+            <tr><th>商品代金以外の必要料金</th><td>なし（インターネット接続料金等はユーザー負担）</td></tr>
+            <tr><th>商品の引き渡し時期</th><td>決済完了後、即時（ツール自体は既に公開されているWebページ上で利用可能です）</td></tr>
+            <tr><th>お支払方法</th><td>クレジットカード（Stripeを利用）</td></tr>
+            <tr><th>返品・交換・キャンセル</th><td>サービスの性質上、決済完了後の返品・返金・キャンセルには応じられません。</td></tr>
+        </table>
     `
 };
