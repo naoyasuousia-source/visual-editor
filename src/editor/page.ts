@@ -1,9 +1,9 @@
-import { getPagesContainerElement } from '../globals.js';
-import { ensureAiImageIndex } from './image.js';
-import { bindEditorEvents } from '../ui/events.js';
-import { renumberParagraphs } from './formatting.js';
-import { updateNavigator } from '../ui/navigator.js';
-import { getMode } from '../core/router.js';
+import { getPagesContainerElement } from '../globals';
+import { ensureAiImageIndex } from './image';
+import { bindEditorEvents } from '../ui/events';
+import { renumberParagraphs } from './formatting';
+import { updateNavigator } from '../ui/navigator';
+import { getMode } from '../core/router';
 
 export function createPage(pageNumber: number, contentHTML?: string): HTMLElement {
     const section = document.createElement('section');

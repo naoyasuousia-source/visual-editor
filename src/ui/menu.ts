@@ -1,11 +1,10 @@
-
 import {
     getParagraphChooserElement,
     getFontChooserElement,
     getHighlightControlElement
-} from '../globals.js';
-import { applyBlockElement } from '../editor/formatting.js';
-import { switchMode, getMode } from '../core/router.js';
+} from '../globals';
+import { applyBlockElement } from '../editor/formatting';
+import { switchMode, getMode } from '../core/router';
 
 // DOM Elements
 const getFileDropdownElement = () => document.querySelector<HTMLElement>('.file-dropdown');
@@ -13,7 +12,7 @@ const getNestedDropdownElements = () => document.querySelectorAll<HTMLElement>('
 
 
 
-import { HELP_CONTENT } from './help-info.js';
+import { HELP_CONTENT } from './help-info';
 
 function adjustMenuPositionSafe(submenu: HTMLElement): void {
     // Reset to default to measure natural size/position

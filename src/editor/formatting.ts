@@ -1,12 +1,12 @@
 import {
     SelectionState,
-} from '../types.js';
+} from '../types';
 
 import {
     computeSelectionStateFromRange,
     restoreRangeFromSelectionState,
     getCurrentParagraph
-} from './selection.js';
+} from './selection';
 
 import {
     convertParagraphToTag,
@@ -14,13 +14,13 @@ import {
     removeColorSpansInNode,
     findParagraphWrapper,
     ensureParagraphWrapper
-} from '../utils/dom.js';
+} from '../utils/dom';
 
-import { updateToolbarState } from '../ui/toolbar.js';
-import { getPagesContainerElement } from '../globals.js';
-import { rebuildFigureMetaStore } from './image.js';
-import { updateAiMetaGuide } from './ai-meta.js';
-import { getMode } from '../core/router.js';
+import { updateToolbarState } from '../ui/toolbar';
+import { getPagesContainerElement } from '../globals';
+import { rebuildFigureMetaStore } from './image';
+import { updateAiMetaGuide } from './ai-meta';
+import { getMode } from '../core/router';
 
 const ALIGN_DIRECTIONS = ['left', 'center', 'right'] as const;
 

@@ -1,8 +1,7 @@
-
 import {
     convertParagraphToTag,
     ensureParagraphWrapper
-} from '../utils/dom.js';
+} from '../utils/dom';
 
 import {
     toggleBold,
@@ -17,10 +16,10 @@ import {
     resetHighlightsInSelection,
     renumberParagraphs,
     applyPendingBlockTag
-} from '../editor/formatting.js';
+} from '../editor/formatting';
 
-import { checkPageOverflow } from '../editor/page.js';
-import { getMode } from '../core/router.js';
+import { checkPageOverflow } from '../editor/page';
+import { getMode } from '../core/router';
 
 // DOM Elements
 const getToolbarElement = () => document.getElementById('toolbar');

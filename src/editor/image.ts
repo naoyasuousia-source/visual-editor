@@ -1,8 +1,8 @@
-import { getPagesContainerElement, state } from '../globals.js';
-import { getClosestBlockId, isParagraphEmpty, ensureFigureWrapper, convertParagraphToTag } from '../utils/dom.js';
-import { renumberParagraphs } from './formatting.js';
-import { findParagraph, placeCaretBefore, getCurrentParagraph } from './selection.js';
-import { getMode } from '../core/router.js';
+import { getPagesContainerElement, state } from '../globals';
+import { getClosestBlockId, isParagraphEmpty, ensureFigureWrapper, convertParagraphToTag } from '../utils/dom';
+import { renumberParagraphs } from './formatting';
+import { findParagraph, placeCaretBefore, getCurrentParagraph } from './selection';
+import { getMode } from '../core/router';
 
 // Internal module state
 let contextTargetImage: HTMLImageElement | null = null;

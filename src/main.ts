@@ -1,3 +1,7 @@
+import './styles/content.css';
+import './styles/ui.css';
+import './styles/ui_word_mode.css';
+
 import {
   renumberParagraphs
 } from './editor/formatting';
@@ -48,8 +52,8 @@ import { initNavigator, initParagraphJump, initSidebarToggle, initToolbarJump } 
 // (Imported modules handle logic)
 // (Global assignments are in registry.ts)
 
-import { checkBrowserSupport } from './ui/browser-check.js';
-import { initRouter } from './core/router.js';
+import { checkBrowserSupport } from './ui/browser-check';
+import { initRouter } from './core/router';
 
 export function initEditor() {
   initRouter();
