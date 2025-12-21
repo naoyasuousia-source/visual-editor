@@ -1,358 +1,354 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
-  <meta charset="UTF-8">
-  <style>
-    :root {
-      --page-margin: 17mm;
-    }
+<meta charset="UTF-8">
+<style>
+:root { --page-margin: 17mm; } 
+:root {
+  --page-margin: 17mm;
+  --para-number-left: 6mm;
+  --editor-font-family: inherit;
+  --tab-width: 0px;
+}
 
-    :root {
-      --page-margin: 17mm;
-      --para-number-left: 6mm;
-      --editor-font-family: inherit;
-      --tab-width: 0px;
-    }
+/* A4ページ */
+section.page {
+  position: relative;
+  width: 210mm;
+  min-width: 210mm;
+  /* Strict A4 dimensions to guarantee ratio regardless of browser support */
+  height: 297mm;
+  min-height: 297mm;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+  overflow: hidden;
+  margin: 0 auto;
+  /* 中央配置 */
+}
 
-    /* A4ページ */
-    section.page {
-      position: relative;
-      width: 210mm;
-      min-width: 210mm;
-      /* Strict A4 dimensions to guarantee ratio regardless of browser support */
-      height: 297mm;
-      min-height: 297mm;
-      background: #fff;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      box-sizing: border-box;
-      overflow: hidden;
-      margin: 0 auto;
-      /* 中央配置 */
-    }
+section.page::after {
+  content: attr(data-page);
+  position: absolute;
+  left: 50%;
+  bottom: 6mm;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #666;
+}
 
-    section.page::after {
-      content: attr(data-page);
-      position: absolute;
-      left: 50%;
-      bottom: 6mm;
-      transform: translateX(-50%);
-      font-size: 11px;
-      color: #666;
-    }
+/* ページ内編集領域 */
+.page-inner {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: var(--page-margin);
+  position: relative;
+  overflow-y: auto;
+  outline: none;
+  font-family: var(--editor-font-family, inherit);
+  font-size: 11pt;
+  color: #333;
+  line-height: 1.6;
+}
 
-    /* ページ内編集領域 */
-    .page-inner {
-      width: 100%;
-      height: 100%;
-      box-sizing: border-box;
-      padding: var(--page-margin);
-      position: relative;
-      overflow-y: auto;
-      outline: none;
-      font-family: var(--editor-font-family, inherit);
-      font-size: 11pt;
-      color: #333;
-      line-height: 1.6;
-    }
+.page-inner p,
+.page-inner h1,
+.page-inner h2,
+.page-inner h3,
+.page-inner h4,
+.page-inner h5,
+.page-inner h6 {
+  margin: 0 0 1em;
+  position: relative;
+  padding-left: 0;
+}
 
-    .page-inner p,
-    .page-inner h1,
-    .page-inner h2,
-    .page-inner h3,
-    .page-inner h4,
-    .page-inner h5,
-    .page-inner h6 {
-      margin: 0 0 1em;
-      position: relative;
-      padding-left: 0;
-    }
+/* 段落番号 */
+.page-inner p[data-para]::before,
+.page-inner h1[data-para]::before,
+.page-inner h2[data-para]::before,
+.page-inner h3[data-para]::before,
+.page-inner h4[data-para]::before,
+.page-inner h5[data-para]::before,
+.page-inner h6[data-para]::before {
+  content: "[" attr(data-para) "]";
+  position: absolute;
+  left: -11mm;
+  top: 0.25em;
+  width: 2.4rem;
+  text-align: right;
+  color: #999;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1;
+  user-select: none;
+  user-select: none;
+  pointer-events: none;
+}
 
-    /* 段落番号 */
-    .page-inner p[data-para]::before,
-    .page-inner h1[data-para]::before,
-    .page-inner h2[data-para]::before,
-    .page-inner h3[data-para]::before,
-    .page-inner h4[data-para]::before,
-    .page-inner h5[data-para]::before,
-    .page-inner h6[data-para]::before {
-      content: "[" attr(data-para) "]";
-      position: absolute;
-      left: -11mm;
-      top: 0.25em;
-      width: 2.4rem;
-      text-align: right;
-      color: #999;
-      font-size: 0.75rem;
-      font-weight: 400;
-      line-height: 1;
-      user-select: none;
-      user-select: none;
-      pointer-events: none;
-    }
+body.hide-page-numbers section.page::after {
+  display: none;
+}
 
-    body.hide-page-numbers section.page::after {
-      display: none;
-    }
+body.hide-para-numbers .page-inner [data-para]::before {
+  display: none;
+}
 
-    body.hide-para-numbers .page-inner [data-para]::before {
-      display: none;
-    }
-
-    /* 画像コンテキストメニュー */
+/* 画像コンテキストメニュー */
 
 
-    .page-inner img {
-      display: block;
-      max-width: 100%;
-      height: auto;
-      margin: 0.8em auto;
-      /* 強制中央 */
-    }
+.page-inner img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0.8em auto;
+  /* 強制中央 */
+}
 
-    .page-inner .figure-inline {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-      margin: 1em 0;
-    }
+.page-inner .figure-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin: 1em 0;
+}
 
-    .page-inner .figure-inline img {
-      margin: 0;
-    }
+.page-inner .figure-inline img {
+  margin: 0;
+}
 
-    .img-xs {
-      width: 20%;
-    }
+.img-xs {
+  width: 20%;
+}
 
-    .img-s {
-      width: 35%;
-    }
+.img-s {
+  width: 35%;
+}
 
-    .img-m {
-      width: 50%;
-    }
+.img-m {
+  width: 50%;
+}
 
-    .img-l {
-      width: 65%;
-    }
+.img-l {
+  width: 65%;
+}
 
-    .img-xl {
-      width: 85%;
-    }
+.img-xl {
+  width: 85%;
+}
 
-    /* .figure-title: Removed custom font/color styles to list block tag control style (e.g. h6) */
-    .page-inner .figure-title {
-      display: inline;
-      /* blockからinlineへ変更（横並びや自然な配置のため） */
-      margin: 0;
-    }
+/* .figure-title: Removed custom font/color styles to list block tag control style (e.g. h6) */
+.page-inner .figure-title {
+  display: inline;
+  /* blockからinlineへ変更（横並びや自然な配置のため） */
+  margin: 0;
+}
 
-    .page-inner .figure-inline .caret-slot {
-      font-size: 0;
-      line-height: 0;
-    }
+.page-inner .figure-inline .caret-slot {
+  font-size: 0;
+  line-height: 0;
+}
 
-    .page-inner img.has-border {
-      border: 1px solid currentColor;
-    }
+.page-inner img.has-border {
+  border: 1px solid currentColor;
+}
 
-    /* その他UIパーツ */
+/* その他UIパーツ */
 
 
-    /* インデントと行間 */
-    .page-inner {
-      line-height: 1.6;
-    }
+/* インデントと行間 */
+.page-inner {
+  line-height: 1.6;
+}
 
-    .page-inner.line-height-s {
-      line-height: 1.25;
-    }
+.page-inner.line-height-s {
+  line-height: 1.25;
+}
 
-    .page-inner.line-height-l {
-      line-height: 2.0;
-    }
+.page-inner.line-height-l {
+  line-height: 2.0;
+}
 
-    .inline-highlight {
-      border-radius: 2px;
-      padding: 2px 0;
-    }
+.inline-highlight {
+  border-radius: 2px;
+  padding: 2px 0;
+}
 
-    .inline-tab {
-      display: inline-block;
-      vertical-align: bottom;
-      height: 1em;
-    }
+.inline-tab {
+  display: inline-block;
+  vertical-align: bottom;
+  height: 1em;
+}
 
 
 
-    /* インデント定義: 36pt = 0.5in = 1.27cm */
-    .page-inner .indent-1 {
-      padding-left: 36pt;
-    }
+/* インデント定義: 36pt = 0.5in = 1.27cm */
+.page-inner .indent-1 {
+  padding-left: 36pt;
+}
 
-    .page-inner .indent-2 {
-      padding-left: 72pt;
-    }
+.page-inner .indent-2 {
+  padding-left: 72pt;
+}
 
-    .page-inner .indent-3 {
-      padding-left: 108pt;
-    }
+.page-inner .indent-3 {
+  padding-left: 108pt;
+}
 
-    .page-inner .indent-4 {
-      padding-left: 144pt;
-    }
+.page-inner .indent-4 {
+  padding-left: 144pt;
+}
 
-    .page-inner .indent-5 {
-      padding-left: 180pt;
-    }
+.page-inner .indent-5 {
+  padding-left: 180pt;
+}
 
-    /* ぶら下げ(hanging-indent)は、padding-leftで設定したインデントを
+/* ぶら下げ(hanging-indent)は、padding-leftで設定したインデントを
    text-indent: -padding-left で相殺し、1行目を左端(0地点)に戻す挙動と定義 */
 
-    .page-inner .hanging-indent {
-      text-indent: -1em;
-    }
+.page-inner .hanging-indent {
+  text-indent: -1em;
+}
 
-    .page-inner .indent-1.hanging-indent {
-      padding-left: 36pt;
-      text-indent: -36pt;
-    }
+.page-inner .indent-1.hanging-indent {
+  padding-left: 36pt;
+  text-indent: -36pt;
+}
 
-    .page-inner .indent-2.hanging-indent {
-      padding-left: 72pt;
-      text-indent: -72pt;
-    }
+.page-inner .indent-2.hanging-indent {
+  padding-left: 72pt;
+  text-indent: -72pt;
+}
 
-    .page-inner .indent-3.hanging-indent {
-      padding-left: 108pt;
-      text-indent: -108pt;
-    }
+.page-inner .indent-3.hanging-indent {
+  padding-left: 108pt;
+  text-indent: -108pt;
+}
 
-    .page-inner .indent-4.hanging-indent {
-      padding-left: 144pt;
-      text-indent: -144pt;
-    }
+.page-inner .indent-4.hanging-indent {
+  padding-left: 144pt;
+  text-indent: -144pt;
+}
 
-    .page-inner .indent-5.hanging-indent {
-      padding-left: 180pt;
-      text-indent: -180pt;
-    }
+.page-inner .indent-5.hanging-indent {
+  padding-left: 180pt;
+  text-indent: -180pt;
+}
 
-    /* Align Helpers */
-    .inline-align {
-      display: inline-block;
-      width: 100%;
-      box-sizing: border-box;
-    }
+/* Align Helpers */
+.inline-align {
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+}
 
-    .inline-align-left {
-      text-align: left;
-    }
+.inline-align-left {
+  text-align: left;
+}
 
-    .inline-align-center {
-      text-align: center;
-    }
+.inline-align-center {
+  text-align: center;
+}
 
-    .inline-align-right {
-      text-align: right;
-    }
+.inline-align-right {
+  text-align: right;
+}
 
-    .page-inner p.inline-spacing-xs,
-    .page-inner .inline-align.inline-spacing-xs {
-      margin-bottom: 4px;
-    }
+.page-inner p.inline-spacing-xs,
+.page-inner .inline-align.inline-spacing-xs {
+  margin-bottom: 4px;
+}
 
-    .page-inner p.inline-spacing-s,
-    .page-inner .inline-align.inline-spacing-s {
-      margin-bottom: 12px;
-    }
+.page-inner p.inline-spacing-s,
+.page-inner .inline-align.inline-spacing-s {
+  margin-bottom: 12px;
+}
 
-    .page-inner p.inline-spacing-m,
-    .page-inner .inline-align.inline-spacing-m {
-      margin-bottom: 20px;
-    }
+.page-inner p.inline-spacing-m,
+.page-inner .inline-align.inline-spacing-m {
+  margin-bottom: 20px;
+}
 
-    .page-inner p.inline-spacing-l,
-    .page-inner .inline-align.inline-spacing-l {
-      margin-bottom: 28px;
-    }
+.page-inner p.inline-spacing-l,
+.page-inner .inline-align.inline-spacing-l {
+  margin-bottom: 28px;
+}
 
-    .page-inner p.inline-spacing-xl,
-    .page-inner .inline-align.inline-spacing-xl {
-      margin-bottom: 36px;
-    }
+.page-inner p.inline-spacing-xl,
+.page-inner .inline-align.inline-spacing-xl {
+  margin-bottom: 36px;
+}
 
-    /* Removed .mini-text */
-
-
-
-    /* Print / PDF Output Optimized Styles */
-    @media print {
-      @page {
-        size: A4 portrait;
-        margin: 0;
-      }
-
-      body {
-        background: #fff;
-        overflow: visible;
-        height: auto;
-        width: 100%;
-      }
+/* Removed .mini-text */
 
 
-      /* Ensure page exactly matches A4 and breaks correctly */
-      section.page {
-        position: relative;
-        width: 210mm;
-        height: 297mm;
-        min-height: 297mm;
-        margin: 0;
-        padding: 0;
-        box-shadow: none;
-        outline: none !important;
-        /* Remove active page outline */
-        background: #fff;
-        overflow: hidden;
-        break-after: page;
-        page-break-after: always;
-      }
 
-      /* Remove break after the last page to avoid empty sheet? 
+/* Print / PDF Output Optimized Styles */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  body {
+    background: #fff;
+    overflow: visible;
+    height: auto;
+    width: 100%;
+  }
+
+
+  /* Ensure page exactly matches A4 and breaks correctly */
+  section.page {
+    position: relative;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    outline: none !important;
+    /* Remove active page outline */
+    background: #fff;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  /* Remove break after the last page to avoid empty sheet? 
      Usually beneficial, but sometimes browser handles it.
      Let's be explicit if possible. */
-      section.page:last-child {
-        break-after: auto;
-        page-break-after: auto;
-      }
+  section.page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
 
-      /* Maintain internal layout fidelity */
-      .page-inner {
-        width: 100%;
-        height: 100%;
-        padding: var(--page-margin);
-        overflow: visible;
-      }
+  /* Maintain internal layout fidelity */
+  .page-inner {
+    width: 100%;
+    height: 100%;
+    padding: var(--page-margin);
+    overflow: visible;
+  }
 
-      /* Force text selection to be available in PDF readers */
-      /* Note: pointer-events: none on * in print media can sometimes help if overlay issues, but default is usually fine. */
+  /* Force text selection to be available in PDF readers */
+  /* Note: pointer-events: none on * in print media can sometimes help if overlay issues, but default is usually fine. */
 
-      .page-inner,
-      .page-inner * {
-        user-select: text !important;
-        -webkit-user-select: text !important;
-      }
-    }
-  </style>
+  .page-inner,
+  .page-inner * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
+}
+</style>
 </head>
-
 <body>
-  <div id="pages-container">
+<div id="pages-container">
+
 
     <div id="ai-meta-guide" style="display: none;">
-      <!-- AI ASSISTANT GUIDE
+<!-- AI ASSISTANT GUIDE
 This HTML structure represents a paginated document.
 - <section class="page"> represents a physical A4 page.
 - .page-inner contains the editable content.
@@ -360,14 +356,12 @@ This HTML structure represents a paginated document.
 - Images and figure metadata are stored in #ai-image-index at the bottom.
 Use the IDs to locate specific paragraphs when assisting the user.
 -->
-    </div>
+</div>
 
     <section class="page" data-page="1">
       <div class="page-inner" data-preferred-block-tag="p" data-pending-block-tag="">
-        <h1 data-para="1" id="p1-1" data-block-style="h1"><span
-            class="inline-align inline-align-center inline-spacing-xl">日本政治の本質概論</span></h1>
-        <h2 data-para="2" id="p1-2" data-block-style="h2"><span
-            class="inline-align inline-align-center inline-spacing-l">目次</span></h2>
+        <h1 data-para="1" id="p1-1" data-block-style="h1" class="inline-align-center inline-spacing-xl"><span class="inline-align inline-spacing-xl">日本政治の本質概論</span></h1>
+        <h2 data-para="2" id="p1-2" data-block-style="h2" class="inline-align-center"><span class="inline-align">目次</span></h2>
         <h3 data-para="3" id="p1-3" data-block-style="h3" class="indent-1"><span class="inline-align">【1. 日本の本質的な政治構造】
             ･･････････････････ p.2</span></h3>
         <h3 data-para="4" id="p1-4" data-block-style="h3" class="indent-1"><span class="inline-align">【2. 既得権益による障害】
@@ -375,11 +369,11 @@ Use the IDs to locate specific paragraphs when assisting the user.
         <h3 data-para="5" id="p1-5" data-block-style="h3" class="indent-1"><span class="inline-align">【3. 外交問題・地政学】
             ････････････････････････ p.4</span></h3>
         <h3 data-para="6" id="p1-6" data-block-style="h3" class="indent-1"><span class="inline-align">【4. 国内問題】
-            ････････････････････････････････ p.5</span></h3>
+            ････････････････････････････････ p.5〜p.6</span></h3>
         <h3 data-para="7" id="p1-7" data-block-style="h3" class="indent-1"><span class="inline-align">【5. 高市政権の政策】
-            ･･････････････････････ p.6〜p.7</span></h3>
+            ･･････････････････････････ p.7〜p.8</span></h3>
         <h3 data-para="8" id="p1-8" data-block-style="h3" class="indent-1"><span class="inline-align">【6.
-            AI時代、日本はどうなるべきか】 ････････････ p.8</span></h3>
+            AI時代、日本はどうなるべきか】 ････････････ p.9</span></h3>
       </div>
     </section>
 
@@ -387,22 +381,15 @@ Use the IDs to locate specific paragraphs when assisting the user.
       <div class="page-inner" data-preferred-block-tag="p" data-pending-block-tag="">
         <h2 data-para="1" id="p2-1" data-block-style="h2"><span class="inline-align">【1. 日本の本質的な政治構造】</span></h2>
         <h3 data-para="2" id="p2-2" data-block-style="h3"><span class="inline-align">1.1 意思決定の真の主役：鉄の三角形</span></h3>
-        <p data-para="3" id="p2-3" data-block-style="p"><span
-            class="inline-align">日本の政治を理解する上で、憲法上の制度的な説明（三権分立）だけでは不十分である。実態としては、<span class="inline-highlight"
-              style="background-color: #FFFF00;">「政・官・財」の三者が緊密に連携する<strong>『鉄の三角形』</strong></span>が長らく意思決定の中枢を担ってきた。</span>
+        <p data-para="3" id="p2-3" data-block-style="p"><span class="inline-align">日本の政治を理解する上で、憲法上の制度的な説明（三権分立）だけでは不十分である。実態としては、<span class="inline-highlight" style="background-color: #FFFF00;">「政・官・財」の三者が緊密に連携する<strong>『鉄の三角形』</strong></span>が長らく意思決定の中枢を担ってきた。</span>
         </p>
-        <p data-para="4" id="p2-4" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・族議員（政）：</strong> 特定の業界団体の利益を代弁し、予算獲得に動く政治家。</span></p>
-        <p data-para="5" id="p2-5" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・官僚（官）：</strong> 許認可権と法案作成能力を独占し、実質的な政策の骨格を作る。</span></p>
-        <p data-para="6" id="p2-6" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・業界団体（財）：</strong> 政治家への献金と票、官僚への天下り先の提供を通じて影響力を行使する。</span></p>
-        <p data-para="7" id="p2-7" data-block-style="p"><span
-            class="inline-align">この構造は、高度経済成長期においては資源を効率的に配分し、国家一丸となって成長を支えるシステムとして機能した。しかし、成熟社会となった現代では、変化を拒む強力な「慣性」として作用している。</span>
+        <p data-para="4" id="p2-4" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・族議員（政）：</strong> 特定の業界団体の利益を代弁し、予算獲得に動く政治家。</span></p>
+        <p data-para="5" id="p2-5" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・官僚（官）：</strong> 許認可権と法案作成能力を独占し、実質的な政策の骨格を作る。</span></p>
+        <p data-para="6" id="p2-6" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・業界団体（財）：</strong> 政治家への献金と票、官僚への天下り先の提供を通じて影響力 行使する。</span></p>
+        <p data-para="7" id="p2-7" data-block-style="p"><span class="inline-align">この構造は、高度経済成長期においては資源を効率的に配分し、国家一丸となって成長を支えるシステムとして機能した。しかし、成熟社会となった現代では、変化を拒む強力な「慣性」として作用している。</span>
         </p>
         <h3 data-para="8" id="p2-8" data-block-style="h3"><span class="inline-align">1.2 日米合同委員会の影</span></h3>
-        <p data-para="9" id="p2-9" data-block-style="p"><span
-            class="inline-align">さらに、日本独自の統治構造として指摘されるのが<strong>「日米合同委員会」</strong>の存在である。これは米軍幹部と日本のエリート官僚が定期的に協議する場であり、日本の国内法よりも日米地位協定が優先されるなど、実質的な主権の制約が存在するとされる。この「戦後体制」の維持が、日本の独自の政治判断を難しくしている側面、いわゆる「属国構造」の議論は避けて通れない本質である。</span>
+        <p data-para="9" id="p2-9" data-block-style="p"><span class="inline-align">さらに、日本独自の統治構造として指摘されるのが<strong>「日米合同委員会」</strong>の存在である。これは米軍幹部と日本のエリート官僚が定期的に協議する場であり、日本の国内法よりも日米地位協定が優先されるなど、実質的な主権の制約が存在するとされる。この「戦後体制」の維持が、日本の独自の政治判断を難しくしている側面、いわゆる「属国構造」の議論は避けて通れない本質である。</span>
         </p>
       </div>
     </section>
@@ -411,25 +398,15 @@ Use the IDs to locate specific paragraphs when assisting the user.
       <div class="page-inner" data-preferred-block-tag="p">
         <h2 data-para="1" id="p3-1" data-block-style="h2"><span class="inline-align">【2. 既得権益による障害】</span></h2>
         <h3 data-para="2" id="p3-2" data-block-style="h3"><span class="inline-align">2.1 規制の正当化とイノベーションの阻害</span></h3>
-        <p data-para="3" id="p3-3" data-block-style="p"><span class="inline-align">日本の多くの産業において、<span
-              class="inline-highlight"
-              style="background-color: #FFFF00;">「公共の福祉」や「安全性の確保」を名目とした過剰な規制</span>が、既得権益を保護する盾となっている。最も顕著な例は、ライドシェア解禁の遅れや、医療・介護分野における利権構造である。</span>
+        <p data-para="3" id="p3-3" data-block-style="p"><span class="inline-align">日本の多くの産業において、<span class="inline-highlight" style="background-color: #FFFF00;">「公共の福祉」や「安全性の確保」を名目とした過剰な規制</span>が、既得権益を保護する盾となっている。最も顕著な例は、ライドシェア解禁の遅れや、医療・介護分野における利権構造である。</span>
         </p>
-        <p data-para="4" id="p3-4" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・規制のキャプチャ：</strong> 本来規制すべき当局が、規制対象の業界に取り込まれ、新規参入を妨害する現象。</span></p>
-        <p data-para="5" id="p3-5" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・内部留保と労働移動の低迷：</strong>
+        <p data-para="4" id="p3-4" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・規制のキャプチャ：</strong> 本来規制すべき当局が、規制対象の業界に取り込まれ、新規参入を妨害する現象。</span></p>
+        <p data-para="5" id="p3-5" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・内部留保と労働移動の低迷：</strong>
             解雇規制の不透明さや終身雇用の残滓が、生産性の高い分野への労働力移動を阻み、経済全体を硬直化させている。</span></p>
         <h3 data-para="6" id="p3-6" data-block-style="h3"><span class="inline-align">2.2 シルバー民主主義のジレンマ</span></h3>
-        <p data-para="7" id="p3-7" data-block-style="p"><span
-            class="inline-align">人口構造の歪みは、政治的な優先順位にも影響を与える。有権者の多数派を占める高齢者層の支持を得るため、<span class="inline-highlight"
-              style="background-color: #FFFF00;">現役世代や将来世代への投資（教育、IT、研究開発）よりも、現状維持のための社会保障支出が優先される</span>状態。これが「失われた30年」を加速させた既得権益の最大要因の一つである。</span>
+        <p data-para="7" id="p3-7" data-block-style="p"><span class="inline-align">人口構造の歪みは、政治的な優先順位にも影響を与える。有権者の多数派を占める高齢者層の支持を得るため、<span class="inline-highlight" style="background-color: #FFFF00;">現役世代や将来世代への投資（教育、IT、研究開発）よりも、現状維持のための社会保障支出が優先される</span>状態。これが「失われた30年」を加速させた既得権益の最大要因の一つである。</span>
         </p>
-        <p data-para="8" id="p3-8" data-block-style="p"><span
-            class="inline-align inline-align-center figure-inline"><img class="img-m has-border"
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Iron_Triangle_Japan.png/600px-Iron_Triangle_Japan.png"
-              alt="Iron_Triangle_Japan.png"><span class="figure-title"
-              contenteditable="false">図1：政官財の利権循環構造イメージ</span></span></p>
+        
       </div>
     </section>
 
@@ -437,22 +414,13 @@ Use the IDs to locate specific paragraphs when assisting the user.
       <div class="page-inner" data-preferred-block-tag="p">
         <h2 data-para="1" id="p4-1" data-block-style="h2"><span class="inline-align">【3. 外交問題・地政学】</span></h2>
         <h3 data-para="2" id="p4-2" data-block-style="h3"><span class="inline-align">3.1 宿命としての地政学的リスク</span></h3>
-        <p data-para="3" id="p4-3" data-block-style="p"><span
-            class="inline-align">日本は、米国・中国・ロシアという核保有大国に囲まれた、地政学的に極めて不安定な位置（フロントライン）に存在する。<span class="inline-highlight"
-              style="background-color: #FFFF00;">特に「台湾有事」は、日本のエネルギー航路（シーレーン）を直撃し、国家存立の危機に直結する。</span></span></p>
-        <p data-para="4" id="p4-4" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・第一列島線の維持：</strong> 中国の海洋進出を抑制する防波堤としての役割。</span></p>
-        <p data-para="5" id="p4-5" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・クアッド（Quad）：</strong> 日米豪印による自由で開かれたインド太平洋の構築。</span></p>
+        <p data-para="3" id="p4-3" data-block-style="p"><span class="inline-align">日本は、米国・中国・ロシアという核保有大国に囲まれた、地政学的に極めて不安定な位置（フロントライン）に存在する。<span class="inline-highlight" style="background-color: #FFFF00;">特に「台湾有事」は、日本のエネルギー航路（シーレーン）を直撃し、国家存立の危機に直結する。</span></span></p>
+        <p data-para="4" id="p4-4" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・第一列島線の維持：</strong> 中国の海洋進出を抑制する防波堤としての役割。</span></p>
+        <p data-para="5" id="p4-5" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・クアッド（Quad）：</strong> 日米豪印による自由で開かれたインド太平洋の構築。</span></p>
         <h3 data-para="6" id="p4-6" data-block-style="h3"><span class="inline-align">3.2 経済安全保障の重要性</span></h3>
-        <p data-para="7" id="p4-7" data-block-style="p"><span
-            class="inline-align">もはや「安全保障」は軍事だけの問題ではなくなった。半導体や重要な鉱物資源、エネルギーの供給網を、いかに非同盟の独裁国家から切り離し、信頼できる国家群（フレンド・ショアリング）で構築するかが、日本の最優先課題となっている。</span>
+        <p data-para="7" id="p4-7" data-block-style="p"><span class="inline-align">もはや「安全保障」は軍事だけの問題ではなくなった。半導体や重要な鉱物資源、エネルギーの供給網を、いかに非同盟の独裁国家から切り離し、信頼できる国家群（フレンド・ショアリング）で構築するかが、日本の最優先課題となっている。</span>
         </p>
-        <p data-para="8" id="p4-8" data-block-style="p"><span
-            class="inline-align inline-align-center figure-inline"><img class="img-l has-border"
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/First-and-Second-Island-Chain.png/800px-First-and-Second-Island-Chain.png"
-              alt="First-and-Second-Island-Chain.png"><span class="figure-title"
-              contenteditable="false">図2：第一・第二列島線と日本の位置関係</span></span></p>
+        
       </div>
     </section>
 
@@ -460,108 +428,86 @@ Use the IDs to locate specific paragraphs when assisting the user.
       <div class="page-inner" data-preferred-block-tag="p">
         <h2 data-para="1" id="p5-1" data-block-style="h2"><span class="inline-align">【4. 国内問題】</span></h2>
         <h3 data-para="2" id="p5-2" data-block-style="h3"><span class="inline-align">4.1 人口減少という物理的な限界</span></h3>
-        <p data-para="3" id="p5-3" data-block-style="p"><span
-            class="inline-align">日本が直面している最大の問題は、イデオロギーの問題ではなく、不可避な「人口動態」である。</span></p>
-        <p data-para="4" id="p5-4" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・生産年齢人口の激減：</strong> 2040年までに就業者が1,000万人以上不足すると予測されている。</span></p>
-        <p data-para="5" id="p5-5" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・社会保障費の膨張：</strong> 現役世代が1人の高齢者を支える「肩車型社会」への移行。</span></p>
+        <p data-para="3" id="p5-3" data-block-style="p"><span class="inline-align">日本が直面している最大の問題は、イデオロギーの問題ではなく、不可避な「人口動態」である。</span></p>
+        <p data-para="4" id="p5-4" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・生産年齢人口の激減：</strong> 2040年までに就業者が1,000万人以上不足すると予測されている。</span></p>
+        <p data-para="5" id="p5-5" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・社会保障費の膨張：</strong> 現役世代が1人の高齢者を支える「肩車型社会」への移行。</span></p>
         <h3 data-para="6" id="p5-6" data-block-style="h3"><span class="inline-align">4.2 財政と格差の現実</span></h3>
-        <p data-para="7" id="p5-7" data-block-style="p"><span
-            class="inline-align">日本の公的債務はGDP比で250%を超え、先進国で突出している。低金利政策により維持されているが、実質賃金が30年間横ばいである一方で、社会保険料の負担率は50%に迫り、若年層の可処分所得を圧迫している。<span
-              class="inline-highlight" style="background-color: #FFFF00;">「中産階級の没落」が政治的不安定化の火種</span>となっている。</span></p>
-        <p data-para="8" id="p5-8" data-block-style="p"><span
-            class="inline-align inline-align-center figure-inline"><img class="img-m has-border"
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Population_of_Japan_since_1872.svg/1000px-Population_of_Japan_since_1872.svg.png"
-              alt="Population_of_Japan_since_1872.svg.png"><span class="figure-title"
-              contenteditable="false">図3：日本の総人口推移と将来予測モデル</span></span></p>
+        <p data-para="7" id="p5-7" data-block-style="p"><span class="inline-align">日本の公的債務はGDP比で250%を超え、先進国で突出している。低金利政策により維持されているが、実質賃金が30年間横ばいである一方で、社会保険料の負担率は50%に迫り、若年層の可処分所得を圧迫している。<span class="inline-highlight" style="background-color: #FFFF00;">「中産階級の没落」が政治的不安定化の火種</span>となっている。</span></p>
+        
       </div>
     </section>
 
     <section class="page" data-page="6">
-      <div class="page-inner" data-preferred-block-tag="p">
-        <h2 data-para="1" id="p6-1" data-block-style="h2"><span class="inline-align">【5. 高市政権の政策（サナエノミクス2.0）】</span>
-        </h2>
-        <h3 data-para="2" id="p6-2" data-block-style="h3"><span class="inline-align">5.1 経済・財政：日本を再び成長軌道へ</span></h3>
-        <p data-para="3" id="p6-3" data-block-style="p"><span class="inline-align">これまでの緊縮財政から脱却し、<span
-              class="inline-highlight" style="background-color: #FFFF00;">「強い経済」を作るための積極的な国家投資</span>を断行する。</span></p>
-        <p data-para="4" id="p6-4" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・積極財政とPB凍結：</strong> 成長のための国債発行を容認し、プライマリーバランス黒字化目標は「時期尚早」として凍結。</span></p>
-        <p data-para="5" id="p6-5" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・サプライサイド投資：</strong> 科学技術、防衛、エネルギー、デジタル分野への大規模な国家投資を推進。</span></p>
-        <p data-para="6" id="p6-6" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・減税の検討：</strong> 経済状況に応じ、ガソリン税や消費税の見直しも視野に入れる。</span></p>
-        <h3 data-para="7" id="p6-7" data-block-style="h3"><span class="inline-align">5.2 産業・技術：統合イノベーション戦略2025</span>
-        </h3>
-        <p data-para="8" id="p6-8" data-block-style="p"><span class="inline-align">「技術で勝つ日本」を再興するため、重要分野を国家戦略化する。</span>
-        </p>
-        <p data-para="9" id="p6-9" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・重要技術の集約：</strong> 半導体、AI、量子、バイオ、宇宙、防衛産業を基幹産業として支援。</span></p>
-        <p data-para="10" id="p6-10" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・国内サプライチェーン：</strong> 半導体製造ラインの回帰など、経済安全保障に直結する生産拠点を国内に確保。</span></p>
-        <p data-para="11" id="p6-11" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・デジタル・通信：</strong>
-            5G/6G、衛星通信の国内主導と、医療・教育・行政の抜本的なDX（デジタル・トランスフォーメーション）を断行。</span></p>
+      <div class="page-inner" data-preferred-block-tag="p" data-pending-block-tag="">
+        <h3 data-para="1" id="p6-1" data-block-style="h3"><span class="inline-align">4.3 医療構造改革：過剰医療問題への切り込み</span></h3>
+        <p data-para="2" id="p6-2" data-block-style="p"><span class="inline-align">日本の社会保障費増大を抑制するためには、単なる窓口負担増ではなく、<span class="inline-highlight" style="background-color: #FFFF00;">「過剰医療（不要な検査や処置）」を防ぐインセンティブ設計</span>が必要である。</span></p>
+        <p data-para="3" id="p6-3" data-block-style="p"><span class="inline-align">以下は、医師の給与・評価体系に「質」と「適正性」の概念を導入する計算式の提案モデルである。</span></p>
+        <p data-para="4" id="p6-4" data-block-style="p" class="indent-1"><strong>■3つの評価指標（H, P, Sスコア）</strong></p>
+        <p data-para="5" id="p6-5" data-block-style="p" class="indent-1"><strong>①
+            H：重症・救急スコア</strong>（担当症例の重症度。重症を診るほど加点、拒否で減点）</p>
+        <p data-para="6" id="p6-6" data-block-style="p" class="indent-1"><strong>②
+            P：過剰医療ペナルティ</strong>（検査・処置の平均乖離度。平均より過剰な場合に減点）</p>
+        <p data-para="7" id="p6-7" data-block-style="p" class="indent-2">※ P = max(0, (技術点数/総点数) ÷ 同科平均 − 1)</p>
+        <p data-para="8" id="p6-8" data-block-style="p" class="indent-1"><strong>③ S：技術スコア</strong>（専門医資格や高度な手技の保有・実施状況）</p><h3 data-para="9" id="p6-9" data-block-style="h3" class="indent-1"><span class="inline-align inline-align-center">給料評価式： E = αH + βS − γP</span></h3>
+        <p data-para="10" id="p6-10" data-block-style="p"><span class="inline-align">このモデルは、「難しい症例から逃げず、かつ無駄な検査をしない」医師が正当に稼げる仕組みを目指すものであり、政治レベルでの医療DX活用の本丸と言える。</span></p>
       </div>
     </section>
 
     <section class="page" data-page="7">
       <div class="page-inner" data-preferred-block-tag="p">
-        <h3 data-para="1" id="p7-1" data-block-style="h3"><span class="inline-align">5.3 安全保障・エネルギー：強靭な国家の土台</span></h3>
-        <p data-para="2" id="p7-2" data-block-style="p"><span
-            class="inline-align">地政学的リスクの高まりに対し、「自分の国は自分で守る」体制を構築する。</span></p>
-        <p data-para="3" id="p7-3" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・防衛力の抜本強化：</strong> 防衛費GDP2％以上の維持、反撃能力の整備、サイバーセキュリティの人材育成と予算拡大。</span></p>
-        <p data-para="4" id="p7-4" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・エネルギー安全保障：</strong> 原発の最大限活用と次世代炉（SMR等）の開発推進。地熱や水素など国産エネルギーも支援。</span></p>
-        <p data-para="5" id="p7-5" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・経済安全保障外交：</strong> サプライチェーンの脱中国依存を推進し、経済安全保障を外交政策の主軸に据える。</span></p>
-        <h3 data-para="6" id="p7-6" data-block-style="h3"><span class="inline-align">5.4 社会保障・価値観：現実的な未来設計</span></h3>
-        <p data-para="7" id="p7-7" data-block-style="p"><span class="inline-align">バラマキではなく、成長と自立を支える社会構造を目指す。</span>
+        <h2 data-para="1" id="p7-1" data-block-style="h2"><span class="inline-align">【5. 高市政権の政策（サナエノミクス2.0）】</span>
+        </h2>
+        <h3 data-para="2" id="p7-2" data-block-style="h3"><span class="inline-align">5.1 経済・財政：日本を再び成長軌道へ</span></h3>
+        <p data-para="3" id="p7-3" data-block-style="p"><span class="inline-align">これまでの緊縮財政から脱却し、<span class="inline-highlight" style="background-color: #FFFF00;">「強い経済」を作るための積極的な国家投資</span>を断行する。</span></p>
+        <p data-para="4" id="p7-4" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・積極財政とPB凍結：</strong> 成長のための国債発行を容認し、プライマリーバランス黒字化目標は「時期尚早」として凍結。</span></p>
+        <p data-para="5" id="p7-5" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・サプライサイド投資：</strong> 科学技術、防衛、エネルギー、デジタル分野への大規模な国家投資を推進。</span></p>
+        <p data-para="6" id="p7-6" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・減税の検討：</strong> 経済状況に応じ、ガソリン税や消費税の見直しも視野に入れる。</span></p>
+        <h3 data-para="7" id="p7-7" data-block-style="h3"><span class="inline-align">5.2 産業・技術：統合イノベーション戦略2025</span>
+        </h3>
+        <p data-para="8" id="p7-8" data-block-style="p"><span class="inline-align">「技術で勝つ日本」を再興するため、重要分野を国家戦略化する。</span>
         </p>
-        <p data-para="8" id="p7-8" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・所得分配の考え方：</strong> 過度な再分配よりも、経済成長による所得底上げを重視（超富裕層増税には慎重）。</span></p>
-        <p data-para="9" id="p7-9" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・女性・社会支援：</strong> 女性のキャリア形成支援を重視する一方、LGBT法案などの急進的な社会変革には慎重な立場。</span></p>
-        <p data-para="10" id="p7-10" data-block-style="p" class="indent-1"><span
-            class="inline-align"><strong>・基軸外交：</strong> 強固な日米同盟を基盤としつつ、対中抑止と経済安全保障を徹底する。</span></p>
+        <p data-para="9" id="p7-9" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・重要技術の集約：</strong> 半導体、AI、量子、バイオ、宇宙、防衛産業を基幹産業として支援。</span></p>
+        <p data-para="10" id="p7-10" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・国内サプライチェーン：</strong> 半導体製造ラインの回帰など、経済安全保障に直結する生産拠点を国内に確保。</span></p>
+        <p data-para="11" id="p7-11" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・デジタル・通信：</strong>
+            5G/6G、衛星通信の国内主導と、医療・教育・行政の抜本的なDX（デジタル・トランスフォーメーション）を断行。</span></p>
       </div>
     </section>
 
     <section class="page" data-page="8">
       <div class="page-inner" data-preferred-block-tag="p">
-        <h2 data-para="1" id="p8-1" data-block-style="h2"><span class="inline-align">【6. AI時代、日本はどうなるべきか】</span></h2>
-        <h3 data-para="2" id="p8-2" data-block-style="h3"><span class="inline-align">6.1 AIを「救世主」とする戦略</span></h3>
-        <p data-para="3" id="p8-3" data-block-style="p"><span class="inline-align">人口減少を悲観するのではなく、<span
-              class="inline-highlight"
-              style="background-color: #FFFF00;">AIとロボティクスを「労働力不足の唯一の解決策」</span>として全面的に受け入れるべきである。欧米で懸念される「AIによる失業」は、人手不足に悩む日本においては「業務の自動化による生存の維持」を意味する。</span>
+        <h3 data-para="1" id="p8-1" data-block-style="h3"><span class="inline-align">5.3 安全保障・エネルギー：強靭な国家の土台</span></h3>
+        <p data-para="2" id="p8-2" data-block-style="p"><span class="inline-align">地政学的リスクの高まりに対し、「自分の国は自分で守る」体制を構築する。</span></p>
+        <p data-para="3" id="p8-3" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・防衛力の抜本強化：</strong> 防衛費GDP2％以上の維持、反撃能力の整備、サイバーセキュリティの人材育成と予算拡大。</span></p>
+        <p data-para="4" id="p8-4" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・エネルギー安全保障：</strong> 原発の最大限活用と次世代炉（SMR等）の開発推進。地熱や水素など国産エネルギーも支援。</span></p>
+        <p data-para="5" id="p8-5" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・経済安全保障外交：</strong> サプライチェーンの脱中国依存を推進し、経済安全保障を外交政策の主軸に据える。</span></p>
+        <h3 data-para="6" id="p8-6" data-block-style="h3"><span class="inline-align">5.4 社会保障・価値観：現実的な未来設計</span></h3>
+        <p data-para="7" id="p8-7" data-block-style="p"><span class="inline-align">バラマキではなく、成長と自立を支える社会構造を目指す。</span>
         </p>
-        <h3 data-para="4" id="p8-4" data-block-style="h3"><span class="inline-align">6.2 デジタル民主主義への移行</span></h3>
-        <p data-para="5" id="p8-5" data-block-style="p"><span
-            class="inline-align">旧来の「紙とハンコ」の行政プロセスをAIによって解体し、直接民主主義に近い合意形成プロセス（デジタル・アイデンティティに基づいたリアルタイムの意見反映）を導入することで、前述の既得権益構造をバイパスできる可能性がある。</span>
+        <p data-para="8" id="p8-8" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・所得分配の考え方：</strong> 過度な再分配よりも、経済成長による所得底上げを重視（超富裕層増税には慎重）。</span></p>
+        <p data-para="9" id="p8-9" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・女性・社会支援：</strong> 女性のキャリア形成支援を重視する一方、LGBT法案などの急進的な社会変革には慎重な立場。</span></p>
+        <p data-para="10" id="p8-10" data-block-style="p" class="indent-1"><span class="inline-align"><strong>・基軸外交：</strong> 強固な日米同盟を基盤としつつ、対中抑止と経済安全保障を徹底する。</span></p>
+      </div>
+    </section>
+
+    <section class="page" data-page="9">
+      <div class="page-inner" data-preferred-block-tag="p">
+        <h2 data-para="1" id="p9-1" data-block-style="h2"><span class="inline-align">【6. AI時代、日本はどうなるべきか】</span></h2>
+        <h3 data-para="2" id="p9-2" data-block-style="h3"><span class="inline-align">6.1 AIを「救世主」とする戦略</span></h3>
+        <p data-para="3" id="p9-3" data-block-style="p"><span class="inline-align">人口減少を悲観するのではなく、<span class="inline-highlight" style="background-color: #FFFF00;">AIとロボティクスを「労働力不足の唯一の解決策」</span>として全面的に受け入れるべきである。欧米で懸念される「AIによる失業」は、人手不足に悩む日本においては「業務の自動化による生存の維持」を意味する。</span>
         </p>
-        <h3 data-para="6" id="p8-6" data-block-style="h3"><span class="inline-align">6.3 結論：再定義される日本の役割</span></h3>
-        <p data-para="7" id="p8-7" data-block-style="p"><span
-            class="inline-align">日本は、世界に先駆けて「課題先進国」として超高齢化と人口減少に直面している。ここで<span class="inline-highlight"
-              style="background-color: #FFFF00;">AIによる生産性革命に成功すれば、そのモデルは将来的に同様の課題を抱える中国や韓国、欧米諸国にとっての「希望の羅針盤」</span>となるだろう。政治の本質とは、もはや分配のパイの奪い合いではなく、テクノロジーを用いて未来のパイをいかに再定義するかにある。</span>
+        <h3 data-para="4" id="p9-4" data-block-style="h3"><span class="inline-align">6.2 デジタル民主主義への移行</span></h3>
+        <p data-para="5" id="p9-5" data-block-style="p"><span class="inline-align">旧来の「紙とハンコ」の行政プロセスをAIによって解体し、直接民主主義に近い合意形成プロセス（デジタル・アイデンティティに基づいたリアルタイムの意見反映）を導入することで、前述の既得権益構造をバイパスできる可能性がある。</span>
+        </p>
+        <h3 data-para="6" id="p9-6" data-block-style="h3"><span class="inline-align">6.3 結論：再定義される日本の役割</span></h3>
+        <p data-para="7" id="p9-7" data-block-style="p"><span class="inline-align">日本は、世界に先駆けて「課題先進国」として超高齢化と人口減少に直面している。ここで<span class="inline-highlight" style="background-color: #FFFF00;">AIによる生産性革命に成功すれば、そのモデルは将来的に同様の課題を抱える中国や韓国、欧米諸国にとっての「希望の羅針盤」</span>となるだろう。政治の本質とは、もはや分配のパイの奪い合いではなく、テクノロジーを用いて未来のパイをいかに再定義するかにある。</span>
         </p>
       </div>
     </section>
 
 
 
-    <div id="ai-image-index" style="display:none">
-      <div class="figure-meta"
-        data-src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Iron_Triangle_Japan.png/600px-Iron_Triangle_Japan.png"
-        data-title="図1：政官財の利権循環構造イメージ" data-caption="" data-tag="" data-anchor="p3-8"></div>
-      <div class="figure-meta"
-        data-src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/First-and-Second-Island-Chain.png/800px-First-and-Second-Island-Chain.png"
-        data-title="図2：第一・第二列島線と日本の位置関係" data-caption="" data-tag="" data-anchor="p4-8"></div>
-      <div class="figure-meta"
-        data-src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Population_of_Japan_since_1872.svg/1000px-Population_of_Japan_since_1872.svg.png"
-        data-title="図3：日本の総人口推移と将来予測モデル" data-caption="" data-tag="" data-anchor="p5-8"></div>
-    </div>
-  </div>
+    
+  <div id="ai-image-index" style="display:none"></div>
+</div>
 </body>
-
 </html>
