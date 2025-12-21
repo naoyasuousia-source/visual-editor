@@ -1,32 +1,31 @@
-
 import {
   renumberParagraphs
-} from './editor/formatting.js';
+} from './editor/formatting';
 
 import {
   handleOpenFile
-} from './editor/io.js';
+} from './editor/io';
 
 import {
   initPages
-} from './editor/page.js';
+} from './editor/page';
 
 import {
   ensureAiImageIndex,
   initImageContextMenuControls
-} from './editor/image.js';
+} from './editor/image';
 
-import { updateAiMetaGuide } from './editor/ai-meta.js';
+import { updateAiMetaGuide } from './editor/ai-meta';
 
 import {
   bindEditorEvents,
   initPageLinkHandler,
   bindDocumentLevelHandlers
-} from './ui/events.js';
+} from './ui/events';
 
 import {
   bindToolbarHandlers
-} from './ui/toolbar.js';
+} from './ui/toolbar';
 
 import {
   initFileMenuControls,
@@ -37,10 +36,10 @@ import {
   initHelpDialog,
   initModeSwitch,
   initWordToolbarControls
-} from './ui/menu.js';
+} from './ui/menu';
 
-import { applyPageMargin } from './ui/settings.js';
-import { initNavigator, initParagraphJump, initSidebarToggle, initToolbarJump } from './ui/navigator.js';
+import { applyPageMargin } from './ui/settings';
+import { initNavigator, initParagraphJump, initSidebarToggle, initToolbarJump } from './ui/navigator';
 
 // Phase 1: Core Utilities Implementation
 // (Moved to editor/core.ts and registry.ts)
@@ -93,6 +92,9 @@ export function initEditor() {
   updateAiMetaGuide();
 
   // Late import of registry to ensure exports are ready
-  import('./registry.js')
+  import('./registry')
     .catch(err => console.error('Failed to load registry', err));
 }
+
+// 実行
+initEditor();

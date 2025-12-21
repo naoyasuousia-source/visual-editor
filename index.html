@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="content.css">
   <link rel="stylesheet" href="ui.css">
   <link rel="stylesheet" href="ui_word_mode.css">
-  <script src="mammoth/mammoth.browser.min.js"></script>
+  <script src="/mammoth/mammoth.browser.min.js"></script>
 </head>
 
 <body>
@@ -20,7 +20,7 @@
   <div id="left">
     <div id="toolbar">
       <div class="app-logo">
-        <img src="image/logo-himawari.png" alt="Logo">
+        <img src="/image/logo-himawari.png" alt="Logo">
       </div>
       <div class="file-menu">
         <button type="button" class="file-trigger">ファイル ▾</button>
@@ -503,7 +503,7 @@
               これにより、AIアシストによる、快適でスピーディーな編集が可能になります。
             </p>
             <p class="hint-desc" style="text-align: left; font-size: 0.7em; margin-top: 8px;">
-              <span style="color: #dc2626; ">※現在β版につき、全機能を無料で公開中です！</span><br>
+              <span style="color:                           #dc2626; ">※現在β版につき、全機能を無料で公開中です！</span><br>
               皆さんのフィードバックを元に改善していきたいので、ぜひ今のうちに使い倒してみてください。
             </p>
           </section>
@@ -511,7 +511,7 @@
           <section class="hint-section">
             <h2 class="hint-title">生成AI連携方法</h2>
             <div class="hint-workflow-container">
-              <img src="image/work-flow.png" alt="生成AI連携方法ワークフロー" class="hint-workflow-img">
+              <img src="/image/work-flow.png" alt="生成AI連携方法ワークフロー" class="hint-workflow-img">
             </div>
           </section>
 
@@ -668,10 +668,7 @@
       </form>
     </dialog>
 
-    <script type="module">
-      import { initEditor } from "./dist/main.js";
-      initEditor();
-    </script>
+    <script type="module" src="/src/main.ts"></script>
 
 
 </body>
