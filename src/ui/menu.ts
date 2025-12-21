@@ -241,7 +241,7 @@ export function initFontChooserControls(): void {
             const family = btn.dataset.family;
             if (family) {
                 (window as any).applyFontFamily?.(family);
-                closeFontMenu();
+                // closeFontMenu(); // Removed to allow continuous switching
             }
         });
     });
