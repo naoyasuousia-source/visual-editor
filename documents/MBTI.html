@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<style>
+:root { --page-margin: 17mm; } 
+:root {
+  --page-margin: 17mm;
+  --para-number-left: 6mm;
+  --editor-font-family: inherit;
+  --tab-width: 0px;
+}
+
+/* A4ページ */
+section.page {
+  position: relative;
+  width: 210mm;
+  min-width: 210mm;
+  /* Strict A4 dimensions to guarantee ratio regardless of browser support */
+  height: 297mm;
+  min-height: 297mm;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+  overflow: hidden;
+  margin: 0 auto;
+  /* 中央配置 */
+}
+
+section.page::after {
+  content: attr(data-page);
+  position: absolute;
+  left: 50%;
+  bottom: 6mm;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #666;
+}
+
+/* ページ内編集領域 */
+.page-inner {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: var(--page-margin);
+  position: relative;
+  overflow-y: auto;
+  outline: none;
+  font-family: var(--editor-font-family, inherit);
+  font-size: 11pt;
+  color: #333;
+  line-height: 1.6;
+}
+
+.page-inner p,
+.page-inner h1,
+.page-inner h2,
+.page-inner h3,
+.page-inner h4,
+.page-inner h5,
+.page-inner h6 {
+  margin: 0 0 1em;
+  position: relative;
+  padding-left: 0;
+}
+
+/* 段落番号 */
+.page-inner p[data-para]::before,
+.page-inner h1[data-para]::before,
+.page-inner h2[data-para]::before,
+.page-inner h3[data-para]::before,
+.page-inner h4[data-para]::before,
+.page-inner h5[data-para]::before,
+.page-inner h6[data-para]::before {
+  content: "[" attr(data-para) "]";
+  position: absolute;
+  left: -11mm;
+  top: 0.25em;
+  width: 2.4rem;
+  text-align: right;
+  color: #999;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1;
+  user-select: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+body.hide-page-numbers section.page::after {
+  display: none;
+}
+
+body.hide-para-numbers .page-inner [data-para]::before {
+  display: none;
+}
+
+/* 画像コンテキストメニュー */
+
+
+.page-inner img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0.8em auto;
+  /* 強制中央 */
+}
+
+.page-inner .figure-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.page-inner .figure-inline img {
+  margin: 0;
+}
+
+.img-xs {
+  width: 20%;
+}
+
+.img-s {
+  width: 35%;
+}
+
+.img-m {
+  width: 50%;
+}
+
+.img-l {
+  width: 65%;
+}
+
+.img-xl {
+  width: 85%;
+}
+
+/* .figure-title: Removed custom font/color styles to list block tag control style (e.g. h6) */
+.page-inner .figure-title {
+  display: inline;
+  /* blockからinlineへ変更（横並びや自然な配置のため） */
+  margin: 0;
+}
+
+.page-inner .figure-inline .caret-slot {
+  font-size: 0;
+  line-height: 0;
+}
+
+.page-inner img.has-border {
+  border: 1px solid currentColor;
+}
+
+/* その他UIパーツ */
+
+
+/* インデントと行間 */
+.page-inner {
+  line-height: 1.6;
+}
+
+.page-inner.line-height-s {
+  line-height: 1.25;
+}
+
+.page-inner.line-height-l {
+  line-height: 2.0;
+}
+
+.inline-highlight {
+  border-radius: 2px;
+  padding: 2px 0;
+}
+
+.inline-tab {
+  display: inline-block;
+  vertical-align: bottom;
+  height: 1em;
+}
+
+
+
+/* インデント定義: 36pt = 0.5in = 1.27cm */
+.page-inner .indent-1 {
+  padding-left: 36pt;
+}
+
+.page-inner .indent-2 {
+  padding-left: 72pt;
+}
+
+.page-inner .indent-3 {
+  padding-left: 108pt;
+}
+
+.page-inner .indent-4 {
+  padding-left: 144pt;
+}
+
+.page-inner .indent-5 {
+  padding-left: 180pt;
+}
+
+/* ぶら下げ(hanging-indent)は、padding-leftで設定したインデントを
+   text-indent: -padding-left で相殺し、1行目を左端(0地点)に戻す挙動と定義 */
+
+.page-inner .hanging-indent {
+  text-indent: -1em;
+}
+
+.page-inner .indent-1.hanging-indent {
+  padding-left: 36pt;
+  text-indent: -36pt;
+}
+
+.page-inner .indent-2.hanging-indent {
+  padding-left: 72pt;
+  text-indent: -72pt;
+}
+
+.page-inner .indent-3.hanging-indent {
+  padding-left: 108pt;
+  text-indent: -108pt;
+}
+
+.page-inner .indent-4.hanging-indent {
+  padding-left: 144pt;
+  text-indent: -144pt;
+}
+
+.page-inner .indent-5.hanging-indent {
+  padding-left: 180pt;
+  text-indent: -180pt;
+}
+
+/* Align Helpers */
+.inline-align {
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.inline-align-left {
+  text-align: left;
+}
+
+.inline-align-center {
+  text-align: center;
+}
+
+.inline-align-right {
+  text-align: right;
+}
+
+.page-inner p.inline-spacing-xs,
+.page-inner .inline-align.inline-spacing-xs {
+  margin-bottom: 4px;
+}
+
+.page-inner p.inline-spacing-s,
+.page-inner .inline-align.inline-spacing-s {
+  margin-bottom: 12px;
+}
+
+.page-inner p.inline-spacing-m,
+.page-inner .inline-align.inline-spacing-m {
+  margin-bottom: 20px;
+}
+
+.page-inner p.inline-spacing-l,
+.page-inner .inline-align.inline-spacing-l {
+  margin-bottom: 28px;
+}
+
+.page-inner p.inline-spacing-xl,
+.page-inner .inline-align.inline-spacing-xl {
+  margin-bottom: 36px;
+}
+
+/* Removed .mini-text */
+
+
+
+/* Print / PDF Output Optimized Styles */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  body {
+    background: #fff;
+    overflow: visible;
+    height: auto;
+    width: 100%;
+  }
+
+
+  /* Ensure page exactly matches A4 and breaks correctly */
+  section.page {
+    position: relative;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    outline: none !important;
+    /* Remove active page outline */
+    background: #fff;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  /* Remove break after the last page to avoid empty sheet? 
+     Usually beneficial, but sometimes browser handles it.
+     Let's be explicit if possible. */
+  section.page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  /* Maintain internal layout fidelity */
+  .page-inner {
+    width: 100%;
+    height: 100%;
+    padding: var(--page-margin);
+    overflow: visible;
+  }
+
+  /* Force text selection to be available in PDF readers */
+  /* Note: pointer-events: none on * in print media can sometimes help if overlay issues, but default is usually fine. */
+
+  .page-inner,
+  .page-inner * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
+}
+</style>
+</head>
+<body>
+<div id="pages-container">
+
+<div id="ai-meta-guide" style="display: none;">
+<!-- AI ASSISTANT GUIDE
+This HTML structure represents a paginated document.
+- <section class="page"> represents a physical A4 page.
+- .page-inner contains the editable content.
+- Paragraphs have IDs like "p1-1" (Page 1, Paragraph 1).
+- Images and figure metadata are stored in #ai-image-index at the bottom.
+Use the IDs to locate specific paragraphs when assisting the user.
+-->
+</div>
+        <!-- 初期ページ -->
+        <section class="page" data-page="1">
+          <div class="page-inner" data-preferred-block-tag="p" data-pending-block-tag="p">
+            <h1 data-para="1" id="p1-1" data-block-style="h1"><span class="inline-align inline-align-center">MBTIについて</span></h1><h2 data-block-style="h2" data-para="2" id="p1-2">MBTIとは？</h2><p data-block-style="p" data-para="3" id="p1-3"><span class="inline-align inline-align-left">MBTIは、スイスの心理学者ユングが提唱した「心理学的類型論」をベースに開発された性格検査である。</span></p><h2 data-block-style="h2" data-para="4" id="p1-4"><span class="inline-align inline-align-left">1. 4つの心理機能と2つの方向</span></h2><p data-block-style="p" data-para="5" id="p1-5"><span class="inline-align inline-align-left">人間が情報を処理するプロセスを「知覚（認識）」と「判断」に分け、それぞれ2種類、計4つの機能として定義する。</span></p><p data-block-style="p" data-para="6" id="p1-6"><span class="inline-align inline-align-left"><strong>知覚機能</strong>： 感覚（S） / 直観（N）<br><strong>判断機能</strong>： 思考（T） / 感情（F）</span></p><h3 data-block-style="h3" data-para="7" id="p1-7" class="indent-1"><u>感覚/直観について</u></h3><p data-block-style="p" data-para="8" id="p1-8" class="indent-1"><strong>・感覚</strong>→五感による情報の純度が高い、部分への集中<br><span style="font-size: 11pt;"><strong>・直観</strong>→全体像、背景、意味</span></p><p data-block-style="p" data-para="9" id="p1-9" class="indent-1"><strong><u>思考/感情について</u></strong></p><p data-block-style="p" data-para="10" id="p1-10" class="indent-1"><span style="font-size: 11pt;"><strong>・思考</strong>→対象物やその状況が論理的にどのようなものなのかを判断する力(左脳的)</span><br><strong>・感情</strong>→理屈無しに対象物が自分または他人にとって気持ち良いか不快かを判断する力(右脳的)</p><p data-block-style="p" data-para="11" id="p1-11" class="inline-spacing-m">これら4つの機能に対して、ユングは「心理的エネルギー（リビドー）がどこに向かうか」という方向性の違いを定義した。</p>
+          </div>
+        </section>
+        
+      
+<section class="page" data-page="2"><div class="page-inner" data-preferred-block-tag="p" data-pending-block-tag=""><p data-block-style="p" data-para="1" id="p2-1" class="inline-spacing-m">ユングによれば、関心が外部の客観的な対象（人々や事象）に向かう**「外向」と、自分の内部にある主観的な世界（概念や内面的な反応）に向かう「内向」**の2パターンが存在する。<br>この「4つの機能」と「2つの方向性」が組み合わさることで、以下の8種類の心理機能が導き出される。</p><h3 data-block-style="h3" data-para="2" id="p2-2" class=""><span class="inline-align inline-align-left">知覚機能</span></h3><p data-block-style="p" data-para="3" id="p2-3"><span class="inline-align inline-align-left">外向的感覚（Se）：外部にある現実的な事実や刺激をそのまま受け取る。<br>内向的感覚<span style="font-size: 14.6667px;">（Si）：過去の経験や身体感覚といった内的なデータと照らし合わせる。</span><br>外向的直観<span style="font-size: 14.6667px;">（Ne）：外の世界にある物事のつながりから、新しい可能性を広げる。</span><br>内向的直観（Ni）：自分の内側でひらめきを収束させ、物事の本質や未来を予見する。</span></p><h3 data-block-style="h3" data-para="4" id="p2-4" class=""><span class="inline-align inline-align-left" style="width: 665.188px;">判断機能</span></h3><p data-block-style="p" data-para="5" id="p2-5" class="inline-spacing-m"><span class="inline-align inline-align-left inline-spacing-m">外向的思考<span style="font-size: 14.6667px;">（Te）：外部のルールや論理に基づいて、環境を効率的に整理・構築する。</span><br>内向的思考<span style="font-size: 14.6667px;">（Ti）：自分の中にある整合性を重視し、独自の論理体系で深く分析する。</span><br>外向的感情<span style="font-size: 14.6667px;">（Fe）：社会的な価値観や周囲の空気に合わせ、調和を保とうとする。</span><br>内向的感情（Fi）：自分自身の深い信念や感情を重んじ、独自の価値基準で判断する。</span></p><h2 data-block-style="h2" data-para="6" id="p2-6" class=""><span class="inline-align">2. 心理機能の階層構造と16タイプ</span></h2><p data-block-style="p" data-para="7" id="p2-7"><span class="inline-align inline-align-left"><strong data-path-to-node="10,0,0" data-index-in-node="0"><span style="font-size: 14.6667px; font-weight: 400;">人間は心のバランスを保つため、対照的な性質を補完し合って使用する。</span><span style="font-size: 14.6667px;">（補完性の原理）</span></strong></span></p><p data-block-style="p" data-para="8" id="p2-8"><span class="inline-align inline-align-left"><strong data-path-to-node="10,0,0" data-index-in-node="0">主機能（第一機能）：</strong> 最も意識的に使いこなせる、その人の「核」となる機能。<br><strong data-path-to-node="10,1,0" data-index-in-node="0">補助機能（第二機能）：</strong> 主機能を支える。主機能が「知覚」なら「判断」、「外向」なら「内向」というように、必ず逆の性質を持つ。<br><strong data-path-to-node="10,2,0" data-index-in-node="0">代替機能（第三機能）：</strong> 補助機能の反対の性質。<br><strong>劣等機能（第四機能）： </strong>主機能の反対。最も無意識の領域にあり、未発達で扱いにくいが、ストレス下での暴走（グリップ状態）や、長期的な成長の鍵を握る重要な存在。<br></span></p><p data-block-style="p" data-para="9" id="p2-9"><span class="inline-align inline-align-left">これら4つの機能の優先順位の組み合わせにより、最終的に16タイプに分類される。<br>（例）第一機能Ni、第二機能Feの場合、INFPとなる。（P or Jは、第一機能が知覚か判断かどうか）</span></p><h3 data-block-style="h3" data-para="10" id="p2-10" class="indent-1"><u>知覚タイプ（P）/判断タイプ（J）について</u></h3><p data-block-style="p" data-para="11" id="p2-11" class="indent-1">Ｐ型は知覚で充電→判断で爆発的行動<br><span style="font-size: 11pt;">Ｊ型はずっと判断で手際良し→たまにエラー（ここで知覚必要になる）</span></p></div></section><section class="page" data-page="3"><div class="page-inner" data-preferred-block-tag="p" data-pending-block-tag=""><h2 data-block-style="h2" data-para="1" id="p3-1">3.心理機能の成長</h2><p data-block-style="p" data-para="2" id="p3-2"><span style="font-size: 11pt;">ユングのモデルでは、心は「意識・個人的無意識・普遍的無意識」の層から成るとされる。 主機能は意識の中心にあるが、劣等機能は無意識の深層に直結している。不健全な状態とは、意識的なコントロールが効かなくなり、無意識にある劣等機能が未熟な形で噴出することを指す。</span></p><p data-block-style="p" data-para="3" id="p3-3"><span class="inline-align inline-align-left">そのため、逆に、普段は無意識に隠れている劣等機能こそが、その人のコンプレックスや、逆に大きな変化のきっかけ（救済）になり、人生の後半にかけて、使い慣れた主機能だけでなく、未発達な劣等機能を統合していくことが人間としての成長（完成）である。</span></p><h3 data-block-style="h3" data-para="4" id="p3-4"><span class="inline-align inline-align-left"><u>自己主張型（A）と慎重型（T）について</u></span></h3><p data-block-style="p" data-para="5" id="p3-5"><span class="inline-align inline-align-left">性格の土台というより、現在の「自分の能力や決断に対する自信」や「ストレスへの反応」を表す。</span></p><p data-block-style="p" data-para="6" id="p3-6"><span class="inline-align inline-align-left"><strong>自己主張型：</strong>ストレス耐性が高く、困難な状況でもリラックスして対処できる。周囲の目をあまり気にせず、過去の失敗を引きずらない。</span></p><p data-block-style="p" data-para="7" id="p3-7"><span class="inline-align inline-align-left"><strong>慎重型</strong>：ストレスに弱く、些細なことで自信を失ったり、精神的に疲弊したりしやすい。他人の視線や将来への不安を感じやすいが、その分、変化に敏感で、問題を事前に察知して改善する力が強い。</span></p><h2 data-block-style="h2" data-para="8" id="p3-8"><span class="inline-align inline-align-left">4.提案</span></h2><p data-block-style="p" data-para="9" id="p3-9"><span class="inline-align inline-align-left">・現行のMBTIには、成熟度合いが加味されてないので、追加すべきでは。</span></p><p data-block-style="p" data-para="10" id="p3-10"><span class="inline-align inline-align-left">・子供用が無い。</span></p></div></section><div id="ai-image-index" style="display:none"></div>
+</div>
+</body>
+</html>
