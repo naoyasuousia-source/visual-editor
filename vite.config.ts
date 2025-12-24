@@ -1,8 +1,11 @@
 import { defineConfig } from 'vite';
 import obfuscator from 'rollup-plugin-obfuscator';
+import { resolve } from 'path';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [
+    react(),
     obfuscator({
       global: true,
       options: {
@@ -28,6 +31,12 @@ export default defineConfig({
   base: './', // GitHub Pages用。リポジトリ名が決まっている場合は '/repo-name/' でも良い
   build: {
     outDir: 'dist',
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        editor_v2: resolve(__dirname, 'ai-link-editor.html'),
+      },
+    },
   },
   server: {
     port: 3000,
