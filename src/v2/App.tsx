@@ -178,7 +178,7 @@ export const EditorV3 = () => {
     }, [isWordMode, editor]);
 
     return (
-        <div className="flex flex-col h-screen bg-[#e0e0e0] overflow-hidden font-sans">
+        <div className="flex flex-col h-screen bg-[#525659] overflow-hidden font-sans">
             <Toolbar
                 editor={editor}
                 onAddPage={handleAddPage}

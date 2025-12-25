@@ -239,8 +239,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                     onClick={toggleWordMode}
                     className={`px-3 py-1 rounded text-xs font-bold transition-all h-[32px] flex items-center gap-1 ${
                         isWordMode 
-                        ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
+                        ? 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100' // Word Mode active -> Show "Switch to standard" (White)
+                        : 'bg-blue-600 text-white hover:bg-blue-700' // Standard Mode active -> Show "Switch to Word" (Blue)
                     }`}
                 >
                     <FileType className="w-3.5 h-3.5" />

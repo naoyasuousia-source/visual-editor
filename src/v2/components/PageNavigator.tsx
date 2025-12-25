@@ -126,28 +126,25 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
 
     return (
         <div 
-            className={`flex flex-col h-full bg-[#f8f9fa] border-r border-gray-200 transition-all duration-300 ease-in-out relative ${isSidebarOpen ? 'w-[240px]' : 'w-0 overflow-hidden'}`}
+            className={`flex flex-col h-full bg-[#f0f0f0] border-r border-gray-300 transition-all duration-300 ease-in-out relative ${isSidebarOpen ? 'w-[200px]' : 'w-0 overflow-hidden'}`}
         >
-            <div className="p-4 border-b border-gray-200 bg-white flex items-center gap-2">
-                <PanelsTopLeft className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-bold text-gray-700">ページ一覧</span>
-            </div>
-            
             <div 
                 id="page-navigator-container" 
-                className="flex-1 overflow-y-auto overflow-x-hidden p-6 scrollbar-thin scrollbar-thumb-gray-300"
+                className="flex-1 overflow-y-auto overflow-x-hidden p-4 scrollbar-thin scrollbar-thumb-gray-300 pt-6"
             >
                 {/* Thumbnails injected here */}
             </div>
 
-            {/* Sidebar toggle button (floating) */}
-            <button 
-                onClick={toggleSidebar}
-                className={`absolute top-4 -right-10 w-8 h-8 bg-white border border-gray-300 rounded-full shadow-md flex items-center justify-center hover:bg-gray-50 transition-all z-[100] ${isSidebarOpen ? 'rotate-0' : 'rotate-180 translate-x-2'}`}
-                title={isSidebarOpen ? 'サイドバーを閉じる' : 'サイドバーを開く'}
-            >
-                <PanelsTopLeft className="w-4 h-4 text-gray-400" />
-            </button>
+            {/* Sidebar toggle button (Fixed at bottom left like original) */}
+            <div className={`fixed bottom-4 left-4 z-[100] transition-all duration-300 ${isSidebarOpen ? 'left-[210px]' : 'left-4'}`}>
+                <button 
+                    onClick={toggleSidebar}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-300 rounded shadow text-xs font-bold text-gray-700 hover:bg-gray-50"
+                >
+                    <PanelsTopLeft className="w-3 h-3" />
+                    {isSidebarOpen ? 'サムネイル: 非表示' : 'サムネイル: 表示'}
+                </button>
+            </div>
         </div>
     );
 };
