@@ -15,6 +15,7 @@ trigger: always_on
 - **Framework**: React (TypeScript) のコンポーネントでwebアプリを組み立て、本体のHTMLは最低限の記述にとどめる。
 
 - **Styling**: Tailwind CSSのみで行うこと。他のライブラリの組み込みスタイルも必ず Tailwind のクラスへ置換・統一すること。
+（style属性は絶対使用しないこと）
 
 - **UI Components**: shadcn/ui をベースとする。
 
@@ -32,3 +33,5 @@ trigger: always_on
 - shadcn/ui の利点を活かし、キーボード操作やスクリーンリーダーに配慮したアクセシブルなHTML構造を維持すること。意味のない div でのクリックイベント作成は避け、適切な button や aria-label を使うこと。
 
 - Reactの不要な再レンダリングを防ぐため、useMemo や useCallback を適切に使用すること。また、巨大な外部ライブラリを導入する際は、バンドルサイズを意識し、必要な関数だけをインポートすること。
+
+- viteによる自動ビルド環境のため、npm run buildは絶対行わないこと。

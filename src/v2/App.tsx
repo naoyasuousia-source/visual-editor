@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -10,7 +10,7 @@ import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
 import FontFamily from '@tiptap/extension-font-family';
-import { Toaster, toast } from 'sonner';
+import { Toaster } from 'sonner';
 
 import { PageExtension } from './extensions/PageExtension';
 import { ParagraphNumbering } from './extensions/ParagraphNumbering';
@@ -35,6 +35,8 @@ import { PageNavigator } from './components/PageNavigator';
 import { AIImageIndex } from './components/AIImageIndex';
 
 import { useAppStore } from './store/useAppStore';
+import { usePageOperations } from './hooks/usePageOperations';
+import { useBrowserCheck } from './hooks/useBrowserCheck';
 
 export const EditorV3 = () => {
     // Global Store
@@ -46,31 +48,8 @@ export const EditorV3 = () => {
         closeDialog
     } = useAppStore();
 
-    const [showBrowserWarning, setShowBrowserWarning] = useState(false);
-
-    // Browser Support Check
-    useEffect(() => {
-        const ua = navigator.userAgent;
-        const vendor = navigator.vendor || '';
-
-        const isEdge = /Edg/.test(ua);
-        const isChrome = /Chrome/.test(ua) && !/Edg/.test(ua) && !/OPR/.test(ua);
-        const isApple = /Apple Computer/.test(vendor);
-        let isSupported = isEdge || (isChrome && !isApple);
-
-        if (ua.includes('Safari') && !ua.includes('Chrome') && !ua.includes('Edg')) {
-            isSupported = false;
-        }
-
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-        if (isMobile) {
-            isSupported = false;
-        }
-
-        if (!isSupported) {
-            setShowBrowserWarning(true);
-        }
-    }, []);
+    // Browser Check (ロジック分離)
+    const { showWarning: showBrowserWarning, setShowWarning: setShowBrowserWarning } = useBrowserCheck();
 
     const editor = useEditor({
         extensions: [
@@ -113,61 +92,10 @@ export const EditorV3 = () => {
             },
         },
     });
- 
-    const handleAddPage = () => {
-        if (editor) {
-            const { tr } = editor.state;
-            const node = editor.schema.nodes.page.createAndFill({
-                class: 'page'
-            });
-            if (node) {
-                const endPos = editor.state.doc.content.size;
-                editor.view.dispatch(tr.insert(endPos, node));
-                toast.success('ページを追加しました');
-            }
-        }
-    };
 
-    const handleRemovePage = () => {
-        if (!editor) return;
-        const { doc } = editor.state;
-        const pages: any[] = [];
-        doc.descendants((node, pos) => {
-            if (node.type.name === 'page') {
-                pages.push({ node, pos });
-            }
-        });
-        if (pages.length === 0) return;
-        if (!window.confirm('現在のページを削除してもよろしいですか？')) return;
-        
-        const { from } = editor.state.selection;
-        let currentPageIndex = -1;
-        for (let i = 0; i < pages.length; i++) {
-            const pageStart = pages[i].pos;
-            const pageEnd = pageStart + pages[i].node.nodeSize;
-            if (from >= pageStart && from < pageEnd) {
-                currentPageIndex = i;
-                break;
-            }
-        }
-        if (currentPageIndex === -1) currentPageIndex = pages.length - 1;
+    // Page Operations (ロジック分離)
+    const { addPage, removePage } = usePageOperations(editor);
 
-        if (pages.length === 1) {
-            const { tr } = editor.state;
-            const pageStart = pages[0].pos + 1;
-            const pageEnd = pageStart + pages[0].node.content.size;
-            tr.replaceWith(pageStart, pageEnd, editor.schema.nodes.paragraph.create());
-            editor.view.dispatch(tr);
-            toast.info('ページをクリアしました');
-            return;
-        }
-
-        const { tr } = editor.state;
-        const pageToRemove = pages[currentPageIndex];
-        tr.delete(pageToRemove.pos, pageToRemove.pos + pageToRemove.node.nodeSize);
-        editor.view.dispatch(tr);
-        toast.success('ページを削除しました');
-    };
 
     useEffect(() => {
         if (editor) {
@@ -181,8 +109,8 @@ export const EditorV3 = () => {
         <div className="flex flex-col h-screen bg-[#525659] overflow-hidden font-sans">
             <Toolbar
                 editor={editor}
-                onAddPage={handleAddPage}
-                onRemovePage={handleRemovePage}
+                onAddPage={addPage}
+                onRemovePage={removePage}
             />
             
             <div className="flex flex-1 overflow-hidden relative">

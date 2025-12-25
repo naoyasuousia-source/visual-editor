@@ -14,6 +14,7 @@ import { ParagraphMenu } from './menus/ParagraphMenu';
 import { FontMenu } from './menus/FontMenu';
 import { HighlightMenu } from './menus/HighlightMenu';
 import { useAppStore } from '../store/useAppStore';
+import { useJumpNavigation } from '../hooks/useJumpNavigation';
 
 interface ToolbarProps {
     editor: Editor | null;
@@ -38,6 +39,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     } = useAppStore();
 
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
+    const { jumpTo } = useJumpNavigation(isWordMode);
 
     if (!editor) return null;
 
@@ -225,20 +227,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                             const target = (e.currentTarget as HTMLInputElement).value;
-                            if (!target) return;
-                            let targetId = target;
-                            if (!isWordMode && /^\d+-\d+$/.test(target)) targetId = 'p' + target;
-                            else if (isWordMode && /^\d+$/.test(target)) targetId = 'p' + target;
-                            
-                            const element = document.getElementById(targetId);
-                            if (element) {
-                                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                toast.success(`${target} へジャンプしました`);
-                            } else if (window.find && window.find(target)) {
-                                toast.success(`"${target}" が見つかりました`);
-                            } else {
-                                toast.error('見つかりませんでした');
-                            }
+                            jumpTo(target);
                         }
                     }}
                 />
