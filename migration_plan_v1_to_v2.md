@@ -62,3 +62,58 @@ V1のコードには「AIアシスタント連携」や「厳密なHTML構造維
 
 4.  **Tiptap構成の検証**
     *   現在の `extensions` フォルダ内の実装が、Tiptapの推奨する Class ベースの拡張機能記述ルールに沿っているか再チェックする。特に `Schema` 定義や `addCommands`, `addKeyboardShortcuts` の使い方が正しいか監査する。
+
+---
+
+## 外部ライブラリ活用戦略（最優先）
+
+**方針**: 独自実装に頼らず、最先端のReactエコシステムを最大限活用する。特に、**Radix UI**をベースとしたHeadless UIアプローチを採用し、Tailwind CSSと完璧に統合する。これにより、保守性・アクセシビリティ・AIとの相性を最大化する。
+
+### 導入するライブラリ
+
+| ライブラリ | 用途 | 置き換え対象 | 優先度 |
+| :--- | :--- | :--- | :--- |
+| **@radix-ui/react-dialog** | ダイアログ（モーダル） | 自前実装の各種ダイアログ（Help, Donate, ImageTitle等） | 🔴 最優先 |
+| **@radix-ui/react-dropdown-menu** | ドロップダウンメニュー | FileMenu, FontMenu, ParagraphMenu等の自前実装 | 🔴 最優先 |
+| **@radix-ui/react-popover** | ポップオーバー | ImageBubbleMenu, LinkBubbleMenu | 🟡 高 |
+| **react-dropzone** | ファイルドロップゾーン | Dropbox画像挿入、ファイル選択UI | 🟡 高 |
+| **react-colorful** | カラーピッカー | HighlightMenu, FontMenuの色選択 | 🟢 中 |
+
+### 実装手順
+
+1.  **ライブラリインストール**
+    ```bash
+    npm install @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-popover react-dropzone react-colorful
+    npm uninstall @mui/material @mui/icons-material @emotion/react @emotion/styled
+    ```
+
+2.  **ダイアログの置き換え（最優先）**
+    *   `components/HelpDialog.tsx` → Radix Dialog
+    *   `components/DonateDialog.tsx` → Radix Dialog
+    *   `components/ImageTitleDialog.tsx` → Radix Dialog
+    *   `components/ImageCaptionDialog.tsx` → Radix Dialog
+    *   `components/ImageTagDialog.tsx` → Radix Dialog
+    *   `components/LinkDialog.tsx` → Radix Dialog
+    *   `components/ParagraphJumpDialog.tsx` → Radix Dialog
+
+3.  **メニューの置き換え**
+    *   `components/menus/FileMenu.tsx` → Radix Dropdown Menu
+    *   `components/menus/FontMenu.tsx` → Radix Dropdown Menu
+    *   `components/menus/ParagraphMenu.tsx` → Radix Dropdown Menu
+    *   `components/menus/HighlightMenu.tsx` → Radix Dropdown Menu + react-colorful
+
+4.  **バブルメニューの置き換え**
+    *   `components/ImageBubbleMenu.tsx` → Radix Popover + Tiptap BubbleMenu
+    *   `components/LinkBubbleMenu.tsx` → Radix Popover + Tiptap BubbleMenu
+
+5.  **ファイル操作UIの強化**
+    *   `react-dropzone` を使用したドラッグ&ドロップ対応
+    *   Dropbox画像挿入UIの改善
+
+### 期待される効果
+
+- ✅ **コード量削減**: 自前実装を削除し、メンテナンスコストを大幅削減
+- ✅ **アクセシビリティ向上**: WAI-ARIA準拠で、スクリーンリーダー対応
+- ✅ **バンドルサイズ削減**: MUI削除により、初期ロード時間を短縮
+- ✅ **型安全性向上**: TypeScript完全対応ライブラリで、バグを事前に防止
+- ✅ **AI連携強化**: セマンティックなHTML構造で、AIが文書構造を正確に理解

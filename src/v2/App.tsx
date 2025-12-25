@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -37,6 +37,8 @@ import { AIImageIndex } from './components/AIImageIndex';
 import { useAppStore } from './store/useAppStore';
 import { usePageOperations } from './hooks/usePageOperations';
 import { useBrowserCheck } from './hooks/useBrowserCheck';
+import { useIMEControl } from './hooks/useIMEControl';
+import { usePasteControl } from './hooks/usePasteControl';
 
 export const EditorV3 = () => {
     // Global Store
@@ -50,6 +52,15 @@ export const EditorV3 = () => {
 
     // Browser Check (ロジック分離)
     const { showWarning: showBrowserWarning, setShowWarning: setShowBrowserWarning } = useBrowserCheck();
+
+    // 一時的なeditorインスタンス（フック初期化のため）
+    const [tempEditor, setTempEditor] = useState<any>(null);
+
+    // IME Control (ロジック分離)
+    const { handleKeyDown: handleIMEKeyDown, handleCompositionStart, handleCompositionEnd } = useIMEControl(tempEditor);
+
+    // Paste Control (ロジック分離)
+    const { handlePaste } = usePasteControl(tempEditor);
 
     const editor = useEditor({
         extensions: [
@@ -84,12 +95,13 @@ export const EditorV3 = () => {
                 class: 'outline-none',
                 spellcheck: 'false',
             },
-            handleKeyDown: (view, event) => {
-                if (event.key === 'Enter' && (view as any).composing) {
-                    return true;
-                }
-                return false;
-            },
+            // IME制御: V1の堅牢なロジックを使用
+            handleKeyDown: handleIMEKeyDown,
+            // ペースト制御: 画像の直接ペーストを禁止
+            handlePaste: handlePaste,
+        },
+        onCreate: ({ editor }) => {
+            setTempEditor(editor);
         },
     });
 
