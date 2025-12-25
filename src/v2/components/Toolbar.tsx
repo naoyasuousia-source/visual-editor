@@ -39,7 +39,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     } = useAppStore();
 
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
-    const { jumpTo } = useJumpNavigation(isWordMode);
+    const { jumpTo } = useJumpNavigation(editor, isWordMode);
 
     if (!editor) return null;
 
