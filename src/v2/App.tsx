@@ -154,10 +154,10 @@ export const EditorV3 = () => {
                 </div>
             </div>
 
-            {activeDialog === 'help' && <HelpDialog onClose={closeDialog} />}
+            <HelpDialog open={activeDialog === 'help'} onClose={closeDialog} />
             <SubHelpDialog />
             <BrowserWarningDialog isOpen={showBrowserWarning} onClose={() => setShowBrowserWarning(false)} />
-            {activeDialog === 'donate' && <DonateDialog onClose={closeDialog} />}
+            <DonateDialog open={activeDialog === 'donate'} onClose={closeDialog} />
             {activeDialog === 'link' && editor && <LinkDialog editor={editor} onClose={closeDialog} />}
             {activeDialog === 'image-title' && editor && <ImageTitleDialog editor={editor} onClose={closeDialog} />}
             {activeDialog === 'image-caption' && editor && <ImageCaptionDialog editor={editor} onClose={closeDialog} />}
