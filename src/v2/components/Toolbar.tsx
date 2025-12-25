@@ -7,13 +7,11 @@ import {
     Strikethrough, 
     Superscript as SuperscriptIcon, 
     Subscript as SubscriptIcon,
-    Plus,
-    Minus,
-    Search,
+    FilePlus2,
+    FileMinus2,
     HelpCircle,
     Heart,
     ChevronDown,
-    LayoutDashboard,
     FileType
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -59,7 +57,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     const closeAllMenus = () => setActiveMenu(null);
     const toggleMenu = (menu: string) => setActiveMenu(activeMenu === menu ? null : menu);
 
-    const btnBase = "p-1.5 rounded hover:bg-gray-200 transition-colors border border-transparent flex items-center justify-center min-w-[32px] h-[32px]";
+    const btnBase = "p-1.5 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center justify-center min-w-[32px] h-[32px]";
     const btnActive = "bg-gray-200 border-gray-300 shadow-inner";
     const dropdownTrigger = "px-2 py-1 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center gap-1 text-sm h-[32px]";
 
@@ -105,25 +103,36 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 </div>
             )}
 
-            {/* Formatting */}
-            <div className="flex items-center gap-1 border-l border-gray-300 pl-2 ml-1">
-                <button type="button" onClick={toggleBold} className={`${btnBase} bg-white border border-gray-300 ${editor.isActive('bold') ? 'bg-gray-200' : ''}`} title="太字"><Bold className="w-4 h-4" /></button>
-                <button type="button" onClick={toggleItalic} className={`${btnBase} bg-white border border-gray-300 ${editor.isActive('italic') ? 'bg-gray-200' : ''}`} title="斜体"><Italic className="w-4 h-4" /></button>
-                <button type="button" onClick={toggleUnderline} className={`${btnBase} bg-white border border-gray-300 ${editor.isActive('underline') ? 'bg-gray-200' : ''}`} title="下線"><UnderlineIcon className="w-4 h-4" /></button>
-                <button type="button" onClick={toggleStrike} className={`${btnBase} bg-white border border-gray-300 ${editor.isActive('strike') ? 'bg-gray-200' : ''}`} title="打ち消し線"><Strikethrough className="w-4 h-4" /></button>
-                <button type="button" onClick={toggleSuperscript} className={`${btnBase} bg-white border border-gray-300 ${editor.isActive('superscript') ? 'bg-gray-200' : ''}`} title="上付き文字"><SuperscriptIcon className="w-4 h-4" /></button>
-                <button type="button" onClick={toggleSubscript} className={`${btnBase} bg-white border border-gray-300 ${editor.isActive('subscript') ? 'bg-gray-200' : ''}`} title="下付き文字"><SubscriptIcon className="w-4 h-4" /></button>
-            </div>
-
-            {/* Highlights (Standard Only) */}
-            {!isWordMode && (
-                <div className="relative ml-1">
-                    <button type="button" className={`${btnBase} bg-[#fef08a] border border-[#fde047] hover:bg-[#fde047] ${activeMenu === 'highlight' ? 'ring-2 ring-yellow-400' : ''}`} onClick={() => toggleMenu('highlight')} title="ハイライト">
-                        <LayoutDashboard className="w-4 h-4 text-[#854d0e]" />
+            {/* Formatting Group - Flattened and Equally Spaced */}
+            <div className="flex items-center gap-1.5 ml-1.5">
+                <button type="button" onClick={toggleBold} className={`${btnBase} ${editor.isActive('bold') ? 'bg-gray-200 shadow-inner' : ''}`} title="太字"><Bold className="w-4 h-4" /></button>
+                <button type="button" onClick={toggleItalic} className={`${btnBase} ${editor.isActive('italic') ? 'bg-gray-200 shadow-inner' : ''}`} title="斜体"><Italic className="w-4 h-4" /></button>
+                <button type="button" onClick={toggleUnderline} className={`${btnBase} ${editor.isActive('underline') ? 'bg-gray-200 shadow-inner' : ''}`} title="下線"><UnderlineIcon className="w-4 h-4" /></button>
+                <button type="button" onClick={toggleStrike} className={`${btnBase} ${editor.isActive('strike') ? 'bg-gray-200 shadow-inner' : ''}`} title="打ち消し線"><Strikethrough className="w-4 h-4" /></button>
+                <button type="button" onClick={toggleSuperscript} className={`${btnBase} ${editor.isActive('superscript') ? 'bg-gray-200 shadow-inner' : ''}`} title="上付き文字"><SuperscriptIcon className="w-4 h-4" /></button>
+                <button type="button" onClick={toggleSubscript} className={`${btnBase} ${editor.isActive('subscript') ? 'bg-gray-200 shadow-inner' : ''}`} title="下付き文字"><SubscriptIcon className="w-4 h-4" /></button>
+                
+                {/* Custom Highlight Button - Scaled & Positioned to match reference */}
+                <div className="relative">
+                     <button 
+                        type="button" 
+                        className={`${btnBase} flex flex-col items-center justify-center gap-0 ${activeMenu === 'highlight' ? 'bg-gray-100 shadow-inner' : ''}`} 
+                        onClick={() => toggleMenu('highlight')} 
+                        title="ハイライト"
+                    >
+                         {/* Custom SVG to match the 'tilted nib' look */}
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-800 translate-y-[1px]">
+                            {/* Represents the tilted pen nib */}
+                             <path d="M16 3l5 5-10 10H6v-5L16 3z" /> 
+                             <path d="M14 6l3 3" />
+                             {/* Small line at the bottom to simulate the 'tip' contact */}
+                             <path d="M6 19l2 2" /> 
+                        </svg>
+                        <div className="w-4 h-[3px] bg-[#ffd700] rounded-sm -mt-[1px]"></div>
                     </button>
                     {activeMenu === 'highlight' && <div className="absolute top-full left-0 mt-1 z-[2000]"><HighlightMenu editor={editor} /></div>}
                 </div>
-            )}
+            </div>
 
             {/* Font & Paragraph (Standard Only) */}
             {!isWordMode && (
@@ -183,8 +192,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             {/* Page Controls (Standard Only) */}
             {!isWordMode && (
                 <div className="flex items-center gap-1 ml-1">
-                    <button type="button" onClick={onAddPage} className={`${btnBase} bg-white border border-gray-300`} title="ページ追加"><Plus className="w-4 h-4 text-gray-600" /></button>
-                    <button type="button" onClick={onRemovePage} className={`${btnBase} bg-white border border-gray-300`} title="ページ削除"><Minus className="w-4 h-4 text-gray-600" /></button>
+                    <button type="button" onClick={onAddPage} className={btnBase} title="ページ追加">
+                        <FilePlus2 className="w-4 h-4 text-gray-600" />
+                    </button>
+                    <button type="button" onClick={onRemovePage} className={btnBase} title="ページ削除">
+                        <FileMinus2 className="w-4 h-4 text-gray-600" />
+                    </button>
                 </div>
             )}
 
@@ -196,12 +209,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             </div>
 
             {/* Jump Widget */}
-            <div className="flex items-center gap-1 ml-1 bg-white border border-gray-300 rounded px-2 h-[32px]">
-                <Search className="w-3 h-3 text-gray-400" />
+            <div className="flex items-center gap-2 ml-1 bg-white border border-gray-300 rounded px-2 h-[32px] min-w-[200px]">
+                <span className="text-[10px] text-gray-500 whitespace-nowrap">ジャンプ機能 [ctrl+J]</span>
                 <input
                     type="text"
-                    className="text-xs outline-none w-32 placeholder-gray-400"
-                    placeholder={isWordMode ? "例：15" : "例：1-1"}
+                    className="text-xs outline-none w-full placeholder-gray-400"
+                    placeholder="(例: 1-1)...ヘジャンプ"
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                             const target = (e.currentTarget as HTMLInputElement).value;
