@@ -1,144 +1,157 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Editor } from '@tiptap/react';
-import { toast } from 'sonner';
-import { ChevronRight, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
+import { BaseDropdownMenu, MenuItem, SubMenu, MenuSeparator } from '../ui/BaseDropdownMenu';
 import { useAppStore } from '../../store/useAppStore';
 import { useFileIO } from '../../hooks/useFileIO';
 
 interface FileMenuProps {
-    isOpen: boolean;
-    onToggle: () => void;
-    onClose: () => void;
     editor: Editor | null;
 }
 
-export const FileMenu: React.FC<FileMenuProps> = ({ isOpen, onToggle, onClose, editor }) => {
-    const { setPageMargin, isWordMode, toggleWordMode, openDialog } = useAppStore();
-    const { saveFile, saveAsFile, downloadFile, importDocx } = useFileIO(editor, isWordMode);
-
-    const handleAction = (action: () => void) => {
-        action();
-        onClose();
-    };
+/**
+ * ファイルメニュー（Radix UI版）
+ * 
+ * 【改善点】
+ * - Radix Dropdown Menuで完全置き換え
+ * - useFileIOフックでロジック分離
+ * - 直接DOM操作を完全排除
+ */
+export const FileMenu: React.FC<FileMenuProps> = ({ editor }) => {
+    const { setPageMargin, isWordMode, openDialog } = useAppStore();
+    const { saveFile, saveAsFile, downloadFile } = useFileIO(editor, isWordMode);
+    
+    const htmlInputRef = useRef<HTMLInputElement>(null);
+    const docxInputRef = useRef<HTMLInputElement>(null);
 
     const handleOpenHtml = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0 && editor) {
             const { readTextFromFile, parseAndSetContent } = await import('../../utils/io');
+            const { toggleWordMode } = useAppStore.getState();
             try {
                 const text = await readTextFromFile(e.target.files[0]);
                 const detectedWordMode = parseAndSetContent(editor, text, isWordMode);
                 if (detectedWordMode !== isWordMode) {
                     toggleWordMode();
-                    toast.info(`モードを${detectedWordMode ? 'Word互換' : '標準'}モードに切り替えました`);
                 }
             } catch (err: any) {
-                toast.error(err.message || 'ファイルを開けませんでした。');
+                console.error(err);
             }
         }
         e.target.value = '';
     };
 
     const handleOpenDocx = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
+        if (e.target.files && e.target.files.length > 0 && editor) {
+            const { importDocx } = useFileIO(editor, isWordMode);
             try {
                 await importDocx(e.target.files[0]);
             } catch (err: any) {
-                toast.error(err.message || 'Wordファイルのインポートに失敗しました。');
+                console.error(err);
             }
         }
         e.target.value = '';
     };
 
-    const menuBtn = "w-full text-left px-4 py-1.5 hover:bg-gray-100 flex justify-between items-center text-sm transition-colors group relative";
-    const shortcut = "text-[10px] text-gray-400 font-mono ml-4";
-    const nestedMenu = "absolute left-full top-0 ml-0.5 bg-white border border-gray-300 shadow-xl rounded py-1 min-w-[180px] hidden group-hover:block transition-all";
-
     return (
-        <div className="relative">
-            <button
-                type="button"
-                className="px-2 py-1 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center gap-1 text-sm h-[32px]"
-                onClick={onToggle}
+        <>
+            <input 
+                ref={htmlInputRef}
+                type="file" 
+                className="hidden" 
+                accept=".html,.htm" 
+                onChange={handleOpenHtml} 
+            />
+            <input 
+                ref={docxInputRef}
+                type="file" 
+                className="hidden" 
+                accept=".docx" 
+                onChange={handleOpenDocx} 
+            />
+
+            <BaseDropdownMenu
+                trigger={
+                    <button
+                        type="button"
+                        className="px-2 py-1 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center gap-1 text-sm h-[32px]"
+                    >
+                        ファイル <ChevronDown className="w-3 h-3" />
+                    </button>
+                }
             >
-                ファイル <ChevronDown className="w-3 h-3" />
-            </button>
-            
-            <input type="file" id="menu-open-html" className="hidden" accept=".html,.htm" onChange={handleOpenHtml} />
-            <input type="file" id="menu-open-docx" className="hidden" accept=".docx" onChange={handleOpenDocx} />
+                <MenuItem onSelect={downloadFile} shortcut="Ctrl+S">
+                    保存
+                </MenuItem>
+                <MenuItem onSelect={saveAsFile}>
+                    名前を付けて保存
+                </MenuItem>
+                <MenuItem onSelect={saveFile} shortcut="Ctrl+S">
+                    上書き保存
+                </MenuItem>
 
-            {isOpen && (
-                <div 
-                    className="absolute top-full left-0 mt-1 bg-white border border-gray-300 shadow-xl rounded py-1 min-w-[220px] z-[2001] animate-in fade-in zoom-in-95 duration-100"
-                    onMouseLeave={() => {}} // Optional: might want to close on leave if not clicked?
-                >
-                    <button type="button" className={menuBtn} onClick={() => handleAction(downloadFile)}>
-                        保存 <span className={shortcut}>Ctrl+S</span>
-                    </button>
-                    <button type="button" className={menuBtn} onClick={() => handleAction(saveAsFile)}>
-                        名前を付けて保存
-                    </button>
-                    <button type="button" className={menuBtn} onClick={() => handleAction(saveFile)}>
-                        上書き保存 <span className={shortcut}>Ctrl+S</span>
-                    </button>
-                    
-                    <button type="button" className={menuBtn} onClick={() => handleAction(() => document.getElementById('menu-open-html')?.click())}>
-                        HTMLファイルを開く <span className={shortcut}>Ctrl+O</span>
-                    </button>
-                    
-                    {isWordMode && (
-                        <button type="button" className={menuBtn} onClick={() => handleAction(() => document.getElementById('menu-open-docx')?.click())}>
-                            Wordファイル(docx)を開く
-                        </button>
-                    )}
-                    
-                    {!isWordMode && (
-                        <>
-                            <button type="button" className={menuBtn} onClick={() => handleAction(() => window.print())}>
-                                PDFとして出力
-                            </button>
-                            
-                            <hr className="my-1 border-gray-200" />
-                            
-                            {/* Nested: Hyperlinks */}
-                            <div className={menuBtn}>
-                                <span>ハイパーリンク</span>
-                                <ChevronRight className="w-3 h-3 text-gray-400" />
-                                <div className={nestedMenu}>
-                                    <button type="button" className={menuBtn} onClick={() => handleAction(() => openDialog('link'))}>リンクを生成</button>
-                                    <button type="button" className={menuBtn} onClick={() => handleAction(() => editor?.chain().focus().unsetLink().run())}>リンクを削除</button>
-                                </div>
-                            </div>
+                <MenuItem onSelect={() => htmlInputRef.current?.click()} shortcut="Ctrl+O">
+                    HTMLファイルを開く
+                </MenuItem>
 
-                            {/* Nested: Images */}
-                            <div className={menuBtn}>
-                                <span>画像を挿入</span>
-                                <ChevronRight className="w-3 h-3 text-gray-400" />
-                                <div className={nestedMenu}>
-                                    <button type="button" className={menuBtn} onClick={() => handleAction(() => {
-                                        const url = window.prompt('Dropbox共有URLを入力');
-                                        if (url && editor) editor.chain().focus().setImage({ src: url }).run();
-                                    })}>Dropboxから挿入</button>
-                                    <button type="button" className={menuBtn} onClick={() => handleAction(() => {
-                                        const url = window.prompt('画像URLを入力');
-                                        if (url && editor) editor.chain().focus().setImage({ src: url }).run();
-                                    })}>Web上の画像を挿入</button>
-                                </div>
-                            </div>
+                {isWordMode && (
+                    <MenuItem onSelect={() => docxInputRef.current?.click()}>
+                        Wordファイル(docx)を開く
+                    </MenuItem>
+                )}
 
-                            {/* Nested: Margins */}
-                            <div className={menuBtn}>
-                                <span>余白</span>
-                                <ChevronRight className="w-3 h-3 text-gray-400" />
-                                <div className={nestedMenu}>
-                                    <button type="button" className={menuBtn} onClick={() => handleAction(() => setPageMargin('s'))}>サイズ S</button>
-                                    <button type="button" className={menuBtn} onClick={() => handleAction(() => setPageMargin('m'))}>サイズ M</button>
-                                    <button type="button" className={menuBtn} onClick={() => handleAction(() => setPageMargin('l'))}>サイズ L</button>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </div>
-            )}
-        </div>
+                {!isWordMode && (
+                    <>
+                        <MenuItem onSelect={() => window.print()}>
+                            PDFとして出力
+                        </MenuItem>
+
+                        <MenuSeparator />
+
+                        <SubMenu trigger="ハイパーリンク">
+                            <MenuItem onSelect={() => openDialog('link')}>
+                                リンクを生成
+                            </MenuItem>
+                            <MenuItem onSelect={() => editor?.chain().focus().unsetLink().run()}>
+                                リンクを削除
+                            </MenuItem>
+                        </SubMenu>
+
+                        <SubMenu trigger="画像を挿入">
+                            <MenuItem onSelect={() => {
+                                const url = window.prompt('Dropbox共有URLを入力');
+                                if (url && editor) {
+                                    // Dropbox URL変換ロジックは後でフックに移動
+                                    const parsed = new URL(url);
+                                    parsed.searchParams.delete('dl');
+                                    parsed.searchParams.set('raw', '1');
+                                    editor.chain().focus().setImage({ src: parsed.toString() }).run();
+                                }
+                            }}>
+                                Dropboxから挿入
+                            </MenuItem>
+                            <MenuItem onSelect={() => {
+                                const url = window.prompt('画像URLを入力');
+                                if (url && editor) editor.chain().focus().setImage({ src: url }).run();
+                            }}>
+                                Web上の画像を挿入
+                            </MenuItem>
+                        </SubMenu>
+
+                        <SubMenu trigger="余白">
+                            <MenuItem onSelect={() => setPageMargin('s')}>
+                                サイズ S
+                            </MenuItem>
+                            <MenuItem onSelect={() => setPageMargin('m')}>
+                                サイズ M
+                            </MenuItem>
+                            <MenuItem onSelect={() => setPageMargin('l')}>
+                                サイズ L
+                            </MenuItem>
+                        </SubMenu>
+                    </>
+                )}
+            </BaseDropdownMenu>
+        </>
     );
 };

@@ -158,11 +158,15 @@ export const EditorV3 = () => {
             <SubHelpDialog />
             <BrowserWarningDialog isOpen={showBrowserWarning} onClose={() => setShowBrowserWarning(false)} />
             <DonateDialog open={activeDialog === 'donate'} onClose={closeDialog} />
-            {activeDialog === 'link' && editor && <LinkDialog editor={editor} onClose={closeDialog} />}
-            {activeDialog === 'image-title' && editor && <ImageTitleDialog editor={editor} onClose={closeDialog} />}
-            {activeDialog === 'image-caption' && editor && <ImageCaptionDialog editor={editor} onClose={closeDialog} />}
-            {activeDialog === 'image-tag' && editor && <ImageTagDialog editor={editor} onClose={closeDialog} />}
-            {activeDialog === 'paragraph-jump' && editor && <ParagraphJumpDialog editor={editor} onClose={closeDialog} />}
+            {editor && (
+                <>
+                    <LinkDialog open={activeDialog === 'link'} editor={editor} onClose={closeDialog} />
+                    <ImageTitleDialog open={activeDialog === 'image-title'} editor={editor} onClose={closeDialog} />
+                    <ImageCaptionDialog open={activeDialog === 'image-caption'} editor={editor} onClose={closeDialog} />
+                    <ImageTagDialog open={activeDialog === 'image-tag'} editor={editor} onClose={closeDialog} />
+                    <ParagraphJumpDialog open={activeDialog === 'paragraph-jump'} editor={editor} onClose={closeDialog} />
+                </>
+            )}
             <Toaster position="top-center" richColors />
         </div>
     );

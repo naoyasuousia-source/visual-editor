@@ -65,14 +65,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             </div>
 
             {/* File Menu */}
-            <div className="relative">
-                <FileMenu
-                    isOpen={activeMenu === 'file'}
-                    onToggle={() => toggleMenu('file')}
-                    onClose={closeAllMenus}
-                    editor={editor}
-                />
-            </div>
+            <FileMenu editor={editor} />
 
             {/* View Menu */}
             {!isWordMode && (
@@ -120,36 +113,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                     <span className="font-sans text-gray-700 text-sm flex items-end leading-none gap-[1px]">x <span className="text-[10px] -mb-1 font-bold">2</span></span>
                 </button>
                 
-                {/* Custom Highlight Button - Scaled & Positioned to match reference */}
-                <div className="relative">
-                     <button 
-                        type="button" 
-                        className={`${btnBase} flex flex-col items-center justify-center gap-0 ${activeMenu === 'highlight' ? 'bg-gray-100 shadow-inner' : ''}`} 
-                        onClick={() => toggleMenu('highlight')} 
-                        title="ハイライト"
-                    >
-                         {/* Custom SVG to match the 'tilted nib' look */}
-                         {/* Exact V1 Editor Highlighter SVG */}
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="m9 11-6 6v3h9l3-3" />
-                            <path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4" />
-                            <path d="M2 21h20" stroke="#FFD700" strokeWidth="3" />
-                        </svg>
-                    </button>
-                    {activeMenu === 'highlight' && <div className="absolute top-full left-0 mt-1 z-[2000]"><HighlightMenu editor={editor} /></div>}
-                </div>
+                {/* Highlight Menu - Radix UI版 */}
+                <HighlightMenu editor={editor} />
             </div>
 
             {/* Font & Paragraph (Standard Only) */}
             {!isWordMode && (
                 <>
-                    <div className="relative">
-                        <button type="button" className={dropdownTrigger} onClick={() => toggleMenu('font')}>フォント <ChevronDown className="w-3 h-3" /></button>
-                        {activeMenu === 'font' && <div className="absolute top-full left-0 mt-1 z-[2000]"><FontMenu editor={editor} /></div>}
-                    </div>
-                    <div className="relative">
-                        <button type="button" className={dropdownTrigger} onClick={() => toggleMenu('paragraph')}>段落スタイル <ChevronDown className="w-3 h-3" /></button>
-                        {activeMenu === 'paragraph' && <div className="absolute top-full left-0 mt-1 z-[2000]"><ParagraphMenu editor={editor} /></div>}
+                    <FontMenu editor={editor} />
+                    <ParagraphMenu editor={editor} />
                     </div>
                 </>
             )}
