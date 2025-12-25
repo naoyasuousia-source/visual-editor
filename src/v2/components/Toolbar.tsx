@@ -1,12 +1,6 @@
 import React, { useState } from 'react';
 import { Editor } from '@tiptap/react';
 import { 
-    Bold, 
-    Italic, 
-    Underline as UnderlineIcon, 
-    Strikethrough, 
-    Superscript as SuperscriptIcon, 
-    Subscript as SubscriptIcon,
     FilePlus2,
     FileMinus2,
     HelpCircle,
@@ -57,9 +51,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     const closeAllMenus = () => setActiveMenu(null);
     const toggleMenu = (menu: string) => setActiveMenu(activeMenu === menu ? null : menu);
 
-    const btnBase = "p-1.5 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center justify-center min-w-[32px] h-[32px]";
+    const btnBase = "p-1.5 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center justify-center min-w-[36px] h-[36px]";
     const btnActive = "bg-gray-200 border-gray-300 shadow-inner";
-    const dropdownTrigger = "px-2 py-1 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center gap-1 text-sm h-[32px]";
+    const dropdownTrigger = "px-2 py-1 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center gap-1 text-sm h-[36px]";
 
     return (
         <div className="sticky top-0 w-full z-50 bg-[#f8f9fa] border-b border-gray-300 shadow-sm p-2 flex items-center gap-2 flex-wrap">
@@ -105,12 +99,24 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
             {/* Formatting Group - Flattened and Equally Spaced */}
             <div className="flex items-center gap-1.5 ml-1.5">
-                <button type="button" onClick={toggleBold} className={`${btnBase} ${editor.isActive('bold') ? 'bg-gray-200 shadow-inner' : ''}`} title="太字"><Bold className="w-4 h-4" /></button>
-                <button type="button" onClick={toggleItalic} className={`${btnBase} ${editor.isActive('italic') ? 'bg-gray-200 shadow-inner' : ''}`} title="斜体"><Italic className="w-4 h-4" /></button>
-                <button type="button" onClick={toggleUnderline} className={`${btnBase} ${editor.isActive('underline') ? 'bg-gray-200 shadow-inner' : ''}`} title="下線"><UnderlineIcon className="w-4 h-4" /></button>
-                <button type="button" onClick={toggleStrike} className={`${btnBase} ${editor.isActive('strike') ? 'bg-gray-200 shadow-inner' : ''}`} title="打ち消し線"><Strikethrough className="w-4 h-4" /></button>
-                <button type="button" onClick={toggleSuperscript} className={`${btnBase} ${editor.isActive('superscript') ? 'bg-gray-200 shadow-inner' : ''}`} title="上付き文字"><SuperscriptIcon className="w-4 h-4" /></button>
-                <button type="button" onClick={toggleSubscript} className={`${btnBase} ${editor.isActive('subscript') ? 'bg-gray-200 shadow-inner' : ''}`} title="下付き文字"><SubscriptIcon className="w-4 h-4" /></button>
+                <button type="button" onClick={toggleBold} className={`${btnBase} ${editor.isActive('bold') ? 'bg-gray-200 shadow-inner' : ''}`} title="太字">
+                    <span className="font-sans font-bold text-gray-700 text-base leading-none">B</span>
+                </button>
+                <button type="button" onClick={toggleItalic} className={`${btnBase} ${editor.isActive('italic') ? 'bg-gray-200 shadow-inner' : ''}`} title="斜体">
+                    <span className="italic font-serif text-gray-700 text-lg leading-none">I</span>
+                </button>
+                <button type="button" onClick={toggleUnderline} className={`${btnBase} ${editor.isActive('underline') ? 'bg-gray-200 shadow-inner' : ''}`} title="下線">
+                    <span className="underline font-serif text-gray-700 text-base leading-none decoration-gray-700 underline-offset-2">U</span>
+                </button>
+                <button type="button" onClick={toggleStrike} className={`${btnBase} ${editor.isActive('strike') ? 'bg-gray-200 shadow-inner' : ''}`} title="打ち消し線">
+                    <span className="line-through font-serif text-gray-700 text-base leading-none decoration-gray-700">S</span>
+                </button>
+                <button type="button" onClick={toggleSuperscript} className={`${btnBase} ${editor.isActive('superscript') ? 'bg-gray-200 shadow-inner' : ''}`} title="上付き文字">
+                    <span className="font-sans text-gray-700 text-sm flex items-start leading-none gap-[1px]">x <span className="text-[10px] -mt-1 font-bold">2</span></span>
+                </button>
+                <button type="button" onClick={toggleSubscript} className={`${btnBase} ${editor.isActive('subscript') ? 'bg-gray-200 shadow-inner' : ''}`} title="下付き文字">
+                    <span className="font-sans text-gray-700 text-sm flex items-end leading-none gap-[1px]">x <span className="text-[10px] -mb-1 font-bold">2</span></span>
+                </button>
                 
                 {/* Custom Highlight Button - Scaled & Positioned to match reference */}
                 <div className="relative">
@@ -121,14 +127,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                         title="ハイライト"
                     >
                          {/* Custom SVG to match the 'tilted nib' look */}
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-800 translate-y-[1px]">
-                            {/* Represents the tilted pen nib */}
-                             <path d="M16 3l5 5-10 10H6v-5L16 3z" /> 
-                             <path d="M14 6l3 3" />
-                             {/* Small line at the bottom to simulate the 'tip' contact */}
-                             <path d="M6 19l2 2" /> 
+                         {/* Exact V1 Editor Highlighter SVG */}
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="m9 11-6 6v3h9l3-3" />
+                            <path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4" />
+                            <path d="M2 21h20" stroke="#FFD700" strokeWidth="3" />
                         </svg>
-                        <div className="w-4 h-[3px] bg-[#ffd700] rounded-sm -mt-[1px]"></div>
                     </button>
                     {activeMenu === 'highlight' && <div className="absolute top-full left-0 mt-1 z-[2000]"><HighlightMenu editor={editor} /></div>}
                 </div>
@@ -138,7 +142,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             {!isWordMode && (
                 <>
                     <div className="relative">
-                        <button type="button" className={dropdownTrigger} onClick={() => toggleMenu('font')}>Font <ChevronDown className="w-3 h-3" /></button>
+                        <button type="button" className={dropdownTrigger} onClick={() => toggleMenu('font')}>フォント <ChevronDown className="w-3 h-3" /></button>
                         {activeMenu === 'font' && <div className="absolute top-full left-0 mt-1 z-[2000]"><FontMenu editor={editor} /></div>}
                     </div>
                     <div className="relative">
@@ -152,7 +156,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             {isWordMode && (
                 <>
                     <div className="flex items-center gap-2 border-r border-gray-300 pr-2 mr-1">
-                         <label className="flex items-center hover:bg-gray-100 cursor-pointer text-xs gap-1 px-2 py-1 rounded border border-gray-300 bg-white h-[32px]">
+                         <label className="flex items-center hover:bg-gray-100 cursor-pointer text-xs gap-1 px-2 py-1 rounded border border-gray-300 bg-white h-[36px]">
                             <input 
                                 type="checkbox" 
                                 defaultChecked 
@@ -164,7 +168,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
                     <div className="relative">
                         <select
-                            className="h-[32px] px-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 outline-none cursor-pointer min-w-[100px]"
+                            className="h-[36px] px-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 outline-none cursor-pointer min-w-[100px]"
                             onChange={(e) => {
                                 const value = e.target.value;
                                 if (value === 'p') editor.chain().focus().setParagraph().run();
@@ -202,19 +206,22 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             )}
 
             {/* Zoom */}
-            <div className="flex items-center border border-gray-300 rounded bg-white overflow-hidden h-[32px] ml-1">
+            <div className="flex items-center border border-gray-300 rounded bg-white overflow-hidden h-[36px] ml-1">
                 <button type="button" onClick={zoomOut} className="px-2 hover:bg-gray-100 border-r border-gray-200 text-sm font-bold text-gray-600">-</button>
                 <div className="px-2 text-xs font-semibold min-w-[36px] text-center select-none text-gray-700">{zoomLevel}%</div>
                 <button type="button" onClick={zoomIn} className="px-2 hover:bg-gray-100 text-sm font-bold text-gray-600">+</button>
             </div>
 
             {/* Jump Widget */}
-            <div className="flex items-center gap-2 ml-1 bg-white border border-gray-300 rounded px-2 h-[32px] min-w-[200px]">
-                <span className="text-[10px] text-gray-500 whitespace-nowrap">ジャンプ機能 [ctrl+J]</span>
+            <div className="flex items-center gap-2 ml-1 bg-white border border-gray-300 rounded px-2 h-[36px] min-w-[200px]">
+                <div className="flex flex-col justify-center items-start leading-[0.8]">
+                    <span className="text-[10px] text-gray-600 font-bold scale-[0.9] origin-left">ジャンプ機能</span>
+                    <span className="text-[9px] text-gray-400 scale-[0.85] origin-left">[ ctrl+J ]</span>
+                </div>
                 <input
                     type="text"
                     className="text-xs outline-none w-full placeholder-gray-400"
-                    placeholder="(例: 1-1)...ヘジャンプ"
+                    placeholder={isWordMode ? "(例：15)…へジャンプ" : "(例：1-1)…へジャンプ"}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                             const target = (e.currentTarget as HTMLInputElement).value;
@@ -235,7 +242,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                         }
                     }}
                 />
-                <span className="text-[10px] text-gray-400 whitespace-nowrap hidden sm:inline">[Ctrl+J]</span>
             </div>
 
             {/* Right Group */}
@@ -243,7 +249,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 <button 
                     type="button" 
                     onClick={toggleWordMode}
-                    className={`px-3 py-1 rounded text-xs font-bold transition-all h-[32px] flex items-center gap-1 shadow-sm ${
+                    className={`px-3 py-1 rounded text-xs font-bold transition-all h-[36px] flex items-center gap-1 shadow-sm ${
                         isWordMode 
                         ? 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100' // Word Mode active -> Show "Switch to standard" (White)
                         : 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] border border-transparent' // Standard Mode active -> Show "Switch to Word" (Blue)
@@ -256,7 +262,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 <button 
                     type="button" 
                     onClick={() => { closeAllMenus(); openDialog('donate'); }}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded bg-[#fff0b3] border border-[#ffe066] text-[#b37400] text-xs font-bold hover:bg-[#ffe680] transition-all h-[32px] shadow-sm ml-1"
+                    className="flex items-center gap-1.5 px-3 py-1 rounded bg-[#fff0b3] border border-[#ffe066] text-[#b37400] text-xs font-bold hover:bg-[#ffe680] transition-all h-[36px] shadow-sm ml-1"
                 >
                     <Heart className="w-3.5 h-3.5 fill-[#f59f00] text-[#f59f00]" />
                     <span>開発を応援</span>
@@ -265,7 +271,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 <button 
                     type="button" 
                     onClick={() => { closeAllMenus(); openDialog('help'); }}
-                    className="p-1.5 rounded-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-600 transition-colors shadow-sm ml-1"
+                    className="w-[36px] h-[36px] flex items-center justify-center rounded-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-600 transition-colors shadow-sm ml-1"
                 >
                     <HelpCircle className="w-5 h-5" />
                 </button>

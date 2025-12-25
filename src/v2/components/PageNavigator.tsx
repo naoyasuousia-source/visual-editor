@@ -136,7 +136,7 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
             </div>
 
             {/* Sidebar toggle button (Fixed at bottom left like original) */}
-            <div className={`fixed bottom-4 left-4 z-[100] transition-all duration-300 ${isSidebarOpen ? 'left-[210px]' : 'left-4'}`}>
+            <div className={`fixed bottom-4 left-4 z-[100] transition-all duration-300`}>
                 <button 
                     onClick={toggleSidebar}
                     className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-300 rounded shadow text-xs font-bold text-gray-700 hover:bg-gray-50"
