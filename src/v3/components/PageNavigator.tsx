@@ -5,8 +5,10 @@ interface PageNavigatorProps {
     editor: Editor;
 }
 
+import { useAppStore } from '../store/useAppStore';
+
 export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
-    const [collapsed, setCollapsed] = useState(false);
+    const { isSidebarOpen, toggleSidebar } = useAppStore();
     const [activePageIndex, setActivePageIndex] = useState<number>(0);
 
     // This effect handles the initial render and mutations to build the navigator structure
@@ -17,7 +19,12 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
         if (!navigator || !pagesContainer) return;
 
         const updateNavigator = () => {
-            if (collapsed) return;
+            if (!isSidebarOpen) {
+                // If closed, strictly maybe we don't update? 
+                // But we should consider clearing it or keeping it?
+                // Original logic returned. CSS hides it.
+                return;
+            }
 
             // Simple rebuild for now (can be optimized later if performance issues arise)
             navigator.innerHTML = '';
@@ -86,7 +93,7 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
         updateNavigator();
 
         return () => observer.disconnect();
-    }, [editor, collapsed, activePageIndex]); // Re-run when activePageIndex changes to update classes
+    }, [editor, isSidebarOpen, activePageIndex]); // Re-run when activePageIndex changes to update classes
 
     // This effect handles scrolling to detect the active page
     useEffect(() => {
@@ -184,10 +191,10 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
 
     return (
         <>
-            <div id="page-navigator" className={collapsed ? 'collapsed' : ''}></div>
+            <div id="page-navigator" className={!isSidebarOpen ? 'collapsed' : ''}></div>
             <div id="sidebar-toggle-overlay">
-                <button id="sidebar-toggle-btn" onClick={() => setCollapsed(!collapsed)}>
-                    {collapsed ? 'サムネイル：非表示' : 'サムネイル：表示'}
+                <button id="sidebar-toggle-btn" onClick={toggleSidebar}>
+                    {isSidebarOpen ? 'サムネイル：表示' : 'サムネイル：非表示'}
                 </button>
             </div>
         </>

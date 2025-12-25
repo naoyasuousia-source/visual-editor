@@ -21,9 +21,10 @@ interface AppState {
     openDialog: (dialogId: string) => void;
     closeDialog: () => void;
 
-    // To maintain existing simple API or use single active dialog?
-    // Let's use a structured object or individual booleans if we want to mimic the previous granular control, 
-    // OR just use activeDialog ID which is cleaner (allows only one dialog at a time, which is usually UX best practice).
+    // Sidebar
+    isSidebarOpen: boolean;
+    toggleSidebar: () => void;
+    setSidebarOpen: (isOpen: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -47,4 +48,9 @@ export const useAppStore = create<AppState>((set) => ({
     activeDialog: null,
     openDialog: (dialogId) => set({ activeDialog: dialogId }),
     closeDialog: () => set({ activeDialog: null }),
+
+    // Sidebar
+    isSidebarOpen: true,
+    toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
+    setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
 }));

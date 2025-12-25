@@ -85,6 +85,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 {viewMenuOpen && (
                     <div className="view-dropdown open" role="menu">
                         <label className="menu-item-label">
+                            <input
+                                type="checkbox"
+                                checked={isSidebarOpen}
+                                onChange={toggleSidebar}
+                            /> サムネイル
+                        </label>
+                        <label className="menu-item-label">
                             <input type="checkbox" data-action="toggle-page-numbers" defaultChecked /> ページ番号
                         </label>
                         <label className="menu-item-label">
