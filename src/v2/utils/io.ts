@@ -77,6 +77,8 @@ export function generateFullHtml(editor: Editor, isWordMode: boolean = false): s
 
     const bodyClass = isWordMode ? ' class="mode-word"' : '';
 
+    const aiIndex = document.getElementById('ai-image-index')?.outerHTML || '';
+
     return `<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -90,6 +92,7 @@ ${contentCssText}
 <div id="pages-container">
 ${htmlContent}
 </div>
+${aiIndex}
 </body>
 </html>`;
 }
