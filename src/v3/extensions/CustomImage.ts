@@ -23,6 +23,38 @@ export const CustomImage = TiptapImage.extend({
                     return { class: 'has-border' };
                 },
             },
+            title: {
+                default: '',
+                parseHTML: element => element.getAttribute('data-title'),
+                renderHTML: attributes => {
+                    if (!attributes.title) return {};
+                    return { 'data-title': attributes.title };
+                },
+            },
+            titleSize: {
+                default: 'default',
+                parseHTML: element => element.getAttribute('data-title-size'),
+                renderHTML: attributes => {
+                    if (!attributes.titleSize) return {};
+                    return { 'data-title-size': attributes.titleSize };
+                },
+            },
+            caption: {
+                default: '',
+                parseHTML: element => element.getAttribute('data-caption'),
+                renderHTML: attributes => {
+                    if (!attributes.caption) return {};
+                    return { 'data-caption': attributes.caption };
+                },
+            },
+            tag: {
+                default: '',
+                parseHTML: element => element.getAttribute('data-tag'),
+                renderHTML: attributes => {
+                    if (!attributes.tag) return {};
+                    return { 'data-tag': attributes.tag };
+                },
+            },
         };
     },
 

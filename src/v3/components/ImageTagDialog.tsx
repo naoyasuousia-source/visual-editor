@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Editor } from '@tiptap/react';
+import { Tag, X, Save } from 'lucide-react';
 
 interface ImageTagDialogProps {
     editor: Editor;
@@ -7,51 +8,77 @@ interface ImageTagDialogProps {
 }
 
 export const ImageTagDialog: React.FC<ImageTagDialogProps> = ({ editor, onClose }) => {
-    const dialogRef = useRef<HTMLDialogElement>(null);
     const [tags, setTags] = useState('');
 
     useEffect(() => {
-        if (dialogRef.current && !dialogRef.current.open) {
-            dialogRef.current.showModal();
-        }
-    }, []);
-
-    useEffect(() => {
         const attrs = editor.getAttributes('image');
-        if (attrs.tags) setTags(attrs.tags); // Assuming 'tags' attribute is used
+        if (attrs.tags) setTags(attrs.tags);
     }, [editor]);
 
     const handleApply = () => {
-        // Tiptap image extension needs to support 'tags' attribute
-        editor.chain().focus().updateAttributes('image', { tags }).run();
-        handleClose();
-    };
-
-    const handleClose = () => {
-        if (dialogRef.current) dialogRef.current.close();
+        editor.chain().focus().updateAttributes('image', { tags: tags.trim() }).run();
         onClose();
     };
 
     return (
-        <dialog ref={dialogRef} id="image-tag-dialog" aria-labelledby="image-tag-dialog-label" onClose={onClose}>
-            <form method="dialog" onSubmit={(e) => { e.preventDefault(); handleApply(); }}>
-                <p id="image-tag-dialog-label">画像タグ</p>
-                <label htmlFor="image-tag-input">
-                    タグ (カンマ区切り)
-                    <input
-                        type="text"
-                        id="image-tag-input"
-                        name="image-tag-input"
-                        value={tags}
-                        onChange={(e) => setTags(e.target.value)}
-                        placeholder="A,B,C"
-                    />
-                </label>
-                <div className="dialog-actions">
-                    <button type="button" data-action="cancel-image-tag" onClick={handleClose}>キャンセル</button>
-                    <button type="submit" data-action="apply-image-tag">適用</button>
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4">
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}></div>
+            
+            {/* Dialog Content */}
+            <form 
+                onSubmit={(e) => { e.preventDefault(); handleApply(); }}
+                className="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            >
+                {/* Header */}
+                <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+                    <h1 className="text-sm font-bold flex items-center gap-2 text-gray-700">
+                        <Tag className="w-4 h-4 text-blue-500" />
+                        画像タグ編集
+                    </h1>
+                    <button 
+                        type="button" 
+                        className="p-1 rounded-full hover:bg-gray-200 text-gray-400 transition-colors" 
+                        onClick={onClose}
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="p-6 space-y-4">
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-gray-500 px-1">
+                            タグ (カンマ区切りで入力)
+                        </label>
+                        <input
+                            type="text"
+                            value={tags}
+                            onChange={(e) => setTags(e.target.value)}
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                            placeholder="A, B, C"
+                            autoFocus
+                        />
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                        <button 
+                            type="button"
+                            className="flex-1 py-2.5 px-4 border border-gray-200 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-50 transition-all"
+                            onClick={onClose}
+                        >
+                            キャンセル
+                        </button>
+                        <button 
+                            type="submit"
+                            className="flex-1 py-2.5 px-4 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transition-all"
+                        >
+                            <Save className="w-3.5 h-3.5" />
+                            <span>適用する</span>
+                        </button>
+                    </div>
                 </div>
             </form>
-        </dialog>
+        </div>
     );
 };

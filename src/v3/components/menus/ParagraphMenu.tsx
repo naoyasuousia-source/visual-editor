@@ -1,13 +1,22 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Editor } from '@tiptap/react';
+import { 
+    AlignLeft, 
+    AlignCenter, 
+    AlignRight, 
+    ChevronRight,
+    MoveVertical,
+    Indent as IndentIcon,
+    Outdent,
+    ArrowDownWideNarrow,
+    Check
+} from 'lucide-react';
 
 interface ParagraphMenuProps {
     editor: Editor;
 }
 
 export const ParagraphMenu: React.FC<ParagraphMenuProps> = ({ editor }) => {
-    const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
-
     const setAlign = (align: string) => {
         editor.chain().focus().updateAttributes('paragraph', { align }).run();
         editor.chain().focus().updateAttributes('heading', { align }).run();
@@ -19,7 +28,6 @@ export const ParagraphMenu: React.FC<ParagraphMenuProps> = ({ editor }) => {
     };
 
     const setLineHeight = (lineHeight: string) => {
-        // Line height could also be a custom attribute in StyleAttributes
         editor.chain().focus().updateAttributes('paragraph', { lineHeight }).run();
     };
 
@@ -34,128 +42,90 @@ export const ParagraphMenu: React.FC<ParagraphMenuProps> = ({ editor }) => {
         editor.chain().focus().updateAttributes('paragraph', { hanging: !current }).run();
     };
 
-    const toggleSubmenu = (submenu: string) => {
-        setActiveSubmenu(activeSubmenu === submenu ? null : submenu);
-    };
-
-    const handleMouseEnter = (submenu: string) => {
-        setActiveSubmenu(submenu);
-    };
+    const itemCls = "w-full text-left px-4 py-1.5 hover:bg-gray-100 flex justify-between items-center text-sm transition-colors group relative";
+    const subMenuCls = "absolute left-full top-0 ml-0.5 bg-white border border-gray-300 shadow-xl rounded py-1 min-w-[120px] hidden group-hover:flex flex-col z-[2100]";
+    const iconBtnCls = "p-2 hover:bg-gray-200 rounded transition-colors flex-1 flex justify-center items-center";
 
     return (
-        <div className="paragraph-panel open" role="menu">
-            <div
-                className={`paragraph-submenu ${activeSubmenu === 'align' ? 'is-open' : ''}`}
-                data-submenu="align"
-                onMouseEnter={() => handleMouseEnter('align')}
-            >
-                <button
-                    type="button"
-                    className="paragraph-submenu-trigger"
-                    title="配置"
-                    aria-haspopup="true"
-                    aria-expanded={activeSubmenu === 'align'}
-                    onClick={() => toggleSubmenu('align')}
-                >
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-                        <line x1="4" y1="6" x2="20" y2="6" /><line x1="4" y1="12" x2="14" y2="12" /><line x1="4" y1="18" x2="20" y2="18" />
-                    </svg>
-                </button>
-                <div className="paragraph-submenu-panel" role="menu">
-                    <div className="align-buttons">
-                        <button type="button" className="align-icon-button" onClick={() => setAlign('left')} title="左揃え" data-action="align-left">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="15" y1="10" x2="3" y2="10"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="17" y1="18" x2="3" y2="18"></line></svg>
+        <div className="bg-white border border-gray-300 shadow-xl rounded py-1 min-w-[200px] z-[2001] flex flex-col animate-in fade-in zoom-in-95 duration-100">
+            {/* Alignment Row */}
+            <div className="px-3 py-2 border-b border-gray-100 flex gap-1">
+                <button type="button" className={`${iconBtnCls} ${editor.isActive({ align: 'left' }) ? 'bg-gray-200' : ''}`} onClick={() => setAlign('left')} title="左揃え"><AlignLeft className="w-4 h-4" /></button>
+                <button type="button" className={`${iconBtnCls} ${editor.isActive({ align: 'center' }) ? 'bg-gray-200' : ''}`} onClick={() => setAlign('center')} title="中央揃え"><AlignCenter className="w-4 h-4" /></button>
+                <button type="button" className={`${iconBtnCls} ${editor.isActive({ align: 'right' }) ? 'bg-gray-200' : ''}`} onClick={() => setAlign('right')} title="右揃え"><AlignRight className="w-4 h-4" /></button>
+            </div>
+
+            {/* Spacing */}
+            <div className={itemCls}>
+                <div className="flex items-center gap-2">
+                    <ArrowDownWideNarrow className="w-4 h-4 text-gray-500" />
+                    <span>段落下の余白</span>
+                </div>
+                <ChevronRight className="w-3 h-3 text-gray-400" />
+                <div className={subMenuCls}>
+                    {['xs', 's', 'm', 'l', 'xl'].map(size => (
+                        <button 
+                            key={size} 
+                            type="button" 
+                            className="px-4 py-1.5 hover:bg-gray-100 text-xs text-left flex justify-between items-center" 
+                            onClick={() => setSpacing(size)}
+                        >
+                            {size.toUpperCase()}
+                            {editor.getAttributes('paragraph').spacing === size && <Check className="w-3 h-3 text-blue-500" />}
                         </button>
-                        <button type="button" className="align-icon-button" onClick={() => setAlign('center')} title="中央揃え" data-action="align-center">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="17" y1="10" x2="7" y2="10"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="17" y1="18" x2="7" y2="18"></line></svg>
-                        </button>
-                        <button type="button" className="align-icon-button" onClick={() => setAlign('right')} title="右揃え" data-action="align-right">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="10" x2="9" y2="10"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="7" y2="18"></line></svg>
-                        </button>
-                    </div>
+                    ))}
                 </div>
             </div>
 
-            <div
-                className={`paragraph-submenu ${activeSubmenu === 'spacing' ? 'is-open' : ''}`}
-                data-submenu="spacing"
-                onMouseEnter={() => handleMouseEnter('spacing')}
-            >
-                <button
-                    type="button"
-                    className="paragraph-submenu-trigger"
-                    title="段落下の余白"
-                    aria-haspopup="true"
-                    aria-expanded={activeSubmenu === 'spacing'}
-                    onClick={() => toggleSubmenu('spacing')}
-                >
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 18h16M12 9v6M9 12l3 3 3-3" /></svg>
-                </button>
-                <div className="paragraph-submenu-panel" role="menu">
-                    <div className="spacing-buttons">
-                        {['xs', 's', 'm', 'l', 'xl'].map(size => (
-                            <button key={size} type="button" className="spacing-button" onClick={() => setSpacing(size)} data-action="paragraph-spacing" data-size={size} title={size.toUpperCase()}>{size.toUpperCase()}</button>
-                        ))}
-                    </div>
+            {/* Line Height */}
+            <div className={itemCls}>
+                <div className="flex items-center gap-2">
+                    <MoveVertical className="w-4 h-4 text-gray-500" />
+                    <span>行間</span>
+                </div>
+                <ChevronRight className="w-3 h-3 text-gray-400" />
+                <div className={subMenuCls}>
+                    {['s', 'm', 'l'].map(size => (
+                        <button 
+                            key={size} 
+                            type="button" 
+                            className="px-4 py-1.5 hover:bg-gray-100 text-xs text-left flex justify-between items-center" 
+                            onClick={() => setLineHeight(size)}
+                        >
+                            {size.toUpperCase()}
+                            {editor.getAttributes('paragraph').lineHeight === size && <Check className="w-3 h-3 text-blue-500" />}
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            <div
-                className={`paragraph-submenu ${activeSubmenu === 'line-height' ? 'is-open' : ''}`}
-                data-submenu="line-height"
-                onMouseEnter={() => handleMouseEnter('line-height')}
-            >
-                <button
-                    type="button"
-                    className="paragraph-submenu-trigger"
-                    title="行間"
-                    aria-haspopup="true"
-                    aria-expanded={activeSubmenu === 'line-height'}
-                    onClick={() => toggleSubmenu('line-height')}
-                >
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M11 6h11v2H11zm0 5h11v2H11zm0 5h11v2H11zM6 3L3 6h2v12H3l3 3 3-3H7V6h2z" /></svg>
-                </button>
-                <div className="paragraph-submenu-panel" role="menu">
-                    <div className="spacing-buttons">
-                        {['s', 'm', 'l'].map(size => (
-                            <button key={size} type="button" className="spacing-button" onClick={() => setLineHeight(size)} data-action="line-height" data-size={size} title={size.toUpperCase()}>{size.toUpperCase()}</button>
-                        ))}
-                    </div>
-                </div>
-            </div>
+            <hr className="my-1 border-gray-100" />
 
-            <div
-                className={`paragraph-submenu ${activeSubmenu === 'indent' ? 'is-open' : ''}`}
-                data-submenu="indent"
-                onMouseEnter={() => handleMouseEnter('indent')}
-            >
-                <button
-                    type="button"
-                    className="paragraph-submenu-trigger"
-                    title="インデント"
-                    aria-haspopup="true"
-                    aria-expanded={activeSubmenu === 'indent'}
-                    onClick={() => toggleSubmenu('indent')}
-                >
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 4h18v2H3zm0 14h18v2H3zm8-9h10v2H11zm0 4h10v2H11zM5 8v8l5-4z" /></svg>
-                </button>
-                <div className="paragraph-submenu-panel" role="menu">
-                    <div className="spacing-buttons">
-                        <button type="button" className="spacing-button" onClick={() => adjustIndent(1)} data-action="indent">＋</button>
-                        <button type="button" className="spacing-button" onClick={() => adjustIndent(-1)} data-action="outdent">ー</button>
-                    </div>
-                    <div className="indent-option">
-                        <label>
-                            <input
-                                type="checkbox"
-                                data-action="hanging-indent"
-                                checked={!!editor.getAttributes('paragraph').hanging}
-                                onChange={toggleHanging}
-                            /> ぶら下げ
-                        </label>
-                    </div>
+            {/* Indent Actions */}
+            <button type="button" className={itemCls} onClick={() => adjustIndent(1)}>
+                <div className="flex items-center gap-2">
+                    <IndentIcon className="w-4 h-4 text-gray-500" />
+                    <span>インデントを増やす</span>
                 </div>
-            </div>
+            </button>
+            <button type="button" className={itemCls} onClick={() => adjustIndent(-1)}>
+                <div className="flex items-center gap-2">
+                    <Outdent className="w-4 h-4 text-gray-500" />
+                    <span>インデントを減らす</span>
+                </div>
+            </button>
+
+            <label className={`${itemCls} cursor-pointer`}>
+                <div className="flex items-center gap-2">
+                    <input 
+                        type="checkbox" 
+                        className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        checked={!!editor.getAttributes('paragraph').hanging}
+                        onChange={toggleHanging}
+                    />
+                    <span>ぶら下げインデント</span>
+                </div>
+            </label>
         </div>
     );
 };

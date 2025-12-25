@@ -1,6 +1,7 @@
 import React from 'react';
 import { Editor } from '@tiptap/react';
 import { toast } from 'sonner';
+import { ChevronRight, ChevronDown } from 'lucide-react';
 import { generateFullHtml, parseAndSetContent, importDocxToEditor, readTextFromFile } from '../../utils/io';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -13,6 +14,11 @@ interface FileMenuProps {
 
 export const FileMenu: React.FC<FileMenuProps> = ({ isOpen, onToggle, onClose, editor }) => {
     const { setPageMargin, isWordMode, toggleWordMode, openDialog } = useAppStore();
+
+    const handleAction = (action: () => void) => {
+        action();
+        onClose();
+    };
 
     const handleSave = () => {
         if (!editor) return;
@@ -27,161 +33,123 @@ export const FileMenu: React.FC<FileMenuProps> = ({ isOpen, onToggle, onClose, e
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         toast.success("保存しました");
-        onClose();
     };
 
-    const handleOpenHtml = () => {
-        const input = document.getElementById('open-file-input') as HTMLInputElement;
-        if (input) {
-            input.accept = '.html,.htm';
-            input.onchange = async (e) => {
-                const target = e.target as HTMLInputElement;
-                if (target.files && target.files.length > 0 && editor) {
-                    try {
-                        const text = await readTextFromFile(target.files[0]);
-                        const detectedWordMode = parseAndSetContent(editor, text, isWordMode);
-                        if (detectedWordMode !== isWordMode) {
-                            toggleWordMode();
-                            toast.info(`モードを${detectedWordMode ? 'Word互換' : '標準'}モードに切り替えました`);
-                        }
-                    } catch (err: any) {
-                        console.error(err);
-                        toast.error(err.message || 'ファイルを開けませんでした。');
-                    }
+    const handleOpenHtml = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0 && editor) {
+            try {
+                const text = await readTextFromFile(e.target.files[0]);
+                const detectedWordMode = parseAndSetContent(editor, text, isWordMode);
+                if (detectedWordMode !== isWordMode) {
+                    toggleWordMode();
+                    toast.info(`モードを${detectedWordMode ? 'Word互換' : '標準'}モードに切り替えました`);
                 }
-                target.value = ''; // reset
-            };
-            input.click();
-        }
-        onClose();
-    };
-
-    const handleOpenDocx = () => {
-        const input = document.getElementById('open-file-input') as HTMLInputElement;
-        if (input) {
-            input.accept = '.docx';
-            input.onchange = async (e) => {
-                const target = e.target as HTMLInputElement;
-                if (target.files && target.files.length > 0 && editor) {
-                    try {
-                        await importDocxToEditor(editor, target.files[0]);
-                    } catch (err: any) {
-                        console.error(err);
-                        toast.error(err.message || 'Wordファイルのインポートに失敗しました。');
-                    }
-                }
-                target.value = ''; // reset
-            };
-            input.click();
-        }
-        onClose();
-    };
-
-    const handleAddLinkDest = () => {
-        if (!editor) return;
-        const { from, to } = editor.state.selection;
-        if (from === to) {
-            toast.warning('リンク先にする箇所を選択してください。');
-            return;
-        }
-        const id = window.prompt('リンク先のIDを入力してください:');
-        if (id) {
-            editor.chain().focus().setAttributes('textStyle', { id }).run();
-            toast.info('ID設定は現在開発中です (Tiptap extension required)');
-        }
-    };
-
-    const handleRemoveLink = () => {
-        if (editor) {
-            editor.chain().focus().unsetLink().run();
-        }
-    };
-
-    const handleInsertDropbox = () => {
-        if (!editor) return;
-        const inputUrl = window.prompt('Dropbox画像の共有URLを貼り付けてください。');
-        if (!inputUrl) return;
-
-        try {
-            const parsed = new URL(inputUrl);
-            const hostname = parsed.hostname.toLowerCase();
-            if (!hostname.includes('dropbox.com')) {
-                toast.error('Dropboxドメインではありません。dropbox.com のURLを選択してください。');
-                return;
+            } catch (err: any) {
+                toast.error(err.message || 'ファイルを開けませんでした。');
             }
-
-            parsed.searchParams.delete('dl');
-            parsed.searchParams.set('raw', '1');
-
-            const normalizedUrl = parsed.toString();
-            const alt = parsed.pathname.split('/').pop() || '';
-
-            editor.chain().focus().setImage({ src: normalizedUrl, alt }).run();
-            toast.success('Dropbox画像を挿入しました');
-            onClose();
-        } catch (err) {
-            toast.error('正しいURL形式を入力してください。');
         }
+        e.target.value = '';
     };
 
-    const handleInsertWeb = () => {
-        if (!editor) return;
-        const inputUrl = window.prompt('画像URLを貼り付けてください。');
-        if (!inputUrl) return;
-
-        try {
-            const parsed = new URL(inputUrl);
-            const alt = parsed.pathname.split('/').pop() || '';
-
-            editor.chain().focus().setImage({ src: parsed.toString(), alt }).run();
-            toast.success('画像を挿入しました');
-            onClose();
-        } catch (err) {
-            toast.error('正しいURL形式を入力してください。');
+    const handleOpenDocx = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0 && editor) {
+            try {
+                await importDocxToEditor(editor, e.target.files[0]);
+            } catch (err: any) {
+                toast.error(err.message || 'Wordファイルのインポートに失敗しました。');
+            }
         }
+        e.target.value = '';
     };
+
+    const menuBtn = "w-full text-left px-4 py-1.5 hover:bg-gray-100 flex justify-between items-center text-sm transition-colors group relative";
+    const shortcut = "text-[10px] text-gray-400 font-mono ml-4";
+    const nestedMenu = "absolute left-full top-0 ml-0.5 bg-white border border-gray-300 shadow-xl rounded py-1 min-w-[180px] hidden group-hover:block transition-all";
 
     return (
-        <div className={`file-menu ${isOpen ? 'is-open' : ''}`}>
+        <div className="relative">
             <button
                 type="button"
-                className="file-trigger"
+                className="px-2 py-1 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center gap-1 text-sm h-[32px]"
                 onClick={onToggle}
-            >ファイル ▾</button>
+            >
+                ファイル <ChevronDown className="w-3 h-3" />
+            </button>
+            
+            <input type="file" id="menu-open-html" className="hidden" accept=".html,.htm" onChange={handleOpenHtml} />
+            <input type="file" id="menu-open-docx" className="hidden" accept=".docx" onChange={handleOpenDocx} />
+
             {isOpen && (
-                <div className="file-dropdown open" role="menu" aria-label="File options">
-                    <button type="button" onClick={handleSave} data-action="save">保存<span className="shortcut-key">ctrl+S</span></button>
-                    <button type="button" onClick={handleSave} data-action="save-as">名前を付けて保存</button>
-                    <button type="button" onClick={handleSave} data-action="overwrite">上書き保存<span className="shortcut-key">ctrl+S</span></button>
-                    <button type="button" onClick={handleOpenHtml} data-action="open-html">HTMLファイルを開く<span className="shortcut-key">ctrl+O</span></button>
-                    <button type="button" onClick={handleOpenDocx} data-action="open-docx" className="word-only">Wordファイル(docx)を開く</button>
-                    <button type="button" data-action="print" onClick={() => { window.print(); onClose(); }}>PDFとして出力</button>
+                <div 
+                    className="absolute top-full left-0 mt-1 bg-white border border-gray-300 shadow-xl rounded py-1 min-w-[220px] z-[2001] animate-in fade-in zoom-in-95 duration-100"
+                    onMouseLeave={() => {}} // Optional: might want to close on leave if not clicked?
+                >
+                    <button type="button" className={menuBtn} onClick={() => handleAction(handleSave)}>
+                        保存 <span className={shortcut}>Ctrl+S</span>
+                    </button>
+                    <button type="button" className={menuBtn} onClick={() => handleAction(handleSave)}>
+                        名前を付けて保存
+                    </button>
+                    <button type="button" className={menuBtn} onClick={() => handleAction(handleSave)}>
+                        上書き保存 <span className={shortcut}>Ctrl+S</span>
+                    </button>
+                    
+                    <button type="button" className={menuBtn} onClick={() => handleAction(() => document.getElementById('menu-open-html')?.click())}>
+                        HTMLファイルを開く <span className={shortcut}>Ctrl+O</span>
+                    </button>
+                    
+                    {isWordMode && (
+                        <button type="button" className={menuBtn} onClick={() => handleAction(() => document.getElementById('menu-open-docx')?.click())}>
+                            Wordファイル(docx)を開く
+                        </button>
+                    )}
+                    
+                    {!isWordMode && (
+                        <>
+                            <button type="button" className={menuBtn} onClick={() => handleAction(() => window.print())}>
+                                PDFとして出力
+                            </button>
+                            
+                            <hr className="my-1 border-gray-200" />
+                            
+                            {/* Nested: Hyperlinks */}
+                            <div className={menuBtn}>
+                                <span>ハイパーリンク</span>
+                                <ChevronRight className="w-3 h-3 text-gray-400" />
+                                <div className={nestedMenu}>
+                                    <button type="button" className={menuBtn} onClick={() => handleAction(() => openDialog('link'))}>リンクを生成</button>
+                                    <button type="button" className={menuBtn} onClick={() => handleAction(() => editor?.chain().focus().unsetLink().run())}>リンクを削除</button>
+                                </div>
+                            </div>
 
-                    <div className="nested-dropdown">
-                        <button type="button" className="nested-trigger" aria-haspopup="menu" aria-expanded="false">ハイパーリンク</button>
-                        <div className="nested-dropdown-menu" role="menu">
-                            <button type="button" onClick={handleAddLinkDest} data-action="add-link-destination">リンク先に追加</button>
-                            <button type="button" onClick={() => openDialog('link')} data-action="create-link">リンクを生成</button>
-                            <button type="button" onClick={handleRemoveLink} data-action="remove-link">リンクを削除</button>
-                        </div>
-                    </div>
+                            {/* Nested: Images */}
+                            <div className={menuBtn}>
+                                <span>画像を挿入</span>
+                                <ChevronRight className="w-3 h-3 text-gray-400" />
+                                <div className={nestedMenu}>
+                                    <button type="button" className={menuBtn} onClick={() => handleAction(() => {
+                                        const url = window.prompt('Dropbox共有URLを入力');
+                                        if (url && editor) editor.chain().focus().setImage({ src: url }).run();
+                                    })}>Dropboxから挿入</button>
+                                    <button type="button" className={menuBtn} onClick={() => handleAction(() => {
+                                        const url = window.prompt('画像URLを入力');
+                                        if (url && editor) editor.chain().focus().setImage({ src: url }).run();
+                                    })}>Web上の画像を挿入</button>
+                                </div>
+                            </div>
 
-                    <div className="nested-dropdown">
-                        <button type="button" className="nested-trigger" aria-haspopup="menu" aria-expanded="false">画像を挿入</button>
-                        <div className="nested-dropdown-menu" role="menu">
-                            <button type="button" onClick={handleInsertDropbox} data-action="insert-image-dropbox">dropboxから挿入</button>
-                            <button type="button" onClick={handleInsertWeb} data-action="insert-image-web">web上の画像を挿入</button>
-                        </div>
-                    </div>
-
-                    <div className="nested-dropdown">
-                        <button type="button" className="nested-trigger" aria-haspopup="menu" aria-expanded="false">余白</button>
-                        <div className="nested-dropdown-menu" role="menu">
-                            <button type="button" onClick={() => setPageMargin('s')} data-action="page-margin" data-size="s">S</button>
-                            <button type="button" onClick={() => setPageMargin('m')} data-action="page-margin" data-size="m">M</button>
-                            <button type="button" onClick={() => setPageMargin('l')} data-action="page-margin" data-size="l">L</button>
-                        </div>
-                    </div>
+                            {/* Nested: Margins */}
+                            <div className={menuBtn}>
+                                <span>余白</span>
+                                <ChevronRight className="w-3 h-3 text-gray-400" />
+                                <div className={nestedMenu}>
+                                    <button type="button" className={menuBtn} onClick={() => handleAction(() => setPageMargin('s'))}>サイズ S</button>
+                                    <button type="button" className={menuBtn} onClick={() => handleAction(() => setPageMargin('m'))}>サイズ M</button>
+                                    <button type="button" className={menuBtn} onClick={() => handleAction(() => setPageMargin('l'))}>サイズ L</button>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
         </div>

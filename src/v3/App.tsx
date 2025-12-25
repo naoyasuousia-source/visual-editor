@@ -31,6 +31,7 @@ import { ImageCaptionDialog } from './components/ImageCaptionDialog';
 import { ImageTagDialog } from './components/ImageTagDialog';
 import { ParagraphJumpDialog } from './components/ParagraphJumpDialog';
 import { PageNavigator } from './components/PageNavigator';
+import { AIImageIndex } from './components/AIImageIndex';
 
 import { useAppStore } from './store/useAppStore';
 
@@ -70,122 +71,9 @@ export const EditorV3 = () => {
         }
     }, []);
 
-    useEffect(() => {
-        // Toggle body class for Word Mode styling
-        if (isWordMode) {
-            document.body.classList.add('mode-word');
-            document.body.classList.remove('mode-standard');
-        } else {
-            document.body.classList.add('mode-standard');
-            document.body.classList.remove('mode-word');
-        }
-    }, [isWordMode]);
-
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.ctrlKey && e.key === 'j') {
-                e.preventDefault();
-                openDialog('paragraph-jump');
-            }
-            // Word Mode: Disable Tab key
-            if (isWordMode && e.key === 'Tab') {
-                e.preventDefault();
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isWordMode, openDialog]);
-
-    const handleAddPage = () => {
-        // Insert a new page node at the end
-        if (editor) {
-            const { tr } = editor.state;
-            const node = editor.schema.nodes.page.createAndFill();
-            if (node) {
-                const endPos = editor.state.doc.content.size;
-                editor.view.dispatch(tr.insert(endPos, node));
-                toast.success('ページを追加しました');
-            }
-        }
-    };
-
-    const handleRemovePage = () => {
-        if (!editor) return;
-
-        const { doc } = editor.state;
-        const pages: any[] = [];
-
-        // Find all page nodes
-        doc.descendants((node, pos) => {
-            if (node.type.name === 'page') {
-                pages.push({ node, pos });
-            }
-        });
-
-        if (pages.length === 0) {
-            toast.error('削除するページがありません');
-            return;
-        }
-
-        // Confirmation
-        if (!window.confirm('現在のページを削除してもよろしいですか？この操作は取り消せません。')) {
-            return;
-        }
-
-        // Find current page based on selection
-        const { from } = editor.state.selection;
-        let currentPageIndex = -1;
-
-        for (let i = 0; i < pages.length; i++) {
-            const pageStart = pages[i].pos;
-            const pageEnd = pageStart + pages[i].node.nodeSize;
-            if (from >= pageStart && from < pageEnd) {
-                currentPageIndex = i;
-                break;
-            }
-        }
-
-        // Default to last page if no current page found
-        if (currentPageIndex === -1) {
-            currentPageIndex = pages.length - 1;
-        }
-
-        // If only one page, just clear its content
-        if (pages.length === 1) {
-            const { tr } = editor.state;
-            const pageStart = pages[0].pos + 1; // +1 to get inside the page
-            const pageEnd = pageStart + pages[0].node.content.size;
-
-            // Clear content and insert empty paragraph
-            const emptyParagraph = editor.schema.nodes.paragraph.create();
-            tr.replaceWith(pageStart, pageEnd, emptyParagraph);
-            editor.view.dispatch(tr);
-            toast.info('ページ内容をクリアしました');
-            return;
-        }
-
-        // Remove the current page
-        const { tr } = editor.state;
-        const pageToRemove = pages[currentPageIndex];
-        tr.delete(pageToRemove.pos, pageToRemove.pos + pageToRemove.node.nodeSize);
-        editor.view.dispatch(tr);
-
-        // Set focus to previous page (or first page if removing first page)
-        const newPageIndex = Math.max(0, currentPageIndex - 1);
-        setTimeout(() => {
-            if (editor) {
-                const newPos = pages[newPageIndex]?.pos || 0;
-                editor.commands.focus();
-                editor.commands.setTextSelection(newPos + 2); // +2 to position inside page
-            }
-        }, 50);
-
-        toast.success('ページを削除しました');
-    };
-
     const editor = useEditor({
         extensions: [
-            StarterKit, // Restore default config for proper Enter key handling
+            StarterKit,
             Underline,
             Subscript,
             Superscript,
@@ -205,36 +93,122 @@ export const EditorV3 = () => {
             Pagination,
         ],
         content: `
-      <section class="page" data-page="1">
-        <div class="page-inner">
+      <section class="page bg-white shadow-xl mx-auto my-0 w-[210mm] h-[297mm] min-h-[297mm] box-border p-[var(--page-margin,17mm)] relative" data-page="1">
+        <div class="page-inner outline-none min-h-full">
           <p data-para="1" id="p1-1"><br></p>
         </div>
       </section>
     `,
+        editorProps: {
+            attributes: {
+                class: 'outline-none',
+                spellcheck: 'false',
+            },
+            handleKeyDown: (view, event) => {
+                if (event.key === 'Enter' && (view as any).composing) {
+                    return true;
+                }
+                return false;
+            },
+        },
     });
 
+    const handleAddPage = () => {
+        if (editor) {
+            const { tr } = editor.state;
+            const node = editor.schema.nodes.page.createAndFill({
+                class: 'page bg-white shadow-xl mx-auto my-0 w-[210mm] h-[297mm] min-h-[297mm] box-border p-[var(--page-margin,17mm)] relative'
+            });
+            if (node) {
+                const endPos = editor.state.doc.content.size;
+                editor.view.dispatch(tr.insert(endPos, node));
+                toast.success('ページを追加しました');
+            }
+        }
+    };
+
+    const handleRemovePage = () => {
+        if (!editor) return;
+        const { doc } = editor.state;
+        const pages: any[] = [];
+        doc.descendants((node, pos) => {
+            if (node.type.name === 'page') {
+                pages.push({ node, pos });
+            }
+        });
+        if (pages.length === 0) return;
+        if (!window.confirm('現在のページを削除してもよろしいですか？')) return;
+        
+        const { from } = editor.state.selection;
+        let currentPageIndex = -1;
+        for (let i = 0; i < pages.length; i++) {
+            const pageStart = pages[i].pos;
+            const pageEnd = pageStart + pages[i].node.nodeSize;
+            if (from >= pageStart && from < pageEnd) {
+                currentPageIndex = i;
+                break;
+            }
+        }
+        if (currentPageIndex === -1) currentPageIndex = pages.length - 1;
+
+        if (pages.length === 1) {
+            const { tr } = editor.state;
+            const pageStart = pages[0].pos + 1;
+            const pageEnd = pageStart + pages[0].node.content.size;
+            tr.replaceWith(pageStart, pageEnd, editor.schema.nodes.paragraph.create());
+            editor.view.dispatch(tr);
+            toast.info('ページをクリアしました');
+            return;
+        }
+
+        const { tr } = editor.state;
+        const pageToRemove = pages[currentPageIndex];
+        tr.delete(pageToRemove.pos, pageToRemove.pos + pageToRemove.node.nodeSize);
+        editor.view.dispatch(tr);
+        toast.success('ページを削除しました');
+    };
+
+    useEffect(() => {
+        if (editor) {
+            editor.setOptions({
+                paragraphNumbering: { isWordMode },
+            } as any);
+        }
+    }, [isWordMode, editor]);
+
     return (
-        <div id="left">
+        <div className="flex flex-col h-screen bg-[#e0e0e0] overflow-hidden font-sans">
             <Toolbar
                 editor={editor}
                 onAddPage={handleAddPage}
                 onRemovePage={handleRemovePage}
             />
-            <div id="workspace">
-                <PageNavigator editor={editor} />
-                <div id="pages-container" style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}>
-                    {editor && (
-                        <>
-                            <ImageBubbleMenu
-                                editor={editor}
-                                onEditTitle={() => openDialog('image-title')}
-                                onEditCaption={() => openDialog('image-caption')}
-                                onEditTag={() => openDialog('image-tag')}
-                            />
-                            <LinkBubbleMenu editor={editor} onEdit={() => openDialog('link')} />
-                        </>
-                    )}
-                    <EditorContent editor={editor} />
+            
+            <div className="flex flex-1 overflow-hidden relative">
+                {editor && <PageNavigator editor={editor} />}
+                
+                <div className="flex-1 overflow-y-auto overflow-x-hidden p-8 scroll-smooth">
+                    <div 
+                        className={`flex flex-col gap-8 transition-transform duration-200 ${isWordMode ? 'mode-word' : ''}`} 
+                        style={{ 
+                            transform: `scale(${zoomLevel / 100})`, 
+                            transformOrigin: 'top center' 
+                        }}
+                    >
+                        {editor && (
+                            <>
+                                <ImageBubbleMenu
+                                    editor={editor}
+                                    onEditTitle={() => openDialog('image-title')}
+                                    onEditCaption={() => openDialog('image-caption')}
+                                    onEditTag={() => openDialog('image-tag')}
+                                />
+                                <LinkBubbleMenu editor={editor} onEdit={() => openDialog('link')} />
+                                <AIImageIndex editor={editor} />
+                                <EditorContent editor={editor} />
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 

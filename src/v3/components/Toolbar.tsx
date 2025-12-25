@@ -1,5 +1,21 @@
 import React, { useState } from 'react';
 import { Editor } from '@tiptap/react';
+import { 
+    Bold, 
+    Italic, 
+    Underline as UnderlineIcon, 
+    Strikethrough, 
+    Superscript as SuperscriptIcon, 
+    Subscript as SubscriptIcon,
+    Plus,
+    Minus,
+    Search,
+    HelpCircle,
+    Heart,
+    ChevronDown,
+    LayoutDashboard,
+    FileType
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { FileMenu } from './menus/FileMenu';
 import { ParagraphMenu } from './menus/ParagraphMenu';
@@ -9,7 +25,7 @@ import { useAppStore } from '../store/useAppStore';
 
 interface ToolbarProps {
     editor: Editor | null;
-    onAddPage?: () => void; // Optional/Deprecated in favor of store or command? Kept for now as it uses editor commands not just store
+    onAddPage?: () => void;
     onRemovePage?: () => void;
 }
 
@@ -18,21 +34,18 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     onAddPage,
     onRemovePage,
 }) => {
-    // Global Store
     const {
         zoomLevel,
         zoomIn,
         zoomOut,
-        setPageMargin,
         isWordMode,
-        toggleWordMode
+        toggleWordMode,
+        openDialog,
+        isSidebarOpen,
+        toggleSidebar
     } = useAppStore();
 
-    const [fileMenuOpen, setFileMenuOpen] = useState(false);
-    const [viewMenuOpen, setViewMenuOpen] = useState(false);
-    const [fontMenuOpen, setFontMenuOpen] = useState(false);
-    const [paraMenuOpen, setParaMenuOpen] = useState(false);
-    const [highlightMenuOpen, setHighlightMenuOpen] = useState(false);
+    const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
     if (!editor) return null;
 
@@ -43,248 +56,170 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     const toggleSuperscript = () => editor.chain().focus().toggleSuperscript().run();
     const toggleSubscript = () => editor.chain().focus().toggleSubscript().run();
 
-    const closeAllMenus = () => {
-        setFileMenuOpen(false);
-        setViewMenuOpen(false);
-        setFontMenuOpen(false);
-        setParaMenuOpen(false);
-        setHighlightMenuOpen(false);
-    };
+    const closeAllMenus = () => setActiveMenu(null);
+    const toggleMenu = (menu: string) => setActiveMenu(activeMenu === menu ? null : menu);
+
+    const btnBase = "p-1.5 rounded hover:bg-gray-200 transition-colors border border-transparent flex items-center justify-center min-w-[32px] h-[32px]";
+    const btnActive = "bg-gray-200 border-gray-300 shadow-inner";
+    const dropdownTrigger = "px-2 py-1 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center gap-1 text-sm h-[32px]";
 
     return (
-        <div id="toolbar">
-            <div className="app-logo">
-                <img src="/image/logo-himawari.png" alt="Logo" />
+        <div className="sticky top-0 w-full z-50 bg-[#f8f9fa] border-b border-gray-300 shadow-sm p-2 flex items-center gap-2 flex-wrap">
+            {/* Logo */}
+            <div className="flex items-center mr-2 select-none pointer-events-none">
+                <img src="/image/logo-himawari.png" alt="Logo" className="h-8 w-auto object-contain rounded filter drop-shadow-sm" />
             </div>
 
-            {/* ファイルメニュー */}
-            <FileMenu
-                isOpen={fileMenuOpen}
-                onToggle={() => {
-                    const next = !fileMenuOpen;
-                    closeAllMenus();
-                    setFileMenuOpen(next);
-                }}
-                onClose={closeAllMenus}
-                editor={editor}
-            />
+            {/* File Menu */}
+            <div className="relative">
+                <FileMenu
+                    isOpen={activeMenu === 'file'}
+                    onToggle={() => toggleMenu('file')}
+                    onClose={closeAllMenus}
+                    editor={editor}
+                />
+            </div>
 
-            <input type="file" id="open-file-input" style={{ display: 'none' }} />
+            {/* View Menu */}
+            {!isWordMode && (
+                <div className="relative">
+                    <button
+                        type="button"
+                        className={dropdownTrigger}
+                        onClick={() => toggleMenu('view')}
+                    >
+                        表示 <ChevronDown className="w-3 h-3" />
+                    </button>
+                    {activeMenu === 'view' && (
+                        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 shadow-xl rounded py-1 min-w-[160px] z-[2000]">
+                            <label className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm gap-2">
+                                <input type="checkbox" checked={isSidebarOpen} onChange={toggleSidebar} />
+                                サムネイル
+                            </label>
+                            <label className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm gap-2">
+                                <input type="checkbox" defaultChecked onChange={(e) => document.body.classList.toggle('hide-page-numbers', !e.target.checked)} />
+                                ページ番号
+                            </label>
+                            <label className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm gap-2">
+                                <input type="checkbox" defaultChecked onChange={(e) => document.body.classList.toggle('hide-para-numbers', !e.target.checked)} />
+                                段落番号
+                            </label>
+                        </div>
+                    )}
+                </div>
+            )}
 
-            {/* 表示メニュー */}
-            <div className={`view-menu ${viewMenuOpen ? 'is-open' : ''}`}>
-                <button
-                    type="button"
-                    className="view-trigger"
-                    onClick={() => {
-                        const next = !viewMenuOpen;
-                        closeAllMenus();
-                        setViewMenuOpen(next);
-                    }}
-                >表示 ▾</button>
-                {viewMenuOpen && (
-                    <div className="view-dropdown open" role="menu">
-                        <label className="menu-item-label">
-                            <input
-                                type="checkbox"
-                                checked={isSidebarOpen}
-                                onChange={toggleSidebar}
-                            /> サムネイル
-                        </label>
-                        <label className="menu-item-label">
-                            <input
-                                type="checkbox"
-                                data-action="toggle-page-numbers"
-                                defaultChecked
-                                onChange={(e) => {
-                                    document.body.classList.toggle('hide-page-numbers', !e.target.checked);
-                                }}
-                            /> ページ番号
-                        </label>
-                        <label className="menu-item-label">
-                            <input
-                                type="checkbox"
-                                data-action="toggle-para-numbers"
-                                defaultChecked
-                                onChange={(e) => {
-                                    document.body.classList.toggle('hide-para-numbers', !e.target.checked);
-                                }}
-                            /> 段落番号
-                        </label>
+            {/* Formatting */}
+            <div className="flex items-center gap-0.5 border-l border-gray-300 pl-2 ml-1">
+                <button type="button" onClick={toggleBold} className={`${btnBase} ${editor.isActive('bold') ? btnActive : ''}`} title="太字"><Bold className="w-4 h-4" /></button>
+                <button type="button" onClick={toggleItalic} className={`${btnBase} ${editor.isActive('italic') ? btnActive : ''}`} title="斜体"><Italic className="w-4 h-4" /></button>
+                <button type="button" onClick={toggleUnderline} className={`${btnBase} ${editor.isActive('underline') ? btnActive : ''}`} title="下線"><UnderlineIcon className="w-4 h-4" /></button>
+                <button type="button" onClick={toggleStrike} className={`${btnBase} ${editor.isActive('strike') ? btnActive : ''}`} title="打ち消し線"><Strikethrough className="w-4 h-4" /></button>
+            </div>
+
+            <div className="flex items-center gap-0.5">
+                <button type="button" onClick={toggleSuperscript} className={`${btnBase} ${editor.isActive('superscript') ? btnActive : ''}`} title="上付き文字"><SuperscriptIcon className="w-4 h-4" /></button>
+                <button type="button" onClick={toggleSubscript} className={`${btnBase} ${editor.isActive('subscript') ? btnActive : ''}`} title="下付き文字"><SubscriptIcon className="w-4 h-4" /></button>
+            </div>
+
+            {/* Highlights (Standard Only) */}
+            {!isWordMode && (
+                <div className="relative">
+                    <button type="button" className={`${btnBase} ${activeMenu === 'highlight' ? btnActive : ''}`} onClick={() => toggleMenu('highlight')} title="ハイライト">
+                        <LayoutDashboard className="w-4 h-4 text-yellow-600" />
+                    </button>
+                    {activeMenu === 'highlight' && <div className="absolute top-full left-0 mt-1 z-[2000]"><HighlightMenu editor={editor} /></div>}
+                </div>
+            )}
+
+            {/* Font & Paragraph (Standard Only) */}
+            {!isWordMode && (
+                <>
+                    <div className="relative">
+                        <button type="button" className={dropdownTrigger} onClick={() => toggleMenu('font')}>Font <ChevronDown className="w-3 h-3" /></button>
+                        {activeMenu === 'font' && <div className="absolute top-full left-0 mt-1 z-[2000]"><FontMenu editor={editor} /></div>}
                     </div>
-                )}
+                    <div className="relative">
+                        <button type="button" className={dropdownTrigger} onClick={() => toggleMenu('paragraph')}>段落スタイル <ChevronDown className="w-3 h-3" /></button>
+                        {activeMenu === 'paragraph' && <div className="absolute top-full left-0 mt-1 z-[2000]"><ParagraphMenu editor={editor} /></div>}
+                    </div>
+                </>
+            )}
+
+            {/* Page Controls (Standard Only) */}
+            {!isWordMode && (
+                <div className="flex items-center border border-gray-300 rounded bg-white overflow-hidden h-[32px]">
+                    <button type="button" onClick={onAddPage} className="p-1.5 hover:bg-gray-100 border-r border-gray-200" title="ページ追加"><Plus className="w-4 h-4 text-gray-600" /></button>
+                    <button type="button" onClick={onRemovePage} className="p-1.5 hover:bg-gray-100" title="ページ削除"><Minus className="w-4 h-4 text-gray-600" /></button>
+                </div>
+            )}
+
+            {/* Zoom */}
+            <div className="flex items-center border border-gray-300 rounded bg-white overflow-hidden h-[32px] ml-1">
+                <button type="button" onClick={zoomOut} className="px-2 hover:bg-gray-100 border-r border-gray-200 text-sm font-bold text-gray-600">-</button>
+                <div className="px-2 text-xs font-semibold min-w-[36px] text-center select-none text-gray-700">{zoomLevel}%</div>
+                <button type="button" onClick={zoomIn} className="px-2 hover:bg-gray-100 text-sm font-bold text-gray-600">+</button>
             </div>
 
-            <button type="button" onClick={toggleBold} className={editor.isActive('bold') ? 'active' : ''} data-action="bold">B</button>
-            <button type="button" onClick={toggleItalic} className={editor.isActive('italic') ? 'active' : ''} data-action="italic">I</button>
-            <button type="button" onClick={toggleUnderline} className={editor.isActive('underline') ? 'active' : ''} data-action="underline">U</button>
-            <button type="button" onClick={toggleStrike} className={editor.isActive('strike') ? 'active' : ''} data-action="strike">S</button>
-
-            <button type="button" onClick={toggleSuperscript} className={editor.isActive('superscript') ? 'active' : ''} title="上付き" data-action="superscript">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M5 20L14 8M14 20L5 8" /><text x="15" y="8" fontSize="11" stroke="none" fill="currentColor" fontWeight="bold">2</text>
-                </svg>
-            </button>
-
-            <button type="button" onClick={toggleSubscript} className={editor.isActive('subscript') ? 'active' : ''} title="下付き" data-action="subscript">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M5 18L14 6M14 18L5 6" /><text x="15" y="23" fontSize="11" stroke="none" fill="currentColor" fontWeight="bold">2</text>
-                </svg>
-            </button>
-
-            {/* ハイライト */}
-            <div className={`highlight-control ${highlightMenuOpen ? 'is-open' : ''}`} style={{ position: 'relative' }}>
-                <button
-                    type="button"
-                    data-action="highlight"
-                    title="ハイライト"
-                    onClick={() => {
-                        const next = !highlightMenuOpen;
-                        closeAllMenus();
-                        setHighlightMenuOpen(next);
+            {/* Jump Widget */}
+            <div className="flex items-center gap-1 ml-1 bg-white border border-gray-300 rounded px-2 h-[32px]">
+                <Search className="w-3 h-3 text-gray-400" />
+                <input
+                    type="text"
+                    className="text-xs outline-none w-32 placeholder-gray-400"
+                    placeholder={isWordMode ? "例：15" : "例：1-1"}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            const target = (e.currentTarget as HTMLInputElement).value;
+                            if (!target) return;
+                            let targetId = target;
+                            if (!isWordMode && /^\d+-\d+$/.test(target)) targetId = 'p' + target;
+                            else if (isWordMode && /^\d+$/.test(target)) targetId = 'p' + target;
+                            
+                            const element = document.getElementById(targetId);
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                toast.success(`${target} へジャンプしました`);
+                            } else if (window.find && window.find(target)) {
+                                toast.success(`"${target}" が見つかりました`);
+                            } else {
+                                toast.error('見つかりませんでした');
+                            }
+                        }
                     }}
+                />
+                <span className="text-[10px] text-gray-400 whitespace-nowrap hidden sm:inline">[Ctrl+J]</span>
+            </div>
+
+            {/* Right Group */}
+            <div className="ml-auto flex items-center gap-2">
+                <button 
+                    type="button" 
+                    onClick={toggleWordMode}
+                    className={`px-3 py-1 rounded text-xs font-bold transition-all h-[32px] flex items-center gap-1 ${
+                        isWordMode 
+                        ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
+                    }`}
                 >
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="m9 11-6 6v3h9l3-3" /><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4" /><path d="M2 21h20" stroke="#FFD700" strokeWidth="3" />
-                    </svg>
+                    <FileType className="w-3.5 h-3.5" />
+                    {isWordMode ? '標準モードに切替' : 'Word互換モードに切替'}
                 </button>
-                {highlightMenuOpen && <HighlightMenu editor={editor} />}
-            </div>
 
-            {/* フォントメニュー */}
-            <div className={`font-chooser ${fontMenuOpen ? 'is-open' : ''}`} id="font-chooser">
-                <button
-                    type="button"
-                    className="font-chooser-trigger"
-                    onClick={() => {
-                        const next = !fontMenuOpen;
-                        closeAllMenus();
-                        setFontMenuOpen(next);
-                    }}
-                >Font ▾</button>
-                {fontMenuOpen && <FontMenu editor={editor} />}
-            </div>
-
-            {/* 段落スタイル */}
-            <div className={`paragraph-chooser ${paraMenuOpen ? 'is-open' : ''}`} id="paragraph-chooser">
-                <button
-                    type="button"
-                    className="paragraph-trigger"
-                    onClick={() => {
-                        const next = !paraMenuOpen;
-                        closeAllMenus();
-                        setParaMenuOpen(next);
-                    }}
-                >段落スタイル ▾</button>
-                {paraMenuOpen && <ParagraphMenu editor={editor} />}
-            </div>
-
-            <div className="page-controls">
-                <button type="button" onClick={onAddPage} data-action="add-page" title="ページを追加">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                <button 
+                    type="button" 
+                    onClick={() => { closeAllMenus(); openDialog('help'); }}
+                    className="p-1.5 rounded-full hover:bg-gray-200 text-gray-500 transition-colors"
+                >
+                    <HelpCircle className="w-6 h-6" />
                 </button>
-                <button type="button" onClick={onRemovePage} data-action="remove-page" title="現在のページを削除">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-                </button>
-            </div>
 
-            <div className="zoom-controls">
-                <button type="button" onClick={zoomOut} data-action="zoom-out">－</button>
-                <span id="zoom-level-display">{zoomLevel}%</span>
-                <button type="button" onClick={zoomIn} data-action="zoom-in">＋</button>
-            </div>
-
-            <div className="jump-widget">
-                <label htmlFor="toolbar-jump-input" className="standard-only">ジャンプ機能　[ ctrl+J ]</label>
-                <label htmlFor="toolbar-jump-input-word" className="word-only">ジャンプ機能　[ ctrl+J ]</label>
-                <input
-                    type="text"
-                    id="toolbar-jump-input"
-                    className="standard-only"
-                    placeholder="(例：1-1)…へジャンプ"
-                    title="段落番号(例:1-1)または検索したい文字列を入力してください"
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                            const target = (e.currentTarget as HTMLInputElement).value;
-                            if (!target) return;
-
-                            // 1. Try ID Jump (e.g. 1-1 -> p1-1)
-                            let targetId = target;
-                            if (/^\d+-\d+$/.test(targetId)) {
-                                targetId = 'p' + targetId;
-                            }
-                            const element = document.getElementById(targetId);
-                            if (element) {
-                                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                toast.success(`段落 ${target} へジャンプしました`);
-                                return;
-                            }
-
-                            // 2. Try Text Search if ID not found or not ID format
-                            if (window.find && window.find(target)) {
-                                toast.success(`"${target}" が見つかりました`);
-                            } else {
-                                toast.error('指定された段落または文字列が見つかりませんでした: ' + target);
-                            }
-                        }
-                    }}
-                />
-                <input
-                    type="text"
-                    id="toolbar-jump-input-word"
-                    className="word-only"
-                    placeholder="(例：15)…へジャンプ"
-                    title="段落番号(例:15)または検索したい文字列を入力してください"
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                            const target = (e.currentTarget as HTMLInputElement).value;
-                            if (!target) return;
-
-                            // Word Mode likely uses p1, p2... or assumes numeric input is para index?
-                            // Assuming similar ID pattern 'p' + number for simple numeric input
-                            let targetId = target;
-                            if (/^\d+$/.test(targetId)) {
-                                // If simple number '15', try 'p15' (Check logic of ParagraphNumbering)
-                                // We'll try direct logic first.
-                                // If paragraph IDs in Word mode are different, this needs adjustment. 
-                                // Assuming consistent IDs for now or will failover to search.
-                                // Wait, in Word Mode numbering might be different but ID might persist?
-                                // Let's try appending 'p' if pure number.
-                                // Actually, if it's strictly Word mode, maybe IDs change?
-                                // I'll assume std behavior for ID ('p' prefix) for now.
-                                // If Word mode re-renders paragraphs with different IDs, search might fail.
-                                // But text search will catch it.
-                                targetId = 'p' + targetId; // Attempt p15
-                            }
-
-                            const element = document.getElementById(targetId);
-                            if (element) {
-                                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                toast.success(`段落 ${target} へジャンプしました`);
-                                return;
-                            }
-
-                            // Text Search
-                            if (window.find && window.find(target)) {
-                                toast.success(`"${target}" が見つかりました`);
-                            } else {
-                                toast.error('指定された段落または文字列が見つかりませんでした: ' + target);
-                            }
-                        }
-                    }}
-                />
-            </div>
-
-            <div id="toolbar-right-group">
-                <button type="button" id="mode-switch" title="編集モード切替" onClick={toggleWordMode}>
-                    <span className={`mode-text-std ${isWordMode ? '' : 'hidden'}`} style={{ display: isWordMode ? 'inline' : 'none' }}>標準モードに切替</span>
-                    <span className={`mode-text-word ${!isWordMode ? '' : 'hidden'}`} style={{ display: !isWordMode ? 'inline' : 'none' }}>Word互換モードに切替</span>
-                </button>
-                <button type="button" id="help-trigger" onClick={() => { closeAllMenus(); openDialog('help'); }}>
-                    <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" strokeWidth="1.25"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                </button>
-                <button type="button" id="donate-trigger" onClick={() => { closeAllMenus(); openDialog('donate'); }}>
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+                <button 
+                    type="button" 
+                    onClick={() => { closeAllMenus(); openDialog('donate'); }}
+                    className="flex items-center gap-1.5 px-3 py-1 rounded bg-[#fffbeb] border border-[#fde68a] text-[#92400e] text-xs font-bold hover:bg-[#fef3c7] transition-all h-[32px] animate-pulse-subtle shadow-sm"
+                >
+                    <Heart className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
                     <span>開発を応援</span>
                 </button>
             </div>

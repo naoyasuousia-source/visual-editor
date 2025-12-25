@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
+import { AlertTriangle, X } from 'lucide-react';
 
 interface BrowserWarningDialogProps {
     isOpen: boolean;
@@ -6,53 +7,46 @@ interface BrowserWarningDialogProps {
 }
 
 export const BrowserWarningDialog: React.FC<BrowserWarningDialogProps> = ({ isOpen, onClose }) => {
-    const dialogRef = useRef<HTMLDialogElement>(null);
-
-    useEffect(() => {
-        const dialog = dialogRef.current;
-        if (!dialog) return;
-
-        if (isOpen) {
-            if (typeof dialog.showModal === 'function') {
-                dialog.showModal();
-            } else {
-                dialog.setAttribute('open', 'true');
-            }
-        } else {
-            if (typeof dialog.close === 'function') {
-                dialog.close();
-            } else {
-                dialog.removeAttribute('open');
-            }
-        }
-    }, [isOpen]);
+    if (!isOpen) return null;
 
     return (
-        <dialog
-            id="browser-warning-dialog"
-            ref={dialogRef}
-            aria-labelledby="browser-warning-label"
-            onCancel={(e) => { e.preventDefault(); onClose(); }}
-        >
-            <form method="dialog">
-                <p
-                    id="browser-warning-label"
-                    style={{ color: '#d9534f', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                >
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                        <line x1="12" y1="9" x2="12" y2="13"></line>
-                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                    </svg>
-                    推奨環境のお知らせ
-                </p>
-                <div className="dialog-content" style={{ textAlign: 'center', lineHeight: 1.6 }}>
-                    <p>このツールはPC環境のGoogle Chrome・Microsoft Edgeに最適化されています。<br />他環境・他ブラウザでは正しく動作しない場合があります。</p>
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4">
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}></div>
+            
+            {/* Dialog Content */}
+            <div className="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                {/* Header */}
+                <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-yellow-50">
+                    <h1 className="text-sm font-bold flex items-center gap-2 text-yellow-700">
+                        <AlertTriangle className="w-4 h-4" />
+                        推奨環境のお知らせ
+                    </h1>
+                    <button 
+                        type="button" 
+                        className="p-1 rounded-full hover:bg-yellow-100 text-yellow-600 transition-colors" 
+                        onClick={onClose}
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
                 </div>
-                <div className="dialog-actions" style={{ justifyContent: 'center' }}>
-                    <button type="submit" onClick={onClose}>閉じる</button>
+
+                {/* Body */}
+                <div className="p-6 text-center space-y-4">
+                    <p className="text-gray-600 text-xs leading-relaxed">
+                        このツールはPC環境のGoogle Chrome・Microsoft Edgeに最適化されています。<br />
+                        他環境・他ブラウザでは正しく動作しない場合があります。
+                    </p>
+
+                    <button 
+                        type="button"
+                        className="w-full py-2 px-4 bg-gray-900 text-white text-xs font-bold rounded-lg hover:bg-gray-800 transition-all"
+                        onClick={onClose}
+                    >
+                        理解して閉じる
+                    </button>
                 </div>
-            </form>
-        </dialog>
+            </div>
+        </div>
     );
 };
