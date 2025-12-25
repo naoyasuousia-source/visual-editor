@@ -38,18 +38,14 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
 
                 // Miniature page (scaled down)
                 const miniature = document.createElement('div');
-                miniature.className = "bg-white shadow-md border border-gray-200 origin-top overflow-hidden select-none pointer-events-none";
-                miniature.style.width = '180px';
-                miniature.style.height = '254px'; // Approx A4 aspect
+                miniature.className = "bg-white shadow-md border border-gray-200 origin-top overflow-hidden select-none pointer-events-none w-[180px] h-[254px]";
                 
                 const inner = page.querySelector('.page-inner');
                 if (inner) {
                     const clone = inner.cloneNode(true) as HTMLElement;
                     clone.removeAttribute('contenteditable');
-                    clone.style.transform = 'scale(0.2)';
-                    clone.style.transformOrigin = 'top left';
-                    clone.style.width = '210mm';
-                    clone.style.height = '297mm';
+                    // Use Tailwind classes for transform and dimensions instead of direct style manipulation
+                    clone.className += " scale-[0.2] origin-top-left w-[210mm] h-[297mm]";
                     clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
                     miniature.appendChild(clone);
                 }
