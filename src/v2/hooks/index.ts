@@ -8,3 +8,4 @@ export { useJumpNavigation } from './useJumpNavigation';
 export { useFileIO } from './useFileIO';
 export { useIMEControl } from './useIMEControl';
 export { usePasteControl } from './usePasteControl';
+export { useParagraphNumberToggle } from './useParagraphNumberToggle';

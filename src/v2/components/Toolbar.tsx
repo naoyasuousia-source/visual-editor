@@ -15,6 +15,7 @@ import { FontMenu } from './menus/FontMenu';
 import { HighlightMenu } from './menus/HighlightMenu';
 import { useAppStore } from '../store/useAppStore';
 import { useJumpNavigation } from '../hooks/useJumpNavigation';
+import { useParagraphNumberToggle } from '../hooks/useParagraphNumberToggle';
 
 interface ToolbarProps {
     editor: Editor | null;
@@ -40,6 +41,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const { jumpTo } = useJumpNavigation(editor, isWordMode);
+    const { toggleParagraphNumbers } = useParagraphNumberToggle();
 
     if (!editor) return null;
 
@@ -122,7 +124,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 <>
                     <FontMenu editor={editor} />
                     <ParagraphMenu editor={editor} />
-                    </div>
                 </>
             )}
 
@@ -134,7 +135,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                             <input 
                                 type="checkbox" 
                                 defaultChecked 
-                                onChange={(e) => document.body.classList.toggle('hide-para-numbers', !e.target.checked)} 
+                                onChange={(e) => toggleParagraphNumbers(e.target.checked)} 
                             />
                             段落番号
                         </label>
