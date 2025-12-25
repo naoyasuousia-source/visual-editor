@@ -20,6 +20,8 @@ import { CustomImage } from './extensions/CustomImage';
 
 import { Toolbar } from './components/Toolbar';
 import { HelpDialog } from './components/HelpDialog';
+import { SubHelpDialog } from './components/SubHelpDialog';
+import { BrowserWarningDialog } from './components/BrowserWarningDialog';
 import { DonateDialog } from './components/DonateDialog';
 import { ImageBubbleMenu } from './components/ImageBubbleMenu';
 import { LinkBubbleMenu } from './components/LinkBubbleMenu';
@@ -41,6 +43,32 @@ export const EditorV3 = () => {
         openDialog,
         closeDialog
     } = useAppStore();
+
+    const [showBrowserWarning, setShowBrowserWarning] = useState(false);
+
+    // Browser Support Check
+    useEffect(() => {
+        const ua = navigator.userAgent;
+        const vendor = navigator.vendor || '';
+
+        const isEdge = /Edg/.test(ua);
+        const isChrome = /Chrome/.test(ua) && !/Edg/.test(ua) && !/OPR/.test(ua);
+        const isApple = /Apple Computer/.test(vendor);
+        let isSupported = isEdge || (isChrome && !isApple);
+
+        if (ua.includes('Safari') && !ua.includes('Chrome') && !ua.includes('Edg')) {
+            isSupported = false;
+        }
+
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+        if (isMobile) {
+            isSupported = false;
+        }
+
+        if (!isSupported) {
+            setShowBrowserWarning(true);
+        }
+    }, []);
 
     useEffect(() => {
         // Toggle body class for Word Mode styling
@@ -147,6 +175,8 @@ export const EditorV3 = () => {
             </div>
 
             {activeDialog === 'help' && <HelpDialog onClose={closeDialog} />}
+            <SubHelpDialog />
+            <BrowserWarningDialog isOpen={showBrowserWarning} onClose={() => setShowBrowserWarning(false)} />
             {activeDialog === 'donate' && <DonateDialog onClose={closeDialog} />}
             {activeDialog === 'link' && editor && <LinkDialog editor={editor} onClose={closeDialog} />}
             {activeDialog === 'image-title' && editor && <ImageTitleDialog editor={editor} onClose={closeDialog} />}

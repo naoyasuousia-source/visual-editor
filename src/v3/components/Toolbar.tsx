@@ -92,10 +92,24 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                             /> サムネイル
                         </label>
                         <label className="menu-item-label">
-                            <input type="checkbox" data-action="toggle-page-numbers" defaultChecked /> ページ番号
+                            <input
+                                type="checkbox"
+                                data-action="toggle-page-numbers"
+                                defaultChecked
+                                onChange={(e) => {
+                                    document.body.classList.toggle('hide-page-numbers', !e.target.checked);
+                                }}
+                            /> ページ番号
                         </label>
                         <label className="menu-item-label">
-                            <input type="checkbox" data-action="toggle-para-numbers" defaultChecked /> 段落番号
+                            <input
+                                type="checkbox"
+                                data-action="toggle-para-numbers"
+                                defaultChecked
+                                onChange={(e) => {
+                                    document.body.classList.toggle('hide-para-numbers', !e.target.checked);
+                                }}
+                            /> 段落番号
                         </label>
                     </div>
                 )}
