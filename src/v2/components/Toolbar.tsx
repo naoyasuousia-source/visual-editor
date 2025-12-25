@@ -93,10 +93,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                     {activeMenu === 'view' && (
                         <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 shadow-xl rounded py-1 min-w-[160px] z-[2000]">
                             <label className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm gap-2">
-                                <input type="checkbox" checked={isSidebarOpen} onChange={toggleSidebar} />
-                                サムネイル
-                            </label>
-                            <label className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm gap-2">
                                 <input type="checkbox" defaultChecked onChange={(e) => document.body.classList.toggle('hide-page-numbers', !e.target.checked)} />
                                 ページ番号
                             </label>
@@ -110,23 +106,20 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             )}
 
             {/* Formatting */}
-            <div className="flex items-center gap-0.5 border-l border-gray-300 pl-2 ml-1">
-                <button type="button" onClick={toggleBold} className={`${btnBase} ${editor.isActive('bold') ? btnActive : ''}`} title="太字"><Bold className="w-4 h-4" /></button>
-                <button type="button" onClick={toggleItalic} className={`${btnBase} ${editor.isActive('italic') ? btnActive : ''}`} title="斜体"><Italic className="w-4 h-4" /></button>
-                <button type="button" onClick={toggleUnderline} className={`${btnBase} ${editor.isActive('underline') ? btnActive : ''}`} title="下線"><UnderlineIcon className="w-4 h-4" /></button>
-                <button type="button" onClick={toggleStrike} className={`${btnBase} ${editor.isActive('strike') ? btnActive : ''}`} title="打ち消し線"><Strikethrough className="w-4 h-4" /></button>
-            </div>
-
-            <div className="flex items-center gap-0.5">
-                <button type="button" onClick={toggleSuperscript} className={`${btnBase} ${editor.isActive('superscript') ? btnActive : ''}`} title="上付き文字"><SuperscriptIcon className="w-4 h-4" /></button>
-                <button type="button" onClick={toggleSubscript} className={`${btnBase} ${editor.isActive('subscript') ? btnActive : ''}`} title="下付き文字"><SubscriptIcon className="w-4 h-4" /></button>
+            <div className="flex items-center gap-1 border-l border-gray-300 pl-2 ml-1">
+                <button type="button" onClick={toggleBold} className={`${btnBase} bg-white border border-gray-300 ${editor.isActive('bold') ? 'bg-gray-200' : ''}`} title="太字"><Bold className="w-4 h-4" /></button>
+                <button type="button" onClick={toggleItalic} className={`${btnBase} bg-white border border-gray-300 ${editor.isActive('italic') ? 'bg-gray-200' : ''}`} title="斜体"><Italic className="w-4 h-4" /></button>
+                <button type="button" onClick={toggleUnderline} className={`${btnBase} bg-white border border-gray-300 ${editor.isActive('underline') ? 'bg-gray-200' : ''}`} title="下線"><UnderlineIcon className="w-4 h-4" /></button>
+                <button type="button" onClick={toggleStrike} className={`${btnBase} bg-white border border-gray-300 ${editor.isActive('strike') ? 'bg-gray-200' : ''}`} title="打ち消し線"><Strikethrough className="w-4 h-4" /></button>
+                <button type="button" onClick={toggleSuperscript} className={`${btnBase} bg-white border border-gray-300 ${editor.isActive('superscript') ? 'bg-gray-200' : ''}`} title="上付き文字"><SuperscriptIcon className="w-4 h-4" /></button>
+                <button type="button" onClick={toggleSubscript} className={`${btnBase} bg-white border border-gray-300 ${editor.isActive('subscript') ? 'bg-gray-200' : ''}`} title="下付き文字"><SubscriptIcon className="w-4 h-4" /></button>
             </div>
 
             {/* Highlights (Standard Only) */}
             {!isWordMode && (
-                <div className="relative">
-                    <button type="button" className={`${btnBase} ${activeMenu === 'highlight' ? btnActive : ''}`} onClick={() => toggleMenu('highlight')} title="ハイライト">
-                        <LayoutDashboard className="w-4 h-4 text-yellow-600" />
+                <div className="relative ml-1">
+                    <button type="button" className={`${btnBase} bg-[#fef08a] border border-[#fde047] hover:bg-[#fde047] ${activeMenu === 'highlight' ? 'ring-2 ring-yellow-400' : ''}`} onClick={() => toggleMenu('highlight')} title="ハイライト">
+                        <LayoutDashboard className="w-4 h-4 text-[#854d0e]" />
                     </button>
                     {activeMenu === 'highlight' && <div className="absolute top-full left-0 mt-1 z-[2000]"><HighlightMenu editor={editor} /></div>}
                 </div>
@@ -189,9 +182,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
             {/* Page Controls (Standard Only) */}
             {!isWordMode && (
-                <div className="flex items-center border border-gray-300 rounded bg-white overflow-hidden h-[32px]">
-                    <button type="button" onClick={onAddPage} className="p-1.5 hover:bg-gray-100 border-r border-gray-200" title="ページ追加"><Plus className="w-4 h-4 text-gray-600" /></button>
-                    <button type="button" onClick={onRemovePage} className="p-1.5 hover:bg-gray-100" title="ページ削除"><Minus className="w-4 h-4 text-gray-600" /></button>
+                <div className="flex items-center gap-1 ml-1">
+                    <button type="button" onClick={onAddPage} className={`${btnBase} bg-white border border-gray-300`} title="ページ追加"><Plus className="w-4 h-4 text-gray-600" /></button>
+                    <button type="button" onClick={onRemovePage} className={`${btnBase} bg-white border border-gray-300`} title="ページ削除"><Minus className="w-4 h-4 text-gray-600" /></button>
                 </div>
             )}
 

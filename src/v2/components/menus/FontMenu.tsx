@@ -51,8 +51,10 @@ export const FontMenu: React.FC<FontMenuProps> = ({ editor }) => {
         { label: 'メイリオ', value: "'Meiryo', 'メイリオ', sans-serif" },
         { label: 'BIZ UDゴシック', value: "'BIZ UDGothic', 'BIZ UDゴシック', sans-serif" },
         { label: 'BIZ UD明朝', value: "'BIZ UDMincho', 'BIZ UD明朝', serif" },
+        { label: 'Noto Serif JP', value: "'Noto Serif JP', serif" },
         { label: 'Noto Sans JP', value: "'Noto Sans JP', sans-serif" },
         { label: 'Arial', value: "Arial, sans-serif" },
+        { label: 'Courier New', value: "'Courier New', monospace" },
         { label: 'Times New Roman', value: "'Times New Roman', serif" },
     ];
 
@@ -80,6 +82,9 @@ export const FontMenu: React.FC<FontMenuProps> = ({ editor }) => {
                     </button>
                     <button type="button" className={itemCls} onClick={() => setBlock('paragraph')}>
                         <div className="flex items-center gap-2"><Text className="w-4 h-4" /> 本文</div>
+                    </button>
+                    <button type="button" className={itemCls} onClick={() => setBlock('heading', 6)}>
+                        <div className="flex items-center gap-2"><Text className="w-3 h-3 text-gray-500" /> サブテキスト</div>
                     </button>
                 </div>
             </div>
