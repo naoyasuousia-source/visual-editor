@@ -42,13 +42,13 @@ export const ParagraphMenu: React.FC<ParagraphMenuProps> = ({ editor }) => {
                 </button>
                 <div className="paragraph-submenu-panel" role="menu">
                     <div className="align-buttons">
-                        <button type="button" className="align-icon-button" onClick={() => setAlign('left')} title="左揃え">
+                        <button type="button" className="align-icon-button" onClick={() => setAlign('left')} title="左揃え" data-action="align-left">
                             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="15" y1="10" x2="3" y2="10"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="17" y1="18" x2="3" y2="18"></line></svg>
                         </button>
-                        <button type="button" className="align-icon-button" onClick={() => setAlign('center')} title="中央揃え">
+                        <button type="button" className="align-icon-button" onClick={() => setAlign('center')} title="中央揃え" data-action="align-center">
                             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="17" y1="10" x2="7" y2="10"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="17" y1="18" x2="7" y2="18"></line></svg>
                         </button>
-                        <button type="button" className="align-icon-button" onClick={() => setAlign('right')} title="右揃え">
+                        <button type="button" className="align-icon-button" onClick={() => setAlign('right')} title="右揃え" data-action="align-right">
                             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="10" x2="9" y2="10"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="7" y2="18"></line></svg>
                         </button>
                     </div>
@@ -62,7 +62,7 @@ export const ParagraphMenu: React.FC<ParagraphMenuProps> = ({ editor }) => {
                 <div className="paragraph-submenu-panel" role="menu">
                     <div className="spacing-buttons">
                         {['xs', 's', 'm', 'l', 'xl'].map(size => (
-                            <button key={size} type="button" className="spacing-button" onClick={() => setSpacing(size)}>{size.toUpperCase()}</button>
+                            <button key={size} type="button" className="spacing-button" onClick={() => setSpacing(size)} data-action="paragraph-spacing" data-size={size} title={size.toUpperCase()}>{size.toUpperCase()}</button>
                         ))}
                     </div>
                 </div>
@@ -75,7 +75,7 @@ export const ParagraphMenu: React.FC<ParagraphMenuProps> = ({ editor }) => {
                 <div className="paragraph-submenu-panel" role="menu">
                     <div className="spacing-buttons">
                         {['s', 'm', 'l'].map(size => (
-                            <button key={size} type="button" className="spacing-button" onClick={() => setLineHeight(size)}>{size.toUpperCase()}</button>
+                            <button key={size} type="button" className="spacing-button" onClick={() => setLineHeight(size)} data-action="line-height" data-size={size} title={size.toUpperCase()}>{size.toUpperCase()}</button>
                         ))}
                     </div>
                 </div>
@@ -87,13 +87,14 @@ export const ParagraphMenu: React.FC<ParagraphMenuProps> = ({ editor }) => {
                 </button>
                 <div className="paragraph-submenu-panel" role="menu">
                     <div className="spacing-buttons">
-                        <button type="button" className="spacing-button" onClick={() => adjustIndent(1)}>＋</button>
-                        <button type="button" className="spacing-button" onClick={() => adjustIndent(-1)}>ー</button>
+                        <button type="button" className="spacing-button" onClick={() => adjustIndent(1)} data-action="indent">＋</button>
+                        <button type="button" className="spacing-button" onClick={() => adjustIndent(-1)} data-action="outdent">ー</button>
                     </div>
                     <div className="indent-option">
                         <label>
                             <input
                                 type="checkbox"
+                                data-action="hanging-indent"
                                 checked={!!editor.getAttributes('paragraph').hanging}
                                 onChange={toggleHanging}
                             /> ぶら下げ

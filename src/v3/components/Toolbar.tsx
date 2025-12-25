@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Editor } from '@tiptap/react';
+import { FileMenu } from './menus/FileMenu';
 import { ParagraphMenu } from './menus/ParagraphMenu';
 import { FontMenu } from './menus/FontMenu';
 
@@ -39,26 +40,16 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onShowHelp, onShowDona
             </div>
 
             {/* ファイルメニュー */}
-            <div className={`file-menu ${fileMenuOpen ? 'is-open' : ''}`}>
-                <button
-                    type="button"
-                    className="file-trigger"
-                    onClick={() => {
-                        const next = !fileMenuOpen;
-                        closeAllMenus();
-                        setFileMenuOpen(next);
-                    }}
-                >ファイル ▾</button>
-                {fileMenuOpen && (
-                    <div className="file-dropdown open" role="menu">
-                        <button type="button" data-action="save">保存<span className="shortcut-key">ctrl+S</span></button>
-                        <button type="button" data-action="save-as">名前を付けて保存</button>
-                        <button type="button" data-action="overwrite">上書き保存<span className="shortcut-key">ctrl+S</span></button>
-                        <button type="button" data-action="open-html">HTMLファイルを開く<span className="shortcut-key">ctrl+O</span></button>
-                        <button type="button" data-action="print" onClick={() => { window.print(); closeAllMenus(); }}>PDFとして出力</button>
-                    </div>
-                )}
-            </div>
+            {/* ファイルメニュー */}
+            <FileMenu
+                isOpen={fileMenuOpen}
+                onToggle={() => {
+                    const next = !fileMenuOpen;
+                    closeAllMenus();
+                    setFileMenuOpen(next);
+                }}
+                onClose={closeAllMenus}
+            />
 
             {/* 表示メニュー */}
             <div className={`view-menu ${viewMenuOpen ? 'is-open' : ''}`}>
@@ -83,18 +74,18 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onShowHelp, onShowDona
                 )}
             </div>
 
-            <button type="button" onClick={toggleBold} className={editor.isActive('bold') ? 'active' : ''}>B</button>
-            <button type="button" onClick={toggleItalic} className={editor.isActive('italic') ? 'active' : ''}>I</button>
-            <button type="button" onClick={toggleUnderline} className={editor.isActive('underline') ? 'active' : ''}>U</button>
-            <button type="button" onClick={toggleStrike} className={editor.isActive('strike') ? 'active' : ''}>S</button>
+            <button type="button" onClick={toggleBold} className={editor.isActive('bold') ? 'active' : ''} data-action="bold">B</button>
+            <button type="button" onClick={toggleItalic} className={editor.isActive('italic') ? 'active' : ''} data-action="italic">I</button>
+            <button type="button" onClick={toggleUnderline} className={editor.isActive('underline') ? 'active' : ''} data-action="underline">U</button>
+            <button type="button" onClick={toggleStrike} className={editor.isActive('strike') ? 'active' : ''} data-action="strike">S</button>
 
-            <button type="button" onClick={toggleSuperscript} className={editor.isActive('superscript') ? 'active' : ''} title="上付き文字">
+            <button type="button" onClick={toggleSuperscript} className={editor.isActive('superscript') ? 'active' : ''} title="上付き" data-action="superscript">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M5 20L14 8M14 20L5 8" /><text x="15" y="8" fontSize="11" stroke="none" fill="currentColor" fontWeight="bold">2</text>
                 </svg>
             </button>
 
-            <button type="button" onClick={toggleSubscript} className={editor.isActive('subscript') ? 'active' : ''} title="下付き文字">
+            <button type="button" onClick={toggleSubscript} className={editor.isActive('subscript') ? 'active' : ''} title="下付き" data-action="subscript">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M5 18L14 6M14 18L5 6" /><text x="15" y="23" fontSize="11" stroke="none" fill="currentColor" fontWeight="bold">2</text>
                 </svg>
@@ -147,17 +138,38 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onShowHelp, onShowDona
             </div>
 
             <div className="zoom-controls">
-                <button type="button" onClick={() => setZoomLevel(Math.max(50, zoomLevel - 10))}>－</button>
+                <button type="button" onClick={() => setZoomLevel(Math.max(50, zoomLevel - 10))} data-action="zoom-out">－</button>
                 <span id="zoom-level-display">{zoomLevel}%</span>
-                <button type="button" onClick={() => setZoomLevel(Math.min(200, zoomLevel + 10))}>＋</button>
+                <button type="button" onClick={() => setZoomLevel(Math.min(200, zoomLevel + 10))} data-action="zoom-in">＋</button>
             </div>
 
             <div className="jump-widget">
-                <input type="text" className="standard-only" placeholder="(例：1-1)…へジャンプ" />
+                <input
+                    type="text"
+                    className="standard-only"
+                    placeholder="(例：1-1)…へジャンプ"
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            const target = (e.currentTarget as HTMLInputElement).value;
+                            if (!target) return;
+                            let targetId = target;
+                            if (/^\d+-\d+$/.test(targetId)) {
+                                targetId = 'p' + targetId;
+                            }
+                            const element = document.getElementById(targetId);
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            } else {
+                                alert('指定された段落が見つかりませんでした: ' + targetId);
+                            }
+                        }
+                    }}
+                />
             </div>
 
             <div id="toolbar-right-group">
-                <button type="button" id="mode-switch">
+                <button type="button" id="mode-switch" title="編集モード切替">
+                    <span className="mode-text-std">標準モードに切替</span>
                     <span className="mode-text-word">Word互換モードに切替</span>
                 </button>
                 <button type="button" id="help-trigger" onClick={() => { closeAllMenus(); onShowHelp(); }}>

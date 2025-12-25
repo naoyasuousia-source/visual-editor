@@ -111,8 +111,10 @@ body {
   order: 999;
 }
 
-#toolbar button:active {
+#toolbar button:active,
+#toolbar button.active {
   background: #e0e0e0;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
 }
 
 #toolbar-right-group {
