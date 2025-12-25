@@ -1,32 +1,32 @@
 import { defineConfig } from 'vite';
-import obfuscator from 'rollup-plugin-obfuscator';
+// import obfuscator from 'rollup-plugin-obfuscator';
 import { resolve } from 'path';
 import react from '@vitejs/plugin-react';
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [
     react(),
-    obfuscator({
+    /* command === 'build' ? obfuscator({
       global: true,
       options: {
         compact: true,
-        controlFlowFlattening: false, // 複雑化を回避
-        deadCodeInjection: false, // デッドコード注入を回避
+        controlFlowFlattening: false,
+        deadCodeInjection: false,
         debugProtection: false,
         debugProtectionInterval: 0,
         disableConsoleOutput: true,
         identifierNamesGenerator: 'hexadecimal',
         log: false,
-        numbersToExpressions: false, // 数式の変換を回避
+        numbersToExpressions: false,
         renameGlobals: false,
-        selfDefending: false, // 防御機構を解除
+        selfDefending: false,
         simplify: true,
-        splitStrings: false, // 文字列分割を解除
-        stringArray: false, // 文字列配列化を解除（これがパス解決エラーの主原因になりやすい）
-        transformObjectKeys: false, // オブジェクトキーの変換を解除
+        splitStrings: false,
+        stringArray: false,
+        transformObjectKeys: false,
         unicodeEscapeSequence: false
       },
-    }),
+    }) : null, */
   ],
   base: './', // GitHub Pages用。リポジトリ名が決まっている場合は '/repo-name/' でも良い
   build: {
@@ -41,4 +41,4 @@ export default defineConfig({
   server: {
     port: 3000,
   }
-});
+}));

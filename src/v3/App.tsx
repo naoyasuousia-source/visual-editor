@@ -1,17 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Subscript from '@tiptap/extension-subscript';
 import Superscript from '@tiptap/extension-superscript';
 import Link from '@tiptap/extension-link';
-import Image from '@tiptap/extension-image';
+import TextAlign from '@tiptap/extension-text-align';
+import TextStyle from '@tiptap/extension-text-style';
+import Color from '@tiptap/extension-color';
 
 import { PageExtension } from './extensions/PageExtension';
 import { ParagraphNumbering } from './extensions/ParagraphNumbering';
+import { StyleAttributes } from './extensions/StyleAttributes';
+import { Pagination } from './extensions/Pagination';
+import { CustomImage } from './extensions/CustomImage';
+
 import { Toolbar } from './components/Toolbar';
+import { HelpDialog } from './components/HelpDialog';
+import { DonateDialog } from './components/DonateDialog';
+import { ImageBubbleMenu } from './components/ImageBubbleMenu';
+import { LinkBubbleMenu } from './components/LinkBubbleMenu';
+import { LinkDialog } from './components/LinkDialog';
 
 export const EditorV3 = () => {
+    const [helpOpen, setHelpOpen] = useState(false);
+    const [donateOpen, setDonateOpen] = useState(false);
+    const [linkOpen, setLinkOpen] = useState(false);
+
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -19,30 +34,56 @@ export const EditorV3 = () => {
             Subscript,
             Superscript,
             Link.configure({ openOnClick: false }),
-            Image,
+            TextAlign.configure({
+                types: ['heading', 'paragraph'],
+                alignments: ['left', 'center', 'right'],
+            }),
+            TextStyle,
+            Color,
+            CustomImage,
             PageExtension,
             ParagraphNumbering,
+            StyleAttributes,
+            Pagination,
         ],
         content: `
       <section class="page" data-page="1">
         <div class="page-inner">
-          <p data-para="1" id="p1-1">React + Tiptap 移行中の新エディタです。</p>
+          <p data-para="1" id="p1-1">React + Tiptap版エディタへようこそ。</p>
+          <img src="/image/logo-himawari.png" class="img-m" />
+          <p data-para="2" id="p1-2" class="inline-align-center">これは中央揃えの段落です。</p>
+          <p data-para="3" id="p1-3">詳細は <a href="https://example.com">こちら</a> をご覧ください。</p>
         </div>
       </section>
     `,
-        editorProps: {
-            attributes: {
-                class: 'pages-container', // ここは親コンテナ
-            },
-        },
     });
 
     return (
         <div id="left">
-            <Toolbar editor={editor} />
+            <Toolbar
+                editor={editor}
+                onShowHelp={() => setHelpOpen(true)}
+                onShowDonate={() => setDonateOpen(true)}
+            />
             <div id="workspace">
-                <EditorContent editor={editor} />
+                <div id="page-navigator"></div>
+                <div id="sidebar-toggle-overlay">
+                    <button id="sidebar-toggle-btn">サムネイル ON/OFF</button>
+                </div>
+                <div id="pages-container">
+                    {editor && (
+                        <>
+                            <ImageBubbleMenu editor={editor} />
+                            <LinkBubbleMenu editor={editor} onEdit={() => setLinkOpen(true)} />
+                        </>
+                    )}
+                    <EditorContent editor={editor} />
+                </div>
             </div>
+
+            {helpOpen && <HelpDialog onClose={() => setHelpOpen(false)} />}
+            {donateOpen && <DonateDialog onClose={() => setDonateOpen(false)} />}
+            {linkOpen && editor && <LinkDialog editor={editor} onClose={() => setLinkOpen(false)} />}
         </div>
     );
 };
