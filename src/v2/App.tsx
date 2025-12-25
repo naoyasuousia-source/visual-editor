@@ -93,8 +93,8 @@ export const EditorV3 = () => {
             Pagination,
         ],
         content: `
-      <section class="page bg-white shadow-xl mx-auto my-0 w-[210mm] h-[297mm] min-h-[297mm] box-border p-[var(--page-margin,17mm)] relative" data-page="1">
-        <div class="page-inner outline-none min-h-full">
+      <section class="page" data-page="1">
+        <div class="page-inner">
           <p data-para="1" id="p1-1"><br></p>
         </div>
       </section>
@@ -112,12 +112,12 @@ export const EditorV3 = () => {
             },
         },
     });
-
+ 
     const handleAddPage = () => {
         if (editor) {
             const { tr } = editor.state;
             const node = editor.schema.nodes.page.createAndFill({
-                class: 'page bg-white shadow-xl mx-auto my-0 w-[210mm] h-[297mm] min-h-[297mm] box-border p-[var(--page-margin,17mm)] relative'
+                class: 'page'
             });
             if (node) {
                 const endPos = editor.state.doc.content.size;

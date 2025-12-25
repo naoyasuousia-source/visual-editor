@@ -28,6 +28,15 @@ export const ParagraphNumbering = Extension.create<ParagraphNumberingOptions>({
                             return { 'data-para': attributes['data-para'] };
                         },
                     },
+                    'data-page': {
+                        default: null,
+                        keepOnSplit: false,
+                        parseHTML: element => element.getAttribute('data-page'),
+                        renderHTML: attributes => {
+                            if (!attributes['data-page']) return {};
+                            return { 'data-page': attributes['data-page'] };
+                        },
+                    },
                     id: {
                         default: null,
                         parseHTML: element => element.getAttribute('id'),
@@ -66,10 +75,11 @@ export const ParagraphNumbering = Extension.create<ParagraphNumberingOptions>({
                                     const expectedIdx = isWordMode ? String(globalCounter++) : String(innerCounter++);
                                     const expectedId = isWordMode ? `p${expectedIdx}` : `p${pageNum}-${expectedIdx}`;
 
-                                    if (child.attrs['data-para'] !== expectedIdx || child.attrs['id'] !== expectedId) {
+                                    if (child.attrs['data-para'] !== expectedIdx || child.attrs['id'] !== expectedId || child.attrs['data-page'] !== pageNum) {
                                         tr.setNodeMarkup(absolutePos, undefined, {
                                             ...child.attrs,
                                             'data-para': expectedIdx,
+                                            'data-page': pageNum,
                                             id: expectedId,
                                         });
                                     }
