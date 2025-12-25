@@ -21,12 +21,19 @@ interface ToolbarProps {
     editor: Editor | null;
     onAddPage?: () => void;
     onRemovePage?: () => void;
+    prompt: (options: { 
+        title: string; 
+        description?: string; 
+        placeholder?: string; 
+        inputType?: 'text' | 'url' 
+    }) => Promise<string | null>;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
     editor,
     onAddPage,
     onRemovePage,
+    prompt,
 }) => {
     const {
         zoomLevel,
@@ -67,7 +74,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             </div>
 
             {/* File Menu */}
-            <FileMenu editor={editor} />
+            <FileMenu editor={editor} prompt={prompt} />
 
             {/* View Menu */}
             {!isWordMode && (

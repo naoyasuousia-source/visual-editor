@@ -1,11 +1,17 @@
 import { Editor } from '@tiptap/react';
 import { toast } from 'sonner';
 
+interface UsePageOperationsOptions {
+    confirm: (options: { title: string; description: string; variant?: 'default' | 'danger' }) => Promise<boolean>;
+}
+
 /**
  * ページ追加・削除のロジックを管理するカスタムフック
  * UIコンポーネントから完全に分離し、Tiptapのトランザクション操作のみを担当
+ * 
+ * 【重要】window.confirm()を使用せず、useDialogsフック経由で確認ダイアログを表示
  */
-export const usePageOperations = (editor: Editor | null) => {
+export const usePageOperations = (editor: Editor | null, options: UsePageOperationsOptions) => {
     const addPage = () => {
         if (!editor) return;
         
@@ -21,7 +27,7 @@ export const usePageOperations = (editor: Editor | null) => {
         }
     };
 
-    const removePage = () => {
+    const removePage = async () => {
         if (!editor) return;
         
         const { doc } = editor.state;
@@ -34,7 +40,15 @@ export const usePageOperations = (editor: Editor | null) => {
         });
         
         if (pages.length === 0) return;
-        if (!window.confirm('現在のページを削除してもよろしいですか？')) return;
+        
+        // Radix Alert Dialogで確認
+        const confirmed = await options.confirm({
+            title: 'ページ削除の確認',
+            description: '現在のページを削除してもよろしいですか？この操作は取り消せません。',
+            variant: 'danger'
+        });
+        
+        if (!confirmed) return;
         
         const { from } = editor.state.selection;
         let currentPageIndex = -1;

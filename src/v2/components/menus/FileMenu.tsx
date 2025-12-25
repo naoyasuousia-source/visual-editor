@@ -4,9 +4,16 @@ import { ChevronDown } from 'lucide-react';
 import { BaseDropdownMenu, MenuItem, SubMenu, MenuSeparator } from '../ui/BaseDropdownMenu';
 import { useAppStore } from '../../store/useAppStore';
 import { useFileIO } from '../../hooks/useFileIO';
+import { useImageInsert } from '../../hooks/useImageInsert';
 
 interface FileMenuProps {
     editor: Editor | null;
+    prompt: (options: { 
+        title: string; 
+        description?: string; 
+        placeholder?: string; 
+        inputType?: 'text' | 'url' 
+    }) => Promise<string | null>;
 }
 
 /**
@@ -15,11 +22,13 @@ interface FileMenuProps {
  * 【改善点】
  * - Radix Dropdown Menuで完全置き換え
  * - useFileIOフックでロジック分離
+ * - useImageInsertフックで画像挿入ロジック分離
  * - 直接DOM操作を完全排除
  */
-export const FileMenu: React.FC<FileMenuProps> = ({ editor }) => {
+export const FileMenu: React.FC<FileMenuProps> = ({ editor, prompt }) => {
     const { setPageMargin, isWordMode, openDialog } = useAppStore();
     const { saveFile, saveAsFile, downloadFile } = useFileIO(editor, isWordMode);
+    const { insertFromDropbox, insertFromWeb } = useImageInsert(editor, { prompt });
     
     const htmlInputRef = useRef<HTMLInputElement>(null);
     const docxInputRef = useRef<HTMLInputElement>(null);
@@ -118,22 +127,10 @@ export const FileMenu: React.FC<FileMenuProps> = ({ editor }) => {
                         </SubMenu>
 
                         <SubMenu trigger="画像を挿入">
-                            <MenuItem onSelect={() => {
-                                const url = window.prompt('Dropbox共有URLを入力');
-                                if (url && editor) {
-                                    // Dropbox URL変換ロジックは後でフックに移動
-                                    const parsed = new URL(url);
-                                    parsed.searchParams.delete('dl');
-                                    parsed.searchParams.set('raw', '1');
-                                    editor.chain().focus().setImage({ src: parsed.toString() }).run();
-                                }
-                            }}>
+                            <MenuItem onSelect={insertFromDropbox}>
                                 Dropboxから挿入
                             </MenuItem>
-                            <MenuItem onSelect={() => {
-                                const url = window.prompt('画像URLを入力');
-                                if (url && editor) editor.chain().focus().setImage({ src: url }).run();
-                            }}>
+                            <MenuItem onSelect={insertFromWeb}>
                                 Web上の画像を挿入
                             </MenuItem>
                         </SubMenu>

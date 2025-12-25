@@ -39,6 +39,9 @@ import { usePageOperations } from './hooks/usePageOperations';
 import { useBrowserCheck } from './hooks/useBrowserCheck';
 import { useIMEControl } from './hooks/useIMEControl';
 import { usePasteControl } from './hooks/usePasteControl';
+import { useDialogs } from './hooks/useDialogs';
+import { ConfirmDialog } from './components/ui/ConfirmDialog';
+import { PromptDialog } from './components/ui/PromptDialog';
 
 export const EditorV3 = () => {
     // Global Store
@@ -105,8 +108,11 @@ export const EditorV3 = () => {
         },
     });
 
+    // Dialogs (ロジック分離)
+    const { confirm, prompt, confirmState, promptState, handleConfirmClose, handlePromptClose } = useDialogs();
+
     // Page Operations (ロジック分離)
-    const { addPage, removePage } = usePageOperations(editor);
+    const { addPage, removePage } = usePageOperations(editor, { confirm });
 
 
     useEffect(() => {
@@ -123,6 +129,7 @@ export const EditorV3 = () => {
                 editor={editor}
                 onAddPage={addPage}
                 onRemovePage={removePage}
+                prompt={prompt}
             />
             
             <div className="flex flex-1 overflow-hidden relative">
@@ -167,6 +174,35 @@ export const EditorV3 = () => {
                     <ParagraphJumpDialog open={activeDialog === 'paragraph-jump'} editor={editor} onClose={closeDialog} />
                 </>
             )}
+
+            {/* Confirm & Prompt Dialogs */}
+            {confirmState.options && (
+                <ConfirmDialog
+                    open={confirmState.open}
+                    onOpenChange={(open) => !open && handleConfirmClose(false)}
+                    title={confirmState.options.title}
+                    description={confirmState.options.description}
+                    confirmText={confirmState.options.confirmText}
+                    cancelText={confirmState.options.cancelText}
+                    variant={confirmState.options.variant}
+                    onConfirm={() => handleConfirmClose(true)}
+                />
+            )}
+            {promptState.options && (
+                <PromptDialog
+                    open={promptState.open}
+                    onOpenChange={(open) => !open && handlePromptClose(null)}
+                    title={promptState.options.title}
+                    description={promptState.options.description}
+                    placeholder={promptState.options.placeholder}
+                    defaultValue={promptState.options.defaultValue}
+                    confirmText={promptState.options.confirmText}
+                    cancelText={promptState.options.cancelText}
+                    inputType={promptState.options.inputType}
+                    onConfirm={(value) => handlePromptClose(value)}
+                />
+            )}
+
             <Toaster position="top-center" richColors />
         </div>
     );

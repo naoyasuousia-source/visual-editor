@@ -9,3 +9,5 @@ export { useFileIO } from './useFileIO';
 export { useIMEControl } from './useIMEControl';
 export { usePasteControl } from './usePasteControl';
 export { useParagraphNumberToggle } from './useParagraphNumberToggle';
+export { useDialogs } from './useDialogs';
+export { useImageInsert } from './useImageInsert';
