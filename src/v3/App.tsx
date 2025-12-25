@@ -26,6 +26,7 @@ import { ImageTitleDialog } from './components/ImageTitleDialog';
 import { ImageCaptionDialog } from './components/ImageCaptionDialog';
 import { ImageTagDialog } from './components/ImageTagDialog';
 import { ParagraphJumpDialog } from './components/ParagraphJumpDialog';
+import { PageNavigator } from './components/PageNavigator';
 
 export const EditorV3 = () => {
     const [helpOpen, setHelpOpen] = useState(false);
@@ -87,10 +88,7 @@ export const EditorV3 = () => {
                 onShowDonate={() => setDonateOpen(true)}
             />
             <div id="workspace">
-                <div id="page-navigator"></div>
-                <div id="sidebar-toggle-overlay">
-                    <button id="sidebar-toggle-btn">サムネイル ON/OFF</button>
-                </div>
+                <PageNavigator editor={editor} />
                 <div id="pages-container">
                     {editor && (
                         <>
