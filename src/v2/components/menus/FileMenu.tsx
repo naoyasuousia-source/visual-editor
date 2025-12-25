@@ -2,8 +2,8 @@ import React from 'react';
 import { Editor } from '@tiptap/react';
 import { toast } from 'sonner';
 import { ChevronRight, ChevronDown } from 'lucide-react';
-import { generateFullHtml, parseAndSetContent, importDocxToEditor, readTextFromFile } from '../../utils/io';
 import { useAppStore } from '../../store/useAppStore';
+import { useFileIO } from '../../hooks/useFileIO';
 
 interface FileMenuProps {
     isOpen: boolean;
@@ -14,29 +14,16 @@ interface FileMenuProps {
 
 export const FileMenu: React.FC<FileMenuProps> = ({ isOpen, onToggle, onClose, editor }) => {
     const { setPageMargin, isWordMode, toggleWordMode, openDialog } = useAppStore();
+    const { saveFile, saveAsFile, downloadFile, importDocx } = useFileIO(editor, isWordMode);
 
     const handleAction = (action: () => void) => {
         action();
         onClose();
     };
 
-    const handleSave = () => {
-        if (!editor) return;
-        const html = generateFullHtml(editor, isWordMode);
-        const blob = new Blob([html], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'document.html';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        toast.success("保存しました");
-    };
-
     const handleOpenHtml = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0 && editor) {
+            const { readTextFromFile, parseAndSetContent } = await import('../../utils/io');
             try {
                 const text = await readTextFromFile(e.target.files[0]);
                 const detectedWordMode = parseAndSetContent(editor, text, isWordMode);
@@ -52,9 +39,9 @@ export const FileMenu: React.FC<FileMenuProps> = ({ isOpen, onToggle, onClose, e
     };
 
     const handleOpenDocx = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0 && editor) {
+        if (e.target.files && e.target.files.length > 0) {
             try {
-                await importDocxToEditor(editor, e.target.files[0]);
+                await importDocx(e.target.files[0]);
             } catch (err: any) {
                 toast.error(err.message || 'Wordファイルのインポートに失敗しました。');
             }
@@ -84,13 +71,13 @@ export const FileMenu: React.FC<FileMenuProps> = ({ isOpen, onToggle, onClose, e
                     className="absolute top-full left-0 mt-1 bg-white border border-gray-300 shadow-xl rounded py-1 min-w-[220px] z-[2001] animate-in fade-in zoom-in-95 duration-100"
                     onMouseLeave={() => {}} // Optional: might want to close on leave if not clicked?
                 >
-                    <button type="button" className={menuBtn} onClick={() => handleAction(handleSave)}>
+                    <button type="button" className={menuBtn} onClick={() => handleAction(downloadFile)}>
                         保存 <span className={shortcut}>Ctrl+S</span>
                     </button>
-                    <button type="button" className={menuBtn} onClick={() => handleAction(handleSave)}>
+                    <button type="button" className={menuBtn} onClick={() => handleAction(saveAsFile)}>
                         名前を付けて保存
                     </button>
-                    <button type="button" className={menuBtn} onClick={() => handleAction(handleSave)}>
+                    <button type="button" className={menuBtn} onClick={() => handleAction(saveFile)}>
                         上書き保存 <span className={shortcut}>Ctrl+S</span>
                     </button>
                     

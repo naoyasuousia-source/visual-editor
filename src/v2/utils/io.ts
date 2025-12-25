@@ -64,37 +64,13 @@ export function parseAndSetContent(editor: Editor, html: string, isWordMode: boo
 
 /**
  * Generates the full HTML document string from the editor content.
- * Mimics buildFullHTML from legacy.
+ * 【重要】この関数は後方互換性のために残されています。
+ * 新しいコードでは useFileIO フックを使用してください。
  */
 export function generateFullHtml(editor: Editor, isWordMode: boolean = false): string {
-    const htmlContent = editor.getHTML(); // This returns inner HTML of the document
-    // We need to check if editor.getHTML() returns the valid structure (section.page > .page-inner)
-    // Tiptap's schema should ensure this.
-
-    // Helper to get current margin - in V3 this might be in CSS var properly set on body/root
-    const rootStyle = getComputedStyle(document.documentElement);
-    const currentMargin = rootStyle.getPropertyValue('--page-margin').trim() || '17mm';
-
-    const bodyClass = isWordMode ? ' class="mode-word"' : '';
-
-    const aiIndex = document.getElementById('ai-image-index')?.outerHTML || '';
-
-    return `<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<style>
-:root { --page-margin: ${currentMargin}; }
-${contentCssText}
-</style>
-</head>
-<body${bodyClass}>
-<div id="pages-container">
-${htmlContent}
-</div>
-${aiIndex}
-</body>
-</html>`;
+    // 新しいbuildFullHTML関数を使用（AIメタガイドを含む）
+    const { buildFullHTML } = require('./aiMetadata');
+    return buildFullHTML(editor, isWordMode, contentCssText);
 }
 
 /**
