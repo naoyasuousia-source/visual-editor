@@ -110,10 +110,77 @@ export const EditorV3 = () => {
     };
 
     const handleRemovePage = () => {
-        // Placeholder for page removal logic
-        if (editor) {
-            toast.info("ページ削除機能は現在実装中です。");
+        if (!editor) return;
+
+        const { doc } = editor.state;
+        const pages: any[] = [];
+
+        // Find all page nodes
+        doc.descendants((node, pos) => {
+            if (node.type.name === 'page') {
+                pages.push({ node, pos });
+            }
+        });
+
+        if (pages.length === 0) {
+            toast.error('削除するページがありません');
+            return;
         }
+
+        // Confirmation
+        if (!window.confirm('現在のページを削除してもよろしいですか？この操作は取り消せません。')) {
+            return;
+        }
+
+        // Find current page based on selection
+        const { from } = editor.state.selection;
+        let currentPageIndex = -1;
+
+        for (let i = 0; i < pages.length; i++) {
+            const pageStart = pages[i].pos;
+            const pageEnd = pageStart + pages[i].node.nodeSize;
+            if (from >= pageStart && from < pageEnd) {
+                currentPageIndex = i;
+                break;
+            }
+        }
+
+        // Default to last page if no current page found
+        if (currentPageIndex === -1) {
+            currentPageIndex = pages.length - 1;
+        }
+
+        // If only one page, just clear its content
+        if (pages.length === 1) {
+            const { tr } = editor.state;
+            const pageStart = pages[0].pos + 1; // +1 to get inside the page
+            const pageEnd = pageStart + pages[0].node.content.size;
+
+            // Clear content and insert empty paragraph
+            const emptyParagraph = editor.schema.nodes.paragraph.create();
+            tr.replaceWith(pageStart, pageEnd, emptyParagraph);
+            editor.view.dispatch(tr);
+            toast.info('ページ内容をクリアしました');
+            return;
+        }
+
+        // Remove the current page
+        const { tr } = editor.state;
+        const pageToRemove = pages[currentPageIndex];
+        tr.delete(pageToRemove.pos, pageToRemove.pos + pageToRemove.node.nodeSize);
+        editor.view.dispatch(tr);
+
+        // Set focus to previous page (or first page if removing first page)
+        const newPageIndex = Math.max(0, currentPageIndex - 1);
+        setTimeout(() => {
+            if (editor) {
+                const newPos = pages[newPageIndex]?.pos || 0;
+                editor.commands.focus();
+                editor.commands.setTextSelection(newPos + 2); // +2 to position inside page
+            }
+        }, 50);
+
+        toast.success('ページを削除しました');
     };
 
     const editor = useEditor({
