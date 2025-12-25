@@ -34,7 +34,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        editor_v2: resolve(__dirname, 'ai-link-editor.html'),
+        editor_v3: resolve(__dirname, 'v3-editor.html'),
       },
     },
   },
