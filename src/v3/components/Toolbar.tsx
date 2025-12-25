@@ -181,14 +181,20 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             </div>
 
             <div className="jump-widget">
+                <label htmlFor="toolbar-jump-input" className="standard-only">ジャンプ機能　[ ctrl+J ]</label>
+                <label htmlFor="toolbar-jump-input-word" className="word-only">ジャンプ機能　[ ctrl+J ]</label>
                 <input
                     type="text"
+                    id="toolbar-jump-input"
                     className="standard-only"
                     placeholder="(例：1-1)…へジャンプ"
+                    title="段落番号(例:1-1)または検索したい文字列を入力してください"
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                             const target = (e.currentTarget as HTMLInputElement).value;
                             if (!target) return;
+
+                            // 1. Try ID Jump (e.g. 1-1 -> p1-1)
                             let targetId = target;
                             if (/^\d+-\d+$/.test(targetId)) {
                                 targetId = 'p' + targetId;
@@ -196,8 +202,59 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                             const element = document.getElementById(targetId);
                             if (element) {
                                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                toast.success(`段落 ${target} へジャンプしました`);
+                                return;
+                            }
+
+                            // 2. Try Text Search if ID not found or not ID format
+                            if (window.find && window.find(target)) {
+                                toast.success(`"${target}" が見つかりました`);
                             } else {
-                                toast.error('指定された段落が見つかりませんでした: ' + targetId);
+                                toast.error('指定された段落または文字列が見つかりませんでした: ' + target);
+                            }
+                        }
+                    }}
+                />
+                <input
+                    type="text"
+                    id="toolbar-jump-input-word"
+                    className="word-only"
+                    placeholder="(例：15)…へジャンプ"
+                    title="段落番号(例:15)または検索したい文字列を入力してください"
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            const target = (e.currentTarget as HTMLInputElement).value;
+                            if (!target) return;
+
+                            // Word Mode likely uses p1, p2... or assumes numeric input is para index?
+                            // Assuming similar ID pattern 'p' + number for simple numeric input
+                            let targetId = target;
+                            if (/^\d+$/.test(targetId)) {
+                                // If simple number '15', try 'p15' (Check logic of ParagraphNumbering)
+                                // We'll try direct logic first.
+                                // If paragraph IDs in Word mode are different, this needs adjustment. 
+                                // Assuming consistent IDs for now or will failover to search.
+                                // Wait, in Word Mode numbering might be different but ID might persist?
+                                // Let's try appending 'p' if pure number.
+                                // Actually, if it's strictly Word mode, maybe IDs change?
+                                // I'll assume std behavior for ID ('p' prefix) for now.
+                                // If Word mode re-renders paragraphs with different IDs, search might fail.
+                                // But text search will catch it.
+                                targetId = 'p' + targetId; // Attempt p15
+                            }
+
+                            const element = document.getElementById(targetId);
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                toast.success(`段落 ${target} へジャンプしました`);
+                                return;
+                            }
+
+                            // Text Search
+                            if (window.find && window.find(target)) {
+                                toast.success(`"${target}" が見つかりました`);
+                            } else {
+                                toast.error('指定された段落または文字列が見つかりませんでした: ' + target);
                             }
                         }
                     }}

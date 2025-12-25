@@ -38,6 +38,14 @@ export const FontMenu: React.FC<FontMenuProps> = ({ editor }) => {
     // Close menu when clicking outside - handled by global click listener in parent or App ideally,
     // but for now relying on hover/toggle logic.
 
+    const getBlockLabel = () => {
+        if (editor.isActive('heading', { level: 1 })) return '見出し１';
+        if (editor.isActive('heading', { level: 2 })) return '見出し２';
+        if (editor.isActive('heading', { level: 3 })) return '見出し３';
+        if (editor.isActive('heading', { level: 6 })) return 'サブテキスト';
+        return '本文';
+    };
+
     return (
         <div className="font-chooser-panel open" role="menu">
             <div
@@ -53,16 +61,17 @@ export const FontMenu: React.FC<FontMenuProps> = ({ editor }) => {
                     title="ブロック要素"
                     onClick={() => toggleSubmenu('block-element')}
                 >
-                    <span className="current-block-label" style={{ fontSize: '12px', marginRight: '4px' }}>本文</span>
+                    <span className="current-block-label" style={{ fontSize: '12px', marginRight: '4px' }}>{getBlockLabel()}</span>
                     <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
                         <path d="M7 10l5 5 5-5z" />
                     </svg>
                 </button>
                 <div className="font-submenu-panel" role="menu">
+                    <button type="button" onClick={() => setBlock('heading', 1)}>見出し１</button>
+                    <button type="button" onClick={() => setBlock('heading', 2)}>見出し２</button>
+                    <button type="button" onClick={() => setBlock('heading', 3)}>見出し３</button>
                     <button type="button" onClick={() => setBlock('paragraph')}>本文</button>
-                    <button type="button" onClick={() => setBlock('heading', 1)}>見出し1</button>
-                    <button type="button" onClick={() => setBlock('heading', 2)}>見出し2</button>
-                    <button type="button" onClick={() => setBlock('heading', 3)}>見出し3</button>
+                    <button type="button" onClick={() => setBlock('heading', 6)}>サブテキスト</button>
                 </div>
             </div>
 

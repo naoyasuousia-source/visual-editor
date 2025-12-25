@@ -97,6 +97,50 @@ export const FileMenu: React.FC<FileMenuProps> = ({ isOpen, onToggle, onClose, e
         }
     };
 
+    const handleInsertDropbox = () => {
+        if (!editor) return;
+        const inputUrl = window.prompt('Dropbox画像の共有URLを貼り付けてください。');
+        if (!inputUrl) return;
+
+        try {
+            const parsed = new URL(inputUrl);
+            const hostname = parsed.hostname.toLowerCase();
+            if (!hostname.includes('dropbox.com')) {
+                toast.error('Dropboxドメインではありません。dropbox.com のURLを選択してください。');
+                return;
+            }
+
+            parsed.searchParams.delete('dl');
+            parsed.searchParams.set('raw', '1');
+
+            const normalizedUrl = parsed.toString();
+            const alt = parsed.pathname.split('/').pop() || '';
+
+            editor.chain().focus().setImage({ src: normalizedUrl, alt }).run();
+            toast.success('Dropbox画像を挿入しました');
+            onClose();
+        } catch (err) {
+            toast.error('正しいURL形式を入力してください。');
+        }
+    };
+
+    const handleInsertWeb = () => {
+        if (!editor) return;
+        const inputUrl = window.prompt('画像URLを貼り付けてください。');
+        if (!inputUrl) return;
+
+        try {
+            const parsed = new URL(inputUrl);
+            const alt = parsed.pathname.split('/').pop() || '';
+
+            editor.chain().focus().setImage({ src: parsed.toString(), alt }).run();
+            toast.success('画像を挿入しました');
+            onClose();
+        } catch (err) {
+            toast.error('正しいURL形式を入力してください。');
+        }
+    };
+
     return (
         <div className={`file-menu ${isOpen ? 'is-open' : ''}`}>
             <button
@@ -125,8 +169,8 @@ export const FileMenu: React.FC<FileMenuProps> = ({ isOpen, onToggle, onClose, e
                     <div className="nested-dropdown">
                         <button type="button" className="nested-trigger" aria-haspopup="menu" aria-expanded="false">画像を挿入</button>
                         <div className="nested-dropdown-menu" role="menu">
-                            <button type="button" data-action="insert-image-dropbox">dropboxから挿入</button>
-                            <button type="button" data-action="insert-image-web">web上の画像を挿入</button>
+                            <button type="button" onClick={handleInsertDropbox} data-action="insert-image-dropbox">dropboxから挿入</button>
+                            <button type="button" onClick={handleInsertWeb} data-action="insert-image-web">web上の画像を挿入</button>
                         </div>
                     </div>
 

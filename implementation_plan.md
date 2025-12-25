@@ -53,13 +53,20 @@ UI/機能をLegacyエディタ (`index.html`) と **100%一致** させます。
 - [ ] 全ボタンの挙動、ツールチップ、ホバー効果の一致確認
 - [ ] コンソールエラー 0 件の達成
 
-## Phase 6: Professional Refactoring (Modern Stack & Best Practices)
-Refactor the codebase to leverage modern React patterns and the installed libraries ("Right tool for the right job").
+## Phase 6: Professional Refactoring (Logic Only - Strict UI Fidelity)
+Refactor the internal codebase for stability and performance while maintaining **100% visual fidelity** with the original editor.
+
+> [!IMPORTANT]
+> **Strict UI/UX Rules**:
+> 1. **Do NOT change the UI appearance from the original editor.**
+> 2. Maintain 100% visual fidelity with the original `style.css` / `ui.css`.
+> 3. Do NOT use modern UI libraries like Material UI, Tailwind, or Shadcn for visible components.
+> 4. Focus refactoring on **internal logic (State, Performance, Clean Code)** and **Functionality Reproduction** only.
 
 ### Dependencies
 - **State Management**: `zustand` (Avoid prop drilling, cleaner store).
-- **Notifications**: `sonner` (Replace `alert`, professional toasts).
-- **UI Components**: Fully leverage `@mui/material` & `framer-motion`.
+- **Notifications**: `sonner` (Accepted replacement for `alert()`).
+- **UI Components**: **Reuse existing HTML/CSS structure**. Do NOT refactor to modern UI libraries.
 
 ### Architecture Changes
 - **Global Store**: Create `useAppStore` to manage:
@@ -67,6 +74,7 @@ Refactor the codebase to leverage modern React patterns and the installed librar
     - `pageMargin`
     - `isWordMode`
     - `activeDialog` (manage dialog visibility centrally)
-- **Component Cleanup**: Remove massive prop passing in `App.tsx` and `Toolbar.tsx`.
+    - `isSidebarOpen`
+- **Component Cleanup**: Remove massive prop passing in `App.tsx` and `Toolbar.tsx` by leveraging the Store.
 
 ## Verification Plan
