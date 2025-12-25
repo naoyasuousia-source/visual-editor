@@ -25,6 +25,11 @@ interface AppState {
     isSidebarOpen: boolean;
     toggleSidebar: () => void;
     setSidebarOpen: (isOpen: boolean) => void;
+
+    // SubHelp Dialog
+    subHelpData: { isOpen: boolean; type: string | null };
+    openSubHelp: (type: string) => void;
+    closeSubHelp: () => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -53,4 +58,9 @@ export const useAppStore = create<AppState>((set) => ({
     isSidebarOpen: true,
     toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
     setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
+
+    // SubHelp Dialog
+    subHelpData: { isOpen: false, type: null },
+    openSubHelp: (type) => set({ subHelpData: { isOpen: true, type } }),
+    closeSubHelp: () => set({ subHelpData: { isOpen: false, type: null } }),
 }));

@@ -77,4 +77,16 @@ Refactor the internal codebase for stability and performance while maintaining *
     - `isSidebarOpen`
 - **Component Cleanup**: Remove massive prop passing in `App.tsx` and `Toolbar.tsx` by leveraging the Store.
 
+### 6.X Implementation Gaps (Critical for 100% Fidelity)
+- [ ] **View Menu Logic**: `ViewMenu` is currently inline in `Toolbar.tsx`.
+    - Missing `togglePageNumbers` implementation (CSS toggle on body).
+    - Missing `toggleParaNumbers` implementation (CSS toggle on body).
+- [ ] **SubHelpDialog**: Missing entirely. Required for "利用規約" etc. links in `HelpDialog`.
+- [ ] **Image Context Menu (Right Click)**: Currently using Tiptap Bubble Menu. Strict Fidelity requires restoring the custom Right Click Menu (`.image-context-menu`) functionality.
+    - Features needed: Resize (XS-XL), Border, Title, Caption, Tag.
+- [ ] **Browser Warning Dialog**: Missing (`#browser-warning-dialog`).
+- [ ] **Page Removal Logic**: `removePage` logic in `App.tsx` is placeholder. Need to port from `editor/page.ts`.
+- [ ] **Word Mode Restrictions**: Verify restricted actions (Image/Link insertion) are blocked in Word Mode.
+
+
 ## Verification Plan
