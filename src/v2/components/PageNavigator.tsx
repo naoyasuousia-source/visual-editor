@@ -126,7 +126,7 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
 
     return (
         <div 
-            className={`flex flex-col h-full bg-[#f0f0f0] border-r border-gray-300 transition-all duration-300 ease-in-out relative ${isSidebarOpen ? 'w-[200px]' : 'w-0 overflow-hidden'}`}
+            className={`flex flex-col h-full bg-[#e0e0e0] border-r border-gray-300 transition-all duration-300 ease-in-out relative ${isSidebarOpen ? 'w-[200px]' : 'w-0 overflow-hidden'}`}
         >
             <div 
                 id="page-navigator-container" 

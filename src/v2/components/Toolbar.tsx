@@ -237,10 +237,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 <button 
                     type="button" 
                     onClick={toggleWordMode}
-                    className={`px-3 py-1 rounded text-xs font-bold transition-all h-[32px] flex items-center gap-1 ${
+                    className={`px-3 py-1 rounded text-xs font-bold transition-all h-[32px] flex items-center gap-1 shadow-sm ${
                         isWordMode 
                         ? 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100' // Word Mode active -> Show "Switch to standard" (White)
-                        : 'bg-blue-600 text-white hover:bg-blue-700' // Standard Mode active -> Show "Switch to Word" (Blue)
+                        : 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] border border-transparent' // Standard Mode active -> Show "Switch to Word" (Blue)
                     }`}
                 >
                     <FileType className="w-3.5 h-3.5" />
@@ -249,19 +249,19 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
                 <button 
                     type="button" 
-                    onClick={() => { closeAllMenus(); openDialog('help'); }}
-                    className="p-1.5 rounded-full hover:bg-gray-200 text-gray-500 transition-colors"
+                    onClick={() => { closeAllMenus(); openDialog('donate'); }}
+                    className="flex items-center gap-1.5 px-3 py-1 rounded bg-[#fff0b3] border border-[#ffe066] text-[#b37400] text-xs font-bold hover:bg-[#ffe680] transition-all h-[32px] shadow-sm ml-1"
                 >
-                    <HelpCircle className="w-6 h-6" />
+                    <Heart className="w-3.5 h-3.5 fill-[#f59f00] text-[#f59f00]" />
+                    <span>開発を応援</span>
                 </button>
-
+                
                 <button 
                     type="button" 
-                    onClick={() => { closeAllMenus(); openDialog('donate'); }}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded bg-[#fffbeb] border border-[#fde68a] text-[#92400e] text-xs font-bold hover:bg-[#fef3c7] transition-all h-[32px] animate-pulse-subtle shadow-sm"
+                    onClick={() => { closeAllMenus(); openDialog('help'); }}
+                    className="p-1.5 rounded-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-600 transition-colors shadow-sm ml-1"
                 >
-                    <Heart className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                    <span>開発を応援</span>
+                    <HelpCircle className="w-5 h-5" />
                 </button>
             </div>
         </div>
