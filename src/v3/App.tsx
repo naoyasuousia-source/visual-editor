@@ -8,7 +8,9 @@ import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
+import Highlight from '@tiptap/extension-highlight';
 import FontFamily from '@tiptap/extension-font-family';
+import { Toaster, toast } from 'sonner';
 
 import { PageExtension } from './extensions/PageExtension';
 import { ParagraphNumbering } from './extensions/ParagraphNumbering';
@@ -28,25 +30,63 @@ import { ImageTagDialog } from './components/ImageTagDialog';
 import { ParagraphJumpDialog } from './components/ParagraphJumpDialog';
 import { PageNavigator } from './components/PageNavigator';
 
+import { useAppStore } from './store/useAppStore';
+
 export const EditorV3 = () => {
-    const [helpOpen, setHelpOpen] = useState(false);
-    const [donateOpen, setDonateOpen] = useState(false);
-    const [linkOpen, setLinkOpen] = useState(false);
-    const [imageTitleOpen, setImageTitleOpen] = useState(false);
-    const [imageCaptionOpen, setImageCaptionOpen] = useState(false);
-    const [imageTagOpen, setImageTagOpen] = useState(false);
-    const [paragraphJumpOpen, setParagraphJumpOpen] = useState(false);
+    // Global Store
+    const {
+        zoomLevel,
+        isWordMode,
+        activeDialog,
+        openDialog,
+        closeDialog
+    } = useAppStore();
+
+    useEffect(() => {
+        // Toggle body class for Word Mode styling
+        if (isWordMode) {
+            document.body.classList.add('mode-word');
+            document.body.classList.remove('mode-standard');
+        } else {
+            document.body.classList.add('mode-standard');
+            document.body.classList.remove('mode-word');
+        }
+    }, [isWordMode]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.key === 'j') {
                 e.preventDefault();
-                setParagraphJumpOpen(true);
+                openDialog('paragraph-jump');
+            }
+            // Word Mode: Disable Tab key
+            if (isWordMode && e.key === 'Tab') {
+                e.preventDefault();
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
+    }, [isWordMode, openDialog]);
+
+    const handleAddPage = () => {
+        // Insert a new page node at the end
+        if (editor) {
+            const { tr } = editor.state;
+            const node = editor.schema.nodes.page.createAndFill();
+            if (node) {
+                const endPos = editor.state.doc.content.size;
+                editor.view.dispatch(tr.insert(endPos, node));
+                toast.success('ページを追加しました');
+            }
+        }
+    };
+
+    const handleRemovePage = () => {
+        // Placeholder for page removal logic
+        if (editor) {
+            toast.info("ページ削除機能は現在実装中です。");
+        }
+    };
 
     const editor = useEditor({
         extensions: [
@@ -62,6 +102,7 @@ export const EditorV3 = () => {
             TextStyle,
             FontFamily,
             Color,
+            Highlight.configure({ multicolor: true }),
             CustomImage,
             PageExtension,
             ParagraphNumbering,
@@ -84,34 +125,35 @@ export const EditorV3 = () => {
         <div id="left">
             <Toolbar
                 editor={editor}
-                onShowHelp={() => setHelpOpen(true)}
-                onShowDonate={() => setDonateOpen(true)}
+                onAddPage={handleAddPage}
+                onRemovePage={handleRemovePage}
             />
             <div id="workspace">
                 <PageNavigator editor={editor} />
-                <div id="pages-container">
+                <div id="pages-container" style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}>
                     {editor && (
                         <>
                             <ImageBubbleMenu
                                 editor={editor}
-                                onEditTitle={() => setImageTitleOpen(true)}
-                                onEditCaption={() => setImageCaptionOpen(true)}
-                                onEditTag={() => setImageTagOpen(true)}
+                                onEditTitle={() => openDialog('image-title')}
+                                onEditCaption={() => openDialog('image-caption')}
+                                onEditTag={() => openDialog('image-tag')}
                             />
-                            <LinkBubbleMenu editor={editor} onEdit={() => setLinkOpen(true)} />
+                            <LinkBubbleMenu editor={editor} onEdit={() => openDialog('link')} />
                         </>
                     )}
                     <EditorContent editor={editor} />
                 </div>
             </div>
 
-            {helpOpen && <HelpDialog onClose={() => setHelpOpen(false)} />}
-            {donateOpen && <DonateDialog onClose={() => setDonateOpen(false)} />}
-            {linkOpen && editor && <LinkDialog editor={editor} onClose={() => setLinkOpen(false)} />}
-            {imageTitleOpen && editor && <ImageTitleDialog editor={editor} onClose={() => setImageTitleOpen(false)} />}
-            {imageCaptionOpen && editor && <ImageCaptionDialog editor={editor} onClose={() => setImageCaptionOpen(false)} />}
-            {imageTagOpen && editor && <ImageTagDialog editor={editor} onClose={() => setImageTagOpen(false)} />}
-            {paragraphJumpOpen && editor && <ParagraphJumpDialog editor={editor} onClose={() => setParagraphJumpOpen(false)} />}
+            {activeDialog === 'help' && <HelpDialog onClose={closeDialog} />}
+            {activeDialog === 'donate' && <DonateDialog onClose={closeDialog} />}
+            {activeDialog === 'link' && editor && <LinkDialog editor={editor} onClose={closeDialog} />}
+            {activeDialog === 'image-title' && editor && <ImageTitleDialog editor={editor} onClose={closeDialog} />}
+            {activeDialog === 'image-caption' && editor && <ImageCaptionDialog editor={editor} onClose={closeDialog} />}
+            {activeDialog === 'image-tag' && editor && <ImageTagDialog editor={editor} onClose={closeDialog} />}
+            {activeDialog === 'paragraph-jump' && editor && <ParagraphJumpDialog editor={editor} onClose={closeDialog} />}
+            <Toaster position="top-center" richColors />
         </div>
     );
 };

@@ -1,21 +1,38 @@
 import React, { useState } from 'react';
 import { Editor } from '@tiptap/react';
+import { toast } from 'sonner';
 import { FileMenu } from './menus/FileMenu';
 import { ParagraphMenu } from './menus/ParagraphMenu';
 import { FontMenu } from './menus/FontMenu';
+import { HighlightMenu } from './menus/HighlightMenu';
+import { useAppStore } from '../store/useAppStore';
 
 interface ToolbarProps {
     editor: Editor | null;
-    onShowHelp: () => void;
-    onShowDonate: () => void;
+    onAddPage?: () => void; // Optional/Deprecated in favor of store or command? Kept for now as it uses editor commands not just store
+    onRemovePage?: () => void;
 }
 
-export const Toolbar: React.FC<ToolbarProps> = ({ editor, onShowHelp, onShowDonate }) => {
+export const Toolbar: React.FC<ToolbarProps> = ({
+    editor,
+    onAddPage,
+    onRemovePage,
+}) => {
+    // Global Store
+    const {
+        zoomLevel,
+        zoomIn,
+        zoomOut,
+        setPageMargin,
+        isWordMode,
+        toggleWordMode
+    } = useAppStore();
+
     const [fileMenuOpen, setFileMenuOpen] = useState(false);
     const [viewMenuOpen, setViewMenuOpen] = useState(false);
     const [fontMenuOpen, setFontMenuOpen] = useState(false);
     const [paraMenuOpen, setParaMenuOpen] = useState(false);
-    const [zoomLevel, setZoomLevel] = useState(100);
+    const [highlightMenuOpen, setHighlightMenuOpen] = useState(false);
 
     if (!editor) return null;
 
@@ -31,6 +48,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onShowHelp, onShowDona
         setViewMenuOpen(false);
         setFontMenuOpen(false);
         setParaMenuOpen(false);
+        setHighlightMenuOpen(false);
     };
 
     return (
@@ -40,7 +58,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onShowHelp, onShowDona
             </div>
 
             {/* ファイルメニュー */}
-            {/* ファイルメニュー */}
             <FileMenu
                 isOpen={fileMenuOpen}
                 onToggle={() => {
@@ -49,7 +66,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onShowHelp, onShowDona
                     setFileMenuOpen(next);
                 }}
                 onClose={closeAllMenus}
+                editor={editor}
             />
+
+            <input type="file" id="open-file-input" style={{ display: 'none' }} />
 
             {/* 表示メニュー */}
             <div className={`view-menu ${viewMenuOpen ? 'is-open' : ''}`}>
@@ -92,12 +112,22 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onShowHelp, onShowDona
             </button>
 
             {/* ハイライト */}
-            <div className="highlight-control">
-                <button type="button" data-action="highlight" title="ハイライト">
+            <div className={`highlight-control ${highlightMenuOpen ? 'is-open' : ''}`} style={{ position: 'relative' }}>
+                <button
+                    type="button"
+                    data-action="highlight"
+                    title="ハイライト"
+                    onClick={() => {
+                        const next = !highlightMenuOpen;
+                        closeAllMenus();
+                        setHighlightMenuOpen(next);
+                    }}
+                >
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="m9 11-6 6v3h9l3-3" /><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4" /><path d="M2 21h20" stroke="#FFD700" strokeWidth="3" />
                     </svg>
                 </button>
+                {highlightMenuOpen && <HighlightMenu editor={editor} />}
             </div>
 
             {/* フォントメニュー */}
@@ -129,18 +159,18 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onShowHelp, onShowDona
             </div>
 
             <div className="page-controls">
-                <button type="button" data-action="add-page" title="ページを追加">
+                <button type="button" onClick={onAddPage} data-action="add-page" title="ページを追加">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
                 </button>
-                <button type="button" data-action="remove-page" title="現在のページを削除">
+                <button type="button" onClick={onRemovePage} data-action="remove-page" title="現在のページを削除">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line></svg>
                 </button>
             </div>
 
             <div className="zoom-controls">
-                <button type="button" onClick={() => setZoomLevel(Math.max(50, zoomLevel - 10))} data-action="zoom-out">－</button>
+                <button type="button" onClick={zoomOut} data-action="zoom-out">－</button>
                 <span id="zoom-level-display">{zoomLevel}%</span>
-                <button type="button" onClick={() => setZoomLevel(Math.min(200, zoomLevel + 10))} data-action="zoom-in">＋</button>
+                <button type="button" onClick={zoomIn} data-action="zoom-in">＋</button>
             </div>
 
             <div className="jump-widget">
@@ -160,7 +190,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onShowHelp, onShowDona
                             if (element) {
                                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             } else {
-                                alert('指定された段落が見つかりませんでした: ' + targetId);
+                                toast.error('指定された段落が見つかりませんでした: ' + targetId);
                             }
                         }
                     }}
@@ -168,14 +198,14 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onShowHelp, onShowDona
             </div>
 
             <div id="toolbar-right-group">
-                <button type="button" id="mode-switch" title="編集モード切替">
-                    <span className="mode-text-std">標準モードに切替</span>
-                    <span className="mode-text-word">Word互換モードに切替</span>
+                <button type="button" id="mode-switch" title="編集モード切替" onClick={toggleWordMode}>
+                    <span className={`mode-text-std ${isWordMode ? '' : 'hidden'}`} style={{ display: isWordMode ? 'inline' : 'none' }}>標準モードに切替</span>
+                    <span className={`mode-text-word ${!isWordMode ? '' : 'hidden'}`} style={{ display: !isWordMode ? 'inline' : 'none' }}>Word互換モードに切替</span>
                 </button>
-                <button type="button" id="help-trigger" onClick={() => { closeAllMenus(); onShowHelp(); }}>
+                <button type="button" id="help-trigger" onClick={() => { closeAllMenus(); openDialog('help'); }}>
                     <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" strokeWidth="1.25"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                 </button>
-                <button type="button" id="donate-trigger" onClick={() => { closeAllMenus(); onShowDonate(); }}>
+                <button type="button" id="donate-trigger" onClick={() => { closeAllMenus(); openDialog('donate'); }}>
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
                     <span>開発を応援</span>
                 </button>
