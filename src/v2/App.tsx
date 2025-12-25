@@ -24,6 +24,7 @@ import { SubHelpDialog } from './components/SubHelpDialog';
 import { BrowserWarningDialog } from './components/BrowserWarningDialog';
 import { DonateDialog } from './components/DonateDialog';
 import { ImageBubbleMenu } from './components/ImageBubbleMenu';
+import { ImageContextMenu } from './components/ImageContextMenu';
 import { LinkBubbleMenu } from './components/LinkBubbleMenu';
 import { LinkDialog } from './components/LinkDialog';
 import { ImageTitleDialog } from './components/ImageTitleDialog';
@@ -203,6 +204,7 @@ export const EditorV3 = () => {
                                     onEditCaption={() => openDialog('image-caption')}
                                     onEditTag={() => openDialog('image-tag')}
                                 />
+                                <ImageContextMenu editor={editor} />
                                 <LinkBubbleMenu editor={editor} onEdit={() => openDialog('link')} />
                                 <AIImageIndex editor={editor} />
                                 <EditorContent editor={editor} />
