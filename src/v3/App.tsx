@@ -185,7 +185,7 @@ export const EditorV3 = () => {
 
     const editor = useEditor({
         extensions: [
-            StarterKit,
+            StarterKit, // Restore default config for proper Enter key handling
             Underline,
             Subscript,
             Superscript,
@@ -207,10 +207,7 @@ export const EditorV3 = () => {
         content: `
       <section class="page" data-page="1">
         <div class="page-inner">
-          <p data-para="1" id="p1-1">React + Tiptap版エディタへようこそ。</p>
-          <img src="/image/logo-himawari.png" class="img-m" />
-          <p data-para="2" id="p1-2" class="inline-align-center">これは中央揃えの段落です。</p>
-          <p data-para="3" id="p1-3">詳細は <a href="https://example.com">こちら</a> をご覧ください。</p>
+          <p data-para="1" id="p1-1"><br></p>
         </div>
       </section>
     `,
