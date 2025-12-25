@@ -11,3 +11,5 @@ export { usePasteControl } from './usePasteControl';
 export { useParagraphNumberToggle } from './useParagraphNumberToggle';
 export { useDialogs } from './useDialogs';
 export { useImageInsert } from './useImageInsert';
+export { useImageIndex } from './useImageIndex';
+export { useImageActions } from './useImageActions';

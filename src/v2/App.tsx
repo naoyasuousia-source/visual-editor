@@ -40,6 +40,7 @@ import { useBrowserCheck } from './hooks/useBrowserCheck';
 import { useIMEControl } from './hooks/useIMEControl';
 import { usePasteControl } from './hooks/usePasteControl';
 import { useDialogs } from './hooks/useDialogs';
+import { useImageIndex } from './hooks/useImageIndex';
 import { ConfirmDialog } from './components/ui/ConfirmDialog';
 import { PromptDialog } from './components/ui/PromptDialog';
 
@@ -114,6 +115,9 @@ export const EditorV3 = () => {
     // Page Operations (ロジック分離)
     const { addPage, removePage } = usePageOperations(editor, { confirm });
 
+    // Image Index (ロジック分離)
+    const { rebuildImageIndex, updateImageMeta } = useImageIndex(editor, isWordMode);
+
 
     useEffect(() => {
         if (editor) {
@@ -151,10 +155,11 @@ export const EditorV3 = () => {
                                     onEditCaption={() => openDialog('image-caption')}
                                     onEditTag={() => openDialog('image-tag')}
                                 />
-                                <ImageContextMenu editor={editor} />
                                 <LinkBubbleMenu editor={editor} onEdit={() => openDialog('link')} />
                                 <AIImageIndex editor={editor} />
-                                <EditorContent editor={editor} />
+                                <ImageContextMenu editor={editor}>
+                                    <EditorContent editor={editor} />
+                                </ImageContextMenu>
                             </>
                         )}
                     </div>
