@@ -1,7 +1,7 @@
 
 import { Editor } from '@tiptap/react';
 import mammoth from 'mammoth';
-import contentCssText from '../../styles/content.css?raw'; // Import CSS as raw string
+import contentCssText from '../styles/content.css?raw'; // Import CSS as raw string
 
 /**
  * Reads text from a File object.

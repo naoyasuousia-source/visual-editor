@@ -1,0 +1,337 @@
+:root {
+  --page-margin: 17mm;
+  --para-number-left: 6mm;
+  --editor-font-family: inherit;
+  --tab-width: 0px;
+}
+
+/* A4ページ */
+section.page {
+  position: relative;
+  width: 210mm;
+  min-width: 210mm;
+  /* Strict A4 dimensions to guarantee ratio regardless of browser support */
+  height: 297mm;
+  min-height: 297mm;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+  overflow: hidden;
+  margin: 0 auto;
+  /* 中央配置 */
+}
+
+section.page::after {
+  content: attr(data-page);
+  position: absolute;
+  left: 50%;
+  bottom: 6mm;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #666;
+}
+
+/* ページ内編集領域 */
+.page-inner {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: var(--page-margin);
+  position: relative;
+  overflow-y: auto;
+  outline: none;
+  font-family: var(--editor-font-family, inherit);
+  font-size: 11pt;
+  color: #333;
+  line-height: 1.6;
+}
+
+.page-inner p,
+.page-inner h1,
+.page-inner h2,
+.page-inner h3,
+.page-inner h4,
+.page-inner h5,
+.page-inner h6 {
+  margin: 0 0 1em;
+  position: relative;
+  padding-left: 0;
+}
+
+/* 段落番号 */
+.page-inner p[data-para]::before,
+.page-inner h1[data-para]::before,
+.page-inner h2[data-para]::before,
+.page-inner h3[data-para]::before,
+.page-inner h4[data-para]::before,
+.page-inner h5[data-para]::before,
+.page-inner h6[data-para]::before {
+  content: "[" attr(data-para) "]";
+  position: absolute;
+  left: -11mm;
+  top: 0.25em;
+  width: 2.4rem;
+  text-align: right;
+  color: #999;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1;
+  user-select: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+body.hide-page-numbers section.page::after {
+  display: none;
+}
+
+body.hide-para-numbers .page-inner [data-para]::before {
+  display: none;
+}
+
+/* 画像コンテキストメニュー */
+
+
+.page-inner img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0.8em auto;
+  /* 強制中央 */
+}
+
+.page-inner .figure-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.page-inner .figure-inline img {
+  margin: 0;
+}
+
+.img-xs {
+  width: 20%;
+}
+
+.img-s {
+  width: 35%;
+}
+
+.img-m {
+  width: 50%;
+}
+
+.img-l {
+  width: 65%;
+}
+
+.img-xl {
+  width: 85%;
+}
+
+/* .figure-title: Removed custom font/color styles to list block tag control style (e.g. h6) */
+.page-inner .figure-title {
+  display: inline;
+  /* blockからinlineへ変更（横並びや自然な配置のため） */
+  margin: 0;
+}
+
+.page-inner .figure-inline .caret-slot {
+  font-size: 0;
+  line-height: 0;
+}
+
+.page-inner img.has-border {
+  border: 1px solid currentColor;
+}
+
+/* その他UIパーツ */
+
+
+/* インデントと行間 */
+.page-inner {
+  line-height: 1.6;
+}
+
+.page-inner.line-height-s {
+  line-height: 1.25;
+}
+
+.page-inner.line-height-l {
+  line-height: 2.0;
+}
+
+.inline-highlight {
+  border-radius: 2px;
+  padding: 2px 0;
+}
+
+.inline-tab {
+  display: inline-block;
+  vertical-align: bottom;
+  height: 1em;
+}
+
+
+
+/* インデント定義: 36pt = 0.5in = 1.27cm */
+.page-inner .indent-1 {
+  padding-left: 36pt;
+}
+
+.page-inner .indent-2 {
+  padding-left: 72pt;
+}
+
+.page-inner .indent-3 {
+  padding-left: 108pt;
+}
+
+.page-inner .indent-4 {
+  padding-left: 144pt;
+}
+
+.page-inner .indent-5 {
+  padding-left: 180pt;
+}
+
+/* ぶら下げ(hanging-indent)は、padding-leftで設定したインデントを
+   text-indent: -padding-left で相殺し、1行目を左端(0地点)に戻す挙動と定義 */
+
+.page-inner .hanging-indent {
+  text-indent: -1em;
+}
+
+.page-inner .indent-1.hanging-indent {
+  padding-left: 36pt;
+  text-indent: -36pt;
+}
+
+.page-inner .indent-2.hanging-indent {
+  padding-left: 72pt;
+  text-indent: -72pt;
+}
+
+.page-inner .indent-3.hanging-indent {
+  padding-left: 108pt;
+  text-indent: -108pt;
+}
+
+.page-inner .indent-4.hanging-indent {
+  padding-left: 144pt;
+  text-indent: -144pt;
+}
+
+.page-inner .indent-5.hanging-indent {
+  padding-left: 180pt;
+  text-indent: -180pt;
+}
+
+/* Align Helpers */
+.inline-align {
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.inline-align-left {
+  text-align: left;
+}
+
+.inline-align-center {
+  text-align: center;
+}
+
+.inline-align-right {
+  text-align: right;
+}
+
+.page-inner p.inline-spacing-xs,
+.page-inner .inline-align.inline-spacing-xs {
+  margin-bottom: 4px;
+}
+
+.page-inner p.inline-spacing-s,
+.page-inner .inline-align.inline-spacing-s {
+  margin-bottom: 12px;
+}
+
+.page-inner p.inline-spacing-m,
+.page-inner .inline-align.inline-spacing-m {
+  margin-bottom: 20px;
+}
+
+.page-inner p.inline-spacing-l,
+.page-inner .inline-align.inline-spacing-l {
+  margin-bottom: 28px;
+}
+
+.page-inner p.inline-spacing-xl,
+.page-inner .inline-align.inline-spacing-xl {
+  margin-bottom: 36px;
+}
+
+/* Removed .mini-text */
+
+
+
+/* Print / PDF Output Optimized Styles */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  body {
+    background: #fff;
+    overflow: visible;
+    height: auto;
+    width: 100%;
+  }
+
+
+  /* Ensure page exactly matches A4 and breaks correctly */
+  section.page {
+    position: relative;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    outline: none !important;
+    /* Remove active page outline */
+    background: #fff;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  /* Remove break after the last page to avoid empty sheet? 
+     Usually beneficial, but sometimes browser handles it.
+     Let's be explicit if possible. */
+  section.page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  /* Maintain internal layout fidelity */
+  .page-inner {
+    width: 100%;
+    height: 100%;
+    padding: var(--page-margin);
+    overflow: visible;
+  }
+
+  /* Force text selection to be available in PDF readers */
+  /* Note: pointer-events: none on * in print media can sometimes help if overlay issues, but default is usually fine. */
+
+  .page-inner,
+  .page-inner * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
+}
