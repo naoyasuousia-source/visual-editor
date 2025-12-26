@@ -145,13 +145,13 @@ export const EditorV3 = () => {
             <div className="flex flex-1 overflow-hidden relative">
                 {editor && <PageNavigator editor={editor} />}
                 
-                <div className="flex-1 overflow-y-auto overflow-x-hidden p-8 scroll-smooth">
+                <div className="flex-1 overflow-auto p-12 scroll-smooth">
                     <div 
-                        className={`flex flex-col gap-6 transition-transform duration-200 ${isWordMode ? 'mode-word' : ''}`} 
+                        className={`flex flex-col gap-6 transition-all duration-200 mx-auto ${isWordMode ? 'mode-word' : ''}`} 
                         style={{ 
-                            transform: `scale(${zoomLevel / 100})`, 
-                            transformOrigin: 'top center' 
-                        }}
+                            width: '210mm',
+                            zoom: zoomLevel / 100,
+                        } as any}
                     >
                         {editor && (
                             <>
