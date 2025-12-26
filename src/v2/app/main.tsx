@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import EditorV3 from './App';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import '@/styles/index.css';
+import '@/styles/content.css';
 
 const container = document.getElementById('root');
 if (container) {
