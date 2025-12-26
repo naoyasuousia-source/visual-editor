@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Editor } from '@tiptap/react';
 import { 
-    Type, 
     ChevronDown 
 } from 'lucide-react';
 import { BaseDropdownMenu, MenuItem, MenuSeparator } from '@/components/ui/BaseDropdownMenu';
@@ -101,10 +100,14 @@ export const FontMenu: React.FC<FontMenuProps> = ({ editor }) => {
                     <button
                         type="button"
                         onClick={() => toggleExpanded('family')}
-                        className={`${boxBase} ${expanded === 'family' ? activeBox : ''}`}
+                        className={`${boxBase} px-2 justify-between gap-1.5 ${expanded === 'family' ? activeBox : ''}`}
                         title="フォントファミリー"
+                        style={{ minWidth: '80px' }}
                     >
-                        <Type className="w-4 h-4" />
+                        <span className="text-[12px] font-bold leading-none truncate max-w-[80px]">
+                            {fontFamilies.find(f => f.value === editor.getAttributes('textStyle').fontFamily)?.name || 'フォント'}
+                        </span>
+                        <ChevronDown className={`w-3 h-3 opacity-50 transition-transform ${expanded === 'family' ? 'rotate-180' : ''}`} />
                     </button>
                 </div>
 
