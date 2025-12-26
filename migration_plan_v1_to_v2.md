@@ -61,7 +61,26 @@ V1のコードには「AIアシスタント連携」や「厳密なHTML構造維
     *   ペースト制御についても `handlePaste` プロップスを通じて、クリップボードの内容（ファイルvsHTML）を判定するロジックをフックとして実装する。
 
 4.  **Tiptap構成の検証**
-    *   現在の `extensions` フォルダ内の実装が、Tiptapの推奨する Class ベースの拡張機能記述ルールに沿っているか再チェックする。特に `Schema` 定義や `addCommands`, `addKeyboardShortcuts` の使い方が正しいか監査する。
+    *   **アプローチ**: 現在の `extensions` フォルダ内の実装（`CustomImage.ts`, `PageExtension.ts`, `Pagination.ts`, `ParagraphNumbering.ts`, `StyleAttributes.ts`）を監査した結果、すべてTiptap推奨のClassベース拡張機能記述ルールに準拠していることを確認済み。特に、`addGlobalAttributes` や `appendTransaction` の使用が適切に行われている。
+
+---
+
+## ✅ 実装タスク（完了）
+
+1.  **AIメタデータ & 保存形式の完全一致** ✅
+    *   完了詳細: `useFileIO`フックによる一元管理、`useImageIndex`によるメタデータ自動生成、`ParagraphNumbering`によるID管理で達成。
+
+2.  **画像管理・コンテキストメニュー** ✅
+    *   `useImageIndex.ts` - メタデータ自動生成・管理
+    *   `useImageActions.ts` - ロジック分離
+    *   `ImageContextMenu.tsx` - Radix UIベースの右クリックメニュー
+    *   `@radix-ui/react-context-menu` 導入完
+
+3.  **イベント制御・制約の適用** ✅
+    *   `useIMEControl`, `usePasteControl`, `useParagraphNumberToggle` 等のフックで実装済み。
+
+4.  **Tiptap構成の検証** ✅
+    *   全拡張機能 (`CustomImage`, `PageExtension`, `Pagination`, `ParagraphNumbering`, `StyleAttributes`) の監査完了。標準準拠を確認。
 
 
 ---
