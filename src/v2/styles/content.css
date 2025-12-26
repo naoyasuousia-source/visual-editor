@@ -95,16 +95,16 @@ section.page::after {
   content: "[" attr(data-para) "]";
   position: absolute;
   left: -11mm;
-  top: 0.25em;
+  top: 1px;
   width: 2.4rem;
   text-align: right;
   color: #999;
-  font-size: 0.75rem;
-  font-weight: 400;
-  line-height: 1;
-  user-select: none;
+  font-size: 10.5pt !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
   user-select: none;
   pointer-events: none;
+  font-family: var(--editor-font-family, inherit);
 }
 
 body.hide-page-numbers section.page::after {

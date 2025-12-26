@@ -135,8 +135,6 @@ export const FontMenu: React.FC<FontMenuProps> = ({ editor }) => {
                                     </div>
                                 </MenuItem>
                             ))}
-                            <MenuSeparator />
-                            <MenuItem onSelect={() => editor.chain().focus().unsetColor().run()}>色をリセット</MenuItem>
                         </div>
                     )}
 
