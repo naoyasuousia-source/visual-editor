@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Tiptap EditorContent (ProseMirror) - ページ間の間隔設定 */
+.ProseMirror {
+  display: flex;
+  flex-direction: column;
+  /* Word-like gap between pages (approx 2% of A4 height = 6mm ≈ 24px) */
+  gap: 24px;
+}
