@@ -18,6 +18,7 @@ import { StyleAttributes } from '@/lib/styleAttributes';
 import { Pagination } from '@/lib/pagination';
 import { CustomImage } from '@/lib/customImage';
 import { FirstParagraphProtection } from '@/lib/firstParagraphProtection';
+import { CustomDocument } from '@/lib/customDocument';
 
 import { Toolbar } from '@/components/features/Toolbar';
 import { HelpDialog } from '@/components/common/dialogs/HelpDialog';
@@ -69,7 +70,10 @@ export const EditorV3 = () => {
 
     const editor = useEditor({
         extensions: [
-            StarterKit,
+            CustomDocument, // カスタムDocument: doc > page+
+            StarterKit.configure({
+                document: false, // デフォルトのDocumentを無効化
+            }),
             Underline,
             Subscript,
             Superscript,
@@ -91,7 +95,7 @@ export const EditorV3 = () => {
         ],
         content: `
       <section class="page" data-page="1">
-        <p data-para="1" id="p1-1"><br></p>
+        <p data-para="1" id="p1-1"></p>
       </section>
     `,
         editorProps: {
