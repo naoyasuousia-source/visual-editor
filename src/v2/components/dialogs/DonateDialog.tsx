@@ -1,5 +1,5 @@
 import React from 'react';
-import { BaseDialog } from './ui/BaseDialog';
+import { BaseDialog } from '../ui/BaseDialog';
 import { Heart, Coffee } from 'lucide-react';
 
 interface DonateDialogProps {

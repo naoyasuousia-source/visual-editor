@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Editor } from '@tiptap/react';
-import { BaseDialog } from './ui/BaseDialog';
+import { BaseDialog } from '../ui/BaseDialog';
 import { Type, Check, Save } from 'lucide-react';
 
 interface ImageTitleDialogProps {

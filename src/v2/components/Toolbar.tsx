@@ -9,10 +9,10 @@ import {
     FileType
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { FileMenu } from './menus/FileMenu';
-import { ParagraphMenu } from './menus/ParagraphMenu';
-import { FontMenu } from './menus/FontMenu';
-import { HighlightMenu } from './menus/HighlightMenu';
+import { FileMenu } from './toolbar/FileMenu';
+import { ParagraphMenu } from './toolbar/ParagraphMenu';
+import { FontMenu } from './toolbar/FontMenu';
+import { HighlightMenu } from './toolbar/HighlightMenu';
 import { useAppStore } from '../store/useAppStore';
 import { useJumpNavigation } from '../hooks/useJumpNavigation';
 import { useParagraphNumberToggle } from '../hooks/useParagraphNumberToggle';
