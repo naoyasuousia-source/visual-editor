@@ -1,11 +1,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Tiptap ProseMirror - v1の#pages-containerと同じページ間隔設定 */
-.ProseMirror {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
-}
