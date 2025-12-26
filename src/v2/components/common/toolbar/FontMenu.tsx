@@ -114,11 +114,11 @@ export const FontMenu: React.FC<FontMenuProps> = ({ editor }) => {
                 <div className="overflow-hidden transition-all">
                     {expanded === 'style' && (
                         <div className="py-1">
-                            <MenuItem onSelect={() => editor.chain().focus().setParagraph().run()}>本文</MenuItem>
-                            <MenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>見出し 1</MenuItem>
-                            <MenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>見出し 2</MenuItem>
-                            <MenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>見出し 3</MenuItem>
-                            <MenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 6 }).run()}>サブテキスト</MenuItem>
+                            <MenuItem onSelect={(e) => { e.preventDefault(); editor.chain().focus().setParagraph().run(); }}>本文</MenuItem>
+                            <MenuItem onSelect={(e) => { e.preventDefault(); editor.chain().focus().toggleHeading({ level: 1 }).run(); }}>見出し 1</MenuItem>
+                            <MenuItem onSelect={(e) => { e.preventDefault(); editor.chain().focus().toggleHeading({ level: 2 }).run(); }}>見出し 2</MenuItem>
+                            <MenuItem onSelect={(e) => { e.preventDefault(); editor.chain().focus().toggleHeading({ level: 3 }).run(); }}>見出し 3</MenuItem>
+                            <MenuItem onSelect={(e) => { e.preventDefault(); editor.chain().focus().toggleHeading({ level: 6 }).run(); }}>サブテキスト</MenuItem>
                         </div>
                     )}
 
@@ -127,7 +127,7 @@ export const FontMenu: React.FC<FontMenuProps> = ({ editor }) => {
                             {colors.map(color => (
                                 <MenuItem 
                                     key={color.value}
-                                    onSelect={() => editor.chain().focus().setColor(color.value).run()}
+                                    onSelect={(e) => { e.preventDefault(); editor.chain().focus().setColor(color.value).run(); }}
                                 >
                                     <div className="flex items-center gap-2">
                                         <div className="w-4 h-4 rounded-full border border-gray-200 shadow-sm" style={{ backgroundColor: color.value }} />
@@ -143,7 +143,7 @@ export const FontMenu: React.FC<FontMenuProps> = ({ editor }) => {
                             {fontFamilies.map(font => (
                                 <MenuItem 
                                     key={font.value}
-                                    onSelect={() => editor.chain().focus().setFontFamily(font.value).run()}
+                                    onSelect={(e) => { e.preventDefault(); editor.chain().focus().setFontFamily(font.value).run(); }}
                                 >
                                     <span style={{ fontFamily: font.value }} className="text-[13px]">{font.name}</span>
                                 </MenuItem>

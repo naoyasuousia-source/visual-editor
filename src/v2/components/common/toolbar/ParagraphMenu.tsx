@@ -167,18 +167,18 @@ export const ParagraphMenu: React.FC<ParagraphMenuProps> = ({ editor }) => {
                             {expanded === 'paragraph-spacing' && (
                                 <>
                                     <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">段落下余白</div>
-                                    <MenuItem onSelect={() => applyParagraphSpacing('xs')}>極小</MenuItem>
-                                    <MenuItem onSelect={() => applyParagraphSpacing('s')}>標準</MenuItem>
-                                    <MenuItem onSelect={() => applyParagraphSpacing('m')}>やや広い</MenuItem>
-                                    <MenuItem onSelect={() => applyParagraphSpacing('l')}>広い</MenuItem>
+                                    <MenuItem onSelect={(e) => { e.preventDefault(); applyParagraphSpacing('xs'); }}>極小</MenuItem>
+                                    <MenuItem onSelect={(e) => { e.preventDefault(); applyParagraphSpacing('s'); }}>標準</MenuItem>
+                                    <MenuItem onSelect={(e) => { e.preventDefault(); applyParagraphSpacing('m'); }}>やや広い</MenuItem>
+                                    <MenuItem onSelect={(e) => { e.preventDefault(); applyParagraphSpacing('l'); }}>広い</MenuItem>
                                 </>
                             )}
                             {expanded === 'line-height' && (
                                 <>
                                     <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">行間</div>
-                                    <MenuItem onSelect={() => applyLineHeight('s')}>狭い</MenuItem>
-                                    <MenuItem onSelect={() => applyLineHeight('m')}>標準</MenuItem>
-                                    <MenuItem onSelect={() => applyLineHeight('l')}>広い</MenuItem>
+                                    <MenuItem onSelect={(e) => { e.preventDefault(); applyLineHeight('s'); }}>狭い</MenuItem>
+                                    <MenuItem onSelect={(e) => { e.preventDefault(); applyLineHeight('m'); }}>標準</MenuItem>
+                                    <MenuItem onSelect={(e) => { e.preventDefault(); applyLineHeight('l'); }}>広い</MenuItem>
                                 </>
                             )}
                         </div>

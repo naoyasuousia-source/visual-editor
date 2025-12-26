@@ -61,7 +61,7 @@ export const BaseDropdownMenu: React.FC<BaseDropdownMenuProps> = ({
  * メニューアイテム
  */
 interface MenuItemProps {
-    onSelect?: () => void;
+    onSelect?: (event: Event) => void;
     disabled?: boolean;
     shortcut?: string;
     className?: string;

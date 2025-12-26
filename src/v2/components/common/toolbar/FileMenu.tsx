@@ -137,13 +137,13 @@ export const FileMenu: React.FC<FileMenuProps> = ({ editor, prompt }) => {
                         </SubMenu>
 
                         <SubMenu trigger="余白">
-                            <MenuItem onSelect={() => setPageMargin('s')}>
+                            <MenuItem onSelect={(e) => { e.preventDefault(); setPageMargin('s'); }}>
                                 サイズ S
                             </MenuItem>
-                            <MenuItem onSelect={() => setPageMargin('m')}>
+                            <MenuItem onSelect={(e) => { e.preventDefault(); setPageMargin('m'); }}>
                                 サイズ M
                             </MenuItem>
-                            <MenuItem onSelect={() => setPageMargin('l')}>
+                            <MenuItem onSelect={(e) => { e.preventDefault(); setPageMargin('l'); }}>
                                 サイズ L
                             </MenuItem>
                         </SubMenu>
