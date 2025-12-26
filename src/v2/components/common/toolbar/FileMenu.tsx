@@ -1,10 +1,10 @@
 import React, { useRef } from 'react';
 import { Editor } from '@tiptap/react';
 import { ChevronDown } from 'lucide-react';
-import { BaseDropdownMenu, MenuItem, SubMenu, MenuSeparator } from '../../ui/BaseDropdownMenu';
-import { useAppStore } from '../../../store/useAppStore';
-import { useFileIO } from '../../../hooks/useFileIO';
-import { useImageInsert } from '../../../hooks/useImageInsert';
+import { BaseDropdownMenu, MenuItem, SubMenu, MenuSeparator } from '@/components/ui/BaseDropdownMenu';
+import { useAppStore } from '@/store/useAppStore';
+import { useFileIO } from '@/hooks/useFileIO';
+import { useImageInsert } from '@/hooks/useImageInsert';
 
 interface FileMenuProps {
     editor: Editor | null;
@@ -35,7 +35,7 @@ export const FileMenu: React.FC<FileMenuProps> = ({ editor, prompt }) => {
 
     const handleOpenHtml = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0 && editor) {
-            const { readTextFromFile, parseAndSetContent } = await import('../../../utils/io');
+            const { readTextFromFile, parseAndSetContent } = await import('@/utils/io');
             const { toggleWordMode } = useAppStore.getState();
             try {
                 const text = await readTextFromFile(e.target.files[0]);

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Editor } from '@tiptap/react';
 import { toast } from 'sonner';
-import { buildFullHTML } from '../utils/aiMetadata';
-import { parseAndSetContent, importDocxToEditor } from '../utils/io';
-import contentCssText from '../styles/content.css?raw';
+import { buildFullHTML } from '@/utils/aiMetadata';
+import { parseAndSetContent, importDocxToEditor } from '@/utils/io';
+import contentCssText from '@/styles/content.css?raw';
 
 /**
  * ファイル入出力を管理するカスタムフック

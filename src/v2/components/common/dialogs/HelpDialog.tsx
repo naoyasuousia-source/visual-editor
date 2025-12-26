@@ -1,6 +1,6 @@
 import React from 'react';
-import { BaseDialog } from '../../ui/BaseDialog';
-import { useAppStore } from '../../../store/useAppStore';
+import { BaseDialog } from '@/components/ui/BaseDialog';
+import { useAppStore } from '@/components/../store/useAppStore';
 import { User, Download, FileText } from 'lucide-react';
 
 interface HelpDialogProps {

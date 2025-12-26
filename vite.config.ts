@@ -28,6 +28,11 @@ export default defineConfig(({ command }) => ({
       },
     }) : null, */
   ],
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src/v2'),
+    },
+  },
   base: './', // GitHub Pages用。リポジトリ名が決まっている場合は '/repo-name/' でも良い
   build: {
     outDir: 'dist',

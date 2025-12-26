@@ -12,37 +12,37 @@ import Highlight from '@tiptap/extension-highlight';
 import FontFamily from '@tiptap/extension-font-family';
 import { Toaster } from 'sonner';
 
-import { PageExtension } from '../lib/PageExtension';
-import { ParagraphNumbering } from '../lib/ParagraphNumbering';
-import { StyleAttributes } from '../lib/StyleAttributes';
-import { Pagination } from '../lib/Pagination';
-import { CustomImage } from '../lib/CustomImage';
+import { PageExtension } from '@/lib/pageExtension';
+import { ParagraphNumbering } from '@/lib/paragraphNumbering';
+import { StyleAttributes } from '@/lib/styleAttributes';
+import { Pagination } from '@/lib/pagination';
+import { CustomImage } from '@/lib/customImage';
 
-import { Toolbar } from '../components/features/Toolbar';
-import { HelpDialog } from '../components/common/dialogs/HelpDialog';
-import { SubHelpDialog } from '../components/common/dialogs/SubHelpDialog';
-import { BrowserWarningDialog } from '../components/common/dialogs/BrowserWarningDialog';
-import { DonateDialog } from '../components/common/dialogs/DonateDialog';
-import { ImageBubbleMenu } from '../components/common/editor-menus/ImageBubbleMenu';
-import { ImageContextMenu } from '../components/common/editor-menus/ImageContextMenu';
-import { LinkBubbleMenu } from '../components/common/editor-menus/LinkBubbleMenu';
-import { LinkDialog } from '../components/common/dialogs/LinkDialog';
-import { ImageTitleDialog } from '../components/common/dialogs/ImageTitleDialog';
-import { ImageCaptionDialog } from '../components/common/dialogs/ImageCaptionDialog';
-import { ImageTagDialog } from '../components/common/dialogs/ImageTagDialog';
-import { ParagraphJumpDialog } from '../components/common/dialogs/ParagraphJumpDialog';
-import { PageNavigator } from '../components/features/PageNavigator';
-import { AIImageIndex } from '../components/features/AIImageIndex';
+import { Toolbar } from '@/components/features/Toolbar';
+import { HelpDialog } from '@/components/common/dialogs/HelpDialog';
+import { SubHelpDialog } from '@/components/common/dialogs/SubHelpDialog';
+import { BrowserWarningDialog } from '@/components/common/dialogs/BrowserWarningDialog';
+import { DonateDialog } from '@/components/common/dialogs/DonateDialog';
+import { ImageBubbleMenu } from '@/components/common/editor-menus/ImageBubbleMenu';
+import { ImageContextMenu } from '@/components/common/editor-menus/ImageContextMenu';
+import { LinkBubbleMenu } from '@/components/common/editor-menus/LinkBubbleMenu';
+import { LinkDialog } from '@/components/common/dialogs/LinkDialog';
+import { ImageTitleDialog } from '@/components/common/dialogs/ImageTitleDialog';
+import { ImageCaptionDialog } from '@/components/common/dialogs/ImageCaptionDialog';
+import { ImageTagDialog } from '@/components/common/dialogs/ImageTagDialog';
+import { ParagraphJumpDialog } from '@/components/common/dialogs/ParagraphJumpDialog';
+import { PageNavigator } from '@/components/features/PageNavigator';
+import { AIImageIndex } from '@/components/features/AIImageIndex';
 
-import { useAppStore } from '../store/useAppStore';
-import { usePageOperations } from '../hooks/usePageOperations';
-import { useBrowserCheck } from '../hooks/useBrowserCheck';
-import { useIMEControl } from '../hooks/useIMEControl';
-import { usePasteControl } from '../hooks/usePasteControl';
-import { useDialogs } from '../hooks/useDialogs';
-import { useImageIndex } from '../hooks/useImageIndex';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { PromptDialog } from '../components/ui/PromptDialog';
+import { useAppStore } from '@/store/useAppStore';
+import { usePageOperations } from '@/hooks/usePageOperations';
+import { useBrowserCheck } from '@/hooks/useBrowserCheck';
+import { useIMEControl } from '@/hooks/useIMEControl';
+import { usePasteControl } from '@/hooks/usePasteControl';
+import { useDialogs } from '@/hooks/useDialogs';
+import { useImageIndex } from '@/hooks/useImageIndex';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { PromptDialog } from '@/components/ui/PromptDialog';
 
 export const EditorV3 = () => {
     // Global Store

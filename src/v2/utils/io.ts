@@ -1,7 +1,7 @@
 
 import { Editor } from '@tiptap/react';
 import mammoth from 'mammoth';
-import contentCssText from '../styles/content.css?raw'; // Import CSS as raw string
+import contentCssText from '@/styles/content.css?raw'; // Import CSS as raw string
 
 /**
  * Reads text from a File object.
@@ -81,7 +81,7 @@ export async function importDocxToEditor(editor: Editor, file: File): Promise<vo
         const arrayBuffer = await file.arrayBuffer();
         const options = {
             styleMap: ["u => u"],
-            convertImage: mammoth.images.inline(() => ({})) // Skip images
+            convertImage: (mammoth.images as any).inline(() => ({})) // Skip images
         };
 
         const result = await mammoth.convertToHtml({ arrayBuffer }, options);

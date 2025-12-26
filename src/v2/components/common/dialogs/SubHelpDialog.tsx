@@ -1,6 +1,6 @@
 import React from 'react';
-import { useAppStore } from '../../../store/useAppStore';
-import { HELP_CONTENT } from '../../../constants/help-info';
+import { useAppStore } from '@/components/../store/useAppStore';
+import { HELP_CONTENT } from '@/components/../constants/help-info';
 import { X, FileText } from 'lucide-react';
 
 export const SubHelpDialog: React.FC = () => {
