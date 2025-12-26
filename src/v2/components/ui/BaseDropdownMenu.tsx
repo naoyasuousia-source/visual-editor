@@ -89,14 +89,16 @@ export const MenuItem: React.FC<MenuItemProps> = ({ onSelect, disabled, shortcut
 interface SubMenuProps {
     trigger: React.ReactNode;
     children: React.ReactNode;
+    className?: string;
+    hideChevron?: boolean;
 }
 
-export const SubMenu: React.FC<SubMenuProps> = ({ trigger, children }) => {
+export const SubMenu: React.FC<SubMenuProps> = ({ trigger, children, className, hideChevron }) => {
     return (
         <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="relative flex items-center justify-between px-4 py-1.5 text-sm outline-none cursor-pointer select-none rounded hover:bg-gray-100 data-[state=open]:bg-gray-100 transition-colors">
+            <DropdownMenu.SubTrigger className={`relative flex items-center gap-2 px-4 py-1.5 text-sm outline-none cursor-pointer select-none rounded hover:bg-gray-100 data-[state=open]:bg-gray-100 transition-colors ${className || ''}`}>
                 <span>{trigger}</span>
-                <ChevronRight className="w-3 h-3 text-gray-400 ml-auto" />
+                {!hideChevron && <ChevronRight className="w-3 h-3 text-gray-400 ml-auto" />}
             </DropdownMenu.SubTrigger>
             <DropdownMenu.Portal>
                 <DropdownMenu.SubContent
