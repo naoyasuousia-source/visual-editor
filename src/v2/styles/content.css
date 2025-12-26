@@ -5,6 +5,14 @@
   --tab-width: 0px;
 }
 
+/* Tiptap ProseMirror Container - v1の#pages-containerと同じレイアウト */
+.ProseMirror {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
 /* A4ページ */
 section.page {
   position: relative;

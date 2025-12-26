@@ -158,10 +158,7 @@ export const EditorV3 = () => {
                                 <LinkBubbleMenu editor={editor} onEdit={() => openDialog('link')} />
                                 <AIImageIndex editor={editor} />
                                 <ImageContextMenu editor={editor}>
-                                    <EditorContent 
-                                        editor={editor} 
-                                        className="flex flex-col items-center gap-6"
-                                    />
+                                    <EditorContent editor={editor} />
                                 </ImageContextMenu>
                             </>
                         )}
