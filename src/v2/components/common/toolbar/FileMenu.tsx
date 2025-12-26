@@ -35,7 +35,7 @@ export const FileMenu: React.FC<FileMenuProps> = ({ editor, prompt }) => {
 
     const handleOpenHtml = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0 && editor) {
-            const { readTextFromFile, parseAndSetContent } = await import('../../utils/io');
+            const { readTextFromFile, parseAndSetContent } = await import('../../../utils/io');
             const { toggleWordMode } = useAppStore.getState();
             try {
                 const text = await readTextFromFile(e.target.files[0]);
