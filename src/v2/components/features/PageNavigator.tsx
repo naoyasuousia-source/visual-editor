@@ -38,9 +38,7 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
                 miniature.className = "bg-white shadow-sm border border-gray-200 origin-top overflow-hidden select-none pointer-events-none w-[160px] h-[226px] transition-all duration-200 relative";
                 
                 if (index === activePageIndex) {
-                    miniature.className += ' ring-4 ring-blue-400 ring-offset-1 rounded-sm opacity-100';
-                } else {
-                    miniature.className += ' opacity-60 group-hover:opacity-100';
+                    miniature.className += ' ring-4 ring-blue-400 ring-offset-1 rounded-sm';
                 }
 
                 // Clone the WHOLE page element (section.page) to get a perfect miniature
@@ -114,6 +112,9 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
         const editorElement = editor.view.dom as HTMLElement;
         if (!editorElement) return;
 
+        let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+        let pendingIndex: number = -1;
+
         const observer = new IntersectionObserver((entries) => {
             // ジャンプ中はスクロール追跡をスキップ
             if (isJumpingRef.current) return;
@@ -129,8 +130,16 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
                 }
             });
 
-            if (maxIndex !== -1) setActivePageIndex(maxIndex);
-        }, { threshold: [0.1, 0.5] });
+            if (maxIndex !== -1 && maxIndex !== pendingIndex) {
+                pendingIndex = maxIndex;
+                
+                // デバウンス: 連続したスクロールでの往復を防ぐ
+                if (debounceTimer) clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    setActivePageIndex(pendingIndex);
+                }, 100);
+            }
+        }, { threshold: [0.2, 0.4, 0.6] });
 
         const initObserver = () => {
             editorElement.querySelectorAll('section.page').forEach(page => observer.observe(page));
