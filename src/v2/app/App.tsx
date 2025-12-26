@@ -19,6 +19,7 @@ import { Pagination } from '@/lib/pagination';
 import { CustomImage } from '@/lib/customImage';
 import { FirstParagraphProtection } from '@/lib/firstParagraphProtection';
 import { CustomDocument } from '@/lib/customDocument';
+import { CrossPageMerge } from '@/lib/crossPageMerge';
 
 import { Toolbar } from '@/components/features/Toolbar';
 import { HelpDialog } from '@/components/common/dialogs/HelpDialog';
@@ -92,6 +93,7 @@ export const EditorV3 = () => {
             StyleAttributes,
             Pagination,
             FirstParagraphProtection,
+            CrossPageMerge,
         ],
         content: `
       <section class="page" data-page="1">

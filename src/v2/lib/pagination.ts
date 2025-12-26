@@ -60,22 +60,16 @@ export const Pagination = Extension.create({
                                     
                                     // Check if next node is a page
                                     if (!nextNode || nextNode.type.name !== 'page') {
-                                        // Create new page with initial paragraph
+                                        // Create new page with the overflowed content
                                         console.log(`Creating new page ${i + 2}`);
                                         
-                                        // Create empty paragraph for the new page
-                                        const emptyParagraph = state.schema.nodes.paragraph.create();
-                                        
-                                        // Create new page with the empty paragraph
+                                        // Create new page with the last child as its content
                                         const newPage = state.schema.nodes.page.create(
                                             { 'data-page': String(i + 2) },
-                                            emptyParagraph
+                                            lastChild
                                         );
                                         
                                         tr = tr.insert(nextPagePos, newPage);
-                                        
-                                        // Move the overflowed content to the new page (after the empty paragraph)
-                                        tr = tr.insert(nextPagePos + 3, lastChild);
                                     } else {
                                         // Move to existing next page
                                         tr = tr.insert(nextPagePos + 2, lastChild);
