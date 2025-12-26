@@ -1,8 +1,9 @@
-import React from 'react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { useAppStore } from '@/store/useAppStore';
 
 interface BaseDropdownMenuProps {
+    id?: string;
     trigger: React.ReactNode;
     children: React.ReactNode;
     align?: 'start' | 'center' | 'end';
@@ -17,13 +18,29 @@ interface BaseDropdownMenuProps {
  * - Tailwind CSSで完全スタイル制御
  */
 export const BaseDropdownMenu: React.FC<BaseDropdownMenuProps> = ({
+    id,
     trigger,
     children,
     align = 'start'
 }) => {
+    const { activeMenu, setActiveMenu } = useAppStore();
+    const isOpen = id ? activeMenu === id : undefined;
+
+    const handleOpenChange = (open: boolean) => {
+        if (id) {
+            setActiveMenu(open ? id : null);
+        }
+    };
+
+    const handleMouseEnter = () => {
+        if (id && activeMenu === null) {
+            setActiveMenu(id);
+        }
+    };
+
     return (
-        <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
+        <DropdownMenu.Root open={isOpen} onOpenChange={handleOpenChange}>
+            <DropdownMenu.Trigger asChild onMouseEnter={handleMouseEnter}>
                 {trigger}
             </DropdownMenu.Trigger>
 
@@ -47,13 +64,14 @@ interface MenuItemProps {
     onSelect?: () => void;
     disabled?: boolean;
     shortcut?: string;
+    className?: string;
     children: React.ReactNode;
 }
 
-export const MenuItem: React.FC<MenuItemProps> = ({ onSelect, disabled, shortcut, children }) => {
+export const MenuItem: React.FC<MenuItemProps> = ({ onSelect, disabled, shortcut, className, children }) => {
     return (
         <DropdownMenu.Item
-            className="relative flex items-center justify-between px-4 py-1.5 text-sm outline-none cursor-pointer select-none rounded hover:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors"
+            className={`relative flex items-center justify-between px-4 py-1.5 text-sm outline-none cursor-pointer select-none rounded hover:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors ${className || ''}`}
             onSelect={onSelect}
             disabled={disabled}
         >
@@ -89,6 +107,30 @@ export const SubMenu: React.FC<SubMenuProps> = ({ trigger, children }) => {
                 </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
         </DropdownMenu.Sub>
+    );
+};
+
+/**
+ * チェックボックス付きメニューアイテム
+ */
+interface MenuCheckboxItemProps {
+    checked?: boolean;
+    onCheckedChange?: (checked: boolean) => void;
+    children: React.ReactNode;
+}
+
+export const MenuCheckboxItem: React.FC<MenuCheckboxItemProps> = ({ checked, onCheckedChange, children }) => {
+    return (
+        <DropdownMenu.CheckboxItem
+            className="relative flex items-center px-4 py-1.5 text-sm outline-none cursor-pointer select-none rounded hover:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors pl-8"
+            checked={checked}
+            onCheckedChange={onCheckedChange}
+        >
+            <DropdownMenu.ItemIndicator className="absolute left-2 flex items-center justify-center">
+                <Check className="w-3.5 h-3.5 text-blue-600" />
+            </DropdownMenu.ItemIndicator>
+            {children}
+        </DropdownMenu.CheckboxItem>
     );
 };
 

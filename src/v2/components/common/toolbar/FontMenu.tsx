@@ -7,17 +7,17 @@ interface FontMenuProps {
     editor: Editor | null;
 }
 
-const fonts = [
-    'serif',
-    'sans-serif', 
-    'monospace',
-    'cursive',
-    'fantasy',
-    'system-ui',
-    'ui-serif',
-    'ui-sans-serif',
-    'ui-monospace',
-    'ui-rounded'
+const fontFamilies = [
+    { name: '游ゴシック', value: '"Yu Gothic", "YuGothic", sans-serif' },
+    { name: '游明朝', value: '"Yu Mincho", "YuMincho", serif' },
+    { name: 'メイリオ', value: 'Meiryo, sans-serif' },
+    { name: 'BIZ UDゴシック', value: '"BIZ UDGothic", "BIZ UDゴシック", sans-serif' },
+    { name: 'BIZ UD明朝', value: '"BIZ UDMincho", "BIZ UD明朝", serif' },
+    { name: 'Noto Sans JP', value: '"Noto Sans JP", sans-serif' },
+    { name: 'Noto Serif JP', value: '"Noto Serif JP", serif' },
+    { name: 'Arial', value: 'Arial, sans-serif' },
+    { name: 'Times New Roman', value: '"Times New Roman", serif' },
+    { name: 'Courier New', value: '"Courier New", monospace' },
 ];
 
 const colors = [
@@ -31,21 +31,17 @@ const colors = [
 
 /**
  * フォントメニュー（Radix UI版）
- * 
- * 【改善点】
- * - Radix Dropdown Menuで完全置き換え
- * - ロジックはすべてTiptapのコマンドを使用
- * - 直接DOM操作なし
  */
 export const FontMenu: React.FC<FontMenuProps> = ({ editor }) => {
     if (!editor) return null;
 
     return (
         <BaseDropdownMenu
+            id="font"
             trigger={
                 <button
                     type="button"
-                    className="px-2 py-1 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center gap-1 text-sm h-[32px]"
+                    className="px-2 py-1 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center gap-1 text-sm h-[36px]"
                 >
                     フォント <ChevronDown className="w-3 h-3" />
                 </button>
@@ -64,14 +60,8 @@ export const FontMenu: React.FC<FontMenuProps> = ({ editor }) => {
                 <MenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
                     見出し3
                 </MenuItem>
-                <MenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}>
-                    見出し4
-                </MenuItem>
-                <MenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 5 }).run()}>
-                    見出し5
-                </MenuItem>
                 <MenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 6 }).run()}>
-                    見出し6
+                    サブテキスト
                 </MenuItem>
             </SubMenu>
 
@@ -93,14 +83,22 @@ export const FontMenu: React.FC<FontMenuProps> = ({ editor }) => {
             </SubMenu>
 
             <SubMenu trigger="フォントファミリー">
-                {fonts.map(font => (
-                    <MenuItem 
-                        key={font}
-                        onSelect={() => editor.chain().focus().setFontFamily(font).run()}
-                    >
-                        <span style={{ fontFamily: font }}>{font}</span>
-                    </MenuItem>
-                ))}
+                <div className="flex flex-col gap-1 p-1">
+                    {fontFamilies.map(font => (
+                        <MenuItem 
+                            key={font.value}
+                            onSelect={() => editor.chain().focus().setFontFamily(font.value).run()}
+                            className="px-2 py-1.5 outline-none rounded hover:bg-gray-100 cursor-default"
+                        >
+                            <span 
+                                className="text-[13px] text-gray-700"
+                                style={{ fontFamily: font.value }}
+                            >
+                                {font.name}
+                            </span>
+                        </MenuItem>
+                    ))}
+                </div>
             </SubMenu>
         </BaseDropdownMenu>
     );

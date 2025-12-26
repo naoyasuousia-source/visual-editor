@@ -19,10 +19,11 @@ export const ParagraphMenu: React.FC<ParagraphMenuProps> = ({ editor }) => {
 
     return (
         <BaseDropdownMenu
+            id="paragraph"
             trigger={
                 <button
                     type="button"
-                    className="px-2 py-1 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center gap-1 text-sm h-[32px]"
+                    className="px-2 py-1 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center gap-1 text-sm h-[36px]"
                 >
                     段落 <ChevronDown className="w-3 h-3" />
                 </button>

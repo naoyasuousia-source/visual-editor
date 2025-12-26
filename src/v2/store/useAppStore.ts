@@ -21,6 +21,10 @@ interface AppState {
     openDialog: (dialogId: string) => void;
     closeDialog: () => void;
 
+    // Menus
+    activeMenu: string | null;
+    setActiveMenu: (menuId: string | null) => void;
+
     // Sidebar
     isSidebarOpen: boolean;
     toggleSidebar: () => void;
@@ -53,6 +57,10 @@ export const useAppStore = create<AppState>((set) => ({
     activeDialog: null,
     openDialog: (dialogId) => set({ activeDialog: dialogId }),
     closeDialog: () => set({ activeDialog: null }),
+
+    // Menus
+    activeMenu: null,
+    setActiveMenu: (menuId) => set({ activeMenu: menuId }),
 
     // Sidebar
     isSidebarOpen: true,

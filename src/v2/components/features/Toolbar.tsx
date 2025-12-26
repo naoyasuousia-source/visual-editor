@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { FileMenu } from '@/components/common/toolbar/FileMenu';
+import { ViewMenu } from '@/components/common/toolbar/ViewMenu';
 import { ParagraphMenu } from '@/components/common/toolbar/ParagraphMenu';
 import { FontMenu } from '@/components/common/toolbar/FontMenu';
 import { HighlightMenu } from '@/components/common/toolbar/HighlightMenu';
@@ -46,8 +47,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         toggleSidebar
     } = useAppStore();
 
-    const [activeMenu, setActiveMenu] = useState<string | null>(null);
-    const { jumpTo } = useJumpNavigation(editor, isWordMode);
     const { toggleParagraphNumbers } = useParagraphNumberToggle();
 
     if (!editor) return null;
@@ -59,12 +58,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     const toggleSuperscript = () => editor.chain().focus().toggleSuperscript().run();
     const toggleSubscript = () => editor.chain().focus().toggleSubscript().run();
 
-    const closeAllMenus = () => setActiveMenu(null);
-    const toggleMenu = (menu: string) => setActiveMenu(activeMenu === menu ? null : menu);
-
     const btnBase = "p-1.5 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center justify-center min-w-[36px] h-[36px]";
     const btnActive = "bg-gray-200 border-gray-300 shadow-inner";
-    const dropdownTrigger = "px-2 py-1 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center gap-1 text-sm h-[36px]";
 
     return (
         <div className="sticky top-0 w-full z-50 bg-[#f8f9fa] border-b border-gray-300 shadow-sm p-2 flex items-center gap-2 flex-wrap">
@@ -77,29 +72,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <FileMenu editor={editor} prompt={prompt} />
 
             {/* View Menu */}
-            {!isWordMode && (
-                <div className="relative">
-                    <button
-                        type="button"
-                        className={dropdownTrigger}
-                        onClick={() => toggleMenu('view')}
-                    >
-                        表示 <ChevronDown className="w-3 h-3" />
-                    </button>
-                    {activeMenu === 'view' && (
-                        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 shadow-xl rounded py-1 min-w-[160px] z-[2000]">
-                            <label className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm gap-2">
-                                <input type="checkbox" defaultChecked onChange={(e) => document.body.classList.toggle('hide-page-numbers', !e.target.checked)} />
-                                ページ番号
-                            </label>
-                            <label className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm gap-2">
-                                <input type="checkbox" defaultChecked onChange={(e) => document.body.classList.toggle('hide-para-numbers', !e.target.checked)} />
-                                段落番号
-                            </label>
-                        </div>
-                    )}
-                </div>
-            )}
+            {!isWordMode && <ViewMenu />}
 
             {/* Formatting Group - Flattened and Equally Spaced */}
             <div className="flex items-center gap-1.5 ml-1.5">
@@ -230,7 +203,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
                 <button 
                     type="button" 
-                    onClick={() => { closeAllMenus(); openDialog('donate'); }}
+                    onClick={() => openDialog('donate')}
                     className="flex items-center gap-1.5 px-3 py-1 rounded bg-[#fff0b3] border border-[#ffe066] text-[#b37400] text-xs font-bold hover:bg-[#ffe680] transition-all h-[36px] shadow-sm ml-1"
                 >
                     <Heart className="w-3.5 h-3.5 fill-[#f59f00] text-[#f59f00]" />
@@ -239,7 +212,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 
                 <button 
                     type="button" 
-                    onClick={() => { closeAllMenus(); openDialog('help'); }}
+                    onClick={() => openDialog('help')}
                     className="w-[36px] h-[36px] flex items-center justify-center rounded-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-600 transition-colors shadow-sm ml-1"
                 >
                     <HelpCircle className="w-5 h-5" />

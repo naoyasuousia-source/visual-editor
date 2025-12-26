@@ -33,10 +33,11 @@ export const HighlightMenu: React.FC<HighlightMenuProps> = ({ editor }) => {
 
     return (
         <BaseDropdownMenu
+            id="highlight"
             trigger={
                 <button
                     type="button"
-                    className="px-2 py-1 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center gap-1 text-sm h-[32px]"
+                    className="px-2 py-1 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center gap-1 text-sm h-[36px]"
                 >
                     <Highlighter className="w-4 h-4" />
                     <ChevronDown className="w-3 h-3" />
@@ -101,8 +102,16 @@ export const HighlightMenu: React.FC<HighlightMenuProps> = ({ editor }) => {
                 </Popover.Portal>
             </Popover.Root>
 
-            <MenuItem onSelect={() => editor.chain().focus().unsetHighlight().run()}>
-                ハイライト解除
+            <div className="h-px bg-gray-100 my-1" />
+            
+            <MenuItem 
+                onSelect={() => editor.chain().focus().unsetHighlight().run()}
+                className="mt-1 mx-1 px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-bold rounded flex items-center justify-center border border-transparent hover:border-red-200 transition-all"
+            >
+                <span className="flex items-center gap-2">
+                    <Highlighter className="w-4 h-4 opacity-70" />
+                    ハイライト解除
+                </span>
             </MenuItem>
         </BaseDropdownMenu>
     );
