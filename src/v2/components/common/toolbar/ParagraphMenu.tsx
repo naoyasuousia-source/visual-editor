@@ -2,6 +2,7 @@ import React from 'react';
 import { Editor } from '@tiptap/react';
 import { ChevronDown } from 'lucide-react';
 import { BaseDropdownMenu, MenuItem, SubMenu } from '@/components/ui/BaseDropdownMenu';
+import { useFormattingActions } from '@/hooks/useFormattingActions';
 
 interface ParagraphMenuProps {
     editor: Editor | null;
@@ -9,8 +10,11 @@ interface ParagraphMenuProps {
 
 /**
  * 段落メニュー（Radix UI版）
+ * useFormattingActionsを使用してロジックを分離
  */
 export const ParagraphMenu: React.FC<ParagraphMenuProps> = ({ editor }) => {
+    const { changeIndent, applyLineHeight, applyParagraphSpacing } = useFormattingActions(editor);
+
     if (!editor) return null;
 
     return (
@@ -37,46 +41,40 @@ export const ParagraphMenu: React.FC<ParagraphMenuProps> = ({ editor }) => {
             </SubMenu>
 
             <SubMenu trigger="インデント">
-                <MenuItem onSelect={() => {
-                    // インデント追加ロジック（後でフックに移動）
-                    const currentIndent = editor.getAttributes('paragraph').indent || 0;
-                    editor.chain().focus().updateAttributes('paragraph', {
-                        indent: Math.min(currentIndent + 1, 5)
-                    }).run();
-                }}>
+                <MenuItem onSelect={() => changeIndent(1)}>
                     インデント追加
                 </MenuItem>
-                <MenuItem onSelect={() => {
-                    // インデント削除ロジック（後でフックに移動）
-                    const currentIndent = editor.getAttributes('paragraph').indent || 0;
-                    editor.chain().focus().updateAttributes('paragraph', {
-                        indent: Math.max(currentIndent - 1, 0)
-                    }).run();
-                }}>
+                <MenuItem onSelect={() => changeIndent(-1)}>
                     インデント削除
                 </MenuItem>
             </SubMenu>
 
-            <SubMenu trigger="行間">
-                <MenuItem onSelect={() => {
-                    editor.chain().focus().updateAttributes('paragraph', {
-                        lineHeight: 'normal'
-                    }).run();
-                }}>
-                    標準
+            <SubMenu trigger="段落間隔">
+                <MenuItem onSelect={() => applyParagraphSpacing('xs')}>
+                    XS
                 </MenuItem>
-                <MenuItem onSelect={() => {
-                    editor.chain().focus().updateAttributes('paragraph', {
-                        lineHeight: 'tight'
-                    }).run();
-                }}>
+                <MenuItem onSelect={() => applyParagraphSpacing('s')}>
+                    S（標準）
+                </MenuItem>
+                <MenuItem onSelect={() => applyParagraphSpacing('m')}>
+                    M
+                </MenuItem>
+                <MenuItem onSelect={() => applyParagraphSpacing('l')}>
+                    L
+                </MenuItem>
+                <MenuItem onSelect={() => applyParagraphSpacing('xl')}>
+                    XL
+                </MenuItem>
+            </SubMenu>
+
+            <SubMenu trigger="行間">
+                <MenuItem onSelect={() => applyLineHeight('s')}>
                     狭い
                 </MenuItem>
-                <MenuItem onSelect={() => {
-                    editor.chain().focus().updateAttributes('paragraph', {
-                        lineHeight: 'loose'
-                    }).run();
-                }}>
+                <MenuItem onSelect={() => applyLineHeight('m')}>
+                    標準
+                </MenuItem>
+                <MenuItem onSelect={() => applyLineHeight('l')}>
                     広い
                 </MenuItem>
             </SubMenu>

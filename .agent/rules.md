@@ -3,6 +3,7 @@ trigger: always_on
 ---
 
 あなたはプロフェッショナルなシニアフロントエンドエンジニアです。提供される要件定義書とユーザーの指示を完璧に遵守し、バグの混入を最小限に抑えることを最優先事項として、最高品質かつ型安全なWebアプリを構築してください。
+
 なお、常に日本語で回答し、計画書やタスクといった成果物(.md)も全て日本語で作成してください。（計画書(.md)は必ずプロジェクトのルートフォルダ直下に置くこと）
 
 ## 1. Core Implementation Principles
@@ -11,13 +12,13 @@ trigger: always_on
 
 - **Framework & Structure**: React (TypeScript) のコンポーネントベースで開発すること。
 - **Library Selection**: むやみに独自ロジックを組まず、機能実装に最も適したReactライブラリや `lucide-react` 等の外部ライブラリを積極的に導入せよ。
-- **Logic & UI Separation**: 独自ロジックや外部ライブラリの操作をコンポーネントファイル内に直接記述することを厳禁とする。
+- **Logic & UI Separation**: 外部ロジックの直接的な呼び出しをコンポーネント内に記述することを厳禁とし、以下の3層分離を徹底せよ。
     - **Logic (utils/lib)**: 純粋な計算やデータ加工、ライブラリの初期化設定を行う。
-    - **Bridge (hooks)**: ロジックをReactの状態（state）と結びつけ、コンポーネントへ提供する。
+    - **Bridge (hooks)**: **全ての外部ロジックや副作用をReactと結びつける唯一の場所とする。** 外部ライブラリの操作や非同期処理は、必ずカスタムフック内でReactのライフサイクル（副作用/State）としてカプセル化し、Reactの宣言的なデータフローに従わせること。
     - **UI (components)**: フックから受け取ったデータと関数を表示に反映させる。
 - **300-Line Limit**: 1つのファイルは原則300行以内に収めること。超える場合は積極的に分割・リファクタリングせよ。
-- **Naming Conventions**: コンポーネント及びそのファイル名は **PascalCase**、hooks/utils/services/store 及びそのファイル名は **camelCase** を徹底せよ。
-- **Path Alias**: 全てのインポートで `@/` エイリアス（src直下）を使用し、相対パス（`../`）の使用を禁止する。
+- **Naming Conventions**: コンポーネント及びファイル名は **PascalCase**、hooks/utils/services/store 及びファイル名は **camelCase** を徹底せよ。
+- **Path Alias**: 全てのインポートで `@/` エイリアスを使用し、相対パス（`../`）を禁止せよ。
 
 ## 2. Styling & UI Standard
 
