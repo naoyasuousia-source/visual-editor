@@ -32,32 +32,27 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
                 // Thumbnail container
                 const thumb = document.createElement('div');
                 thumb.className = `relative mb-6 cursor-pointer group transition-all duration-200 transform hover:scale-[1.02]`;
-                if (index === activePageIndex) {
-                    thumb.className += ' ring-4 ring-blue-400 ring-offset-2 rounded-sm';
-                } else {
-                    thumb.className += ' opacity-80 hover:opacity-100';
-                }
-
                 // Miniature page (scaled down)
                 const miniature = document.createElement('div');
-                miniature.className = "bg-white shadow-md border border-gray-200 origin-top overflow-hidden select-none pointer-events-none w-[180px] h-[254px]";
+                miniature.className = "bg-white shadow-sm border border-gray-200 origin-top overflow-hidden select-none pointer-events-none w-[160px] h-[226px] transition-all duration-200";
                 
+                if (index === activePageIndex) {
+                    miniature.className += ' ring-4 ring-blue-400 ring-offset-1 rounded-sm opacity-100';
+                } else {
+                    miniature.className += ' opacity-60 group-hover:opacity-100';
+                }
+
                 const inner = page.querySelector('.page-inner');
                 if (inner) {
                     const clone = inner.cloneNode(true) as HTMLElement;
                     clone.removeAttribute('contenteditable');
-                    clone.className += " scale-[0.2] origin-top-left w-[210mm] h-[297mm]";
+                    // Calculate scale: 160px / 210mm (~793.7px) = 0.2016...
+                    clone.className += " scale-[0.202] origin-top-left w-[210mm] h-[297mm]";
                     clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
                     miniature.appendChild(clone);
                 }
 
-                // Page number badge
-                const label = document.createElement('div');
-                label.className = "absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded";
-                label.textContent = `PAGE ${pageNum}`;
-
                 thumb.appendChild(miniature);
-                thumb.appendChild(label);
 
                 thumb.onclick = () => {
                     page.scrollIntoView({ behavior: 'smooth', block: 'start' });
