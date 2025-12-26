@@ -1,11 +1,10 @@
 import { Editor } from '@tiptap/react';
-import { getEffectiveTextRange } from '@/utils/selectionState';
 
 /**
  * Formatting Actions Hook
  * 
- * Based on v1's formatting.ts, provides advanced formatting operations
- * that go beyond Tiptap's built-in commands.
+ * Based on v1's formatting.ts, but using Tiptap commands instead of DOM manipulation.
+ * All formatting is stored in Tiptap's document state for persistence.
  */
 
 const PARAGRAPH_SPACING_SIZES = ['xs', 's', 'm', 'l', 'xl'] as const;
@@ -15,41 +14,7 @@ type ParagraphSpacingSize = typeof PARAGRAPH_SPACING_SIZES[number];
 type LineHeightSize = typeof LINE_HEIGHT_SIZES[number];
 
 /**
- * Get paragraphs intersecting with current selection
- */
-function getParagraphsInRange(editor: Editor | null): HTMLElement[] {
-    if (!editor) return [];
-    
-    const editorElement = editor.view.dom as HTMLElement;
-    const selection = window.getSelection();
-    
-    if (!selection || !selection.rangeCount) return [];
-    
-    const range = selection.getRangeAt(0);
-    
-    // If collapsed, get current paragraph only
-    if (range.collapsed) {
-        let node = selection.anchorNode;
-        while (node && node !== editorElement) {
-            if (node.nodeType === Node.ELEMENT_NODE && 
-                /^(p|h[1-6])$/i.test((node as Element).tagName)) {
-                return [node as HTMLElement];
-            }
-            node = node.parentNode;
-        }
-        return [];
-    }
-    
-    // Get all paragraphs intersecting the range
-    const selector = 'p, h1, h2, h3, h4, h5, h6';
-    const allParagraphs = Array.from(editorElement.querySelectorAll<HTMLElement>(selector));
-    
-    return allParagraphs.filter(p => range.intersectsNode(p));
-}
-
-/**
- * Apply paragraph spacing (間隔調整)
- * Based on v1's applyParagraphSpacing function
+ * Apply paragraph spacing using Tiptap's class attribute
  */
 export function applyParagraphSpacing(
     editor: Editor | null, 
@@ -57,78 +22,92 @@ export function applyParagraphSpacing(
 ): void {
     if (!editor || !size || !PARAGRAPH_SPACING_SIZES.includes(size)) return;
     
-    const paragraphs = getParagraphsInRange(editor);
-    if (paragraphs.length === 0) return;
+    const { state } = editor;
+    const { from, to } = state.selection;
     
-    paragraphs.forEach(paragraph => {
-        // Remove all existing spacing classes
-        PARAGRAPH_SPACING_SIZES.forEach(sz => {
-            paragraph.classList.remove(`inline-spacing-${sz}`);
-        });
-        
-        // Apply new spacing (except 's' which is default)
-        if (size !== 's') {
-            paragraph.classList.add(`inline-spacing-${size}`);
+    // Find all paragraph/heading nodes in selection
+    state.doc.nodesBetween(from, to, (node, pos) => {
+        if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+            const currentClass = node.attrs.class || '';
+            
+            // Remove all spacing classes
+            let newClass = currentClass;
+            PARAGRAPH_SPACING_SIZES.forEach(sz => {
+                newClass = newClass.replace(new RegExp(`\\s*inline-spacing-${sz}\\s*`, 'g'), ' ');
+            });
+            
+            // Add new spacing (except 's' which is default)
+            if (size !== 's') {
+                newClass = `${newClass} inline-spacing-${size}`.trim();
+            }
+            
+            newClass = newClass.trim();
+            
+            // Update via Tiptap transaction
+            editor.commands.updateAttributes(node.type.name, { class: newClass });
         }
     });
 }
 
 /**
- * Get current indent level from paragraph
+ * Get current indent level from node attributes
  */
-function getIndentLevel(paragraph: HTMLElement): number {
-    const match = paragraph.className.match(/indent-(\d+)/);
+function getIndentLevel(className: string): number {
+    const match = className?.match(/indent-(\d+)/);
     return match ? parseInt(match[1], 10) : 0;
 }
 
 /**
- * Change indent level (インデント増減)
- * Based on v1's changeIndent function
- * 
- * @param editor - Tiptap editor instance
- * @param delta - +1 to indent, -1 to outdent
+ * Change indent level using Tiptap commands
  */
 export function changeIndent(editor: Editor | null, delta: number): void {
     if (!editor) return;
     
-    const paragraphs = getParagraphsInRange(editor);
-    if (paragraphs.length === 0) return;
+    const { state } = editor;
+    const { from, to } = state.selection;
     
-    paragraphs.forEach(paragraph => {
-        const currentLevel = getIndentLevel(paragraph);
-        const newLevel = Math.max(0, Math.min(5, currentLevel + delta));
-        
-        // Remove old indent class
-        paragraph.className = paragraph.className.replace(/indent-\d+/, '').trim();
-        
-        // Add new indent class
-        if (newLevel > 0) {
-            paragraph.classList.add(`indent-${newLevel}`);
+    state.doc.nodesBetween(from, to, (node, pos) => {
+        if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+            const currentClass = node.attrs.class || '';
+            const currentLevel = getIndentLevel(currentClass);
+            const newLevel = Math.max(0, Math.min(5, currentLevel + delta));
+            
+            // Remove old indent class
+            let newClass = currentClass.replace(/indent-\d+/, '').trim();
+            
+            // Add new indent class
+            if (newLevel > 0) {
+                newClass = `${newClass} indent-${newLevel}`.trim();
+            }
+            
+            editor.commands.updateAttributes(node.type.name, { class: newClass });
         }
     });
 }
 
 /**
- * Toggle hanging indent (ぶら下げインデント)
- * Based on v1's toggleHangingIndent function
- * 
- * Only applicable when paragraph has indent > 0
+ * Toggle hanging indent using Tiptap commands
  */
 export function toggleHangingIndent(editor: Editor | null, enabled: boolean): void {
     if (!editor) return;
     
-    const paragraphs = getParagraphsInRange(editor);
-    if (paragraphs.length === 0) return;
+    const { state } = editor;
+    const { from, to } = state.selection;
     
-    paragraphs.forEach(paragraph => {
-        const indentLevel = getIndentLevel(paragraph);
-        
-        // Hanging indent only makes sense with indent > 0
-        if (indentLevel > 0) {
-            if (enabled) {
-                paragraph.classList.add('hanging-indent');
-            } else {
-                paragraph.classList.remove('hanging-indent');
+    state.doc.nodesBetween(from, to, (node, pos) => {
+        if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+            const currentClass = node.attrs.class || '';
+            const indentLevel = getIndentLevel(currentClass);
+            
+            // Hanging indent only makes sense with indent > 0
+            if (indentLevel > 0) {
+                let newClass = currentClass.replace(/\s*hanging-indent\s*/g, ' ').trim();
+                
+                if (enabled) {
+                    newClass = `${newClass} hanging-indent`.trim();
+                }
+                
+                editor.commands.updateAttributes(node.type.name, { class: newClass });
             }
         }
     });
@@ -140,28 +119,38 @@ export function toggleHangingIndent(editor: Editor | null, enabled: boolean): vo
 export function hasHangingIndent(editor: Editor | null): boolean {
     if (!editor) return false;
     
-    const paragraphs = getParagraphsInRange(editor);
-    if (paragraphs.length === 0) return false;
+    const { state } = editor;
+    const { $from } = state.selection;
+    const node = $from.parent;
     
-    return paragraphs[0].classList.contains('hanging-indent');
+    if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+        const className = node.attrs.class || '';
+        return className.includes('hanging-indent');
+    }
+    
+    return false;
 }
 
 /**
  * Check if hanging indent control should be enabled
- * (i.e., if current paragraph has indent > 0)
  */
 export function canHangingIndent(editor: Editor | null): boolean {
     if (!editor) return false;
     
-    const paragraphs = getParagraphsInRange(editor);
-    if (paragraphs.length === 0) return false;
+    const { state } = editor;
+    const { $from } = state.selection;
+    const node = $from.parent;
     
-    return getIndentLevel(paragraphs[0]) > 0;
+    if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+        const className = node.attrs.class || '';
+        return getIndentLevel(className) > 0;
+    }
+    
+    return false;
 }
 
 /**
- * Apply line height to all pages
- * Based on v1's applyLineHeight function
+ * Apply line height to all pages using Tiptap commands
  */
 export function applyLineHeight(
     editor: Editor | null, 
@@ -169,18 +158,27 @@ export function applyLineHeight(
 ): void {
     if (!editor || !size || !LINE_HEIGHT_SIZES.includes(size)) return;
     
-    const editorElement = editor.view.dom as HTMLElement;
-    const inners = editorElement.querySelectorAll<HTMLElement>('.page-inner');
+    const { state } = editor;
     
-    inners.forEach(inner => {
-        // Remove all existing line-height classes
-        LINE_HEIGHT_SIZES.forEach(sz => {
-            inner.classList.remove(`line-height-${sz}`);
-        });
-        
-        // Apply new line-height (except 'm' which is default)
-        if (size !== 'm') {
-            inner.classList.add(`line-height-${size}`);
+    // Apply to all page-inner nodes
+    state.doc.descendants((node, pos) => {
+        if (node.type.name === 'page') {
+            const currentClass = node.attrs.class || '';
+            
+            // Remove all line-height classes
+            let newClass = currentClass;
+            LINE_HEIGHT_SIZES.forEach(sz => {
+                newClass = newClass.replace(new RegExp(`\\s*line-height-${sz}\\s*`, 'g'), ' ');
+            });
+            
+            // Add new line-height (except 'm' which is default)
+            if (size !== 'm') {
+                newClass = `${newClass} line-height-${size}`.trim();
+            }
+            
+            newClass = newClass.trim();
+            
+            editor.commands.updateAttributes('page', { class: newClass });
         }
     });
 }
