@@ -11,6 +11,9 @@ export const PageExtension = Node.create({
             'data-page': {
                 default: '1',
             },
+            class: {
+                default: null,
+            },
         };
     },
 

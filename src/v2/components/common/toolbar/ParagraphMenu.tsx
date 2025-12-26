@@ -167,10 +167,10 @@ export const ParagraphMenu: React.FC<ParagraphMenuProps> = ({ editor }) => {
                             {expanded === 'paragraph-spacing' && (
                                 <>
                                     <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">段落下余白</div>
-                                    <MenuItem onSelect={() => applyParagraphSpacing('xs')}>極小 (XS)</MenuItem>
-                                    <MenuItem onSelect={() => applyParagraphSpacing('s')}>標準 (S)</MenuItem>
-                                    <MenuItem onSelect={() => applyParagraphSpacing('m')}>やや広い (M)</MenuItem>
-                                    <MenuItem onSelect={() => applyParagraphSpacing('l')}>広い (L)</MenuItem>
+                                    <MenuItem onSelect={() => applyParagraphSpacing('xs')}>極小</MenuItem>
+                                    <MenuItem onSelect={() => applyParagraphSpacing('s')}>標準</MenuItem>
+                                    <MenuItem onSelect={() => applyParagraphSpacing('m')}>やや広い</MenuItem>
+                                    <MenuItem onSelect={() => applyParagraphSpacing('l')}>広い</MenuItem>
                                 </>
                             )}
                             {expanded === 'line-height' && (

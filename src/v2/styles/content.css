@@ -182,10 +182,12 @@ body.hide-para-numbers .page-inner [data-para]::before {
   line-height: 1.6;
 }
 
+.page.line-height-s .page-inner,
 .page-inner.line-height-s {
   line-height: 1.25;
 }
 
+.page.line-height-l .page-inner,
 .page-inner.line-height-l {
   line-height: 2.0;
 }
@@ -287,17 +289,17 @@ body.hide-para-numbers .page-inner [data-para]::before {
 
 .page-inner p.inline-spacing-m,
 .page-inner .inline-align.inline-spacing-m {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .page-inner p.inline-spacing-l,
 .page-inner .inline-align.inline-spacing-l {
-  margin-bottom: 28px;
+  margin-bottom: 48px;
 }
 
 .page-inner p.inline-spacing-xl,
 .page-inner .inline-align.inline-spacing-xl {
-  margin-bottom: 36px;
+  margin-bottom: 60px;
 }
 
 /* Removed .mini-text */

@@ -16,101 +16,70 @@ type LineHeightSize = typeof LINE_HEIGHT_SIZES[number];
 /**
  * Apply paragraph spacing using Tiptap's class attribute
  */
+/**
+ * Apply paragraph spacing using 'spacing' attribute
+ */
 export function applyParagraphSpacing(
     editor: Editor | null, 
     size: ParagraphSpacingSize | null
 ): void {
     if (!editor || !size || !PARAGRAPH_SPACING_SIZES.includes(size)) return;
     
-    const { state } = editor;
-    const { from, to } = state.selection;
-    
-    // Find all paragraph/heading nodes in selection
-    state.doc.nodesBetween(from, to, (node, pos) => {
-        if (node.type.name === 'paragraph' || node.type.name === 'heading') {
-            const currentClass = node.attrs.class || '';
-            
-            // Remove all spacing classes
-            let newClass = currentClass;
-            PARAGRAPH_SPACING_SIZES.forEach(sz => {
-                newClass = newClass.replace(new RegExp(`\\s*inline-spacing-${sz}\\s*`, 'g'), ' ');
-            });
-            
-            // Add new spacing (except 's' which is default)
-            if (size !== 's') {
-                newClass = `${newClass} inline-spacing-${size}`.trim();
-            }
-            
-            newClass = newClass.trim();
-            
-            // Update via Tiptap transaction
-            editor.commands.updateAttributes(node.type.name, { class: newClass });
-        }
-    });
+    // updateAttributes applies to the text selection for the node type
+    editor.chain()
+        .focus()
+        .updateAttributes('paragraph', { spacing: size })
+        .updateAttributes('heading', { spacing: size })
+        .run();
 }
 
 /**
- * Get current indent level from node attributes
- */
-function getIndentLevel(className: string): number {
-    const match = className?.match(/indent-(\d+)/);
-    return match ? parseInt(match[1], 10) : 0;
-}
-
-/**
- * Change indent level using Tiptap commands
+ * Change indent level using 'indent' attribute
  */
 export function changeIndent(editor: Editor | null, delta: number): void {
     if (!editor) return;
     
-    const { state } = editor;
+    const { state, view } = editor;
+    const { tr } = state;
     const { from, to } = state.selection;
     
     state.doc.nodesBetween(from, to, (node, pos) => {
         if (node.type.name === 'paragraph' || node.type.name === 'heading') {
-            const currentClass = node.attrs.class || '';
-            const currentLevel = getIndentLevel(currentClass);
-            const newLevel = Math.max(0, Math.min(5, currentLevel + delta));
+            const currentIndent = parseInt(node.attrs.indent || '0', 10);
+            const newIndent = Math.max(0, Math.min(5, currentIndent + delta));
             
-            // Remove old indent class
-            let newClass = currentClass.replace(/indent-\d+/, '').trim();
-            
-            // Add new indent class
-            if (newLevel > 0) {
-                newClass = `${newClass} indent-${newLevel}`.trim();
+            if (currentIndent !== newIndent) {
+                // indentが0になったらnullにして属性を削除する（HTMLが綺麗になる）
+                const indentVal = newIndent === 0 ? null : String(newIndent);
+                
+                // hangingもチェック：インデント0ならhangingも解除
+                const hangingVal = (newIndent === 0) ? false : node.attrs.hanging;
+
+                tr.setNodeMarkup(pos, undefined, {
+                    ...node.attrs,
+                    indent: indentVal,
+                    hanging: hangingVal
+                });
             }
-            
-            editor.commands.updateAttributes(node.type.name, { class: newClass });
         }
     });
+
+    if (tr.docChanged) {
+        view.dispatch(tr);
+    }
 }
 
 /**
- * Toggle hanging indent using Tiptap commands
+ * Toggle hanging indent using 'hanging' attribute
  */
 export function toggleHangingIndent(editor: Editor | null, enabled: boolean): void {
     if (!editor) return;
     
-    const { state } = editor;
-    const { from, to } = state.selection;
-    
-    state.doc.nodesBetween(from, to, (node, pos) => {
-        if (node.type.name === 'paragraph' || node.type.name === 'heading') {
-            const currentClass = node.attrs.class || '';
-            const indentLevel = getIndentLevel(currentClass);
-            
-            // Hanging indent only makes sense with indent > 0
-            if (indentLevel > 0) {
-                let newClass = currentClass.replace(/\s*hanging-indent\s*/g, ' ').trim();
-                
-                if (enabled) {
-                    newClass = `${newClass} hanging-indent`.trim();
-                }
-                
-                editor.commands.updateAttributes(node.type.name, { class: newClass });
-            }
-        }
-    });
+    editor.chain()
+        .focus()
+        .updateAttributes('paragraph', { hanging: enabled })
+        .updateAttributes('heading', { hanging: enabled })
+        .run();
 }
 
 /**
@@ -121,31 +90,33 @@ export function hasHangingIndent(editor: Editor | null): boolean {
     
     const { state } = editor;
     const { $from } = state.selection;
-    const node = $from.parent;
-    
-    if (node.type.name === 'paragraph' || node.type.name === 'heading') {
-        const className = node.attrs.class || '';
-        return className.includes('hanging-indent');
+    // 親ノード（paragraph/heading）の属性を確認
+    // depthsを遡ってブロックを探す
+    for (let d = $from.depth; d > 0; d--) {
+        const node = $from.node(d);
+        if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+            return !!node.attrs.hanging;
+        }
     }
-    
     return false;
 }
 
 /**
  * Check if hanging indent control should be enabled
+ * (Must have indent > 0)
  */
 export function canHangingIndent(editor: Editor | null): boolean {
     if (!editor) return false;
     
     const { state } = editor;
     const { $from } = state.selection;
-    const node = $from.parent;
-    
-    if (node.type.name === 'paragraph' || node.type.name === 'heading') {
-        const className = node.attrs.class || '';
-        return getIndentLevel(className) > 0;
+    for (let d = $from.depth; d > 0; d--) {
+        const node = $from.node(d);
+        if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+            const indent = parseInt(node.attrs.indent || '0', 10);
+            return indent > 0;
+        }
     }
-    
     return false;
 }
 
