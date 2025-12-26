@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Editor } from '@tiptap/react';
 import { 
-    Baseline, 
     Type, 
     ChevronDown 
 } from 'lucide-react';
-import { BaseDropdownMenu, MenuItem, SubMenu } from '@/components/ui/BaseDropdownMenu';
+import { BaseDropdownMenu, MenuItem, MenuSeparator } from '@/components/ui/BaseDropdownMenu';
 
 interface FontMenuProps {
     editor: Editor | null;
@@ -37,9 +36,12 @@ const colors = [
  * フォントメニュー（ビジュアル・直感UI版）
  */
 export const FontMenu: React.FC<FontMenuProps> = ({ editor }) => {
+    const [expanded, setExpanded] = useState<'style' | 'color' | 'family' | null>(null);
+
     if (!editor) return null;
 
-    const boxBase = "flex items-center justify-center rounded border border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition-all cursor-pointer outline-none bg-white";
+    const boxBase = "flex items-center justify-center rounded border border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition-all cursor-pointer outline-none bg-white m-0 min-w-[32px] h-8 px-1";
+    const activeBox = "border-blue-500 bg-blue-50 text-blue-600";
     
     const getCurrentBlockLabel = () => {
         if (editor.isActive('heading', { level: 1 })) return '見出し1';
@@ -47,6 +49,10 @@ export const FontMenu: React.FC<FontMenuProps> = ({ editor }) => {
         if (editor.isActive('heading', { level: 3 })) return '見出し3';
         if (editor.isActive('heading', { level: 6 })) return 'サブテキスト';
         return '本文';
+    };
+
+    const toggleExpanded = (section: 'style' | 'color' | 'family') => {
+        setExpanded(expanded === section ? null : section);
     };
 
     return (
@@ -61,79 +67,92 @@ export const FontMenu: React.FC<FontMenuProps> = ({ editor }) => {
                 </button>
             }
         >
-            <div className="flex items-center gap-1.5 p-1.5 bg-white rounded shadow-sm">
-                {/* ブロック要素選択 */}
-                <SubMenu
-                    hideChevron
-                    className="p-0 border-none hover:bg-transparent"
-                    trigger={
-                        <div className={`${boxBase} min-w-[80px] h-10 px-3 justify-between gap-2`} title="ブロックスタイル">
-                            <span className="text-[13px] font-bold text-gray-700">{getCurrentBlockLabel()}</span>
-                            <ChevronDown className="w-3 h-3 opacity-50" />
-                        </div>
-                    }
-                >
-                    <MenuItem onSelect={() => editor.chain().focus().setParagraph().run()}>段落 (本文)</MenuItem>
-                    <MenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>見出し 1</MenuItem>
-                    <MenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>見出し 2</MenuItem>
-                    <MenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>見出し 3</MenuItem>
-                    <MenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 6 }).run()}>サブテキスト (H6)</MenuItem>
-                </SubMenu>
+            <div className="flex flex-col min-w-[150px]">
+                {/* アイコンストリップ */}
+                <div className="flex items-center gap-1.5 p-1">
+                    {/* ブロック要素選択 */}
+                    <button
+                        type="button"
+                        onClick={() => toggleExpanded('style')}
+                        className={`${boxBase} px-2 justify-between gap-1.5 ${expanded === 'style' ? activeBox : ''}`}
+                        title="ブロックスタイル"
+                    >
+                        <span className="text-[12px] font-bold leading-none">{getCurrentBlockLabel()}</span>
+                        <ChevronDown className={`w-3 h-3 opacity-50 transition-transform ${expanded === 'style' ? 'rotate-180' : ''}`} />
+                    </button>
 
-                {/* 文字色 */}
-                <SubMenu
-                    hideChevron
-                    className="p-0 border-none hover:bg-transparent"
-                    trigger={
-                        <div className={`${boxBase} w-10 h-10`} title="文字色">
-                            <div className="relative">
-                                <Baseline className="w-5 h-5" />
-                                <div 
-                                    className="absolute -bottom-1 left-0 right-0 h-1 rounded-full" 
-                                    style={{ backgroundColor: editor.getAttributes('textStyle').color || '#000' }}
-                                />
-                            </div>
+                    {/* 文字色 */}
+                    <button
+                        type="button"
+                        onClick={() => toggleExpanded('color')}
+                        className={`${boxBase} ${expanded === 'color' ? activeBox : ''}`}
+                        title="文字色"
+                    >
+                        <div className="flex flex-col items-center leading-none">
+                            <span className="text-lg font-serif font-bold -mb-1 mt-0.5 leading-none">A</span>
+                            <div 
+                                className="w-3.5 h-[2.5px] rounded-full" 
+                                style={{ backgroundColor: editor.getAttributes('textStyle').color || '#000' }}
+                            />
                         </div>
-                    }
-                >
-                    <div className="py-1 min-w-[120px]">
-                        {colors.map(color => (
-                            <MenuItem 
-                                key={color.value}
-                                onSelect={() => editor.chain().focus().setColor(color.value).run()}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 rounded-full border border-gray-200 shadow-sm" style={{ backgroundColor: color.value }} />
-                                    <span>{color.name}</span>
-                                </div>
-                            </MenuItem>
-                        ))}
-                        <div className="h-px bg-gray-100 my-1" />
-                        <MenuItem onSelect={() => editor.chain().focus().unsetColor().run()}>色をリセット</MenuItem>
-                    </div>
-                </SubMenu>
+                    </button>
 
-                {/* フォントファミリー */}
-                <SubMenu
-                    hideChevron
-                    className="p-0 border-none hover:bg-transparent"
-                    trigger={
-                        <div className={`${boxBase} w-10 h-10`} title="フォントファミリー">
-                            <Type className="w-5 h-5" />
+                    {/* フォントファミリー */}
+                    <button
+                        type="button"
+                        onClick={() => toggleExpanded('family')}
+                        className={`${boxBase} ${expanded === 'family' ? activeBox : ''}`}
+                        title="フォントファミリー"
+                    >
+                        <Type className="w-4 h-4" />
+                    </button>
+                </div>
+
+                {/* 展開されたコンテンツ */}
+                {expanded && <MenuSeparator />}
+                
+                <div className="overflow-hidden transition-all">
+                    {expanded === 'style' && (
+                        <div className="py-1">
+                            <MenuItem onSelect={() => editor.chain().focus().setParagraph().run()}>本文</MenuItem>
+                            <MenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>見出し 1</MenuItem>
+                            <MenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>見出し 2</MenuItem>
+                            <MenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>見出し 3</MenuItem>
+                            <MenuItem onSelect={() => editor.chain().focus().toggleHeading({ level: 6 }).run()}>サブテキスト</MenuItem>
                         </div>
-                    }
-                >
-                    <div className="py-1 max-h-[300px] overflow-y-auto">
-                        {fontFamilies.map(font => (
-                            <MenuItem 
-                                key={font.value}
-                                onSelect={() => editor.chain().focus().setFontFamily(font.value).run()}
-                            >
-                                <span style={{ fontFamily: font.value }} className="text-[13px]">{font.name}</span>
-                            </MenuItem>
-                        ))}
-                    </div>
-                </SubMenu>
+                    )}
+
+                    {expanded === 'color' && (
+                        <div className="py-1 min-w-[140px]">
+                            {colors.map(color => (
+                                <MenuItem 
+                                    key={color.value}
+                                    onSelect={() => editor.chain().focus().setColor(color.value).run()}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 rounded-full border border-gray-200 shadow-sm" style={{ backgroundColor: color.value }} />
+                                        <span>{color.name}</span>
+                                    </div>
+                                </MenuItem>
+                            ))}
+                            <MenuSeparator />
+                            <MenuItem onSelect={() => editor.chain().focus().unsetColor().run()}>色をリセット</MenuItem>
+                        </div>
+                    )}
+
+                    {expanded === 'family' && (
+                        <div className="py-1 max-h-[250px] overflow-y-auto">
+                            {fontFamilies.map(font => (
+                                <MenuItem 
+                                    key={font.value}
+                                    onSelect={() => editor.chain().focus().setFontFamily(font.value).run()}
+                                >
+                                    <span style={{ fontFamily: font.value }} className="text-[13px]">{font.name}</span>
+                                </MenuItem>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         </BaseDropdownMenu>
     );

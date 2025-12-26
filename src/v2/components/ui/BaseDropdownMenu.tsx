@@ -46,7 +46,7 @@ export const BaseDropdownMenu: React.FC<BaseDropdownMenuProps> = ({
 
             <DropdownMenu.Portal>
                 <DropdownMenu.Content
-                    className="min-w-[220px] bg-white rounded-md border border-gray-200 shadow-xl p-1 z-[2001] animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
+                    className="min-w-max bg-white rounded-md border border-gray-200 shadow-xl p-1 z-[2001] animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
                     align={align}
                     sideOffset={4}
                 >
@@ -94,15 +94,18 @@ interface SubMenuProps {
 }
 
 export const SubMenu: React.FC<SubMenuProps> = ({ trigger, children, className, hideChevron }) => {
+    const hasCustomPadding = className?.includes('p-') || className?.includes('px-') || className?.includes('py-');
+    const defaultPadding = hasCustomPadding ? '' : 'px-4 py-1.5';
+
     return (
         <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className={`relative flex items-center gap-2 px-4 py-1.5 text-sm outline-none cursor-pointer select-none rounded hover:bg-gray-100 data-[state=open]:bg-gray-100 transition-colors ${className || ''}`}>
+            <DropdownMenu.SubTrigger className={`relative flex items-center gap-2 text-sm outline-none cursor-pointer select-none rounded hover:bg-gray-100 data-[state=open]:bg-gray-100 transition-colors ${defaultPadding} ${className || ''}`}>
                 <span>{trigger}</span>
                 {!hideChevron && <ChevronRight className="w-3 h-3 text-gray-400 ml-auto" />}
             </DropdownMenu.SubTrigger>
             <DropdownMenu.Portal>
                 <DropdownMenu.SubContent
-                    className="min-w-[180px] bg-white rounded-md border border-gray-200 shadow-xl p-1 z-[2002] animate-in fade-in-0 zoom-in-95 data-[side=right]:slide-in-from-left-2 data-[side=left]:slide-in-from-right-2"
+                    className="min-w-max bg-white rounded-md border border-gray-200 shadow-xl p-1 z-[2002] animate-in fade-in-0 zoom-in-95 data-[side=right]:slide-in-from-left-2 data-[side=left]:slide-in-from-right-2"
                     sideOffset={8}
                 >
                     {children}
