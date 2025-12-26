@@ -17,6 +17,7 @@ import { ParagraphNumbering } from '@/lib/paragraphNumbering';
 import { StyleAttributes } from '@/lib/styleAttributes';
 import { Pagination } from '@/lib/pagination';
 import { CustomImage } from '@/lib/customImage';
+import { FirstParagraphProtection } from '@/lib/firstParagraphProtection';
 
 import { Toolbar } from '@/components/features/Toolbar';
 import { HelpDialog } from '@/components/common/dialogs/HelpDialog';
@@ -86,12 +87,11 @@ export const EditorV3 = () => {
             ParagraphNumbering,
             StyleAttributes,
             Pagination,
+            FirstParagraphProtection,
         ],
         content: `
       <section class="page" data-page="1">
-        <div class="page-inner">
-          <p data-para="1" id="p1-1"><br></p>
-        </div>
+        <p data-para="1" id="p1-1"><br></p>
       </section>
     `,
         editorProps: {

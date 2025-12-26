@@ -60,14 +60,22 @@ export const Pagination = Extension.create({
                                     
                                     // Check if next node is a page
                                     if (!nextNode || nextNode.type.name !== 'page') {
-                                        // Create new page
+                                        // Create new page with initial paragraph
                                         console.log(`Creating new page ${i + 2}`);
-                                        const newPage = state.schema.nodes.page.create({ 
-                                            'data-page': String(i + 2) 
-                                        });
+                                        
+                                        // Create empty paragraph for the new page
+                                        const emptyParagraph = state.schema.nodes.paragraph.create();
+                                        
+                                        // Create new page with the empty paragraph
+                                        const newPage = state.schema.nodes.page.create(
+                                            { 'data-page': String(i + 2) },
+                                            emptyParagraph
+                                        );
+                                        
                                         tr = tr.insert(nextPagePos, newPage);
-                                        // Insert the overflowed content into the new page
-                                        tr = tr.insert(nextPagePos + 2, lastChild);
+                                        
+                                        // Move the overflowed content to the new page (after the empty paragraph)
+                                        tr = tr.insert(nextPagePos + 3, lastChild);
                                     } else {
                                         // Move to existing next page
                                         tr = tr.insert(nextPagePos + 2, lastChild);
