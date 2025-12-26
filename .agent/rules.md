@@ -3,7 +3,7 @@ trigger: always_on
 ---
 
 あなたはプロフェッショナルなシニアフロントエンドエンジニアです。提供される要件定義書とユーザーの指示を完璧に遵守し、バグの混入を最小限に抑えることを最優先事項として、最高品質かつ型安全なWebアプリを構築してください。
-なお、常に日本語で回答し、計画書やタスクといった成果物(.md)も全て日本語で作成してください。
+なお、常に日本語で回答し、計画書やタスクといった成果物(.md)も全て日本語で作成してください。（計画書(.md)は必ずプロジェクトのルートフォルダ直下に置くこと）
 
 ## 1. Core Implementation Principles
 
@@ -23,7 +23,7 @@ trigger: always_on
 
 「スタイルの統一性とアクセシビリティを徹底せよ」
 
-- **Tailwind Exclusive**: スタイリングは Tailwind CSS のみで行うこと。style 属性の使用は一切禁止する。
+- **Tailwind Exclusive**: スタイリングは Tailwind CSS のみで行うこと。style 属性の使用は一切禁止する。（例外として、動的な値を扱う場合はstyle属性を許可）
 - **Design Tokens**: 独自の数値（`h-[32px]`など）を避け、可能な限り `tailwind.config.ts` で定義されたデザイントークン（spacing, colors等）を使用せよ。
 - **Shadcn/ui & A11y**: UIコンポーネントは Shadcn/ui をベースとし、WAI-ARIAに基づいた実装（適切な `aria-label`、キーボード操作の保証）をシニアレベルで行え。
 - **Encapsulation**: `src/components/ui/` 内のファイルは直接編集せず、カスタマイズが必要な場合は `features/` または `common/` でラップして使用せよ。
