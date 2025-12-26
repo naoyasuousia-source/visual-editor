@@ -34,7 +34,7 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
                 thumb.className = `relative mb-6 cursor-pointer group transition-all duration-200 transform hover:scale-[1.02]`;
                 // Miniature page (scaled down)
                 const miniature = document.createElement('div');
-                miniature.className = "bg-white shadow-sm border border-gray-200 origin-top overflow-hidden select-none pointer-events-none w-[160px] h-[226px] transition-all duration-200";
+                miniature.className = "bg-white shadow-sm border border-gray-200 origin-top overflow-hidden select-none pointer-events-none w-[160px] h-[226px] transition-all duration-200 relative";
                 
                 if (index === activePageIndex) {
                     miniature.className += ' ring-4 ring-blue-400 ring-offset-1 rounded-sm opacity-100';
@@ -42,15 +42,36 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
                     miniature.className += ' opacity-60 group-hover:opacity-100';
                 }
 
-                const inner = page.querySelector('.page-inner');
+                // Clone the WHOLE page element (section.page) to get a perfect miniature
+                const clone = page.cloneNode(true) as HTMLElement;
+                clone.removeAttribute('contenteditable');
+                
+                // Force layout properties to match the editor exactly
+                // We use inline styles to override any Tailwind or CSS constraints
+                Object.assign(clone.style, {
+                    width: '210mm',
+                    height: '297mm',
+                    minWidth: '210mm',
+                    minHeight: '297mm',
+                    margin: '0',
+                    boxShadow: 'none',
+                    position: 'absolute',
+                    top: '0',
+                    left: '0',
+                    transform: 'scale(0.2016)', // 160 / (210 * 3.78)
+                    transformOrigin: 'top left',
+                    pointerEvents: 'none',
+                });
+
+                // Prevent internal scrollbars in the thumbnail
+                const inner = clone.querySelector('.page-inner') as HTMLElement;
                 if (inner) {
-                    const clone = inner.cloneNode(true) as HTMLElement;
-                    clone.removeAttribute('contenteditable');
-                    // Calculate scale: 160px / 210mm (~793.7px) = 0.2016...
-                    clone.className += " scale-[0.202] origin-top-left w-[210mm] h-[297mm]";
-                    clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-                    miniature.appendChild(clone);
+                    inner.style.overflow = 'hidden';
+                    inner.style.height = '100%'; // Ensure it fills the clone
                 }
+
+                clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+                miniature.appendChild(clone);
 
                 thumb.appendChild(miniature);
 
