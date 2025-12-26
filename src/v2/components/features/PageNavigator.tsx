@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Editor } from '@tiptap/react';
 import { useAppStore } from '@/store/useAppStore';
 import { PanelsTopLeft } from 'lucide-react';
@@ -10,19 +10,21 @@ interface PageNavigatorProps {
 export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
     const { isSidebarOpen, toggleSidebar } = useAppStore();
     const [activePageIndex, setActivePageIndex] = useState<number>(0);
+    const navigatorRef = useRef<HTMLDivElement>(null);
 
     // Rebuild thumbnails on content change
     useEffect(() => {
-        const navigator = document.getElementById('page-navigator-container');
-        const pagesContainer = document.getElementById('pages-container');
-
-        if (!navigator || !pagesContainer) return;
+        if (!navigatorRef.current || !isSidebarOpen) return;
 
         const updateNavigator = () => {
-            if (!isSidebarOpen) return;
+            if (!navigatorRef.current || !isSidebarOpen) return;
 
+            const navigator = navigatorRef.current;
             navigator.innerHTML = '';
-            const pages = pagesContainer.querySelectorAll('section.page');
+            
+            // Use editor.view.dom instead of document.getElementById
+            const editorElement = editor.view.dom as HTMLElement;
+            const pages = editorElement.querySelectorAll('section.page');
 
             pages.forEach((page, index) => {
                 const pageNum = index + 1;
@@ -31,9 +33,9 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
                 const thumb = document.createElement('div');
                 thumb.className = `relative mb-6 cursor-pointer group transition-all duration-200 transform hover:scale-[1.02]`;
                 if (index === activePageIndex) {
-                    thumb.classList.add('ring-4', 'ring-blue-400', 'ring-offset-2', 'rounded-sm');
+                    thumb.className += ' ring-4 ring-blue-400 ring-offset-2 rounded-sm';
                 } else {
-                    thumb.classList.add('opacity-80', 'hover:opacity-100');
+                    thumb.className += ' opacity-80 hover:opacity-100';
                 }
 
                 // Miniature page (scaled down)
@@ -44,7 +46,6 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
                 if (inner) {
                     const clone = inner.cloneNode(true) as HTMLElement;
                     clone.removeAttribute('contenteditable');
-                    // Use Tailwind classes for transform and dimensions instead of direct style manipulation
                     clone.className += " scale-[0.2] origin-top-left w-[210mm] h-[297mm]";
                     clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
                     miniature.appendChild(clone);
@@ -67,12 +68,14 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
             });
         };
 
+        // Use MutationObserver on editor.view.dom
+        const editorElement = editor.view.dom as HTMLElement;
         const domObserver = new MutationObserver((mutations) => {
             const shouldUpdate = mutations.some(m => m.type === 'childList' || m.type === 'characterData');
             if (shouldUpdate) updateNavigator();
         });
 
-        domObserver.observe(pagesContainer, {
+        domObserver.observe(editorElement, {
             childList: true,
             subtree: true,
             characterData: true
@@ -84,8 +87,8 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
 
     // Track active page on scroll
     useEffect(() => {
-        const pagesContainer = document.getElementById('pages-container');
-        if (!pagesContainer) return;
+        const editorElement = editor.view.dom as HTMLElement;
+        if (!editorElement) return;
 
         const observer = new IntersectionObserver((entries) => {
             let maxRatio = 0;
@@ -94,7 +97,7 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting && entry.intersectionRatio > maxRatio) {
                     maxRatio = entry.intersectionRatio;
-                    const pages = Array.from(pagesContainer.querySelectorAll('section.page'));
+                    const pages = Array.from(editorElement.querySelectorAll('section.page'));
                     maxIndex = pages.indexOf(entry.target as HTMLElement);
                 }
             });
@@ -103,7 +106,7 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
         }, { threshold: [0.1, 0.5] });
 
         const initObserver = () => {
-            pagesContainer.querySelectorAll('section.page').forEach(page => observer.observe(page));
+            editorElement.querySelectorAll('section.page').forEach(page => observer.observe(page));
         };
 
         initObserver();
@@ -112,7 +115,7 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
             observer.disconnect();
             initObserver();
         });
-        pageMutation.observe(pagesContainer, { childList: true });
+        pageMutation.observe(editorElement, { childList: true });
 
         return () => {
             observer.disconnect();
@@ -125,7 +128,7 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
             className={`flex flex-col h-full bg-[#e0e0e0] border-r border-gray-300 transition-all duration-300 ease-in-out relative ${isSidebarOpen ? 'w-[200px]' : 'w-0 overflow-hidden'}`}
         >
             <div 
-                id="page-navigator-container" 
+                ref={navigatorRef}
                 className="flex-1 overflow-y-auto overflow-x-hidden p-4 scrollbar-thin scrollbar-thumb-gray-300 pt-6"
             >
                 {/* Thumbnails injected here */}
