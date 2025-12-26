@@ -9,13 +9,13 @@ import {
     FileType
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { FileMenu } from './toolbar/FileMenu';
-import { ParagraphMenu } from './toolbar/ParagraphMenu';
-import { FontMenu } from './toolbar/FontMenu';
-import { HighlightMenu } from './toolbar/HighlightMenu';
-import { useAppStore } from '../store/useAppStore';
-import { useJumpNavigation } from '../hooks/useJumpNavigation';
-import { useParagraphNumberToggle } from '../hooks/useParagraphNumberToggle';
+import { FileMenu } from '../common/toolbar/FileMenu';
+import { ParagraphMenu } from '../common/toolbar/ParagraphMenu';
+import { FontMenu } from '../common/toolbar/FontMenu';
+import { HighlightMenu } from '../common/toolbar/HighlightMenu';
+import { useAppStore } from '../../store/useAppStore';
+import { useJumpNavigation } from '../../hooks/useJumpNavigation';
+import { useParagraphNumberToggle } from '../../hooks/useParagraphNumberToggle';
 
 interface ToolbarProps {
     editor: Editor | null;

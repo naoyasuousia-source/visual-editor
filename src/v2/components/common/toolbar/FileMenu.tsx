@@ -1,10 +1,10 @@
 import React, { useRef } from 'react';
 import { Editor } from '@tiptap/react';
 import { ChevronDown } from 'lucide-react';
-import { BaseDropdownMenu, MenuItem, SubMenu, MenuSeparator } from '../ui/BaseDropdownMenu';
-import { useAppStore } from '../../store/useAppStore';
-import { useFileIO } from '../../hooks/useFileIO';
-import { useImageInsert } from '../../hooks/useImageInsert';
+import { BaseDropdownMenu, MenuItem, SubMenu, MenuSeparator } from '../../ui/BaseDropdownMenu';
+import { useAppStore } from '../../../store/useAppStore';
+import { useFileIO } from '../../../hooks/useFileIO';
+import { useImageInsert } from '../../../hooks/useImageInsert';
 
 interface FileMenuProps {
     editor: Editor | null;

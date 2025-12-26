@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Editor } from '@tiptap/react';
-import { useAppStore } from '../store/useAppStore';
+import { useAppStore } from '../../store/useAppStore';
 
 interface AIImageIndexProps {
     editor: Editor;

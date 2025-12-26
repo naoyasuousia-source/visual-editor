@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Editor } from '@tiptap/react';
-import { BaseDialog } from '../ui/BaseDialog';
-import { useJumpNavigation } from '../../hooks/useJumpNavigation';
-import { useAppStore } from '../../store/useAppStore';
+import { BaseDialog } from '../../ui/BaseDialog';
+import { useJumpNavigation } from '../../../hooks/useJumpNavigation';
+import { useAppStore } from '../../../store/useAppStore';
 import { Hash, ArrowRight } from 'lucide-react';
 
 interface ParagraphJumpDialogProps {

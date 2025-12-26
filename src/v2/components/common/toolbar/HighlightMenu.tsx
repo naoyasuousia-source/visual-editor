@@ -3,7 +3,7 @@ import { Editor } from '@tiptap/react';
 import { ChevronDown, Highlighter } from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
 import * as Popover from '@radix-ui/react-popover';
-import { BaseDropdownMenu, MenuItem } from '../ui/BaseDropdownMenu';
+import { BaseDropdownMenu, MenuItem } from '../../ui/BaseDropdownMenu';
 
 interface HighlightMenuProps {
     editor: Editor | null;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Editor } from '@tiptap/react';
 import { ChevronDown } from 'lucide-react';
-import { BaseDropdownMenu, MenuItem, SubMenu } from '../ui/BaseDropdownMenu';
+import { BaseDropdownMenu, MenuItem, SubMenu } from '../../ui/BaseDropdownMenu';
 
 interface FontMenuProps {
     editor: Editor | null;
