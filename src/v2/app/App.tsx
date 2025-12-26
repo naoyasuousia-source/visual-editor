@@ -20,6 +20,7 @@ import { CustomImage } from '@/lib/customImage';
 import { FirstParagraphProtection } from '@/lib/firstParagraphProtection';
 import { CustomDocument } from '@/lib/customDocument';
 import { CrossPageMerge } from '@/lib/crossPageMerge';
+import { Bookmark } from '@/lib/bookmarkExtension';
 
 import { Toolbar } from '@/components/features/Toolbar';
 import { HelpDialog } from '@/components/common/dialogs/HelpDialog';
@@ -44,6 +45,7 @@ import { useIMEControl } from '@/hooks/useIMEControl';
 import { usePasteControl } from '@/hooks/usePasteControl';
 import { useDialogs } from '@/hooks/useDialogs';
 import { useImageIndex } from '@/hooks/useImageIndex';
+import { useFileIO } from '@/hooks/useFileIO';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PromptDialog } from '@/components/ui/PromptDialog';
 
@@ -78,7 +80,12 @@ export const EditorV3 = () => {
             Underline,
             Subscript,
             Superscript,
-            Link.configure({ openOnClick: false }),
+            Link.configure({ 
+                openOnClick: true,
+                HTMLAttributes: {
+                    class: 'text-blue-600 underline cursor-pointer',
+                },
+            }),
             TextAlign.configure({
                 types: ['heading', 'paragraph'],
                 alignments: ['left', 'center', 'right'],
@@ -94,6 +101,7 @@ export const EditorV3 = () => {
             Pagination,
             FirstParagraphProtection,
             CrossPageMerge,
+            Bookmark,
         ],
         content: `
       <section class="page" data-page="1">
@@ -109,6 +117,24 @@ export const EditorV3 = () => {
             handleKeyDown: handleIMEKeyDown,
             // ペースト制御: 画像の直接ペーストを禁止
             handlePaste: handlePaste,
+            // リンククリック制御: 内部リンクはスクロール
+            handleClick: (view, pos, event) => {
+                const target = event.target as HTMLElement;
+                const link = target.closest('a');
+                if (link) {
+                    const href = link.getAttribute('href');
+                    if (href?.startsWith('#bm-')) {
+                        event.preventDefault();
+                        const bookmarkId = href.substring(1);
+                        const bookmark = view.dom.querySelector(`#${bookmarkId}`);
+                        if (bookmark) {
+                            bookmark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                        return true;
+                    }
+                }
+                return false;
+            },
         },
         onCreate: ({ editor }) => {
             setTempEditor(editor);
@@ -124,6 +150,9 @@ export const EditorV3 = () => {
     // Image Index (ロジック分離)
     const { rebuildImageIndex, updateImageMeta } = useImageIndex(editor, isWordMode);
 
+    // File IO (ロジック分離)
+    const { saveFile, saveAsFile, downloadFile, openFileWithHandle } = useFileIO(editor, isWordMode);
+    const { currentFileHandle } = useAppStore();
 
     useEffect(() => {
         if (editor) {
@@ -132,6 +161,34 @@ export const EditorV3 = () => {
             } as any);
         }
     }, [isWordMode, editor]);
+
+    // Ctrl+S / Ctrl+N / Ctrl+O キーボードショートカット
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ctrl+S: シンプル保存（ファイルハンドルがあれば上書き、なければダウンロード）
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                if (currentFileHandle) {
+                    saveFile();
+                } else {
+                    downloadFile();
+                }
+            }
+            // Ctrl+N: 名前を付けて保存
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                saveAsFile();
+            }
+            // Ctrl+O: ファイルを開く
+            if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
+                e.preventDefault();
+                openFileWithHandle();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [saveFile, saveAsFile, downloadFile, openFileWithHandle, currentFileHandle]);
 
     return (
         <div className="flex flex-col h-screen bg-[#525659] overflow-hidden font-sans">
@@ -161,7 +218,7 @@ export const EditorV3 = () => {
                                     onEditCaption={() => openDialog('image-caption')}
                                     onEditTag={() => openDialog('image-tag')}
                                 />
-                                <LinkBubbleMenu editor={editor} onEdit={() => openDialog('link')} />
+                                <LinkBubbleMenu editor={editor} />
                                 <AIImageIndex editor={editor} />
                                 <ImageContextMenu editor={editor}>
                                     <EditorContent editor={editor} />

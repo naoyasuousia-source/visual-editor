@@ -5,6 +5,7 @@ import { BaseDropdownMenu, MenuItem, SubMenu, MenuSeparator } from '@/components
 import { useAppStore } from '@/store/useAppStore';
 import { useFileIO } from '@/hooks/useFileIO';
 import { useImageInsert } from '@/hooks/useImageInsert';
+import { addLinkDestination, createLink, removeLink } from '@/hooks/useLinkActions';
 
 interface FileMenuProps {
     editor: Editor | null;
@@ -27,13 +28,23 @@ interface FileMenuProps {
  */
 export const FileMenu: React.FC<FileMenuProps> = ({ editor, prompt }) => {
     const { setPageMargin, isWordMode, openDialog } = useAppStore();
-    const { saveFile, saveAsFile, downloadFile } = useFileIO(editor, isWordMode);
+    const { saveFile, saveAsFile, downloadFile, openFileWithHandle, importDocx } = useFileIO(editor, isWordMode);
     const { insertFromDropbox, insertFromWeb } = useImageInsert(editor, { prompt });
     
     const htmlInputRef = useRef<HTMLInputElement>(null);
     const docxInputRef = useRef<HTMLInputElement>(null);
 
-    const handleOpenHtml = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleOpenHtml = async () => {
+        // Try File System Access API first
+        const success = await openFileWithHandle();
+        
+        // Fallback to input element if not supported
+        if (!success) {
+            htmlInputRef.current?.click();
+        }
+    };
+
+    const handleOpenHtmlFallback = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0 && editor) {
             const { readTextFromFile, parseAndSetContent } = await import('@/utils/io');
             const { toggleWordMode } = useAppStore.getState();
@@ -52,7 +63,6 @@ export const FileMenu: React.FC<FileMenuProps> = ({ editor, prompt }) => {
 
     const handleOpenDocx = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0 && editor) {
-            const { importDocx } = useFileIO(editor, isWordMode);
             try {
                 await importDocx(e.target.files[0]);
             } catch (err: any) {
@@ -69,7 +79,7 @@ export const FileMenu: React.FC<FileMenuProps> = ({ editor, prompt }) => {
                 type="file" 
                 className="hidden" 
                 accept=".html,.htm" 
-                onChange={handleOpenHtml} 
+                onChange={handleOpenHtmlFallback} 
             />
             <input 
                 ref={docxInputRef}
@@ -93,14 +103,14 @@ export const FileMenu: React.FC<FileMenuProps> = ({ editor, prompt }) => {
                 <MenuItem onSelect={downloadFile} shortcut="Ctrl+S">
                     保存
                 </MenuItem>
-                <MenuItem onSelect={saveAsFile}>
+                <MenuItem onSelect={saveAsFile} shortcut="Ctrl+N">
                     名前を付けて保存
                 </MenuItem>
                 <MenuItem onSelect={saveFile} shortcut="Ctrl+S">
                     上書き保存
                 </MenuItem>
 
-                <MenuItem onSelect={() => htmlInputRef.current?.click()} shortcut="Ctrl+O">
+                <MenuItem onSelect={handleOpenHtml} shortcut="Ctrl+O">
                     HTMLファイルを開く
                 </MenuItem>
 
@@ -119,10 +129,13 @@ export const FileMenu: React.FC<FileMenuProps> = ({ editor, prompt }) => {
                         <MenuSeparator />
 
                         <SubMenu trigger="ハイパーリンク">
-                            <MenuItem onSelect={() => openDialog('link')}>
+                            <MenuItem onSelect={() => addLinkDestination(editor)}>
+                                リンク先に追加
+                            </MenuItem>
+                            <MenuItem onSelect={() => createLink(editor)}>
                                 リンクを生成
                             </MenuItem>
-                            <MenuItem onSelect={() => editor?.chain().focus().unsetLink().run()}>
+                            <MenuItem onSelect={() => removeLink(editor)}>
                                 リンクを削除
                             </MenuItem>
                         </SubMenu>

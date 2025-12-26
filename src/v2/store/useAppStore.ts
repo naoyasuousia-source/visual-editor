@@ -34,6 +34,10 @@ interface AppState {
     subHelpData: { isOpen: boolean; type: string | null };
     openSubHelp: (type: string) => void;
     closeSubHelp: () => void;
+
+    // File Handle (for Ctrl+S overwrite)
+    currentFileHandle: any;
+    setCurrentFileHandle: (handle: any) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -71,4 +75,8 @@ export const useAppStore = create<AppState>((set) => ({
     subHelpData: { isOpen: false, type: null },
     openSubHelp: (type) => set({ subHelpData: { isOpen: true, type } }),
     closeSubHelp: () => set({ subHelpData: { isOpen: false, type: null } }),
+
+    // File Handle
+    currentFileHandle: null,
+    setCurrentFileHandle: (handle) => set({ currentFileHandle: handle }),
 }));

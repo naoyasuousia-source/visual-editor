@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { buildFullHTML } from '@/utils/aiMetadata';
 import { parseAndSetContent, importDocxToEditor } from '@/utils/io';
 import contentCssText from '@/styles/content.css?raw';
+import { useAppStore } from '@/store/useAppStore';
 
 /**
  * ファイル入出力を管理するカスタムフック
@@ -13,12 +14,14 @@ import contentCssText from '@/styles/content.css?raw';
  */
 export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
     const [isLoading, setIsLoading] = useState(false);
-    const [currentFileHandle, setCurrentFileHandle] = useState<any>(null);
+    
+    // グローバルストアからファイルハンドルを取得（共有状態）
+    const { currentFileHandle, setCurrentFileHandle } = useAppStore();
 
     /**
      * HTMLファイルを開く（File System Access API使用）
      */
-    const openFile = async (): Promise<boolean> => {
+    const openFileWithHandle = async (): Promise<boolean> => {
         if (!editor) return false;
         
         if (typeof (window as any).showOpenFilePicker !== 'function') {
@@ -166,7 +169,7 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
 
     return {
         isLoading,
-        openFile,
+        openFileWithHandle,
         saveFile,
         saveAsFile,
         downloadFile,
