@@ -11,6 +11,7 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
     const { isSidebarOpen, toggleSidebar } = useAppStore();
     const [activePageIndex, setActivePageIndex] = useState<number>(0);
     const navigatorRef = useRef<HTMLDivElement>(null);
+    const isJumpingRef = useRef<boolean>(false);
 
     // Rebuild thumbnails on content change
     useEffect(() => {
@@ -76,8 +77,15 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
                 thumb.appendChild(miniature);
 
                 thumb.onclick = () => {
-                    page.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // ジャンプ中フラグをONにして、IntersectionObserverの更新を一時無効化
+                    isJumpingRef.current = true;
                     setActivePageIndex(index);
+                    page.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    
+                    // スクロール完了後にフラグをOFF（smooth scrollの完了を待つ）
+                    setTimeout(() => {
+                        isJumpingRef.current = false;
+                    }, 600);
                 };
 
                 navigator.appendChild(thumb);
@@ -107,6 +115,9 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({ editor }) => {
         if (!editorElement) return;
 
         const observer = new IntersectionObserver((entries) => {
+            // ジャンプ中はスクロール追跡をスキップ
+            if (isJumpingRef.current) return;
+
             let maxRatio = 0;
             let maxIndex = -1;
 
