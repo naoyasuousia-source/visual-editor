@@ -1,20 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ChevronDown } from 'lucide-react';
 import { BaseDropdownMenu, MenuCheckboxItem } from '@/components/ui/BaseDropdownMenu';
+import { useNumberToggle } from '@/hooks/useParagraphNumberToggle';
 
 export const ViewMenu: React.FC = () => {
-    const [pageNumbers, setPageNumbers] = useState(true);
-    const [paraNumbers, setParaNumbers] = useState(true);
-
-    const togglePageNumbers = (checked: boolean) => {
-        setPageNumbers(checked);
-        document.body.classList.toggle('hide-page-numbers', !checked);
-    };
-
-    const toggleParaNumbers = (checked: boolean) => {
-        setParaNumbers(checked);
-        document.body.classList.toggle('hide-para-numbers', !checked);
-    };
+    const { 
+        showPageNumbers, 
+        showParaNumbers, 
+        togglePageNumbers, 
+        toggleParaNumbers 
+    } = useNumberToggle();
 
     return (
         <BaseDropdownMenu
@@ -29,13 +24,13 @@ export const ViewMenu: React.FC = () => {
             }
         >
             <MenuCheckboxItem
-                checked={pageNumbers}
+                checked={showPageNumbers}
                 onCheckedChange={togglePageNumbers}
             >
                 ページ番号
             </MenuCheckboxItem>
             <MenuCheckboxItem
-                checked={paraNumbers}
+                checked={showParaNumbers}
                 onCheckedChange={toggleParaNumbers}
             >
                 段落番号
