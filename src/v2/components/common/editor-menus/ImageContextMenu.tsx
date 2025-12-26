@@ -10,8 +10,8 @@ import {
     Trash2,
     Check
 } from 'lucide-react';
-import { useImageActions } from '@/components/../hooks/useImageActions';
-import { useAppStore } from '@/components/../store/useAppStore';
+import { useImageActions } from '@/hooks/useImageActions';
+import { useAppStore } from '@/store/useAppStore';
 
 interface ImageContextMenuProps {
     editor: Editor | null;
