@@ -66,6 +66,24 @@ section.page::after {
   padding-left: 0;
 }
 
+/* 個別ブロックスタイル定義 */
+.page-inner h1,
+.page-inner h2,
+.page-inner h3,
+.page-inner h4,
+.page-inner h5,
+.page-inner h6 {
+  font-weight: revert;
+  font-size: revert;
+  line-height: revert;
+  color: revert;
+}
+
+.page-inner p {
+  font-size: 1em;
+  font-weight: 400;
+}
+
 /* 段落番号 */
 .page-inner p[data-para]::before,
 .page-inner h1[data-para]::before,
