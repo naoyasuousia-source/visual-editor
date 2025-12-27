@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Editor } from '@tiptap/react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { 
@@ -26,6 +26,7 @@ interface ImageContextMenuProps {
  * - useImageActionsフックでロジック分離
  * - アクセシビリティ完全対応
  * - 直接DOM操作なし
+ * - 画像上で右クリックした場合のみ表示
  */
 export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({ editor, children }) => {
     const { openDialog } = useAppStore();
@@ -38,6 +39,42 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({ editor, chil
         editTags,
         getCurrentImageAttrs
     } = useImageActions(editor, { openDialog });
+
+    // 画像上の右クリックかどうかを追跡
+    const [isImageRightClick, setIsImageRightClick] = useState(false);
+    const triggerRef = useRef<HTMLDivElement>(null);
+
+    /**
+     * 右クリック時に対象が画像かどうかをチェック
+     */
+    const handleContextMenu = useCallback((e: React.MouseEvent) => {
+        const target = e.target as HTMLElement;
+        // 画像要素または画像コンテナ上での右クリックかチェック
+        const isImage = target.tagName === 'IMG' || 
+                        target.closest('img') !== null ||
+                        target.closest('[data-type="customImage"]') !== null;
+        
+        if (isImage) {
+            // 画像の場合はカスタムメニューを表示（デフォルト動作を防止）
+            setIsImageRightClick(true);
+        } else {
+            // 画像でない場合はブラウザのデフォルトメニューを表示
+            setIsImageRightClick(false);
+            // Radix ContextMenuのデフォルト動作を防止するイベントをキャンセル
+            // これによりブラウザのネイティブコンテキストメニューが表示される
+            e.stopPropagation();
+        }
+    }, []);
+
+    /**
+     * メニューの開閉状態変更時のハンドラ
+     */
+    const handleOpenChange = useCallback((open: boolean) => {
+        // 閉じる際はリセット
+        if (!open) {
+            setIsImageRightClick(false);
+        }
+    }, []);
 
     if (!editor) return <>{children}</>;
 
@@ -54,13 +91,17 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({ editor, chil
     ] as const;
 
     return (
-        <ContextMenu.Root>
-            <ContextMenu.Trigger asChild>
-                {children}
+        <ContextMenu.Root onOpenChange={handleOpenChange} modal={false}>
+            <ContextMenu.Trigger asChild onContextMenu={handleContextMenu}>
+                <div ref={triggerRef}>
+                    {children}
+                </div>
             </ContextMenu.Trigger>
 
-            <ContextMenu.Portal>
-                <ContextMenu.Content className="min-w-[220px] bg-white rounded-md border border-gray-200 shadow-xl p-1 z-[3000] animate-in fade-in-0 zoom-in-95">
+            {/* 画像上での右クリック時のみメニューを表示 */}
+            {isImageRightClick && (
+                <ContextMenu.Portal>
+                    <ContextMenu.Content className="min-w-[220px] bg-white rounded-md border border-gray-200 shadow-xl p-1 z-[3000] animate-in fade-in-0 zoom-in-95">
                     {/* サイズサブメニュー */}
                     <ContextMenu.Sub>
                         <ContextMenu.SubTrigger className="relative flex items-center justify-between px-4 py-2 text-sm outline-none cursor-pointer select-none rounded hover:bg-gray-100 data-[state=open]:bg-gray-100 transition-colors">
@@ -130,11 +171,12 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({ editor, chil
                         className="relative flex items-center gap-2 px-4 py-2 text-sm outline-none cursor-pointer select-none rounded hover:bg-red-50 text-red-600 transition-colors"
                         onSelect={deleteImage}
                     >
-                        <Trash2 className="w-4 h-4" />
-                        <span>削除</span>
-                    </ContextMenu.Item>
-                </ContextMenu.Content>
-            </ContextMenu.Portal>
+                            <Trash2 className="w-4 h-4" />
+                            <span>削除</span>
+                        </ContextMenu.Item>
+                    </ContextMenu.Content>
+                </ContextMenu.Portal>
+            )}
         </ContextMenu.Root>
     );
 };

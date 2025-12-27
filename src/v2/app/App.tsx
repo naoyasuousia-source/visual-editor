@@ -3,7 +3,6 @@ import { Editor, EditorContent } from '@tiptap/react';
 import { Toaster } from 'sonner';
 
 import { Toolbar } from '@/components/features/Toolbar';
-import { ImageBubbleMenu } from '@/components/common/editor-menus/ImageBubbleMenu';
 import { ImageContextMenu } from '@/components/common/editor-menus/ImageContextMenu';
 import { LinkBubbleMenu } from '@/components/common/editor-menus/LinkBubbleMenu';
 import { PageNavigator } from '@/components/features/PageNavigator';
@@ -109,12 +108,6 @@ export const EditorV3 = () => {
                     >
                         {editor && (
                             <>
-                                <ImageBubbleMenu
-                                    editor={editor}
-                                    onEditTitle={() => openDialog('image-title')}
-                                    onEditCaption={() => openDialog('image-caption')}
-                                    onEditTag={() => openDialog('image-tag')}
-                                />
                                 <LinkBubbleMenu editor={editor} />
                                 <AIImageIndex editor={editor} />
                                 <ImageContextMenu editor={editor}>
