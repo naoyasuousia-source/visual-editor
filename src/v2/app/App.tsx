@@ -1,42 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
-import Subscript from '@tiptap/extension-subscript';
-import Superscript from '@tiptap/extension-superscript';
-import Link from '@tiptap/extension-link';
-import TextAlign from '@tiptap/extension-text-align';
-import TextStyle from '@tiptap/extension-text-style';
-import Color from '@tiptap/extension-color';
-import Highlight from '@tiptap/extension-highlight';
-import FontFamily from '@tiptap/extension-font-family';
+import { Editor, EditorContent } from '@tiptap/react';
 import { Toaster } from 'sonner';
 
-import { PageExtension } from '@/lib/pageExtension';
-import { ParagraphNumbering } from '@/lib/paragraphNumbering';
-import { StyleAttributes } from '@/lib/styleAttributes';
-import { Pagination } from '@/lib/pagination';
-import { CustomImage } from '@/lib/customImage';
-import { FirstParagraphProtection } from '@/lib/firstParagraphProtection';
-import { CustomDocument } from '@/lib/customDocument';
-import { CrossPageMerge } from '@/lib/crossPageMerge';
-import { Bookmark } from '@/lib/bookmarkExtension';
-
 import { Toolbar } from '@/components/features/Toolbar';
-import { HelpDialog } from '@/components/common/dialogs/HelpDialog';
-import { SubHelpDialog } from '@/components/common/dialogs/SubHelpDialog';
-import { BrowserWarningDialog } from '@/components/common/dialogs/BrowserWarningDialog';
-import { DonateDialog } from '@/components/common/dialogs/DonateDialog';
 import { ImageBubbleMenu } from '@/components/common/editor-menus/ImageBubbleMenu';
 import { ImageContextMenu } from '@/components/common/editor-menus/ImageContextMenu';
 import { LinkBubbleMenu } from '@/components/common/editor-menus/LinkBubbleMenu';
-import { LinkDialog } from '@/components/common/dialogs/LinkDialog';
-import { ImageTitleDialog } from '@/components/common/dialogs/ImageTitleDialog';
-import { ImageCaptionDialog } from '@/components/common/dialogs/ImageCaptionDialog';
-import { ImageTagDialog } from '@/components/common/dialogs/ImageTagDialog';
-import { ParagraphJumpDialog } from '@/components/common/dialogs/ParagraphJumpDialog';
 import { PageNavigator } from '@/components/features/PageNavigator';
 import { AIImageIndex } from '@/components/features/AIImageIndex';
+import { DialogGroup } from '@/components/common/DialogGroup';
 
 import { useAppStore } from '@/store/useAppStore';
 import { usePageOperations } from '@/hooks/usePageOperations';
@@ -47,8 +19,7 @@ import { useDialogs } from '@/hooks/useDialogs';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useImageIndex } from '@/hooks/useImageIndex';
 import { useFileIO } from '@/hooks/useFileIO';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { PromptDialog } from '@/components/ui/PromptDialog';
+import { useTiptapEditor } from '@/hooks/useTiptapEditor';
 
 /**
  * EditorV3 - V2エディタのメインコンポーネント
@@ -85,74 +56,9 @@ export const EditorV3 = () => {
     // Paste Control (ロジック分離)
     const { handlePaste } = usePasteControl(tempEditor);
 
-    const editor = useEditor({
-        extensions: [
-            CustomDocument, // カスタムDocument: doc > page+
-            StarterKit.configure({
-                document: false, // デフォルトのDocumentを無効化
-            }),
-            Underline,
-            Subscript,
-            Superscript,
-            Link.configure({ 
-                openOnClick: true,
-                HTMLAttributes: {
-                    class: 'text-blue-600 underline cursor-pointer',
-                },
-            }),
-            TextAlign.configure({
-                types: ['heading', 'paragraph'],
-                alignments: ['left', 'center', 'right'],
-            }),
-            TextStyle,
-            FontFamily,
-            Color,
-            Highlight.configure({ multicolor: true }),
-            CustomImage,
-            PageExtension,
-            ParagraphNumbering,
-            StyleAttributes,
-            Pagination,
-            FirstParagraphProtection,
-            CrossPageMerge,
-            Bookmark,
-        ],
-        content: `
-      <section class="page" data-page="1">
-        <p data-para="1" id="p1-1"></p>
-      </section>
-    `,
-        editorProps: {
-            attributes: {
-                class: 'outline-none',
-                spellcheck: 'false',
-            },
-            // IME制御: V1の堅牢なロジックを使用
-            handleKeyDown: handleIMEKeyDown,
-            // ペースト制御: 画像の直接ペーストを禁止
-            handlePaste: handlePaste,
-            // リンククリック制御: 内部リンクはスクロール
-            handleClick: (view, pos, event) => {
-                const target = event.target as HTMLElement;
-                const link = target.closest('a');
-                if (link) {
-                    const href = link.getAttribute('href');
-                    if (href?.startsWith('#bm-')) {
-                        event.preventDefault();
-                        const bookmarkId = href.substring(1);
-                        const bookmark = view.dom.querySelector(`#${bookmarkId}`);
-                        if (bookmark) {
-                            bookmark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                        return true;
-                    }
-                }
-                return false;
-            },
-        },
-        onCreate: ({ editor }) => {
-            setTempEditor(editor);
-        },
+    // Tiptap Editor (ロジック分離)
+    const editor = useTiptapEditor(handleIMEKeyDown, handlePaste, (editor) => {
+        setTempEditor(editor);
     });
 
     // Dialogs (ロジック分離)
@@ -220,47 +126,18 @@ export const EditorV3 = () => {
                 </div>
             </div>
 
-            <HelpDialog open={activeDialog === 'help'} onClose={closeDialog} />
-            <SubHelpDialog />
-            <BrowserWarningDialog isOpen={showBrowserWarning} onClose={() => setShowBrowserWarning(false)} />
-            <DonateDialog open={activeDialog === 'donate'} onClose={closeDialog} />
-            {editor && (
-                <>
-                    <LinkDialog open={activeDialog === 'link'} editor={editor} onClose={closeDialog} />
-                    <ImageTitleDialog open={activeDialog === 'image-title'} editor={editor} onClose={closeDialog} />
-                    <ImageCaptionDialog open={activeDialog === 'image-caption'} editor={editor} onClose={closeDialog} />
-                    <ImageTagDialog open={activeDialog === 'image-tag'} editor={editor} onClose={closeDialog} />
-                    <ParagraphJumpDialog open={activeDialog === 'paragraph-jump'} editor={editor} onClose={closeDialog} />
-                </>
-            )}
-
-            {/* Confirm & Prompt Dialogs */}
-            {confirmState.options && (
-                <ConfirmDialog
-                    open={confirmState.open}
-                    onOpenChange={(open) => !open && handleConfirmClose(false)}
-                    title={confirmState.options.title}
-                    description={confirmState.options.description}
-                    confirmText={confirmState.options.confirmText}
-                    cancelText={confirmState.options.cancelText}
-                    variant={confirmState.options.variant}
-                    onConfirm={() => handleConfirmClose(true)}
-                />
-            )}
-            {promptState.options && (
-                <PromptDialog
-                    open={promptState.open}
-                    onOpenChange={(open) => !open && handlePromptClose(null)}
-                    title={promptState.options.title}
-                    description={promptState.options.description}
-                    placeholder={promptState.options.placeholder}
-                    defaultValue={promptState.options.defaultValue}
-                    confirmText={promptState.options.confirmText}
-                    cancelText={promptState.options.cancelText}
-                    inputType={promptState.options.inputType}
-                    onConfirm={(value) => handlePromptClose(value)}
-                />
-            )}
+            {/* All Dialogs */}
+            <DialogGroup
+                editor={editor}
+                activeDialog={activeDialog}
+                closeDialog={closeDialog}
+                showBrowserWarning={showBrowserWarning}
+                setShowBrowserWarning={setShowBrowserWarning}
+                confirmState={confirmState}
+                promptState={promptState}
+                handleConfirmClose={handleConfirmClose}
+                handlePromptClose={handlePromptClose}
+            />
 
             <Toaster position="top-center" richColors />
         </div>
