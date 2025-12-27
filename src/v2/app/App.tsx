@@ -44,11 +44,25 @@ import { useBrowserCheck } from '@/hooks/useBrowserCheck';
 import { useIMEControl } from '@/hooks/useIMEControl';
 import { usePasteControl } from '@/hooks/usePasteControl';
 import { useDialogs } from '@/hooks/useDialogs';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useImageIndex } from '@/hooks/useImageIndex';
 import { useFileIO } from '@/hooks/useFileIO';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PromptDialog } from '@/components/ui/PromptDialog';
 
+/**
+ * EditorV3 - V2エディタのメインコンポーネント
+ * 
+ * Tiptapベースのリッチテキストエディタを提供します。
+ * このコンポーネントは以下の責務を持ちます:
+ * - Tiptapエディタインスタンスの初期化と管理
+ * - グローバル状態（Zustand）との連携
+ * - 各種フック（IME制御、ペースト制御、ファイルIO等）の統合
+ * - UI要素（ツールバー、ダイアログ、メニュー等）の配置
+ * 
+ * ビジネスロジックは全て hooks/ に分離されており、
+ * このコンポーネントは純粋なUI統合レイヤーとして機能します。
+ */
 export const EditorV3 = () => {
     // Global Store
     const {
@@ -63,7 +77,7 @@ export const EditorV3 = () => {
     const { showWarning: showBrowserWarning, setShowWarning: setShowBrowserWarning } = useBrowserCheck();
 
     // 一時的なeditorインスタンス（フック初期化のため）
-    const [tempEditor, setTempEditor] = useState<any>(null);
+    const [tempEditor, setTempEditor] = useState<Editor | null>(null);
 
     // IME Control (ロジック分離)
     const { handleKeyDown: handleIMEKeyDown, handleCompositionStart, handleCompositionEnd } = useIMEControl(tempEditor);
@@ -154,41 +168,18 @@ export const EditorV3 = () => {
     const { saveFile, saveAsFile, downloadFile, openFileWithHandle } = useFileIO(editor, isWordMode);
     const { currentFileHandle } = useAppStore();
 
+    // Word Mode 同期: Tiptap外部ライブラリの設定を同期
     useEffect(() => {
         if (editor) {
+            // @ts-expect-error - Tiptapの型定義が不完全なため
             editor.setOptions({
                 paragraphNumbering: { isWordMode },
-            } as any);
+            });
         }
     }, [isWordMode, editor]);
 
-    // Ctrl+S / Ctrl+N / Ctrl+O キーボードショートカット
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            // Ctrl+S: シンプル保存（ファイルハンドルがあれば上書き、なければダウンロード）
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                e.preventDefault();
-                if (currentFileHandle) {
-                    saveFile();
-                } else {
-                    downloadFile();
-                }
-            }
-            // Ctrl+N: 名前を付けて保存
-            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-                e.preventDefault();
-                saveAsFile();
-            }
-            // Ctrl+O: ファイルを開く
-            if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
-                e.preventDefault();
-                openFileWithHandle();
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [saveFile, saveAsFile, downloadFile, openFileWithHandle, currentFileHandle]);
+    // Keyboard Shortcuts (ロジック分離)
+    useKeyboardShortcuts(saveFile, saveAsFile, downloadFile, openFileWithHandle, currentFileHandle);
 
     return (
         <div className="flex flex-col h-screen bg-[#525659] overflow-hidden font-sans">
@@ -208,7 +199,7 @@ export const EditorV3 = () => {
                         style={{ 
                             width: '210mm',
                             zoom: zoomLevel / 100,
-                        } as any}
+                        } as React.CSSProperties}
                     >
                         {editor && (
                             <>

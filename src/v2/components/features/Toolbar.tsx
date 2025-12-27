@@ -17,6 +17,7 @@ import { HighlightMenu } from '@/components/common/toolbar/HighlightMenu';
 import { useAppStore } from '@/store/useAppStore';
 import { useJumpNavigation } from '@/hooks/useJumpNavigation';
 import { useParagraphNumberToggle } from '@/hooks/useParagraphNumberToggle';
+import { useTextFormatting } from '@/hooks/useTextFormatting';
 
 interface ToolbarProps {
     editor: Editor | null;
@@ -49,14 +50,21 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
     const { toggleParagraphNumbers } = useParagraphNumberToggle();
 
-    if (!editor) return null;
+    // Jump Navigation (ロジック分離)
+    const { jumpTo } = useJumpNavigation(editor, isWordMode);
 
-    const toggleBold = () => editor.chain().focus().toggleBold().run();
-    const toggleItalic = () => editor.chain().focus().toggleItalic().run();
-    const toggleUnderline = () => editor.chain().focus().toggleUnderline().run();
-    const toggleStrike = () => editor.chain().focus().toggleStrike().run();
-    const toggleSuperscript = () => editor.chain().focus().toggleSuperscript().run();
-    const toggleSubscript = () => editor.chain().focus().toggleSubscript().run();
+    // Text Formatting (ロジック分離)
+    const {
+        toggleBold,
+        toggleItalic,
+        toggleUnderline,
+        toggleStrike,
+        toggleSuperscript,
+        toggleSubscript,
+        isActive
+    } = useTextFormatting(editor);
+
+    if (!editor) return null;
 
     const btnBase = "p-1.5 rounded hover:bg-gray-200 transition-colors border border-gray-300 bg-white flex items-center justify-center min-w-[36px] h-[36px]";
     const btnActive = "bg-gray-200 border-gray-300 shadow-inner";
@@ -76,22 +84,22 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
             {/* Formatting Group - Flattened and Equally Spaced */}
             <div className="flex items-center gap-1.5 ml-1.5">
-                <button type="button" onClick={toggleBold} className={`${btnBase} ${editor.isActive('bold') ? 'bg-gray-200 shadow-inner' : ''}`} title="太字">
+                <button type="button" onClick={toggleBold} className={`${btnBase} ${isActive('bold') ? 'bg-gray-200 shadow-inner' : ''}`} title="太字">
                     <span className="font-sans font-bold text-gray-700 text-base leading-none">B</span>
                 </button>
-                <button type="button" onClick={toggleItalic} className={`${btnBase} ${editor.isActive('italic') ? 'bg-gray-200 shadow-inner' : ''}`} title="斜体">
+                <button type="button" onClick={toggleItalic} className={`${btnBase} ${isActive('italic') ? 'bg-gray-200 shadow-inner' : ''}`} title="斜体">
                     <span className="italic font-serif text-gray-700 text-lg leading-none">I</span>
                 </button>
-                <button type="button" onClick={toggleUnderline} className={`${btnBase} ${editor.isActive('underline') ? 'bg-gray-200 shadow-inner' : ''}`} title="下線">
+                <button type="button" onClick={toggleUnderline} className={`${btnBase} ${isActive('underline') ? 'bg-gray-200 shadow-inner' : ''}`} title="下線">
                     <span className="underline font-serif text-gray-700 text-base leading-none decoration-gray-700 underline-offset-2">U</span>
                 </button>
-                <button type="button" onClick={toggleStrike} className={`${btnBase} ${editor.isActive('strike') ? 'bg-gray-200 shadow-inner' : ''}`} title="打ち消し線">
+                <button type="button" onClick={toggleStrike} className={`${btnBase} ${isActive('strike') ? 'bg-gray-200 shadow-inner' : ''}`} title="打ち消し線">
                     <span className="line-through font-serif text-gray-700 text-base leading-none decoration-gray-700">S</span>
                 </button>
-                <button type="button" onClick={toggleSuperscript} className={`${btnBase} ${editor.isActive('superscript') ? 'bg-gray-200 shadow-inner' : ''}`} title="上付き文字">
+                <button type="button" onClick={toggleSuperscript} className={`${btnBase} ${isActive('superscript') ? 'bg-gray-200 shadow-inner' : ''}`} title="上付き文字">
                     <span className="font-sans text-gray-700 text-sm flex items-start leading-none gap-[1px]">x <span className="text-[10px] -mt-1 font-bold">2</span></span>
                 </button>
-                <button type="button" onClick={toggleSubscript} className={`${btnBase} ${editor.isActive('subscript') ? 'bg-gray-200 shadow-inner' : ''}`} title="下付き文字">
+                <button type="button" onClick={toggleSubscript} className={`${btnBase} ${isActive('subscript') ? 'bg-gray-200 shadow-inner' : ''}`} title="下付き文字">
                     <span className="font-sans text-gray-700 text-sm flex items-end leading-none gap-[1px]">x <span className="text-[10px] -mb-1 font-bold">2</span></span>
                 </button>
                 
