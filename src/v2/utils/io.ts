@@ -81,7 +81,8 @@ export async function importDocxToEditor(editor: Editor, file: File): Promise<vo
         const arrayBuffer = await file.arrayBuffer();
         const options = {
             styleMap: ["u => u"],
-            convertImage: (mammoth.images as any).inline(() => ({})) // Skip images
+            // mammothの型定義が不完全なため、画像スキップのために必要な型アサーション
+            convertImage: (mammoth.images as unknown as { inline: (fn: () => Record<string, never>) => unknown }).inline(() => ({}))
         };
 
         const result = await mammoth.convertToHtml({ arrayBuffer }, options);

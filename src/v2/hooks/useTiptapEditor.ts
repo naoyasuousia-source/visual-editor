@@ -19,6 +19,7 @@ import { FirstParagraphProtection } from '@/lib/firstParagraphProtection';
 import { CustomDocument } from '@/lib/customDocument';
 import { CrossPageMerge } from '@/lib/crossPageMerge';
 import { Bookmark } from '@/lib/bookmarkExtension';
+import { TiptapKeyDownHandler, TiptapPasteHandler } from '@/types/tiptap';
 
 /**
  * Tiptap Editor Hook
@@ -33,8 +34,8 @@ import { Bookmark } from '@/lib/bookmarkExtension';
  * @returns Tiptap Editor インスタンス
  */
 export const useTiptapEditor = (
-    handleIMEKeyDown: any,
-    handlePaste: any,
+    handleIMEKeyDown: TiptapKeyDownHandler,
+    handlePaste: TiptapPasteHandler,
     onEditorCreate?: (editor: Editor) => void
 ) => {
     const editor = useEditor({

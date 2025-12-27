@@ -54,7 +54,7 @@ export const FileMenu: React.FC<FileMenuProps> = ({ editor, prompt }) => {
                 if (detectedWordMode !== isWordMode) {
                     toggleWordMode();
                 }
-            } catch (err: any) {
+            } catch (err) {
                 console.error(err);
             }
         }
@@ -65,7 +65,7 @@ export const FileMenu: React.FC<FileMenuProps> = ({ editor, prompt }) => {
         if (e.target.files && e.target.files.length > 0 && editor) {
             try {
                 await importDocx(e.target.files[0]);
-            } catch (err: any) {
+            } catch (err) {
                 console.error(err);
             }
         }

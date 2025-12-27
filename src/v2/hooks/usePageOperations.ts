@@ -1,8 +1,14 @@
 import { Editor } from '@tiptap/react';
+import { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { toast } from 'sonner';
 
 interface UsePageOperationsOptions {
     confirm: (options: { title: string; description: string; variant?: 'default' | 'danger' }) => Promise<boolean>;
+}
+
+interface PageInfo {
+    node: ProseMirrorNode;
+    pos: number;
 }
 
 /**
@@ -31,7 +37,7 @@ export const usePageOperations = (editor: Editor | null, options: UsePageOperati
         if (!editor) return;
         
         const { doc } = editor.state;
-        const pages: any[] = [];
+        const pages: PageInfo[] = [];
         
         doc.descendants((node, pos) => {
             if (node.type.name === 'page') {

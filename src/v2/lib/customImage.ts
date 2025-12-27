@@ -140,29 +140,58 @@ export const CustomImage = TiptapImage.extend({
             new Plugin({
                 key: new PluginKey('customImageClick'),
                 props: {
-                    // 画像クリック時にキャレットを画像の右辺に配置
-                    handleClick: (view, pos, event) => {
-                        const target = event.target as HTMLElement;
-                        
-                        // クリック対象が画像かチェック
-                        if (target.tagName === 'IMG') {
-                            const { state } = view;
+                    handleDOMEvents: {
+                        // ネイティブclickイベントをキャプチャ
+                        mousedown: (view, event) => {
+                            const target = event.target as HTMLElement;
                             
-                            // クリック位置から画像ノードを特定
-                            const imageNode = state.doc.nodeAt(pos);
-                            
-                            if (imageNode?.type.name === 'image') {
-                                // 画像の直後にキャレットを配置
-                                const afterImagePos = pos + imageNode.nodeSize;
-                                const tr = state.tr.setSelection(
-                                    TextSelection.create(state.doc, afterImagePos)
-                                );
-                                view.dispatch(tr);
-                                return true;
+                            // クリック対象が画像かチェック
+                            if (target.tagName !== 'IMG') {
+                                return false;
                             }
-                        }
-                        
-                        return false;
+                            
+                            const imgElement = target as HTMLImageElement;
+                            const imgSrc = imgElement.getAttribute('src');
+                            
+                            if (!imgSrc) {
+                                return false;
+                            }
+                            
+                            const { state } = view;
+                            let foundPos: number | null = null;
+                            
+                            // ドキュメント全体を走査して画像ノードを探す
+                            state.doc.descendants((node, pos) => {
+                                if (node.type.name === 'image' && node.attrs.src === imgSrc) {
+                                    foundPos = pos;
+                                    return false; // 見つかったら走査終了
+                                }
+                                return true;
+                            });
+                            
+                            if (foundPos !== null) {
+                                const imageNode = state.doc.nodeAt(foundPos);
+                                if (imageNode) {
+                                    // 画像の直後にキャレットを配置
+                                    const afterImagePos = foundPos + imageNode.nodeSize;
+                                    
+                                    // 非同期でselectionを設定（デフォルト動作を上書き）
+                                    setTimeout(() => {
+                                        const tr = view.state.tr.setSelection(
+                                            TextSelection.create(view.state.doc, afterImagePos)
+                                        );
+                                        view.dispatch(tr);
+                                        view.focus();
+                                    }, 0);
+                                    
+                                    // デフォルトのNodeSelection動作を防止
+                                    event.preventDefault();
+                                    return true;
+                                }
+                            }
+                            
+                            return false;
+                        },
                     },
                 },
             }),

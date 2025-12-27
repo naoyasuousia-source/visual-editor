@@ -36,8 +36,8 @@ interface AppState {
     closeSubHelp: () => void;
 
     // File Handle (for Ctrl+S overwrite)
-    currentFileHandle: any;
-    setCurrentFileHandle: (handle: any) => void;
+    currentFileHandle: FileSystemFileHandle | null;
+    setCurrentFileHandle: (handle: FileSystemFileHandle | null) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({

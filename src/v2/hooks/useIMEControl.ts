@@ -1,5 +1,6 @@
 import { useRef, useCallback } from 'react';
 import { Editor } from '@tiptap/react';
+import { TiptapKeyDownHandler } from '@/types/tiptap';
 
 /**
  * IME（日本語入力）制御フック
@@ -19,7 +20,7 @@ export const useIMEControl = (editor: Editor | null) => {
     /**
      * Tiptapの editorProps.handleKeyDown で使用するハンドラ
      */
-    const handleKeyDown = useCallback((view: any, event: KeyboardEvent): boolean => {
+    const handleKeyDown = useCallback<TiptapKeyDownHandler>((view, event): boolean => {
         // IME入力中かチェック
         if (event.isComposing || event.keyCode === 229 || isComposingRef.current) {
             return false; // Tiptapのデフォルト処理を継続

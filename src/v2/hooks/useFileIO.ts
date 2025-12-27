@@ -24,14 +24,14 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
     const openFileWithHandle = async (): Promise<boolean> => {
         if (!editor) return false;
         
-        if (typeof (window as any).showOpenFilePicker !== 'function') {
+        if (!window.showOpenFilePicker) {
             // フォールバック: input要素を使用
             return false;
         }
 
         try {
             setIsLoading(true);
-            const [handle] = await (window as any).showOpenFilePicker({
+            const [handle] = await window.showOpenFilePicker({
                 types: [{
                     description: 'HTML Files',
                     accept: { 'text/html': ['.html', '.htm'] }
@@ -47,8 +47,8 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
             
             toast.success('ファイルを開きました');
             return true;
-        } catch (err: any) {
-            if (err.name !== 'AbortError') {
+        } catch (err) {
+            if (err instanceof Error && err.name !== 'AbortError') {
                 console.error('File open error:', err);
                 toast.error('ファイルを開けませんでした');
             }
@@ -64,7 +64,7 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
     const saveAsFile = async (): Promise<void> => {
         if (!editor) return;
 
-        if (typeof (window as any).showSaveFilePicker !== 'function') {
+        if (!window.showSaveFilePicker) {
             // フォールバック: ダウンロード
             await downloadFile();
             return;
@@ -72,7 +72,7 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
 
         try {
             setIsLoading(true);
-            const handle = await (window as any).showSaveFilePicker({
+            const handle = await window.showSaveFilePicker({
                 types: [{
                     description: 'HTML Files',
                     accept: { 'text/html': ['.html', '.htm'] }
@@ -87,8 +87,8 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
 
             setCurrentFileHandle(handle);
             toast.success('保存しました');
-        } catch (err: any) {
-            if (err.name !== 'AbortError') {
+        } catch (err) {
+            if (err instanceof Error && err.name !== 'AbortError') {
                 console.error('Save error:', err);
                 toast.error('保存に失敗しました');
             }

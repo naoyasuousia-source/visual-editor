@@ -16,7 +16,6 @@ import { useIMEControl } from '@/hooks/useIMEControl';
 import { usePasteControl } from '@/hooks/usePasteControl';
 import { useDialogs } from '@/hooks/useDialogs';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
-import { useImageIndex } from '@/hooks/useImageIndex';
 import { useFileIO } from '@/hooks/useFileIO';
 import { useTiptapEditor } from '@/hooks/useTiptapEditor';
 
@@ -39,7 +38,6 @@ export const EditorV3 = () => {
         zoomLevel,
         isWordMode,
         activeDialog,
-        openDialog,
         closeDialog
     } = useAppStore();
 
@@ -50,7 +48,7 @@ export const EditorV3 = () => {
     const [tempEditor, setTempEditor] = useState<Editor | null>(null);
 
     // IME Control (ロジック分離)
-    const { handleKeyDown: handleIMEKeyDown, handleCompositionStart, handleCompositionEnd } = useIMEControl(tempEditor);
+    const { handleKeyDown: handleIMEKeyDown } = useIMEControl(tempEditor);
 
     // Paste Control (ロジック分離)
     const { handlePaste } = usePasteControl(tempEditor);
@@ -66,8 +64,8 @@ export const EditorV3 = () => {
     // Page Operations (ロジック分離)
     const { addPage, removePage } = usePageOperations(editor, { confirm });
 
-    // Image Index (ロジック分離)
-    const { rebuildImageIndex, updateImageMeta } = useImageIndex(editor, isWordMode);
+    // Image Index (ロジック分離) - 現在未使用だが将来の拡張のために保持
+    // const { rebuildImageIndex, updateImageMeta } = useImageIndex(editor, isWordMode);
 
     // File IO (ロジック分離)
     const { saveFile, saveAsFile, downloadFile, openFileWithHandle } = useFileIO(editor, isWordMode);

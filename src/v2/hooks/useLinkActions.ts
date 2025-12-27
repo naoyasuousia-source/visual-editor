@@ -25,7 +25,7 @@ export function addLinkDestination(editor: Editor | null): void {
     const bookmarkId = generateBookmarkId();
     
     // Bookmark拡張のコマンドを使用
-    (editor.commands as any).setBookmark(bookmarkId);
+    editor.commands.setBookmark(bookmarkId);
     
     alert(`リンク先を追加しました`);
 }

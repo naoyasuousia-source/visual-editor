@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { Editor } from '@tiptap/react';
 import { toast } from 'sonner';
+import { TiptapPasteHandler } from '@/types/tiptap';
 
 /**
  * ペースト制御フック
@@ -15,7 +16,7 @@ export const usePasteControl = (editor: Editor | null) => {
     /**
      * Tiptapの editorProps.handlePaste で使用するハンドラ
      */
-    const handlePaste = useCallback((view: any, event: ClipboardEvent): boolean => {
+    const handlePaste = useCallback<TiptapPasteHandler>((view, event): boolean => {
         const clipboardData = event.clipboardData;
         if (!clipboardData) return false;
 

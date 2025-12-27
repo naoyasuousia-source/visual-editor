@@ -135,8 +135,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                             onChange={(e) => {
                                 const value = e.target.value;
                                 if (value === 'p') editor.chain().focus().setParagraph().run();
-                                else if (value.startsWith('h')) editor.chain().focus().toggleHeading({ level: parseInt(value.substring(1)) as any }).run();
-                                else if (value === 'h6') editor.chain().focus().toggleHeading({ level: 6 }).run();
+                                else if (value.startsWith('h')) {
+                                    const level = parseInt(value.substring(1)) as 1 | 2 | 3 | 4 | 5 | 6;
+                                    editor.chain().focus().toggleHeading({ level }).run();
+                                }
                             }}
                             value={
                                 editor.isActive('heading', { level: 1 }) ? 'h1' :
