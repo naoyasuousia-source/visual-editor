@@ -170,6 +170,11 @@ body.hide-para-numbers .page-inner [data-para]::before {
   line-height: 0;
 }
 
+/* 画像の下に生じる余白（キャレット用の行）を最小化 */
+.page-inner p:has(> img:not(.ProseMirror-separator)) {
+  line-height: 0;
+}
+
 .page-inner img.has-border {
   border: 1px solid currentColor;
 }

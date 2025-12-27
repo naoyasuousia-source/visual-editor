@@ -1,5 +1,6 @@
 import { Image as TiptapImage } from '@tiptap/extension-image';
 import { mergeAttributes } from '@tiptap/core';
+import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
 
 /**
  * カスタム画像拡張
@@ -9,6 +10,7 @@ import { mergeAttributes } from '@tiptap/core';
  * - atom: true - 画像をアトムノードとして扱い、内部にキャレットを置かない
  * - selectable: true - 画像を選択可能にする
  * - Backspaceで画像段落ごと削除
+ * - 画像クリック時はキャレットを画像右辺に配置
  */
 export const CustomImage = TiptapImage.extend({
     // 画像を段落内に配置可能にする（インライン要素として扱う）
@@ -131,6 +133,40 @@ export const CustomImage = TiptapImage.extend({
                 return false;
             },
         };
+    },
+
+    addProseMirrorPlugins() {
+        return [
+            new Plugin({
+                key: new PluginKey('customImageClick'),
+                props: {
+                    // 画像クリック時にキャレットを画像の右辺に配置
+                    handleClick: (view, pos, event) => {
+                        const target = event.target as HTMLElement;
+                        
+                        // クリック対象が画像かチェック
+                        if (target.tagName === 'IMG') {
+                            const { state } = view;
+                            
+                            // クリック位置から画像ノードを特定
+                            const imageNode = state.doc.nodeAt(pos);
+                            
+                            if (imageNode?.type.name === 'image') {
+                                // 画像の直後にキャレットを配置
+                                const afterImagePos = pos + imageNode.nodeSize;
+                                const tr = state.tr.setSelection(
+                                    TextSelection.create(state.doc, afterImagePos)
+                                );
+                                view.dispatch(tr);
+                                return true;
+                            }
+                        }
+                        
+                        return false;
+                    },
+                },
+            }),
+        ];
     },
 
     renderHTML({ HTMLAttributes }) {

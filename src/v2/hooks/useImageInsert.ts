@@ -59,7 +59,7 @@ export const useImageInsert = (editor: Editor | null, options: UseImageInsertOpt
      * 
      * 【重要】
      * 画像は常に独自の段落（<p>タグ）内に配置され、段落番号が付与される
-     * 挿入後、キャレットは画像の右辺（直後）に配置される
+     * キャレットは画像クリックプラグインにより画像右辺に配置される
      */
     const insertImageWithParagraphCheck = (src: string) => {
         if (!editor) return;
@@ -68,16 +68,8 @@ export const useImageInsert = (editor: Editor | null, options: UseImageInsertOpt
         
         if (isEmpty) {
             // 空の段落の場合はそのまま画像を挿入（段落内にインライン要素として配置）
+            // setImage後、キャレットは自動的に画像の直後に配置される
             editor.chain().focus().setImage({ src }).run();
-            
-            // 挿入後、キャレットを画像の直後に移動
-            // setImageは画像の直後にキャレットを配置するはずだが、明示的に設定
-            setTimeout(() => {
-                // 段落の末尾に移動（画像の直後）
-                const { $from } = editor.state.selection;
-                const endPos = $from.end();
-                editor.commands.setTextSelection(endPos);
-            }, 0);
         } else {
             // テキストがある段落の場合:
             // 新しい段落を作成し、その中に画像を配置
@@ -101,23 +93,6 @@ export const useImageInsert = (editor: Editor | null, options: UseImageInsertOpt
                     ]
                 })
                 .run();
-            
-            // 挿入後、新しい段落の末尾（画像の直後）にキャレットを移動
-            setTimeout(() => {
-                // 挿入した段落を探して、その末尾にキャレットを移動
-                const newState = editor.state;
-                const doc = newState.doc;
-                
-                // afterParagraphPosの位置に挿入された段落を探す
-                // 挿入後は位置がずれている可能性があるので、ドキュメントを走査
-                let targetPos = afterParagraphPos + 1; // 段落の開始位置の直後
-                
-                // 挿入した段落の末尾位置を計算
-                const resolvedPos = doc.resolve(targetPos);
-                const endOfNewParagraph = resolvedPos.end();
-                
-                editor.commands.setTextSelection(endOfNewParagraph);
-            }, 0);
         }
     };
 
