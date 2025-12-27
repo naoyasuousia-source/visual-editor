@@ -1,7 +1,29 @@
 import { Image as TiptapImage } from '@tiptap/extension-image';
 import { mergeAttributes } from '@tiptap/core';
 
+/**
+ * カスタム画像拡張
+ * 
+ * 【重要な変更点】
+ * - inline: true - 段落（p）内に画像を配置可能にする
+ * - atom: true - 画像をアトムノードとして扱い、内部にキャレットを置かない
+ * - selectable: true - 画像を選択可能にする
+ * - Backspaceで画像段落ごと削除
+ */
 export const CustomImage = TiptapImage.extend({
+    // 画像を段落内に配置可能にする（インライン要素として扱う）
+    inline: true,
+    group: 'inline',
+    
+    // 画像をアトムノードとして扱う（内部にキャレットを置かない）
+    atom: true,
+    
+    // 画像を選択可能にする
+    selectable: true,
+    
+    // ドラッグ可能
+    draggable: true,
+
     addAttributes() {
         return {
             ...this.parent?.(),
@@ -54,6 +76,59 @@ export const CustomImage = TiptapImage.extend({
                     if (!attributes.tag) return {};
                     return { 'data-tag': attributes.tag };
                 },
+            },
+        };
+    },
+
+    addKeyboardShortcuts() {
+        return {
+            // Backspaceで画像が選択されている場合、または画像の直後にいる場合は段落ごと削除
+            Backspace: () => {
+                const { state, view } = this.editor;
+                const { selection } = state;
+                const { $from, empty } = selection;
+                
+                // NodeSelectionで画像が選択されている場合
+                if (selection.node?.type.name === 'image') {
+                    // 画像を含む段落全体を削除
+                    const parentPos = $from.before($from.depth);
+                    const parentNode = $from.node($from.depth);
+                    
+                    // 親が段落で、画像のみを含む場合は段落ごと削除
+                    if (parentNode.type.name === 'paragraph' && parentNode.content.size === 1) {
+                        const tr = state.tr.delete(parentPos, parentPos + parentNode.nodeSize);
+                        view.dispatch(tr);
+                        return true;
+                    }
+                    
+                    // それ以外は画像のみ削除
+                    return this.editor.commands.deleteSelection();
+                }
+                
+                // キャレットが空の位置にあり、直前に画像がある場合
+                if (empty) {
+                    const nodeBefore = $from.nodeBefore;
+                    if (nodeBefore?.type.name === 'image') {
+                        // 親段落を取得
+                        const parentPos = $from.before($from.depth);
+                        const parentNode = $from.node($from.depth);
+                        
+                        // 親が段落で、画像のみを含む場合は段落ごと削除
+                        if (parentNode.type.name === 'paragraph' && parentNode.content.size === 1) {
+                            const tr = state.tr.delete(parentPos, parentPos + parentNode.nodeSize);
+                            view.dispatch(tr);
+                            return true;
+                        }
+                        
+                        // 画像のみ削除
+                        const pos = $from.pos - nodeBefore.nodeSize;
+                        const tr = state.tr.delete(pos, $from.pos);
+                        view.dispatch(tr);
+                        return true;
+                    }
+                }
+                
+                return false;
             },
         };
     },

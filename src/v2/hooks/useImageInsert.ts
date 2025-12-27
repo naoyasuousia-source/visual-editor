@@ -46,33 +46,78 @@ export const useImageInsert = (editor: Editor | null, options: UseImageInsertOpt
         const { $from } = editor.state.selection;
         const parent = $from.parent;
         
-        // 段落のテキスト内容が空かチェック
-        return parent.textContent.trim() === '';
+        // 段落のテキスト内容が空かチェック（画像ノードがある場合も空でないと判定）
+        return parent.content.size === 0;
     };
 
     /**
      * 画像を挿入（段落にテキストがある場合は新しい段落を作成）
+     * 
+     * 【動作】
+     * - 空の段落: その段落内に画像を挿入
+     * - テキストがある段落: 新しい段落を作成し、その中に画像を挿入
+     * 
+     * 【重要】
+     * 画像は常に独自の段落（<p>タグ）内に配置され、段落番号が付与される
+     * 挿入後、キャレットは画像の右辺（直後）に配置される
      */
     const insertImageWithParagraphCheck = (src: string) => {
         if (!editor) return;
 
-        if (isCurrentParagraphEmpty()) {
-            // 空の段落の場合はそのまま挿入
+        const isEmpty = isCurrentParagraphEmpty();
+        
+        if (isEmpty) {
+            // 空の段落の場合はそのまま画像を挿入（段落内にインライン要素として配置）
             editor.chain().focus().setImage({ src }).run();
+            
+            // 挿入後、キャレットを画像の直後に移動
+            // setImageは画像の直後にキャレットを配置するはずだが、明示的に設定
+            setTimeout(() => {
+                // 段落の末尾に移動（画像の直後）
+                const { $from } = editor.state.selection;
+                const endPos = $from.end();
+                editor.commands.setTextSelection(endPos);
+            }, 0);
         } else {
-            // テキストがある段落の場合は、まず段落末尾に移動し、新しい段落を作成してから挿入
+            // テキストがある段落の場合:
+            // 新しい段落を作成し、その中に画像を配置
+            
+            const { state } = editor;
+            const { $from } = state.selection;
+            
+            // 現在の段落ノードの終了位置（次のノードの開始位置）を取得
+            const afterParagraphPos = $from.after();
+            
+            // 新しい段落ノードを作成し、その中に画像を配置
             editor.chain()
                 .focus()
-                .command(({ tr, state }) => {
-                    // 現在の段落の末尾に移動
-                    const { $from } = state.selection;
-                    const endOfParagraph = $from.end();
-                    tr.setSelection(state.selection.constructor.near(tr.doc.resolve(endOfParagraph)));
-                    return true;
+                .insertContentAt(afterParagraphPos, {
+                    type: 'paragraph',
+                    content: [
+                        {
+                            type: 'image',
+                            attrs: { src }
+                        }
+                    ]
                 })
-                .splitBlock()
-                .setImage({ src })
                 .run();
+            
+            // 挿入後、新しい段落の末尾（画像の直後）にキャレットを移動
+            setTimeout(() => {
+                // 挿入した段落を探して、その末尾にキャレットを移動
+                const newState = editor.state;
+                const doc = newState.doc;
+                
+                // afterParagraphPosの位置に挿入された段落を探す
+                // 挿入後は位置がずれている可能性があるので、ドキュメントを走査
+                let targetPos = afterParagraphPos + 1; // 段落の開始位置の直後
+                
+                // 挿入した段落の末尾位置を計算
+                const resolvedPos = doc.resolve(targetPos);
+                const endOfNewParagraph = resolvedPos.end();
+                
+                editor.commands.setTextSelection(endOfNewParagraph);
+            }, 0);
         }
     };
 
