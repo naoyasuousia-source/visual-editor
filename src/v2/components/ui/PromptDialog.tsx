@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BaseDialog } from './BaseDialog';
 
 interface PromptDialogProps {
@@ -23,6 +23,7 @@ interface PromptDialogProps {
  * - アクセシビリティ完全対応
  * - バリデーション対応
  * - カスタマイズ可能
+ * - ダイアログ表示時に自動フォーカス
  */
 export const PromptDialog: React.FC<PromptDialogProps> = ({
     open,
@@ -37,10 +38,17 @@ export const PromptDialog: React.FC<PromptDialogProps> = ({
     inputType = 'text'
 }) => {
     const [value, setValue] = useState(defaultValue);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (open) {
             setValue(defaultValue);
+            // ダイアログのアニメーション完了後にフォーカスを設定
+            const timer = setTimeout(() => {
+                inputRef.current?.focus();
+                inputRef.current?.select();
+            }, 50);
+            return () => clearTimeout(timer);
         }
     }, [open, defaultValue]);
 
@@ -61,6 +69,7 @@ export const PromptDialog: React.FC<PromptDialogProps> = ({
         >
             <form onSubmit={(e) => { e.preventDefault(); handleConfirm(); }} className="space-y-4">
                 <input
+                    ref={inputRef}
                     type={inputType}
                     value={value}
                     onChange={(e) => setValue(e.target.value)}

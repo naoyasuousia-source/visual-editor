@@ -38,6 +38,45 @@ export const useImageInsert = (editor: Editor | null, options: UseImageInsertOpt
     };
 
     /**
+     * 現在のカーソル位置の段落が空かどうかをチェック
+     */
+    const isCurrentParagraphEmpty = (): boolean => {
+        if (!editor) return true;
+        
+        const { $from } = editor.state.selection;
+        const parent = $from.parent;
+        
+        // 段落のテキスト内容が空かチェック
+        return parent.textContent.trim() === '';
+    };
+
+    /**
+     * 画像を挿入（段落にテキストがある場合は新しい段落を作成）
+     */
+    const insertImageWithParagraphCheck = (src: string) => {
+        if (!editor) return;
+
+        if (isCurrentParagraphEmpty()) {
+            // 空の段落の場合はそのまま挿入
+            editor.chain().focus().setImage({ src }).run();
+        } else {
+            // テキストがある段落の場合は、まず段落末尾に移動し、新しい段落を作成してから挿入
+            editor.chain()
+                .focus()
+                .command(({ tr, state }) => {
+                    // 現在の段落の末尾に移動
+                    const { $from } = state.selection;
+                    const endOfParagraph = $from.end();
+                    tr.setSelection(state.selection.constructor.near(tr.doc.resolve(endOfParagraph)));
+                    return true;
+                })
+                .splitBlock()
+                .setImage({ src })
+                .run();
+        }
+    };
+
+    /**
      * Dropboxから画像を挿入
      */
     const insertFromDropbox = async () => {
@@ -54,7 +93,7 @@ export const useImageInsert = (editor: Editor | null, options: UseImageInsertOpt
 
         try {
             const convertedUrl = convertDropboxUrl(url);
-            editor.chain().focus().setImage({ src: convertedUrl }).run();
+            insertImageWithParagraphCheck(convertedUrl);
             toast.success('画像を挿入しました');
         } catch (error) {
             toast.error('画像の挿入に失敗しました');
@@ -77,7 +116,7 @@ export const useImageInsert = (editor: Editor | null, options: UseImageInsertOpt
         if (!url) return;
 
         try {
-            editor.chain().focus().setImage({ src: url }).run();
+            insertImageWithParagraphCheck(url);
             toast.success('画像を挿入しました');
         } catch (error) {
             toast.error('画像の挿入に失敗しました');
