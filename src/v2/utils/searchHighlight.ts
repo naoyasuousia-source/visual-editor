@@ -9,7 +9,7 @@
  * Remove all search highlights from the document
  */
 export function clearSearchHighlights(): void {
-    const highlights = document.querySelectorAll('.search-match');
+    const highlights = document.querySelectorAll('[data-search-match]');
     highlights.forEach(h => {
         const parent = h.parentNode;
         if (parent) {
@@ -47,7 +47,7 @@ export function countSearchMatches(query: string, containers: NodeListOf<Element
         } else if (node.nodeType === Node.ELEMENT_NODE) {
             const element = node as Element;
             // 既にハイライト済みの要素はスキップ
-            if (!element.classList.contains('search-match')) {
+            if (!element.hasAttribute('data-search-match')) {
                 Array.from(node.childNodes).forEach(countInNode);
             }
         }
@@ -79,23 +79,21 @@ function highlightAllInTextNode(textNode: Text, query: string): HTMLElement | nu
         if (idx === -1) break;
         
         try {
-            // 方法1: テキストノード分割 + span挿入（より堅牢）
-            // テキストノードを3つに分割: [前のテキスト][マッチ部分][後のテキスト]
             const parent = currentNode.parentNode;
             if (!parent) break;
             
-            // マッチ部分の前で分割（splitTextは新しいテキストノードを返す）
+            // テキストノードを分割
             const matchStartNode: Text = currentNode.splitText(idx);
-            
-            // マッチ部分の後で分割
             const afterNode: Text = matchStartNode.splitText(query.length);
             
-            // span要素を作成してマッチ部分をラップ
+            // span要素を作成してTailwindクラスを適用
             const span = document.createElement('span');
-            span.className = 'search-match';
+            // Tailwindクラスでオレンジ系ハイライトを適用
+            span.className = 'bg-orange-400 text-black font-bold rounded px-0.5 shadow-md';
+            span.setAttribute('data-search-match', 'true');
             span.textContent = matchStartNode.nodeValue;
             
-            // マッチ部分のテキストノードをspanで置き換え
+            // マッチ部分のテキストノードをspanで置換
             parent.replaceChild(span, matchStartNode);
             
             if (!firstSpan) firstSpan = span;
@@ -103,28 +101,8 @@ function highlightAllInTextNode(textNode: Text, query: string): HTMLElement | nu
             // 後のテキストノードで続行
             currentNode = afterNode;
         } catch (e) {
-            // フォールバック: 従来のrange.surroundContentsを試行
-            try {
-                const range = document.createRange();
-                range.setStart(currentNode, idx);
-                range.setEnd(currentNode, idx + query.length);
-                
-                const span = document.createElement('span');
-                span.className = 'search-match';
-                range.surroundContents(span);
-                
-                if (!firstSpan) firstSpan = span;
-                
-                const nextNode = span.nextSibling;
-                if (nextNode && nextNode.nodeType === Node.TEXT_NODE) {
-                    currentNode = nextNode as Text;
-                } else {
-                    currentNode = null;
-                }
-            } catch (e2) {
-                // 両方失敗した場合はスキップ
-                break;
-            }
+            // エラー発生時はスキップ
+            break;
         }
     }
     
@@ -162,7 +140,7 @@ export function highlightSearchMatches(
         } else if (node.nodeType === Node.ELEMENT_NODE) {
             const element = node as Element;
             // 既にハイライト済みの要素はスキップ
-            if (!element.classList.contains('search-match')) {
+            if (!element.hasAttribute('data-search-match')) {
                 Array.from(node.childNodes).forEach(collectTextNodes);
             }
         }
@@ -184,9 +162,11 @@ export function highlightSearchMatches(
         }
     }
     
-    // Mark first match as current
+    // Mark first match as current with brighter style
     if (firstFound) {
-        (firstFound as HTMLElement).classList.add('current');
+        // currentクラスをTailwindで適用（より明るいオレンジ）
+        firstFound.classList.remove('bg-orange-400');
+        firstFound.classList.add('bg-orange-500', 'text-white', 'scale-110', 'z-10');
     }
     
     return firstFound;

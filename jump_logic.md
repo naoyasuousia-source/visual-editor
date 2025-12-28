@@ -240,6 +240,37 @@
   - 従来の`range.surroundContents`はtry-catchのフォールバックとして残す
   - 明示的な型注釈`Text`を追加して型エラーを解消
 
+---
+
+### 変更9: Tailwindクラスへの移行（2025-12-28）
+
+**分析結果:**
+- ユーザーからの指摘: `index.css`は先頭3行（Tailwindディレクティブ）以外は許可されていない
+- `.search-match`クラスのCSS定義が使用不可
+
+**方針:**
+- `index.css`から`.search-match`のCSS定義を削除
+- span要素にTailwindクラスを直接適用
+- `.search-match`クラスの代わりに`data-search-match`属性を使用
+
+**変更内容:**
+- ファイル: `src/v2/styles/index.css`
+  - 4行目以降の`.search-match`CSS定義を全て削除
+  - Tailwindディレクティブ3行のみに
+
+- ファイル: `src/v2/utils/searchHighlight.ts`
+  - **highlightAllInTextNode関数**:
+    - `span.className = 'search-match'` → `span.className = 'bg-orange-400 text-black font-bold rounded px-0.5 shadow-md'`
+    - `span.setAttribute('data-search-match', 'true')` を追加
+  - **clearSearchHighlights関数**:
+    - `querySelectorAll('.search-match')` → `querySelectorAll('[data-search-match]')`
+  - **countInNode関数**:
+    - `classList.contains('search-match')` → `hasAttribute('data-search-match')`
+  - **collectTextNodes関数**:
+    - 同様に`hasAttribute('data-search-match')`に変更
+  - **highlightSearchMatches関数**:
+    - currentマッチの強調: `bg-orange-500`, `text-white`, `scale-110`, `z-10`をTailwindで適用
+
 
 ## 3. 分析中に気づいた重要ポイント
 
