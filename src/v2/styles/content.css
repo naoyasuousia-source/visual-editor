@@ -70,8 +70,6 @@ section.page::after {
 .page-inner h1,
 .page-inner h2,
 .page-inner h3,
-.page-inner h4,
-.page-inner h5,
 .page-inner h6 {
   margin: 0 0 1em;
   position: relative;
@@ -81,8 +79,6 @@ section.page::after {
 .page-inner h1,
 .page-inner h2,
 .page-inner h3,
-.page-inner h4,
-.page-inner h5,
 .page-inner h6 {
   font-weight: revert;
   font-size: revert;
@@ -99,8 +95,6 @@ section.page::after {
 .page-inner h1[data-para]::before,
 .page-inner h2[data-para]::before,
 .page-inner h3[data-para]::before,
-.page-inner h4[data-para]::before,
-.page-inner h5[data-para]::before,
 .page-inner h6[data-para]::before {
   content: "[" attr(data-para) "]";
   position: absolute;
@@ -284,48 +278,6 @@ body.hide-para-numbers .page-inner [data-para]::before {
   text-indent: -180pt;
 }
 
-.inline-align {
-  display: inline-block;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.inline-align-left {
-  text-align: left;
-}
-
-.inline-align-center {
-  text-align: center;
-}
-
-.inline-align-right {
-  text-align: right;
-}
-
-.page-inner p.inline-spacing-xs,
-.page-inner .inline-align.inline-spacing-xs {
-  margin-bottom: 4px;
-}
-
-.page-inner p.inline-spacing-s,
-.page-inner .inline-align.inline-spacing-s {
-  margin-bottom: 12px;
-}
-
-.page-inner p.inline-spacing-m,
-.page-inner .inline-align.inline-spacing-m {
-  margin-bottom: 24px;
-}
-
-.page-inner p.inline-spacing-l,
-.page-inner .inline-align.inline-spacing-l {
-  margin-bottom: 48px;
-}
-
-.page-inner p.inline-spacing-xl,
-.page-inner .inline-align.inline-spacing-xl {
-  margin-bottom: 60px;
-}
 
 @media print {
   @page {
