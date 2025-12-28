@@ -156,8 +156,7 @@ body.hide-para-numbers .page-inner [data-para]::before {
   line-height: 1;
   font-size: inherit;
   caret-color: #000;
-  /* 【1.1解決】画像コンテナ直後のキャレットを1.5pt右に配置 */
-  letter-spacing: 1.5pt;
+  /* letter-spacing は廃止し、.image-container の margin-right で制御する */
 }
 
 /* 画像コンテナ: インラインブロックにしてキャレットを横に配置 */
@@ -169,6 +168,8 @@ body.hide-para-numbers .page-inner [data-para]::before {
   line-height: 0;
   font-size: 0;
   position: relative;
+  /* 画像の右辺から 1.5pt 離した位置にキャレットを置くため、マージンを設定 */
+  margin-right: 1.5pt;
   /* タイトルがある場合は下に余白を確保 */
   margin-bottom: 0;
   transition: margin-bottom 0.2s;
@@ -189,7 +190,7 @@ body.hide-para-numbers .page-inner [data-para]::before {
 /* 画像本体 */
 .page-inner .image-container img {
   display: block;
-  max-width: 100%;
+  width: 100%; /* コンテナの幅（img-s, img-m 等）に追従させる */
   height: auto;
 }
 

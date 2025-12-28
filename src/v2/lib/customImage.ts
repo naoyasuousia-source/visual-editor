@@ -210,7 +210,7 @@ export const CustomImage = TiptapImage.extend({
             
             // クラスを設定
             if (node.attrs.size) {
-                img.classList.add(`img-${node.attrs.size}`);
+                container.classList.add(`img-${node.attrs.size}`);
             }
             if (node.attrs.hasBorder) {
                 img.classList.add('has-border');
@@ -279,7 +279,11 @@ export const CustomImage = TiptapImage.extend({
                     img.alt = updatedNode.attrs.alt || '';
                     
                     img.className = '';
-                    if (updatedNode.attrs.size) img.classList.add(`img-${updatedNode.attrs.size}`);
+                    container.className = 'image-container'; // リセット
+                    
+                    if (updatedNode.attrs.size) {
+                        container.classList.add(`img-${updatedNode.attrs.size}`);
+                    }
                     if (updatedNode.attrs.hasBorder) img.classList.add('has-border');
                     
                     // タイトル更新（data属性とクラス）
