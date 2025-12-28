@@ -151,8 +151,9 @@ body.hide-para-numbers .page-inner [data-para]::before {
   display: block;
   text-align: center;
   padding: 0;
-  /* line-height: 1だと画像サイズにキャレットが合わない可能性があるが、まずは標準的な挙動に */
-  line-height: 1.2;
+  /* line-height: 1 に設定することで、インラインブロックである画像コンテナの高さを行の高さとし、
+     キャレットの高さを画像に合わせる（ブラウザ仕様に依存） */
+  line-height: 1;
   font-size: inherit;
   caret-color: #000;
   /* 【1.1解決】画像コンテナ直後のキャレットを1.5pt右に配置 */
