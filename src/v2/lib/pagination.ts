@@ -21,6 +21,8 @@ export const Pagination = Extension.create<PaginationOptions>({
     },
 
     addProseMirrorPlugins() {
+        const options = this.options;
+        
         return [
             new Plugin({
                 key: new PluginKey('pagination'),
@@ -31,7 +33,7 @@ export const Pagination = Extension.create<PaginationOptions>({
                         if (isProcessing) return;
                         
                         // Wordモード時はページ溢れチェックをスキップ
-                        if (this.options.isWordMode) return;
+                        if (options.isWordMode) return;
 
                         isProcessing = true;
 
