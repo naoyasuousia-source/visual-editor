@@ -46,20 +46,38 @@ export const useImageActions = (editor: Editor | null, options: UseImageActionsO
     const { openDialog } = options;
 
     /**
-     * 指定されたDOM要素（imgまたはcontainer）から画像を特定し、その右辺にキャレットを配置する
+     * 指定されたDOM要素（imgまたはcontainer）または座標から画像を特定し、その右辺にキャレットを配置する
      */
-    const selectImageAt = useCallback((target: HTMLElement) => {
+    const selectImageAt = useCallback((target: HTMLElement, event?: React.MouseEvent | MouseEvent) => {
         if (!editor) return false;
 
+        // 1. DOM要素から画像を探す
         const imgElement = target.tagName === 'IMG' 
             ? target 
-            : target.closest('img');
+            : (target.closest('img') || target.querySelector('img'));
         
         const imageContainer = target.closest('.image-container');
         const targetImg = imgElement || imageContainer?.querySelector('img');
 
-        if (targetImg) {
-            const pos = editor.view.posAtDOM(targetImg, 0);
+        // 2. 座標から画像を探す（フォールバック）
+        // DOM要素からの判定に失敗した場合や、より正確な判定が必要な場合に使用
+        const coords = event ? { left: event.clientX, top: event.clientY } : null;
+        const posAtCoords = coords ? editor.view.posAtCoords(coords) : null;
+        
+        // 画像と認識される可能性のある条件:
+        // - DOM要素として img が見つかった
+        // - または、座標の下にあるノードが 'image' 型
+        const isImageNodeAtCoords = posAtCoords && editor.state.doc.nodeAt(posAtCoords.pos)?.type.name === 'image';
+
+        if (targetImg || isImageNodeAtCoords) {
+            let pos: number | null = null;
+            
+            if (targetImg) {
+                pos = editor.view.posAtDOM(targetImg, 0);
+            } else if (posAtCoords) {
+                pos = posAtCoords.pos;
+            }
+            
             if (typeof pos === 'number') {
                 let imagePos: number | null = null;
                 editor.state.doc.descendants((node, nodePos) => {
