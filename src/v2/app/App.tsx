@@ -81,7 +81,7 @@ export const EditorV3 = () => {
 
     // File IO (ロジック分離)
     const { saveFile, saveAsFile, downloadFile, openFileWithHandle } = useFileIO(editor, isWordMode);
-    const { currentFileHandle } = useAppStore();
+    const { currentFileHandle, triggerJumpInputFocus } = useAppStore();
 
     // Word Mode 同期: Tiptap外部ライブラリの設定を同期
     useEffect(() => {
@@ -94,7 +94,7 @@ export const EditorV3 = () => {
     }, [isWordMode, editor]);
 
     // Keyboard Shortcuts (ロジック分離)
-    useKeyboardShortcuts(saveFile, saveAsFile, downloadFile, openFileWithHandle, currentFileHandle);
+    useKeyboardShortcuts(saveFile, saveAsFile, downloadFile, openFileWithHandle, currentFileHandle, triggerJumpInputFocus);
 
     return (
         <div className="flex flex-col h-screen bg-[#525659] overflow-hidden font-sans">

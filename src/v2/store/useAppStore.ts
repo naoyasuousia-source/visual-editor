@@ -38,6 +38,11 @@ interface AppState {
     // File Handle (for Ctrl+S overwrite)
     currentFileHandle: FileSystemFileHandle | null;
     setCurrentFileHandle: (handle: FileSystemFileHandle | null) => void;
+
+    // Jump Input Focus (for Ctrl+J)
+    shouldFocusJumpInput: boolean;
+    triggerJumpInputFocus: () => void;
+    resetJumpInputFocus: () => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -79,4 +84,9 @@ export const useAppStore = create<AppState>((set) => ({
     // File Handle
     currentFileHandle: null,
     setCurrentFileHandle: (handle) => set({ currentFileHandle: handle }),
+
+    // Jump Input Focus
+    shouldFocusJumpInput: false,
+    triggerJumpInputFocus: () => set({ shouldFocusJumpInput: true }),
+    resetJumpInputFocus: () => set({ shouldFocusJumpInput: false }),
 }));

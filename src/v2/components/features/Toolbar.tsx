@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Editor } from '@tiptap/react';
 import { 
     FilePlus2,
@@ -45,7 +45,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         toggleWordMode,
         openDialog,
         isSidebarOpen,
-        toggleSidebar
+        toggleSidebar,
+        shouldFocusJumpInput,
+        resetJumpInputFocus
     } = useAppStore();
 
     const { toggleParagraphNumbers } = useParagraphNumberToggle();
@@ -65,6 +67,18 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         setParagraph,
         isActive
     } = useTextFormatting(editor);
+
+    // Jump Input Ref (Ctrl+J focus制御)
+    const jumpInputRef = useRef<HTMLInputElement>(null);
+
+    // Ctrl+Jでフォーカスを設定
+    useEffect(() => {
+        if (shouldFocusJumpInput && jumpInputRef.current) {
+            jumpInputRef.current.focus();
+            jumpInputRef.current.select();
+            resetJumpInputFocus();
+        }
+    }, [shouldFocusJumpInput, resetJumpInputFocus]);
 
     if (!editor) return null;
 
@@ -188,6 +202,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                     ジャンプ機能　[ ctrl+J ]
                 </label>
                 <input
+                    ref={jumpInputRef}
                     type="text"
                     id={isWordMode ? 'toolbar-jump-input-word' : 'toolbar-jump-input'}
                     className="w-full bg-transparent border-none outline-none text-black leading-[0.8] text-[10pt] font-normal tracking-tight p-0 placeholder:text-gray-400 placeholder:text-[9.1pt] placeholder:opacity-100"

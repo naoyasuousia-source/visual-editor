@@ -1,14 +1,18 @@
 import { Editor } from '@tiptap/react';
 import { toast } from 'sonner';
+import { clearSearchHighlights, countSearchMatches, highlightSearchMatches } from '@/utils/searchHighlight';
 
 /**
  * ジャンプ機能のロジックを管理するカスタムフック
  * 段落IDまたはテキスト検索によるナビゲーション機能を提供
- * 【重要】直接DOM操作は禁止。すべてTiptap Editor APIを経由する
+ * v1のnavigator.ts jumpToParagraph関数を参考に実装
  */
 export const useJumpNavigation = (editor: Editor | null, isWordMode: boolean) => {
     const jumpTo = (target: string) => {
         if (!editor || !target) return;
+
+        // 常に前回の検索ハイライトをクリア
+        clearSearchHighlights();
 
         let targetId = target;
         
@@ -43,11 +47,11 @@ export const useJumpNavigation = (editor: Editor | null, isWordMode: boolean) =>
         });
 
         if (found && targetPos !== -1) {
-            // Tiptapのコマンドを使用してフォーカスと選択を設定
+            // 段落IDが見つかった場合
             editor.commands.focus();
             editor.commands.setTextSelection(targetPos);
             
-            // エディタのビューを使用してスクロール（React管理下のDOM操作）
+            // エディタのビューを使用してスクロール
             const { view } = editor;
             const domAtPos = view.domAtPos(targetPos);
             if (domAtPos.node) {
@@ -64,20 +68,42 @@ export const useJumpNavigation = (editor: Editor | null, isWordMode: boolean) =>
             return;
         }
 
-        // テキスト検索フォールバック（Tiptapのドキュメント内検索）
-        let textFound = false;
-        editor.state.doc.descendants((node) => {
-            if (textFound) return false;
-            if (node.isText && node.text?.includes(target)) {
-                textFound = true;
-                return false;
-            }
-        });
+        // 段落IDが見つからない場合、テキスト検索フォールバック（v1準拠）
+        const editorElement = editor.view.dom;
+        const containers = editorElement.querySelectorAll('[data-type="page-content"]');
+        
+        // コンテナが見つからない場合は、エディタ全体を検索対象にする
+        const searchContainers = containers.length > 0 
+            ? Array.from(containers) 
+            : [editorElement];
 
-        if (textFound) {
-            toast.success(`"${target}" が見つかりました`);
+        const count = countSearchMatches(target, searchContainers as Element[]);
+
+        if (count === 0) {
+            toast.error(`指定された段落または文字列が見つかりません: ${target}`);
+        } else if (count > 1) {
+            toast.error(`該当箇所が複数あります（${count}箇所）。検索条件を詳しくしてください。`);
         } else {
-            toast.error('見つかりませんでした');
+            // 正確に1件のマッチ
+            const firstMatch = highlightSearchMatches(target, searchContainers as Element[]);
+
+            if (firstMatch) {
+                firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                toast.success(`"${target}" が見つかりました`);
+
+                // 次の操作でハイライト自動クリア（v1準拠）
+                const autoClear = () => {
+                    clearSearchHighlights();
+                    document.removeEventListener('mousedown', autoClear);
+                    document.removeEventListener('keydown', autoClear);
+                };
+
+                // 1秒後にイベントリスナーを登録（誤操作防止）
+                setTimeout(() => {
+                    document.addEventListener('mousedown', autoClear);
+                    document.addEventListener('keydown', autoClear);
+                }, 1000);
+            }
         }
     };
 

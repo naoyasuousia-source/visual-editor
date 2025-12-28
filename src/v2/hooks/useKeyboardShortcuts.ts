@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 /**
  * Keyboard Shortcuts Hook
  * 
- * ファイル操作のキーボードショートカット (Ctrl+S, Ctrl+N, Ctrl+O) を管理します。
+ * ファイル操作のキーボードショートカット (Ctrl+S, Ctrl+N, Ctrl+O, Ctrl+J) を管理します。
  * App.tsx からロジックを分離し、hooks/ に配置することで、
  * rules.md の「ロジックとUIの分離」原則に準拠します。
  * 
@@ -12,13 +12,15 @@ import { useEffect } from 'react';
  * @param downloadFile - ファイルダウンロード関数（ファイルハンドルがない場合）
  * @param openFileWithHandle - ファイルを開く関数
  * @param currentFileHandle - 現在のファイルハンドル（nullの場合はダウンロード）
+ * @param triggerJumpInputFocus - ジャンプ入力ボックスへのフォーカストリガー関数
  */
 export const useKeyboardShortcuts = (
     saveFile: () => void,
     saveAsFile: () => void,
     downloadFile: () => void,
     openFileWithHandle: () => void,
-    currentFileHandle: FileSystemFileHandle | null
+    currentFileHandle: FileSystemFileHandle | null,
+    triggerJumpInputFocus: () => void
 ) => {
     useEffect(() => {
         /**
@@ -26,6 +28,7 @@ export const useKeyboardShortcuts = (
          * - Ctrl+S: ファイル保存（ハンドルがあれば上書き、なければダウンロード）
          * - Ctrl+N: 名前を付けて保存
          * - Ctrl+O: ファイルを開く
+         * - Ctrl+J: ジャンプ入力ボックスにフォーカス
          */
         const handleKeyDown = (e: KeyboardEvent) => {
             // Ctrl+S: シンプル保存（ファイルハンドルがあれば上書き、なければダウンロード）
@@ -49,6 +52,12 @@ export const useKeyboardShortcuts = (
                 e.preventDefault();
                 openFileWithHandle();
             }
+
+            // Ctrl+J: ジャンプ入力ボックスにフォーカス（v1準拠）
+            if ((e.ctrlKey || e.metaKey) && e.key === 'j') {
+                e.preventDefault();
+                triggerJumpInputFocus();
+            }
         };
 
         // イベントリスナーの登録
@@ -56,5 +65,5 @@ export const useKeyboardShortcuts = (
         
         // クリーンアップ: メモリリーク防止のため、必ずイベントリスナーを解除
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [saveFile, saveAsFile, downloadFile, openFileWithHandle, currentFileHandle]);
+    }, [saveFile, saveAsFile, downloadFile, openFileWithHandle, currentFileHandle, triggerJumpInputFocus]);
 };
