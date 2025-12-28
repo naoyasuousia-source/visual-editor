@@ -98,17 +98,23 @@ export const EditorV3 = () => {
 
     return (
         <div className="flex flex-col h-screen bg-[#525659] overflow-hidden font-sans">
-            <Toolbar
-                editor={editor}
-                onAddPage={addPage}
-                onRemovePage={removePage}
-                prompt={prompt}
-            />
+            <div id="toolbar">
+                <Toolbar
+                    editor={editor}
+                    onAddPage={addPage}
+                    onRemovePage={removePage}
+                    prompt={prompt}
+                />
+            </div>
             
             <div className="flex flex-1 overflow-hidden relative">
-                {editor && <PageNavigator editor={editor} />}
+                {editor && (
+                    <div id="page-navigator">
+                        <PageNavigator editor={editor} />
+                    </div>
+                )}
                 
-                <div className="flex-1 overflow-auto p-12 scroll-smooth">
+                <div id="pages-container" className="flex-1 overflow-auto p-12 scroll-smooth">
                     <div 
                         className={`flex flex-col gap-6 transition-all duration-200 mx-auto ${isWordMode ? 'mode-word' : ''}`} 
                         style={{ 
