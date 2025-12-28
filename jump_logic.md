@@ -27,7 +27,7 @@
 ----------------------------------------
 
 ## 1. 未解決要件
-・ジャンプ用入力ボックスに文字列を入力してエンターキーを押すと、エディタ上で、その文字列を含む段落にジャンプする。（ジャンプ箇所で、その文字列をハイライトする）
+・ジャンプ用入力ボックスに文字列を入力してエンターキーを押すと、エディタ上で、その文字列を含む段落にジャンプする。（ジャンプ箇所で、その文字列をハイライトする）（ハイライトはオレンジ系の色でマーカーのように表示する）
 
 **これらの機能はすべて、v1で実装済みなので、積極的に参考にすること。**
 **また、rules.mdを厳守すること。**
@@ -166,6 +166,80 @@
   - 要素ノードの場合、その子ノードを再帰的に処理
   - div要素もquerySelectorに追加（ProseMirrorの構造に対応）
 
+---
+
+### 変更6: 重複カウント問題の修正（2025-12-28）
+
+**分析結果:**
+- **変更5で新たな問題発生**: 1か所しかない文字列が3か所と誤認される
+- **根本原因**: `querySelectorAll`で親子関係にある要素（`div > p > span`）を取得し、それぞれから再帰的に処理したため、同じテキストノードを複数回カウント
+- 例：`div`、`p`、`span`の3つの要素から同じテキストノードに到達 → 3回カウント
+
+**方針:**
+- `querySelectorAll`を完全に削除
+- `container`から直接再帰的に処理する方式に変更
+- これにより、各テキストノードは正確に1回のみ処理される
+
+**変更内容:**
+- ファイル: `src/v2/utils/searchHighlight.ts`
+- **countSearchMatches関数（25-61行目）**:
+  - `querySelectorAll`と`elements.forEach`を削除
+  - `countInNode`関数を外に出し、`containers.forEach(container => countInNode(container))`に単純化
+  - containerから直接再帰処理することで重複を防止
+- **highlightSearchMatches関数（116-151行目）**:
+  - 同様に`querySelectorAll`と`elements.forEach`を削除
+  - `processNode`関数で`containers.forEach(container => processNode(container))`に単純化
+  - containerから直接再帰処理
+
+---
+
+### 変更7: ハイライト表示の完全修正（2025-12-28）
+
+**分析結果:**
+- 重複カウント問題は解決したが、ハイライト表示が依然として動作しない
+- **根本原因**: `highlightAllInTextNode`内で`range.surroundContents`を実行すると、DOMが変更される（テキストノードが分割される）
+- 再帰的に処理中にDOMが変更されると、次のテキストノードの参照が無効になる可能性がある
+- v1との違い：v1は浅い構造で直接の子ノードのみを処理、v2は深いネスト構造を再帰的に処理
+
+**方針:**
+- テキストノードを**事前に収集**してから、収集後に順次処理
+- 2段階アプローチ：1) 収集フェーズ、2) ハイライトフェーズ
+- ハイライト中にDOMが変更されても、事前に収集した配列には影響しない
+
+**変更内容:**
+- ファイル: `src/v2/utils/searchHighlight.ts`
+- **highlightSearchMatches関数（116-168行目）**:
+  - `collectTextNodes`関数で該当するテキストノードを配列に収集
+  - `textNodes.push(node as Text)`で配列に追加（queryを含むテキストノードのみ）
+  - 収集完了後、`for`ループで順次`highlightAllInTextNode`を呼び出し
+  - `textNode.parentNode`チェックでDOMに存在するか確認してから処理
+  - この2段階アプローチにより、DOM変更の影響を受けずに処理可能
+
+---
+
+### 変更8: highlightAllInTextNode関数の堅牢化（2025-12-28）
+
+**分析結果:**
+- 前回の修正でもハイライトが表示されない
+- **根本原因の推測**: `range.surroundContents`がTiptap/ProseMirrorのDOM構造で失敗している可能性
+- `surroundContents`は選択範囲が複数の要素をまたぐ場合に失敗する
+- Tiptapはインラインスタイル（太字など）を`<strong>`タグでラップするため、この問題が発生しやすい
+
+**方針:**
+- より堅牢な`splitText` + `replaceChild`方式に変更
+- `surroundContents`をプライマリから削除し、フォールバックに降格
+- TypeScript型エラーも同時に修正
+
+**変更内容:**
+- ファイル: `src/v2/utils/searchHighlight.ts`
+- **highlightAllInTextNode関数（71-131行目）**:
+  - プライマリ方式を`splitText` + `replaceChild`に変更
+  - `currentNode.splitText(idx)`: マッチ位置でテキストノードを分割
+  - `matchStartNode.splitText(query.length)`: マッチ後で再分割
+  - `parent.replaceChild(span, matchStartNode)`: マッチ部分をspanで置換
+  - 従来の`range.surroundContents`はtry-catchのフォールバックとして残す
+  - 明示的な型注釈`Text`を追加して型エラーを解消
+
 
 ## 3. 分析中に気づいた重要ポイント
 
@@ -243,6 +317,20 @@
 
 **実装箇所:**
 - `src/v2/hooks/useJumpNavigation.ts` (49-87行目)
+
+---
+
+### ✅ 1か所しかない文字列が複数か所と誤認されずに正確にカウントされる
+
+**解決方法:**
+- 変更5で導入した`querySelectorAll`が親子関係の要素を重複取得していた問題を修正
+- `querySelectorAll`を完全に削除し、containerから直接再帰的に処理
+- `countInNode`関数で各テキストノードを1回のみ走査
+- これにより、同じテキストノードが複数回カウントされることを防止
+
+**実装箇所:**
+- `src/v2/utils/searchHighlight.ts` (countSearchMatches関数、25-61行目)
+- `src/v2/utils/searchHighlight.ts` (highlightSearchMatches関数、116-151行目)
 
 ## 5. 要件に関連する全ファイルのファイル構成
 

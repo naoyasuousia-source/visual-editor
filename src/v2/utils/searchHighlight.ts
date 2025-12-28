@@ -35,33 +35,27 @@ export function countSearchMatches(query: string, containers: NodeListOf<Element
     let count = 0;
     const lowerQuery = query.toLowerCase();
     
+    // 再帰的にテキストノードを検索（重複を避けるため、containerから直接処理）
+    const countInNode = (node: Node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.nodeValue || '';
+            let idx = text.toLowerCase().indexOf(lowerQuery);
+            while (idx !== -1) {
+                count++;
+                idx = text.toLowerCase().indexOf(lowerQuery, idx + 1);
+            }
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+            const element = node as Element;
+            // 既にハイライト済みの要素はスキップ
+            if (!element.classList.contains('search-match')) {
+                Array.from(node.childNodes).forEach(countInNode);
+            }
+        }
+    };
+    
+    // 各containerから直接再帰的に処理（querySelectorAllは使わない）
     containers.forEach(container => {
-        // Tiptap/ProseMirrorのDOM構造に対応: より広範囲に検索
-        const elements = [
-            container, 
-            ...Array.from(container.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, span:not(.search-match), div'))
-        ];
-        
-        elements.forEach(el => {
-            // Process all text nodes recursively
-            const countInNode = (node: Node) => {
-                if (node.nodeType === Node.TEXT_NODE) {
-                    const text = node.nodeValue || '';
-                    let idx = text.toLowerCase().indexOf(lowerQuery);
-                    while (idx !== -1) {
-                        count++;
-                        idx = text.toLowerCase().indexOf(lowerQuery, idx + 1);
-                    }
-                } else if (node.nodeType === Node.ELEMENT_NODE) {
-                    const element = node as Element;
-                    if (!element.classList.contains('search-match')) {
-                        Array.from(node.childNodes).forEach(countInNode);
-                    }
-                }
-            };
-            
-            Array.from(el.childNodes).forEach(countInNode);
-        });
+        countInNode(container);
     });
     
     return count;
@@ -79,32 +73,58 @@ function highlightAllInTextNode(textNode: Text, query: string): HTMLElement | nu
     let firstSpan: HTMLElement | null = null;
     let currentNode: Text | null = textNode;
     
-    while (currentNode) {
+    while (currentNode && currentNode.parentNode) {
         const text = currentNode.nodeValue || '';
         const idx = text.toLowerCase().indexOf(lowerQuery);
         if (idx === -1) break;
         
         try {
-            const range = document.createRange();
-            range.setStart(currentNode, idx);
-            range.setEnd(currentNode, idx + query.length);
+            // 方法1: テキストノード分割 + span挿入（より堅牢）
+            // テキストノードを3つに分割: [前のテキスト][マッチ部分][後のテキスト]
+            const parent = currentNode.parentNode;
+            if (!parent) break;
             
+            // マッチ部分の前で分割（splitTextは新しいテキストノードを返す）
+            const matchStartNode: Text = currentNode.splitText(idx);
+            
+            // マッチ部分の後で分割
+            const afterNode: Text = matchStartNode.splitText(query.length);
+            
+            // span要素を作成してマッチ部分をラップ
             const span = document.createElement('span');
             span.className = 'search-match';
-            range.surroundContents(span);
+            span.textContent = matchStartNode.nodeValue;
+            
+            // マッチ部分のテキストノードをspanで置き換え
+            parent.replaceChild(span, matchStartNode);
             
             if (!firstSpan) firstSpan = span;
             
-            // surroundContents splits the text node. The part after the span is nextSibling.
-            const nextNode = span.nextSibling;
-            if (nextNode && nextNode.nodeType === Node.TEXT_NODE) {
-                currentNode = nextNode as Text;
-            } else {
-                currentNode = null;
-            }
+            // 後のテキストノードで続行
+            currentNode = afterNode;
         } catch (e) {
-            // Skip if it fails (e.g. range issues)
-            break;
+            // フォールバック: 従来のrange.surroundContentsを試行
+            try {
+                const range = document.createRange();
+                range.setStart(currentNode, idx);
+                range.setEnd(currentNode, idx + query.length);
+                
+                const span = document.createElement('span');
+                span.className = 'search-match';
+                range.surroundContents(span);
+                
+                if (!firstSpan) firstSpan = span;
+                
+                const nextNode = span.nextSibling;
+                if (nextNode && nextNode.nodeType === Node.TEXT_NODE) {
+                    currentNode = nextNode as Text;
+                } else {
+                    currentNode = null;
+                }
+            } catch (e2) {
+                // 両方失敗した場合はスキップ
+                break;
+            }
         }
     }
     
@@ -127,35 +147,42 @@ export function highlightSearchMatches(
     
     let firstFound: HTMLElement | null = null;
     
+    // 先にすべてのテキストノードを収集してから処理
+    // （ハイライト処理中にDOMが変更されるため、事前収集が必要）
+    const textNodes: Text[] = [];
+    
+    const collectTextNodes = (node: Node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.nodeValue || '';
+            const lowerText = text.toLowerCase();
+            const lowerQuery = query.toLowerCase();
+            if (lowerText.includes(lowerQuery)) {
+                textNodes.push(node as Text);
+            }
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+            const element = node as Element;
+            // 既にハイライト済みの要素はスキップ
+            if (!element.classList.contains('search-match')) {
+                Array.from(node.childNodes).forEach(collectTextNodes);
+            }
+        }
+    };
+    
+    // 各containerからテキストノードを収集
     containers.forEach(container => {
-        // Tiptap/ProseMirrorのDOM構造に対応: より広範囲に検索
-        // .ProseMirror内のすべての段落要素とspan要素を取得
-        const elements = [
-            container, 
-            ...Array.from(container.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, span:not(.search-match), div'))
-        ];
-        
-        elements.forEach(el => {
-            // Process all text nodes recursively (Tiptap uses nested structure)
-            const processNode = (node: Node) => {
-                if (node.nodeType === Node.TEXT_NODE) {
-                    const match = highlightAllInTextNode(node as Text, query);
-                    if (match && !firstFound) {
-                        firstFound = match;
-                    }
-                } else if (node.nodeType === Node.ELEMENT_NODE) {
-                    // Skip already highlighted elements
-                    const element = node as Element;
-                    if (!element.classList.contains('search-match')) {
-                        Array.from(node.childNodes).forEach(processNode);
-                    }
-                }
-            };
-            
-            // Start processing from the element
-            Array.from(el.childNodes).forEach(processNode);
-        });
+        collectTextNodes(container);
     });
+    
+    // 収集したテキストノードを順次ハイライト
+    for (const textNode of textNodes) {
+        // テキストノードがまだDOMに存在するか確認
+        if (textNode.parentNode) {
+            const match = highlightAllInTextNode(textNode, query);
+            if (match && !firstFound) {
+                firstFound = match;
+            }
+        }
+    }
     
     // Mark first match as current
     if (firstFound) {
