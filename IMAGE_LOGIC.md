@@ -157,19 +157,31 @@ const handleMouseDown = (event: MouseEvent) => {
 
 ### 2.2 タイトル表示の仕組み
 
-タイトルは`customImage.ts`の`addNodeView()`内で、画像コンテナ内に`<span class="image-title">`として挿入されます。
+**【重要】タイトルはDOM要素ではなくCSS擬似要素（`::after`）で表示します。**
+
+これにより、キャレットが画像とタイトルの間に正しく配置されます。
 
 ```typescript
-// タイトル要素（タイトルがある場合のみ表示）
+// customImage.ts の addNodeView 内
+// タイトルはDOM要素として追加しない
+// CSSの::afterで表示するため、キャレットは画像の直後に表示される
+
 if (node.attrs.title) {
-    titleEl = document.createElement('span');
-    titleEl.classList.add('image-title');
+    container.dataset.title = node.attrs.title;  // data-title属性に格納
+    container.classList.add('has-title');
     if (node.attrs.titleSize === 'mini') {
-        titleEl.classList.add('image-title-mini');
+        container.classList.add('title-mini');
     }
-    titleEl.textContent = node.attrs.title;
-    titleEl.setAttribute('contenteditable', 'false');
-    container.appendChild(titleEl);
+}
+```
+
+```css
+/* CSSでタイトルを表示 */
+.page-inner .image-container.has-title::after {
+    content: attr(data-title);  /* data-title属性から取得 */
+    display: block;
+    text-align: center;
+    font-size: 11pt;
 }
 ```
 
@@ -177,10 +189,11 @@ if (node.attrs.title) {
 
 | 項目 | 仕様 |
 |-----|------|
-| 表示位置 | 画像の直下、中央揃え |
-| 編集可否 | 不可（`contenteditable="false"`） |
+| 表示位置 | 画像の直下、中央揃え（CSS `::after`で表示） |
+| 編集可否 | 不可（擬似要素のため編集不可） |
 | 選択可否 | 不可（`user-select: none`） |
-| キャレット挿入 | 不可 |
+| キャレット挿入 | 不可（擬似要素のためDOMに存在しない） |
+| キャレット位置 | 画像とタイトルの間（画像の直後） |
 
 ### 2.4 メタデータ編集ダイアログ
 
@@ -269,56 +282,103 @@ if (empty && $from.nodeBefore?.type.name === 'image') {
 }
 ```
 
-### 4.2 画像タイトル
+### 4.2 画像タイトル（CSS擬似要素・絶対配置）
+
+**【重要】キャレットが画像の横に並ぶよう、タイトルは`position: absolute`でフローから外す**
 
 ```css
-.page-inner .image-title {
+/* 画像コンテナ: インラインブロック */
+.page-inner .image-container {
+    display: inline-block;
+    position: relative;
+    /* タイトルがある場合は下に余白を確保（タイトル高さ分） */
+    margin-bottom: 0;
+    transition: margin-bottom 0.2s;
+}
+
+.page-inner .image-container.has-title {
+    margin-bottom: 2em;
+}
+
+/* 画像タイトル: 絶対配置で画像の下へ */
+.page-inner .image-container.has-title::after {
+    content: attr(data-title);
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
     display: block;
-    width: 100%;
+    width: max-content;
+    max-width: 200%;
     text-align: center;
-    font-size: 11pt;
-    line-height: 1.4;
-    color: #333;
-    margin-top: 4px;
-    user-select: none;       /* 選択不可 */
-    pointer-events: none;    /* クリック不可 */
-}
-
-.page-inner .image-title-mini {
-    font-size: 9pt;
-    color: #666;
+    /* ... font styles ... */
 }
 ```
 
-### 4.3 余計な行の削除
+### 4.3 キャレット表示の確保（画像右辺への配置）
+
+**問題の経緯と解決策**:
+
+| 問題 | 解決策 |
+|------|--------|
+| キャレットがタイトル下に表示 | タイトルを絶対配置にし、画像コンテナを`inline-block`にしてキャレットを横に並べる |
 
 ```css
-.page-inner p:has(> img:not(.ProseMirror-separator)),
+/* 画像段落のスタイル */
 .page-inner p:has(> .image-container) {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    line-height: 0;
-    font-size: 0;
-    padding: 0;
+    display: block;   /* 段落はブロック */
+    text-align: center; /* 中身（画像コンテナ）を中央揃え */
+    line-height: 1.2;
+    font-size: inherit;
+    caret-color: #000;
 }
 
-.page-inner p:has(> .image-container) .ProseMirror-trailingBreak {
-    display: none;
+/* 画像コンテナ */
+.page-inner .image-container {
+    display: inline-block; /* これによりキャレットが画像の直後（横）に配置される */
+    vertical-align: bottom;
+    width: auto;
 }
 ```
+
+**ポイント**:
+- 親段落で`text-align: center`して画像を中央配置
+- 画像コンテナを`inline-block`にすることで、キャレット（テキストノード扱い）がコンテナの右隣に並ぶ
+- タイトルは`absolute`配置で下にずらし、余白は`margin-bottom`で確保
 
 ---
 
 ## デバッグガイド
 
-### 問題: キャレットが画像右辺に表示されない
+### 問題: キャレットが画像右辺に表示されない（機能しない）
 
 1. **確認箇所**: `customImage.ts` の `addNodeView()` 内の `handleMouseDown`
 2. **チェックポイント**:
    - `getPos()`が正しい数値を返しているか
    - `TextSelection.create()`が正しく呼ばれているか
    - `editor.view.focus()`が呼ばれているか
+
+### 問題: キャレットが機能するがUI上で見えない（修正済み）
+
+**症状**: Enter/Backspaceは動作するが、キャレットが視覚的に点滅しない
+
+**原因**: 画像段落に`line-height: 0`と`font-size: 0`を設定していたため、キャレットの高さが0になる
+
+**失敗したアプローチ**: 
+- `::after`でゼロ幅スペース（`\u200B`）を追加 → CSSでは`\u200B`がエスケープされず「u200B」という文字列がそのまま表示されてしまった
+
+**成功した解決策**: 
+段落に`font-size: inherit`を設定し、画像コンテナ内だけ`font-size: 0`にする
+
+```css
+.page-inner p:has(> .image-container) {
+    font-size: inherit;
+    caret-color: #000;
+}
+.page-inner p:has(> .image-container) > .image-container {
+    font-size: 0;
+}
+```
 
 ### 問題: 左辺にキャレットが入ってしまう
 
@@ -387,6 +447,10 @@ editor.state.doc.descendants((node, nodePos) => {
 | 2025-12-28 | 古いDOM操作ベースのコード（selectionState.ts）を削除 |
 | 2025-12-28 | メタデータ編集ダイアログを`$from.nodeBefore`方式に修正 |
 | 2025-12-28 | 新段落生成後の画像操作バグを修正（右クリック時にキャレット移動） |
+| 2025-12-28 | キャレット非表示問題を修正（font-size: inherit + caret-color方式に変更） |
+| 2025-12-28 | u200B文字列が表示されるバグを修正 |
+| 2025-12-28 | タイトル表示をDOM要素からCSS擬似要素（::after + data-title）に変更 |
+| 2025-12-28 | キャレットが画像とタイトルの間に配置されるように構造変更 |
 
 ---
 

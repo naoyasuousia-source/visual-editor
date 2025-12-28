@@ -194,6 +194,8 @@ export const CustomImage = TiptapImage.extend({
     },
 
     // カスタムNodeView: 画像クリック時にキャレットを画像右辺に配置
+    // 【重要】タイトルはDOM要素ではなくCSS擬似要素で表示する
+    // これによりキャレットが画像の直後（タイトルの前）に表示される
     addNodeView() {
         return ({ node, getPos, editor }) => {
             // コンテナ（inlineを維持するためspan）
@@ -214,26 +216,21 @@ export const CustomImage = TiptapImage.extend({
                 img.classList.add('has-border');
             }
             
-            // データ属性を設定（画像要素に）
-            if (node.attrs.title) img.dataset.title = node.attrs.title;
-            if (node.attrs.titleSize) img.dataset.titleSize = node.attrs.titleSize;
+            // データ属性を設定（タイトルはCSS content: attr()で表示）
+            if (node.attrs.title) {
+                container.dataset.title = node.attrs.title;
+                container.classList.add('has-title');
+                if (node.attrs.titleSize === 'mini') {
+                    container.classList.add('title-mini');
+                }
+            }
             if (node.attrs.caption) img.dataset.caption = node.attrs.caption;
             if (node.attrs.tag) img.dataset.tag = node.attrs.tag;
             
             container.appendChild(img);
             
-            // タイトル要素（タイトルがある場合のみ表示）
-            let titleEl: HTMLSpanElement | null = null;
-            if (node.attrs.title) {
-                titleEl = document.createElement('span');
-                titleEl.classList.add('image-title');
-                if (node.attrs.titleSize === 'mini') {
-                    titleEl.classList.add('image-title-mini');
-                }
-                titleEl.textContent = node.attrs.title;
-                titleEl.setAttribute('contenteditable', 'false');
-                container.appendChild(titleEl);
-            }
+            // 【注意】タイトルはDOM要素として追加しない
+            // CSSの::afterで表示するため、キャレットは画像の直後に表示される
             
             /**
              * マウスダウンハンドラ: 画像クリック時にキャレットを画像右辺に配置
@@ -260,10 +257,7 @@ export const CustomImage = TiptapImage.extend({
             };
             
             img.addEventListener('mousedown', handleMouseDown);
-            // タイトルクリックでも画像右辺にキャレット
-            if (titleEl) {
-                titleEl.addEventListener('mousedown', handleMouseDown);
-            }
+            container.addEventListener('mousedown', handleMouseDown);
             
             return {
                 dom: container,
@@ -288,35 +282,20 @@ export const CustomImage = TiptapImage.extend({
                     if (updatedNode.attrs.size) img.classList.add(`img-${updatedNode.attrs.size}`);
                     if (updatedNode.attrs.hasBorder) img.classList.add('has-border');
                     
-                    if (updatedNode.attrs.title) img.dataset.title = updatedNode.attrs.title;
-                    else delete img.dataset.title;
-                    if (updatedNode.attrs.titleSize) img.dataset.titleSize = updatedNode.attrs.titleSize;
-                    else delete img.dataset.titleSize;
+                    // タイトル更新（data属性とクラス）
+                    if (updatedNode.attrs.title) {
+                        container.dataset.title = updatedNode.attrs.title;
+                        container.classList.add('has-title');
+                        container.classList.toggle('title-mini', updatedNode.attrs.titleSize === 'mini');
+                    } else {
+                        delete container.dataset.title;
+                        container.classList.remove('has-title', 'title-mini');
+                    }
+                    
                     if (updatedNode.attrs.caption) img.dataset.caption = updatedNode.attrs.caption;
                     else delete img.dataset.caption;
                     if (updatedNode.attrs.tag) img.dataset.tag = updatedNode.attrs.tag;
                     else delete img.dataset.tag;
-                    
-                    // タイトル更新
-                    const existingTitle = container.querySelector('.image-title');
-                    if (updatedNode.attrs.title) {
-                        if (existingTitle) {
-                            existingTitle.textContent = updatedNode.attrs.title;
-                            existingTitle.classList.toggle('image-title-mini', updatedNode.attrs.titleSize === 'mini');
-                        } else {
-                            const newTitleEl = document.createElement('span');
-                            newTitleEl.classList.add('image-title');
-                            if (updatedNode.attrs.titleSize === 'mini') {
-                                newTitleEl.classList.add('image-title-mini');
-                            }
-                            newTitleEl.textContent = updatedNode.attrs.title;
-                            newTitleEl.setAttribute('contenteditable', 'false');
-                            newTitleEl.addEventListener('mousedown', handleMouseDown);
-                            container.appendChild(newTitleEl);
-                        }
-                    } else if (existingTitle) {
-                        existingTitle.remove();
-                    }
                     
                     return true;
                 },
