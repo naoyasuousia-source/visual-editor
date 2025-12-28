@@ -179,15 +179,20 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 <button type="button" onClick={zoomIn} className="px-2 hover:bg-gray-100 text-sm font-bold text-gray-600">+</button>
             </div>
 
-            {/* Jump Widget */}
-            <div className="flex items-center gap-2 ml-1 bg-white border border-gray-300 rounded px-2 h-[36px] min-w-[200px]">
-                <div className="flex flex-col justify-center items-start leading-[0.8]">
-                    <span className="text-[10px] text-gray-600 font-bold scale-[0.9] origin-left">ジャンプ機能</span>
-                    <span className="text-[9px] text-gray-400 scale-[0.85] origin-left">[ ctrl+J ]</span>
-                </div>
+            {/* Jump Widget - v1準拠の二段構造 */}
+            <div className="flex flex-col justify-center items-start ml-2 bg-white border border-gray-300 rounded px-1.5 h-[36px] w-[220px] box-border">
+                <label
+                    htmlFor={isWordMode ? 'toolbar-jump-input-word' : 'toolbar-jump-input'}
+                    className="text-gray-400 cursor-text leading-tight"
+                    style={{ fontSize: '7pt', letterSpacing: '-0.5px' }}
+                >
+                    ジャンプ機能　[ ctrl+J ]
+                </label>
                 <input
                     type="text"
-                    className="text-xs outline-none w-full placeholder-gray-400"
+                    id={isWordMode ? 'toolbar-jump-input-word' : 'toolbar-jump-input'}
+                    className="w-full bg-transparent border-none outline-none text-black leading-none"
+                    style={{ fontSize: '11pt', letterSpacing: '-0.5px', padding: 0 }}
                     placeholder={isWordMode ? "(例：15)…へジャンプ" : "(例：1-1)…へジャンプ"}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {
