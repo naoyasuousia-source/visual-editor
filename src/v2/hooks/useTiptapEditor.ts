@@ -9,6 +9,7 @@ import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
 import FontFamily from '@tiptap/extension-font-family';
+import { useAppStore } from '@/store/useAppStore';
 
 import { PageExtension } from '@/lib/pageExtension';
 import { ParagraphNumbering } from '@/lib/paragraphNumbering';
@@ -29,6 +30,8 @@ export const useTiptapEditor = (
     handleIMEKeyDown: TiptapKeyDownHandler,
     handlePaste: TiptapPasteHandler
 ) => {
+    const { isWordMode } = useAppStore();
+
     const editor = useEditor({
         extensions: [
             CustomDocument,
@@ -54,9 +57,9 @@ export const useTiptapEditor = (
             Highlight.configure({ multicolor: true }),
             CustomImage,
             PageExtension,
-            ParagraphNumbering,
+            ParagraphNumbering.configure({ isWordMode }),
             StyleAttributes,
-            Pagination,
+            Pagination.configure({ isWordMode }),
             FirstParagraphProtection,
             CrossPageMerge,
             Bookmark,

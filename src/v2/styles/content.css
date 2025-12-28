@@ -112,11 +112,12 @@ section.page::after {
 }
 
 body.hide-page-numbers section.page::after {
-  display: none;
+  display: none !important;
 }
 
-body.hide-para-numbers .page-inner [data-para]::before {
-  display: none;
+body.hide-para-numbers .page-inner [data-para]::before,
+body.hide-para-numbers .ProseMirror [data-para]::before {
+  display: none !important;
 }
 
 .page-inner img {
@@ -404,3 +405,34 @@ body.hide-para-numbers .page-inner [data-para]::before {
   }
 }
 
+
+/* --- Word Mode Styles --- */
+
+body.mode-word #pages-container {
+  background-color: #e0e0e0;
+}
+
+body.mode-word section.page {
+  height: auto !important;
+  min-height: 297mm !important;
+  box-shadow: 10px 0 10px -5px rgba(0, 0, 0, 0.1), -10px 0 10px -5px rgba(0, 0, 0, 0.1) !important;
+  overflow: visible !important;
+}
+
+body.mode-word .page-inner {
+  height: auto !important;
+  min-height: 297mm !important;
+  padding-bottom: calc(297mm - var(--page-margin)) !important;
+  overflow: visible !important;
+}
+
+body.mode-word section.page::after {
+  display: none !important;
+}
+
+body.mode-word #page-navigator,
+body.mode-word #sidebar-toggle-overlay,
+body.mode-word #sidebar-toggle-btn,
+body.mode-word #ai-image-index {
+  display: none !important;
+}

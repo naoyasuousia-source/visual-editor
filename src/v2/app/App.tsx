@@ -85,10 +85,17 @@ export const EditorV3 = () => {
 
     // Word Mode 同期: Tiptap外部ライブラリの設定を同期
     useEffect(() => {
+        if (isWordMode) {
+            document.body.classList.add('mode-word');
+        } else {
+            document.body.classList.remove('mode-word');
+        }
+
         if (editor) {
             // @ts-expect-error - Tiptapの型定義が不完全なため
             editor.setOptions({
                 paragraphNumbering: { isWordMode },
+                pagination: { isWordMode },
             });
         }
     }, [isWordMode, editor]);

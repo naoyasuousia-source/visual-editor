@@ -14,6 +14,7 @@ import { ViewMenu } from '@/components/common/toolbar/ViewMenu';
 import { ParagraphMenu } from '@/components/common/toolbar/ParagraphMenu';
 import { FontMenu } from '@/components/common/toolbar/FontMenu';
 import { HighlightMenu } from '@/components/common/toolbar/HighlightMenu';
+import { WordBlockMenu } from '@/components/common/toolbar/WordBlockMenu';
 import { useAppStore } from '@/store/useAppStore';
 import { useJumpNavigation } from '@/hooks/useJumpNavigation';
 import { useParagraphNumberToggle } from '@/hooks/useParagraphNumberToggle';
@@ -95,6 +96,19 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             {/* File Menu */}
             <FileMenu editor={editor} prompt={prompt} />
 
+            {/* Paragraph Number Toggle (常に表示、ファイルとBの間) */}
+            <div className="flex items-center ml-1">
+                <label className="flex items-center hover:bg-gray-100 cursor-pointer text-xs gap-1 px-2 py-1 rounded border border-gray-300 bg-white h-[36px] select-none">
+                    <input 
+                        type="checkbox" 
+                        defaultChecked 
+                        onChange={(e) => toggleParagraphNumbers(e.target.checked)} 
+                        className="w-3.5 h-3.5"
+                    />
+                    <span className="font-bold text-gray-700">段落番号</span>
+                </label>
+            </div>
+
             {/* View Menu */}
             {!isWordMode && <ViewMenu />}
 
@@ -119,8 +133,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                     <span className="font-sans text-gray-700 text-sm flex items-end leading-none gap-[1px]">x <span className="text-[10px] -mb-1 font-bold">2</span></span>
                 </button>
                 
-                {/* Highlight Menu - Radix UI版 */}
-                <HighlightMenu editor={editor} />
+                {/* Highlight Menu - Radix UI版 (Wordモードでは非表示) */}
+                {!isWordMode && <HighlightMenu editor={editor} />}
             </div>
 
             {/* Font & Paragraph (Standard Only) */}
@@ -132,47 +146,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             )}
 
             {/* Word Mode Controls */}
-            {isWordMode && (
-                <>
-                    <div className="flex items-center gap-2 border-r border-gray-300 pr-2 mr-1">
-                         <label className="flex items-center hover:bg-gray-100 cursor-pointer text-xs gap-1 px-2 py-1 rounded border border-gray-300 bg-white h-[36px]">
-                            <input 
-                                type="checkbox" 
-                                defaultChecked 
-                                onChange={(e) => toggleParagraphNumbers(e.target.checked)} 
-                            />
-                            段落番号
-                        </label>
-                    </div>
-
-                    <div className="relative">
-                        <select
-                            className="h-[36px] px-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 outline-none cursor-pointer min-w-[100px]"
-                            onChange={(e) => {
-                                const value = e.target.value;
-                                if (value === 'p') setParagraph();
-                                else if (value.startsWith('h')) {
-                                    const level = parseInt(value.substring(1)) as 1 | 2 | 3 | 4 | 5 | 6;
-                                    toggleHeading(level);
-                                }
-                            }}
-                            value={
-                                isActive('heading', { level: 1 }) ? 'h1' :
-                                isActive('heading', { level: 2 }) ? 'h2' :
-                                isActive('heading', { level: 3 }) ? 'h3' :
-                                isActive('heading', { level: 6 }) ? 'h6' :
-                                'p'
-                            }
-                        >
-                            <option value="p">本文</option>
-                            <option value="h1">見出し1</option>
-                            <option value="h2">見出し2</option>
-                            <option value="h3">見出し3</option>
-                            <option value="h6">サブテキスト</option>
-                        </select>
-                    </div>
-                </>
-            )}
+            {isWordMode && <WordBlockMenu editor={editor} />}
 
             {/* Page Controls (Standard Only) */}
             {!isWordMode && (
@@ -221,11 +195,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 <button 
                     type="button" 
                     onClick={toggleWordMode}
-                    className={`px-3 py-1 rounded text-xs font-bold transition-all h-[36px] flex items-center gap-1 shadow-sm ${
+                    className={`px-3 py-1 rounded text-xs transition-all h-[36px] flex items-center gap-1 shadow-sm font-black tracking-wider ${
                         isWordMode 
-                        ? 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100' // Word Mode active -> Show "Switch to standard" (White)
+                        ? 'bg-gradient-to-br from-[#f39c12] to-[#d35400] text-white hover:brightness-110 !border-none' // v1 Sunset Orange
                         : 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] border border-transparent' // Standard Mode active -> Show "Switch to Word" (Blue)
                     }`}
+                    style={isWordMode ? { textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' } : {}}
                 >
                     <FileType className="w-3.5 h-3.5" />
                     {isWordMode ? '標準モードに切替' : 'Word互換モードに切替'}

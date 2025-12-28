@@ -7,8 +7,18 @@ import { Plugin, PluginKey } from '@tiptap/pm/state';
  * Automatically creates new pages when content overflows.
  * Based on v1's overflow detection logic.
  */
-export const Pagination = Extension.create({
+export interface PaginationOptions {
+    isWordMode: boolean;
+}
+
+export const Pagination = Extension.create<PaginationOptions>({
     name: 'pagination',
+
+    addOptions() {
+        return {
+            isWordMode: false,
+        };
+    },
 
     addProseMirrorPlugins() {
         return [
@@ -19,6 +29,10 @@ export const Pagination = Extension.create({
 
                     const checkOverflow = () => {
                         if (isProcessing) return;
+                        
+                        // Wordモード時はページ溢れチェックをスキップ
+                        if (this.options.isWordMode) return;
+
                         isProcessing = true;
 
                         try {

@@ -19,7 +19,7 @@ export const useNumberToggle = () => {
         }
     }, []);
 
-    const toggleParaNumbers = useCallback((show: boolean) => {
+    const toggleParagraphNumbers = useCallback((show: boolean) => {
         setShowParaNumbers(show);
         // bodyのクラス操作（CSSによる表示制御）
         if (show) {
@@ -33,7 +33,7 @@ export const useNumberToggle = () => {
         showPageNumbers,
         showParaNumbers,
         togglePageNumbers,
-        toggleParaNumbers
+        toggleParagraphNumbers
     };
 };
 
