@@ -22,7 +22,16 @@ export const ImageBubbleMenu: React.FC<ImageBubbleMenuProps> = ({ editor, onEdit
     if (!editor) return null;
 
     const setSize = (size: string) => {
-        editor.chain().focus().updateAttributes('image', { size }).run();
+        const { state, view } = editor;
+        const { $from, empty } = state.selection;
+        
+        // キャレットの直前の画像に対しても確実に属性を更新
+        if (empty && $from.nodeBefore?.type.name === 'image') {
+            const imagePos = $from.pos - $from.nodeBefore.nodeSize;
+            editor.chain().setNodeSelection(imagePos).updateAttributes('image', { size }).focus().run();
+        } else {
+            editor.chain().focus().updateAttributes('image', { size }).run();
+        }
     };
 
     const toggleBorder = () => {

@@ -67,7 +67,7 @@ export const useImageActions = (editor: Editor | null, options: UseImageActionsO
             return;
         }
         
-        // フォールバック
+        // フォールバック: 標準の updateAttributes も試すが、上記が優先される
         editor.chain().focus().updateAttributes('image', { size }).run();
         toast.success(`サイズを${size.toUpperCase()}に変更しました`);
     }, [editor]);
