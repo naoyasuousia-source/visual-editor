@@ -155,6 +155,8 @@ body.hide-para-numbers .page-inner [data-para]::before {
   line-height: 1.2;
   font-size: inherit;
   caret-color: #000;
+  /* 【1.1解決】画像コンテナ直後のキャレットを1.5pt右に配置 */
+  letter-spacing: 1.5pt;
 }
 
 /* 画像コンテナ: インラインブロックにしてキャレットを横に配置 */
@@ -166,9 +168,6 @@ body.hide-para-numbers .page-inner [data-para]::before {
   line-height: 0;
   font-size: 0;
   position: relative;
-  /* 【1.1試行】キャレットを画像右辺から1.5pt右に配置 */
-  padding-right: 2px;
-  box-sizing: content-box; /* paddingを幅に含めない */
   /* タイトルがある場合は下に余白を確保 */
   margin-bottom: 0;
   transition: margin-bottom 0.2s;
@@ -218,11 +217,16 @@ body.hide-para-numbers .page-inner [data-para]::before {
   pointer-events: none;
 }
 
-/* サブテキストタイトル: h6相当のスタイル */
+/* サブテキストタイトル: ブラウザのh6相当スタイル */
 .page-inner .image-container.has-title.title-mini::after {
-  font-size: 0.67em; /* h6相当（約8pt） */
+  /* h6相当: ブラウザデフォルトは約0.67em = 約8pt */
+  /* 親がfont-size:0のため、ページのfont-sizeを基準に計算 */
+  font-size: calc(11pt * 0.67); /* 本文サイズの0.67倍 */
+  font-weight: bold; /* h6はbold */
   color: #666;
 }
+
+
 
 
 /* 画像段落内の自動挿入されるbrを非表示にする */
