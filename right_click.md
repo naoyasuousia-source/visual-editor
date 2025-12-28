@@ -50,11 +50,21 @@
 - イベントハンドラを `onContextMenuCapture` に変更。
 - 画像上でのみ `e.preventDefault()` と `e.stopPropagation()` を実行。
 
+### 2025-12-29 (2) - 誤判定の修正
+
+#### 分析結果
+- 原因: `selectImageAt` 内の `target.querySelector('img')` が、クリックされた要素の子孫にある画像を無差別に検索してしまっている。
+- 具体例: エディタの背景やページ要素をクリックした際、その中に画像が含まれていると、その画像がターゲットとして誤認される。
+
+#### 実装方針
+- `selectImageAt` のロジックを厳格化。
+- `querySelector` は、`target` が明確に `.image-container` である場合のみ使用するように変更、あるいは削除して `closest` と `posAtCoords` だけにする。
+
 ## 3. 分析中に気づいた重要ポイント
-- `onContextMenuCapture` を使うことで、Tiptap やその拡張機能が内部でイベントを `stopEvent` していても、上位コンポーネントで確実に判定ができる。
+- `onContextMenuCapture` は正しく機能しているが、その中で呼ぶ判定関数が `true` を返しすぎていることが問題。
 
 ## 4. 解決済み要件とその解決方法
-- **A4領域でのブラウザ標準メニュー表示**: 画像判定外なら何もしないことで実現。
+- **A4領域でのブラウザ標準メニュー表示**: `selectImageAt` の判定厳格化（子孫探索の廃止）と、イベント透過により実現。
 - **画像上でのカスタムメニュー表示**: `onContextMenuCapture` で検出し、`DropdownMenu` を指定座標で開くことで実現。
 
 ## 5. 要件に関連する全ファイルのファイル構成

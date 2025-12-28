@@ -52,12 +52,14 @@ export const useImageActions = (editor: Editor | null, options: UseImageActionsO
         if (!editor) return false;
 
         // 1. DOM要素から画像を探す
+        // 【修正】無差別な querySelector('img') は親要素クリック時に誤判定を起こすため削除
         const imgElement = target.tagName === 'IMG' 
             ? target 
-            : (target.closest('img') || target.querySelector('img'));
+            : target.closest('img');
         
         const imageContainer = target.closest('.image-container');
-        const targetImg = imgElement || imageContainer?.querySelector('img');
+        // コンテナが見つかった場合のみ、その中の画像を探す
+        const targetImg = imgElement || (imageContainer ? imageContainer.querySelector('img') : null);
 
         // 2. 座標から画像を探す（フォールバック）
         // DOM要素からの判定に失敗した場合や、より正確な判定が必要な場合に使用
