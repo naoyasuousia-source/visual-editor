@@ -190,7 +190,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 <input
                     type="text"
                     id={isWordMode ? 'toolbar-jump-input-word' : 'toolbar-jump-input'}
-                    className="w-full bg-transparent border-none outline-none text-black leading-[0.8] text-[14.3pt] tracking-tight p-0 -mt-1 placeholder:text-gray-400 placeholder:text-[9.1pt] placeholder:opacity-100"
+                    className="w-full bg-transparent border-none outline-none text-black leading-[0.8] text-[10pt] font-normal tracking-tight p-0 placeholder:text-gray-400 placeholder:text-[9.1pt] placeholder:opacity-100"
                     placeholder={isWordMode ? "(例：15)…へジャンプ" : "(例：1-1)…へジャンプ"}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {

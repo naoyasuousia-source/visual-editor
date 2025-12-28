@@ -51,6 +51,14 @@ inputに負のmargin-top（`-mt-1`）を追加して、ラベルとの縦方向�
 `src/v2/components/features/Toolbar.tsx` (186行)
 - labelのclassNameに`mt-0.5`を追加（約2px下に移動）
 
+### 変更3: 2025-12-28
+**方針:**
+入力テキストのフォントサイズを0.7倍にしたことで行間が狭まったため、-mt-1を削除して行間を広げる
+
+**変更内容:**
+`src/v2/components/features/Toolbar.tsx` (193行)
+- inputのclassNameから`-mt-1`を削除
+
 ## 3. 分析中に気づいた重要ポイント
 - v1のラベルには`cursor: text`が設定されており、ラベルをクリックするとinputにフォーカスが移る
 - ReactではhtmlFor属性でlabelとinputを関連付ける
