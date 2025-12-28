@@ -1,6 +1,5 @@
 :root {
   --page-margin: 17mm;
-  --para-number-left: 6mm;
   --editor-font-family: inherit;
   --tab-width: 0px;
 }
@@ -222,17 +221,11 @@ body.hide-para-numbers .page-inner [data-para]::before {
   border: 1px solid currentColor;
 }
 
-.page-inner {
-  line-height: 1.6;
-}
-
-.page.line-height-s .page-inner,
-.page-inner.line-height-s {
+.page.line-height-s .page-inner {
   line-height: 1.25;
 }
 
-.page.line-height-l .page-inner,
-.page-inner.line-height-l {
+.page.line-height-l .page-inner {
   line-height: 2.0;
 }
 
