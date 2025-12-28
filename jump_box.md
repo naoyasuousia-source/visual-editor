@@ -27,30 +27,30 @@
 ----------------------------------------
 
 ## 1. 未解決要件
-・ジャンプウィジェットのフォントサイズを1.3倍にする
-・フォントサイズ増加分、行間をつめる
-・入力ボックスの幅を0.7倍（220px → 154px）にする
+・ジャンプウィジェットのラベルと入力欄の行間（縦方向の間隔）をさらに詰める
 
 ## 2. 未解決要件に関するコード変更履歴
 
 ### 変更1: 2025-12-28
 **分析結果:**
-現在のスタイル値を1.3倍、0.7倍に調整する必要あり。
-- ラベル: `text-[7pt]` → `text-[9.1pt]`
-- 入力: `text-[11pt]` → `text-[14.3pt]`
-- プレースホルダー: `placeholder:text-[7pt]` → `placeholder:text-[9.1pt]`
-- 幅: `w-[220px]` → `w-[154px]`
-- 行間: `leading-tight` → `leading-none`
+`leading-[0.8]`はテキストの行間（line-height）を制御するが、flex子要素間の間隔には影響しない。
+要素間の間隔を詰めるには、負のmarginを使用する必要がある。
 
 **方針:**
-Tailwind任意値を計算後の値に更新
+inputに負のmargin-top（`-mt-1`）を追加して、ラベルとの縦方向の間隔を詰める
 
 **変更内容:**
-`src/v2/components/features/Toolbar.tsx` (182-202行)
-- 幅: `w-[220px]` → `w-[154px]`
-- ラベル: `text-[7pt]` → `text-[9.1pt]`、`leading-tight` → `leading-none`
-- 入力: `text-[11pt]` → `text-[14.3pt]`
-- プレースホルダー: `placeholder:text-[7pt]` → `placeholder:text-[9.1pt]`
+`src/v2/components/features/Toolbar.tsx` (193行)
+- inputのclassNameに`-mt-1`を追加
+
+### 変更2: 2025-12-28
+**方針:**
+上の行（ラベル）をわずかに下げ、下の行（入力欄）は現在位置をキープ
+
+**変更内容:**
+`src/v2/components/features/Toolbar.tsx` (186行)
+- labelのclassNameに`mt-0.5`を追加（約2px下に移動）
+
 ## 3. 分析中に気づいた重要ポイント
 - v1のラベルには`cursor: text`が設定されており、ラベルをクリックするとinputにフォーカスが移る
 - ReactではhtmlFor属性でlabelとinputを関連付ける
@@ -59,19 +59,26 @@ Tailwind任意値を計算後の値に更新
 
 ## 4. 解決済み要件とその解決方法
 
-### 解決済み: ジャンプウィジェットのv1準拠スタイリング
+### 解決済み: フォントサイズ1.3倍、幅0.7倍
 **元の要件:**
-・ジャンプ用入力ボックスのスタイリングをv1と同じにする
-・二段、全部同じフォントサイズ、キャレットはボックスの一番左のみに入るようにする
-・v1のスタイリングコードを積極的に参考にすること
+・ジャンプウィジェットのフォントサイズを1.3倍にする
+・入力ボックスの幅を0.7倍（220px → 154px）にする
 
 **解決方法:**
 `src/v2/components/features/Toolbar.tsx` (182-202行)
+- ラベル: `text-[9.1pt]`
+- 入力: `text-[14.3pt]`
+- プレースホルダー: `placeholder:text-[9.1pt]`
+- 幅: `w-[154px]`
+
+### 解決済み: ジャンプウィジェットのv1準拠スタイリング
+**元の要件:**
+・ジャンプ用入力ボックスのスタイリングをv1と同じにする
+・二段、キャレットはボックスの一番左のみに入るようにする
+
+**解決方法:**
 - 横並び→縦2段構造に変更（`flex items-center` → `flex flex-col`）
 - ラベルをlabel要素に変更し、htmlForでinputと連携
-- フォントサイズ: ラベル`text-[7pt]`、入力`text-[11pt]`
-- プレースホルダー: `placeholder:text-gray-400 placeholder:text-[7pt]`
-- 幅: `w-[220px]`固定
 
 ## 5. 要件に関連する全ファイルのファイル構成
 - `src/v2/components/features/Toolbar.tsx` (182-202行): ジャンプウィジェット
@@ -80,10 +87,14 @@ Tailwind任意値を計算後の値に更新
 - React + Tailwind CSS（任意値使用）
 
 ## 7. 要件に関する機能の動作原理
-### 現在のスタイル値
-- ラベル: `text-[7pt]` → 1.3倍 = `text-[9.1pt]`
-- 入力: `text-[11pt]` → 1.3倍 = `text-[14.3pt]`
-- プレースホルダー: `placeholder:text-[7pt]` → 1.3倍 = `placeholder:text-[9.1pt]`
-- 幅: `w-[220px]` → 0.7倍 = `w-[154px]`
-- 行間: `leading-tight` → より詰める `leading-none`
+### 現在の構造
+```tsx
+<div className="flex flex-col justify-center ...">
+    <label ...>ジャンプ機能...</label>
+    <input .../>
+</div>
+```
+- `flex flex-col` + `justify-center`: 子要素を縦並びで中央揃え
+- `leading-[0.8]`: テキストの行間のみ制御、要素間の間隔は別
+- 要素間の間隔を詰めるには`gap`や負のmarginを使用する必要がある
 
