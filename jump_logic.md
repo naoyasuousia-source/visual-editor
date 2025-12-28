@@ -27,9 +27,7 @@
 ----------------------------------------
 
 ## 1. 未解決要件
-・ジャンプ用入力ボックスに文字列を入力してエンターキーを押すと、エディタ上で、その文字列を含む段落にジャンプする。（ジャンプ箇所で、その文字列をハイライトする）→**ハイライトされない**
-・段落id（1-1等）が入力されたら、エディタ上で、その段落idの段落にジャンプする。（ジャンプ箇所がエディタ上の中央にくるようにスクロール）→**完全OK**
-・ctrl + Jを押すと、ジャンプ用入力ボックスにキャレットが移動する。→**完全OK**
+・ジャンプ用入力ボックスに文字列を入力してエンターキーを押すと、エディタ上で、その文字列を含む段落にジャンプする。（ジャンプ箇所で、その文字列をハイライトする）
 
 **これらの機能はすべて、v1で実装済みなので、積極的に参考にすること。**
 **また、rules.mdを厳守すること。**
@@ -141,6 +139,33 @@
   - `targetElement.closest('p, h1, h2, h3, h4, h5, h6')`で段落要素まで遡る
   - `setTimeout(() => paragraphOrHeading.scrollIntoView({...}), 50)`で確実にスクロール実行
 
+---
+
+### 変更5: テキストハイライト完全修正（2025-12-28）
+
+**分析結果:**
+- 前回の修正でもハイライトが表示されない
+- **根本原因**: Tiptap/ProseMirrorのDOM構造はネストされたspan要素を使用しており、従来の「直接の子ノードのみを検索」するアプローチでは、深い階層のテキストノードに到達できない
+- v1はシンプルなcontenteditable要素で、テキストノードが浅い階層にあった
+- v2のTiptapでは、`p > span > span > テキストノード`のような深いネスト構造
+
+**方針:**
+- `countSearchMatches`と`highlightSearchMatches`を再帰的検索に変更
+- すべての子孫テキストノードを探索するように修正
+- 既にハイライト済みの`.search-match`要素内は再検索しないようスキップ
+
+**変更内容:**
+- ファイル: `src/v2/utils/searchHighlight.ts`
+- **countSearchMatches関数（32-65行目）**:
+  - 再帰関数`countInNode`を追加
+  - `node.nodeType === Node.ELEMENT_NODE`の場合、その子ノードを再帰的に処理
+  - `.search-match`クラスを持つ要素はスキップ
+- **highlightSearchMatches関数（125-159行目）**:
+  - 再帰関数`processNode`を追加
+  - テキストノードを見つけたら`highlightAllInTextNode`を呼び出し
+  - 要素ノードの場合、その子ノードを再帰的に処理
+  - div要素もquerySelectorに追加（ProseMirrorの構造に対応）
+
 
 ## 3. 分析中に気づいた重要ポイント
 
@@ -206,6 +231,18 @@
 - `src/v2/hooks/useKeyboardShortcuts.ts` (Ctrl+J検知)
 - `src/v2/components/features/Toolbar.tsx` (useRef + useEffect)
 
+---
+
+### ✅ 段落ID（1-1等）が入力されたら、エディタ上でその段落にジャンプする（ジャンプ箇所が中央にくるようにスクロール）
+
+**解決方法:**
+- Tiptapの`editor.state.doc.descendants`で段落IDを検索
+- `domAtPos`で取得したノードから`closest('p, h1, h2, h3, h4, h5, h6')`で段落要素まで遡る
+- `setTimeout(..., 50)`で50ms遅延させてレンダリング後に確実にスクロール実行
+- `scrollIntoView({ behavior: 'smooth', block: 'center' })`で中央配置
+
+**実装箇所:**
+- `src/v2/hooks/useJumpNavigation.ts` (49-87行目)
 
 ## 5. 要件に関連する全ファイルのファイル構成
 

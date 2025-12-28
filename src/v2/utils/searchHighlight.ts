@@ -36,16 +36,15 @@ export function countSearchMatches(query: string, containers: NodeListOf<Element
     const lowerQuery = query.toLowerCase();
     
     containers.forEach(container => {
-        // Find all elements that might contain text (excluding our own highlight spans)
+        // Tiptap/ProseMirrorのDOM構造に対応: より広範囲に検索
         const elements = [
             container, 
-            ...Array.from(container.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, span:not(.search-match)'))
+            ...Array.from(container.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, span:not(.search-match), div'))
         ];
         
         elements.forEach(el => {
-            // Process text nodes of this element only
-            const childNodes = Array.from(el.childNodes);
-            for (const node of childNodes) {
+            // Process all text nodes recursively
+            const countInNode = (node: Node) => {
                 if (node.nodeType === Node.TEXT_NODE) {
                     const text = node.nodeValue || '';
                     let idx = text.toLowerCase().indexOf(lowerQuery);
@@ -53,8 +52,15 @@ export function countSearchMatches(query: string, containers: NodeListOf<Element
                         count++;
                         idx = text.toLowerCase().indexOf(lowerQuery, idx + 1);
                     }
+                } else if (node.nodeType === Node.ELEMENT_NODE) {
+                    const element = node as Element;
+                    if (!element.classList.contains('search-match')) {
+                        Array.from(node.childNodes).forEach(countInNode);
+                    }
                 }
-            }
+            };
+            
+            Array.from(el.childNodes).forEach(countInNode);
         });
     });
     
@@ -122,23 +128,32 @@ export function highlightSearchMatches(
     let firstFound: HTMLElement | null = null;
     
     containers.forEach(container => {
-        // Find all elements that might contain text (excluding our own highlight spans)
+        // Tiptap/ProseMirrorのDOM構造に対応: より広範囲に検索
+        // .ProseMirror内のすべての段落要素とspan要素を取得
         const elements = [
             container, 
-            ...Array.from(container.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, span:not(.search-match)'))
+            ...Array.from(container.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, span:not(.search-match), div'))
         ];
         
         elements.forEach(el => {
-            // Process text nodes of this element only (non-recursive to avoid double processing)
-            const childNodes = Array.from(el.childNodes);
-            for (const node of childNodes) {
+            // Process all text nodes recursively (Tiptap uses nested structure)
+            const processNode = (node: Node) => {
                 if (node.nodeType === Node.TEXT_NODE) {
                     const match = highlightAllInTextNode(node as Text, query);
                     if (match && !firstFound) {
                         firstFound = match;
                     }
+                } else if (node.nodeType === Node.ELEMENT_NODE) {
+                    // Skip already highlighted elements
+                    const element = node as Element;
+                    if (!element.classList.contains('search-match')) {
+                        Array.from(node.childNodes).forEach(processNode);
+                    }
                 }
-            }
+            };
+            
+            // Start processing from the element
+            Array.from(el.childNodes).forEach(processNode);
         });
     });
     
