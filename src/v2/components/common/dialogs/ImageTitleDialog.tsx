@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Editor } from '@tiptap/react';
 import { BaseDialog } from '@/components/ui/BaseDialog';
 import { Check, Save } from 'lucide-react';
@@ -13,24 +13,30 @@ interface ImageTitleDialogProps {
  * 画像タイトル編集ダイアログ
  * 
  * 【重要】selectable: falseの画像に対応するため、
- * キャレットの直前のノード（$from.nodeBefore）から画像を特定します。
+ * ダイアログが開いたときに画像の位置を保存し、適用時にその位置を使用します。
  */
 export const ImageTitleDialog: React.FC<ImageTitleDialogProps> = ({ open, editor, onClose }) => {
     const [title, setTitle] = useState('');
     const [fontSize, setFontSize] = useState<'default' | 'mini'>('default');
+    
+    // ダイアログが開いたときの画像位置を保存
+    const imagePosRef = useRef<number | null>(null);
 
     useEffect(() => {
         if (open) {
-            // キャレットの直前のノードから画像属性を取得
+            // ダイアログが開いたときに画像の位置と属性を保存
             const { state } = editor;
             const { $from } = state.selection;
             const nodeBefore = $from.nodeBefore;
             
             if (nodeBefore?.type.name === 'image') {
+                // 画像の位置を保存
+                imagePosRef.current = $from.pos - nodeBefore.nodeSize;
                 setTitle(nodeBefore.attrs.title || '');
                 setFontSize(nodeBefore.attrs.titleSize || 'default');
             } else {
-                // フォールバック
+                // フォールバック: 画像が見つからない場合
+                imagePosRef.current = null;
                 const attrs = editor.getAttributes('image');
                 if (attrs.title) setTitle(attrs.title);
                 if (attrs.titleSize) setFontSize(attrs.titleSize);
@@ -40,9 +46,24 @@ export const ImageTitleDialog: React.FC<ImageTitleDialogProps> = ({ open, editor
 
     const handleApply = () => {
         const { state, view } = editor;
-        const { $from, empty } = state.selection;
         
-        // キャレットの直前のノードが画像かチェック
+        // 保存した位置を使用して画像を更新
+        if (imagePosRef.current !== null) {
+            const node = state.doc.nodeAt(imagePosRef.current);
+            if (node?.type.name === 'image') {
+                const tr = state.tr.setNodeMarkup(imagePosRef.current, undefined, {
+                    ...node.attrs,
+                    title: title.trim(),
+                    titleSize: fontSize
+                });
+                view.dispatch(tr);
+                onClose();
+                return;
+            }
+        }
+        
+        // フォールバック: 現在のキャレット位置から画像を探す
+        const { $from, empty } = state.selection;
         if (empty && $from.nodeBefore?.type.name === 'image') {
             const imagePos = $from.pos - $from.nodeBefore.nodeSize;
             const tr = state.tr.setNodeMarkup(imagePos, undefined, {
@@ -52,7 +73,7 @@ export const ImageTitleDialog: React.FC<ImageTitleDialogProps> = ({ open, editor
             });
             view.dispatch(tr);
         } else {
-            // フォールバック
+            // 最終フォールバック
             editor.chain().focus().updateAttributes('image', {
                 title: title.trim(),
                 titleSize: fontSize
@@ -61,6 +82,7 @@ export const ImageTitleDialog: React.FC<ImageTitleDialogProps> = ({ open, editor
         
         onClose();
     };
+
 
     return (
         <BaseDialog
