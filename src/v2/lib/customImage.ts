@@ -278,13 +278,14 @@ export const CustomImage = TiptapImage.extend({
                     img.src = updatedNode.attrs.src || '';
                     img.alt = updatedNode.attrs.alt || '';
                     
-                    img.className = '';
-                    container.className = 'image-container'; // リセット
-                    
+                    // サイズクラスの更新（既存のサイズクラスを除去してから新しいものを追加）
+                    container.classList.remove('img-xs', 'img-s', 'img-m', 'img-l', 'img-xl');
                     if (updatedNode.attrs.size) {
                         container.classList.add(`img-${updatedNode.attrs.size}`);
                     }
-                    if (updatedNode.attrs.hasBorder) img.classList.add('has-border');
+                    
+                    // 枠線の更新
+                    img.classList.toggle('has-border', !!updatedNode.attrs.hasBorder);
                     
                     // タイトル更新（data属性とクラス）
                     if (updatedNode.attrs.title) {

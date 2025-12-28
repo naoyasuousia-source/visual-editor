@@ -126,24 +126,24 @@ body.hide-para-numbers .page-inner [data-para]::before {
   /* 強制中央 */
 }
 
-/* 画像サイズクラス */
-.img-xs {
+/* 画像サイズクラス - .image-container の width: auto を上書きするため詳細度を上げる */
+.page-inner .image-container.img-xs {
   width: 20%;
 }
 
-.img-s {
+.page-inner .image-container.img-s {
   width: 35%;
 }
 
-.img-m {
+.page-inner .image-container.img-m {
   width: 50%;
 }
 
-.img-l {
+.page-inner .image-container.img-l {
   width: 65%;
 }
 
-.img-xl {
+.page-inner .image-container.img-xl {
   width: 85%;
 }
 /* 画像段落のスタイル */

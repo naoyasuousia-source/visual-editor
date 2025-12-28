@@ -25,11 +25,16 @@ export const ImageBubbleMenu: React.FC<ImageBubbleMenuProps> = ({ editor, onEdit
         const { state, view } = editor;
         const { $from, empty } = state.selection;
         
-        // キャレットの直前の画像に対しても確実に属性を更新
+        // キャレットの直前の画像を探す
         if (empty && $from.nodeBefore?.type.name === 'image') {
             const imagePos = $from.pos - $from.nodeBefore.nodeSize;
-            editor.chain().setNodeSelection(imagePos).updateAttributes('image', { size }).focus().run();
+            const tr = state.tr.setNodeMarkup(imagePos, undefined, {
+                ...$from.nodeBefore.attrs,
+                size
+            });
+            view.dispatch(tr);
         } else {
+            // フォールバック
             editor.chain().focus().updateAttributes('image', { size }).run();
         }
     };
