@@ -160,20 +160,29 @@ body.hide-para-numbers .page-inner [data-para]::before {
 /* 画像コンテナ: インラインブロックにしてキャレットを横に配置 */
 .page-inner .image-container {
   display: inline-block; /* inline-blockによりキャレットが画像の横に来る */
-  vertical-align: bottom; /* 下揃え */
+  vertical-align: top; /* 【1.2解決】画像上辺を段落番号（top: 1px）に合わせる */
   width: auto; /* width 100%をやめる */
   max-width: 100%;
   line-height: 0;
   font-size: 0;
   position: relative;
+  /* 【1.1解決】キャレットを画像右辺から1.5pt右に配置 */
+  margin-right: 1.5pt;
   /* タイトルがある場合は下に余白を確保 */
   margin-bottom: 0;
   transition: margin-bottom 0.2s;
 }
 
-/* タイトルがある場合の余白確保 */
+/* 【1.3解決】タイトルがある場合の余白確保（タイトル高さ分） */
 .page-inner .image-container.has-title {
-  margin-bottom: 2em;
+  /* 本文タイトル: font-size 11pt × line-height 1.4 + padding-top 4px ≈ 1.8em */
+  margin-bottom: 1.8em;
+}
+
+/* サブテキストタイトルの場合は余白を小さく */
+.page-inner .image-container.has-title.title-mini {
+  /* サブテキスト: 約1.5em */
+  margin-bottom: 1.5em;
 }
 
 /* 画像本体 */
