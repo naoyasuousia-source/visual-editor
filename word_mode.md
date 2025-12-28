@@ -48,6 +48,7 @@
     - `Toolbar.tsx`: 段落番号チェックボックスを「ファイル」と「B」の間に移動。モード切替ボタンをオレンジグラデーションに。ハイライトメニューをWordモードで非表示化。
     - `WordBlockMenu.tsx`: Radix UI ベースの新規コンポーネント。選択しても閉じない挙動を実現。
     - `useAppStore.ts`: `toggleWordMode` に確認ダイアログとリロード処理を追加。初期状態を `localStorage` から取得するように変更。
+    - `useBrowserCheck.ts` & `BrowserWarningDialog.tsx`: v1準拠の判定ロジック（PC且つChrome/Edge以外で警告）及び、プレミアムな警告ダイアログの実装。
 
 ## 3. 分析中に気づいた重要ポイント
 - **Wordモードの無限ページ**: `Pagination` エクステンションに `isWordMode` オプションを追加し、`update` フック内でスキップ。CSSで `height: auto` と `min-height: 297mm` を強制。
