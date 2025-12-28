@@ -51,16 +51,31 @@ export const useJumpNavigation = (editor: Editor | null, isWordMode: boolean) =>
             editor.commands.focus();
             editor.commands.setTextSelection(targetPos);
             
-            // エディタのビューを使用してスクロール
+            // エディタのビューを使用してスクロール（確実に中央配置）
             const { view } = editor;
             const domAtPos = view.domAtPos(targetPos);
-            if (domAtPos.node) {
-                const element = domAtPos.node.nodeType === Node.ELEMENT_NODE 
-                    ? domAtPos.node as Element
-                    : domAtPos.node.parentElement;
-                
-                if (element) {
-                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // 段落要素を確実に取得
+            let targetElement: Element | null = null;
+            if (domAtPos.node.nodeType === Node.ELEMENT_NODE) {
+                targetElement = domAtPos.node as Element;
+            } else if (domAtPos.node.parentElement) {
+                targetElement = domAtPos.node.parentElement;
+            }
+
+            // p要素またはh要素まで遡る
+            if (targetElement) {
+                const paragraphOrHeading = targetElement.closest('p, h1, h2, h3, h4, h5, h6');
+                if (paragraphOrHeading) {
+                    // 少し遅延させて確実にスクロール（レンダリング後）
+                    setTimeout(() => {
+                        paragraphOrHeading.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 50);
+                } else {
+                    // フォールバック
+                    setTimeout(() => {
+                        targetElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 50);
                 }
             }
             
@@ -70,12 +85,9 @@ export const useJumpNavigation = (editor: Editor | null, isWordMode: boolean) =>
 
         // 段落IDが見つからない場合、テキスト検索フォールバック（v1準拠）
         const editorElement = editor.view.dom;
-        const containers = editorElement.querySelectorAll('[data-type="page-content"]');
         
-        // コンテナが見つからない場合は、エディタ全体を検索対象にする
-        const searchContainers = containers.length > 0 
-            ? Array.from(containers) 
-            : [editorElement];
+        // Tiptapエディタ内のすべての段落要素を検索対象に
+        const searchContainers = [editorElement];
 
         const count = countSearchMatches(target, searchContainers as Element[]);
 

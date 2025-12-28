@@ -27,10 +27,9 @@
 ----------------------------------------
 
 ## 1. 未解決要件
-・ジャンプ用入力ボックスに文字列を入力してエンターキーを押すと、エディタ上で、その文字列を含む段落にジャンプする。（ジャンプ箇所で、その文字列をハイライトする）
-・文字列が複数段落に該当する場合はエラーを返す。（一か所のみ該当する場合のみジャンプ）
-・段落id（1-1等）が入力されたら、エディタ上で、その段落idの段落にジャンプする。
-・ctrl + Jを押すと、ジャンプ用入力ボックスにキャレットが移動する。
+・ジャンプ用入力ボックスに文字列を入力してエンターキーを押すと、エディタ上で、その文字列を含む段落にジャンプする。（ジャンプ箇所で、その文字列をハイライトする）→**ハイライトされない**
+・段落id（1-1等）が入力されたら、エディタ上で、その段落idの段落にジャンプする。（ジャンプ箇所がエディタ上の中央にくるようにスクロール）→**完全OK**
+・ctrl + Jを押すと、ジャンプ用入力ボックスにキャレットが移動する。→**完全OK**
 
 **これらの機能はすべて、v1で実装済みなので、積極的に参考にすること。**
 **また、rules.mdを厳守すること。**
@@ -119,6 +118,29 @@
 - useEffectで`shouldFocusJumpInput`を監視 → trueの時に`jumpInputRef.current.focus()` + `select()` → `resetJumpInputFocus()`
 - input要素に`ref={jumpInputRef}`を設定
 
+---
+
+### 変更4: テキスト検索ハイライト修正 & 段落IDジャンプスクロール改善（2025-12-28）
+
+**分析結果:**
+- **文字列ハイライトが表示されない**: `[data-type="page-content"]`セレクタがTiptapのDOM構造に存在せず、検索コンテナが空になっていた
+- **段落IDジャンプのスクロール位置**: `domAtPos`で取得したノードが段落要素ではなく、その子ノードの可能性があり、確実に段落要素までclosestで遡る必要がある
+
+**方針:**
+- テキスト検索時の検索コンテナを`editor.view.dom`（エディタ全体）に変更
+- 段落IDジャンプ時は`closest('p, h1, h2, h3, h4, h5, h6')`で段落要素を確実に取得
+- スクロールを50ms遅延させてレンダリング後に実行
+
+**変更内容:**
+- ファイル: `src/v2/hooks/useJumpNavigation.ts`
+- **テキスト検索部分（72-76行目）**:
+  - `querySelectorAll('[data-type="page-content"]')`を削除
+  - `searchContainers = [editorElement]`に単純化（エディタDOM全体を検索）
+- **段落IDジャンプ部分（54-79行目）**:
+  - `domAtPos`で取得したノードから`targetElement`を取得
+  - `targetElement.closest('p, h1, h2, h3, h4, h5, h6')`で段落要素まで遡る
+  - `setTimeout(() => paragraphOrHeading.scrollIntoView({...}), 50)`で確実にスクロール実行
+
 
 ## 3. 分析中に気づいた重要ポイント
 
@@ -154,6 +176,36 @@
 2. **useKeyboardShortcuts.tsの拡張**: Ctrl+Jを追加（ただし、入力要素へのfocusはhooks経由で実現）
 3. **CSSの追加**: search-matchクラスのスタイルをv2/styles/index.cssに追加
 4. **rules.md遵守**: DOM操作はhooksに隔離し、コンポーネントは描画のみに専念
+
+## 4. 解決済み要件とその解決方法
+
+### ✅ 文字列が複数段落に該当する場合はエラーを返す（一か所のみ該当する場合のみジャンプ）
+
+**解決方法:**
+- `countSearchMatches`関数でDOM内の該当箇所をカウント
+- 0件 → エラートースト「見つかりません」
+- 2件以上 → エラートースト「該当箇所が複数あります（N箇所）。検索条件を詳しくしてください。」
+- 1件のみ → ハイライト表示 + ジャンプ
+
+**実装箇所:**
+- `src/v2/hooks/useJumpNavigation.ts` (80-107行目)
+- `src/v2/utils/searchHighlight.ts` (countSearchMatches関数)
+
+---
+
+### ✅ Ctrl+Jを押すと、ジャンプ用入力ボックスにキャレットが移動する
+
+**解決方法:**
+- Zustandストアに`shouldFocusJumpInput`状態を追加
+- `useKeyboardShortcuts`でCtrl+Jを検知 → `triggerJumpInputFocus()`でstateをtrueに
+- `Toolbar.tsx`でuseEffectで状態監視 → useRefでinput要素にフォーカス + select()
+- React宣言的UIに従い、DOM操作はhooks内でrefを経由
+
+**実装箇所:**
+- `src/v2/store/useAppStore.ts` (状態管理)
+- `src/v2/hooks/useKeyboardShortcuts.ts` (Ctrl+J検知)
+- `src/v2/components/features/Toolbar.tsx` (useRef + useEffect)
+
 
 ## 5. 要件に関連する全ファイルのファイル構成
 
