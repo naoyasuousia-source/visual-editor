@@ -238,6 +238,7 @@ export const useImageActions = (editor: Editor | null, options: UseImageActionsO
         editTitle,
         editCaption,
         editTags,
-        getCurrentImageAttrs
+        getCurrentImageAttrs,
+        selectImageAt
     };
 };
