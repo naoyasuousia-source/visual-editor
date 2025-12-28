@@ -9,9 +9,9 @@
 ## 📊 全体進捗
 
 - [x] **Phase 1: 基盤構築** (1-2日) ✅ 完了
-- [ ] **Phase 2: コマンドシステム** (2-3日) 🔄 進行中
+- [x] **Phase 2: コマンドシステム** (2-3日) ✅ 完了
 - [ ] **Phase 3: 変更ハイライト** (1日)
-- [ ] **Phase 4: UIコンポーネント** (1-2日)
+- [ ] **Phase 4: UIコンポーネント** (1-2日) 🔄 進行中（70%完了）
 - [ ] **Phase 5: 残りのコマンド実装** (2-3日)
 - [ ] **Phase 6: テスト・最適化** (2-3日)
 - [ ] **Phase 7: ドキュメント・公開準備** (1日)
@@ -35,29 +35,31 @@
 
 ---
 
-## Phase 2: コマンドシステム 🔄 進行中
+## Phase 2: コマンドシステム ✅ 完了
 
 ### タスク一覧
-- [ ] `useFileSystemWatcher` フック実装
-  - [ ] File System Access API統合
-  - [ ] ファイル変更検知ロジック
-  - [ ] ポーリング機構
-- [ ] `useCommandParser` フック実装
-  - [ ] HTMLコメント抽出
-  - [ ] コマンドパース
-  - [ ] エラーハンドリング
-- [ ] `useCommandExecutor` フック実装
-  - [ ] Tiptapエディタとの統合
-  - [ ] コマンド実行ロジック
-  - [ ] 変更範囲の追跡
-- [ ] 基本コマンド実装
-  - [ ] INSERT_TEXT
-  - [ ] REPLACE_TEXT
+- [x] `useFileSystemWatcher` フック実装
+  - [x] File System Access API統合
+  - [x] ファイル変更検知ロジック
+  - [x] ポーリング機構
+- [x] `useCommandParser` フック実装
+  - [x] HTMLコメント抽出
+  - [x] コマンドパース
+  - [x] エラーハンドリング
+- [x] `useCommandExecutor` フック実装
+  - [x] Tiptapエディタとの統合
+  - [x] コマンド実行ロジック
+  - [x] 変更範囲の追跡
+- [x] 基本コマンド実装
+  - [x] INSERT_TEXT
+  - [x] REPLACE_TEXT
 
-### 予定ファイル
-- `src/v2/hooks/useFileSystemWatcher.ts`
-- `src/v2/hooks/useCommandParser.ts`
-- `src/v2/hooks/useCommandExecutor.ts`
+### 作成したファイル
+- `src/v2/hooks/useFileSystemWatcher.ts` - ファイル監視フック
+- `src/v2/hooks/useCommandParser.ts` - コマンドパーサーフック
+- `src/v2/hooks/useCommandExecutor.ts` - コマンド実行フック
+- `src/v2/hooks/useAiSync.ts` - 統合AI同期フック
+- `src/v2/store/useAppStore.ts` - AI同期状態管理を追加
 
 ---
 
@@ -73,19 +75,21 @@
 
 ---
 
-## Phase 4: UIコンポーネント
+## Phase 4: UIコンポーネント 🔄 進行中（70%完了）
 
 ### タスク一覧
-- [ ] `EditorLockOverlay` コンポーネント作成（エディタロック用オーバーレイ）
-- [ ] `AiSyncPanel` コンポーネント作成
+- [x] `EditorLockOverlay` コンポーネント作成（エディタロック用オーバーレイ）
+- [x] `AiSyncPanel` コンポーネント作成
 - [ ] `ChangeHighlight` コンポーネント作成
 - [ ] 既存エディタUIへの統合
-- [ ] エディタロック状態管理の実装
+- [x] エディタロック状態管理の実装
+
+### 作成したファイル
+- `src/v2/components/features/EditorLockOverlay.tsx` - エディタロック用オーバーレイ
+- `src/v2/components/features/AiSyncPanel.tsx` - AI同期制御パネル
 
 ### 予定ファイル
-- `src/v2/components/features/ai-sync/EditorLockOverlay.tsx`
-- `src/v2/components/features/ai-sync/AiSyncPanel.tsx`
-- `src/v2/components/features/ai-sync/ChangeHighlight.tsx`
+- `src/v2/components/features/ChangeHighlight.tsx`
 
 ---
 
@@ -134,7 +138,10 @@
 （なし）
 
 ### 解決済み
-（なし）
+1. **pagination.tsのthisコンテキストエラー** (2025-12-29 04:09)
+   - 問題: `this.options.isWordMode`にアクセスできない
+   - 原因: プラグインのview関数内でthisコンテキストが正しくない
+   - 解決: `addProseMirrorPlugins()`の開始時に`const options = this.options;`でキャプチャし、クロージャ内で参照
 
 ---
 
@@ -146,10 +153,21 @@
 - パーサーは引数の入れ子括弧に対応
 - バリデーションでXSS対策を実装
 
+### Phase 2完了時のメモ
+- File System Access APIでポーリング方式を採用（1秒間隔）
+- useAiSyncフックで8ステップの安全な実行フローを実装
+- エディタロック中はTiptapの`editable`をfalseに設定
+- コマンド実行前に自動保存してロールバック可能に
+
+### Phase 4進行中のメモ
+- EditorLockOverlayはz-index 9999で最前面に表示
+- AiSyncPanelは状態インジケーター付き
+- Zustandストアにエディタロック状態を追加
+
 ### 次のステップ
-1. File System Access APIを使用したファイル監視フックの実装
-2. Tiptapエディタとの統合準備
-3. エディタロック機能の実装（Phase 4と並行検討）
+1. 既存エディタ（App.tsx）への統合
+2. ChangeHighlightコンポーネント作成（Phase 3と並行）
+3. 残りのコマンド（DELETE_TEXT, FORMAT_TEXT等）の実装
 
 ---
 
