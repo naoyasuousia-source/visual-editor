@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { Editor } from '@tiptap/react';
+import { TextSelection } from '@tiptap/pm/state';
 import { toast } from 'sonner';
 
 interface UseImageActionsOptions {
@@ -37,11 +38,55 @@ interface UseImageActionsOptions {
  * - deleteImage: 画像削除（段落ごと削除も対応）
  * - editTitle/editCaption/editTags: メタデータ編集ダイアログ呼び出し
  * - getCurrentImageAttrs: 現在の画像属性取得
+ * - selectImageAt: 指定されたDOM要素近傍の画像を認識し選択状態（右辺キャレット）にする
  * 
  * ============================================================================
  */
 export const useImageActions = (editor: Editor | null, options: UseImageActionsOptions) => {
     const { openDialog } = options;
+
+    /**
+     * 指定されたDOM要素（imgまたはcontainer）から画像を特定し、その右辺にキャレットを配置する
+     */
+    const selectImageAt = useCallback((target: HTMLElement) => {
+        if (!editor) return false;
+
+        const imgElement = target.tagName === 'IMG' 
+            ? target 
+            : target.closest('img');
+        
+        const imageContainer = target.closest('.image-container');
+        const targetImg = imgElement || imageContainer?.querySelector('img');
+
+        if (targetImg) {
+            const pos = editor.view.posAtDOM(targetImg, 0);
+            if (typeof pos === 'number') {
+                let imagePos: number | null = null;
+                editor.state.doc.descendants((node, nodePos) => {
+                    if (node.type.name === 'image' && imagePos === null) {
+                        if (nodePos <= pos && pos <= nodePos + node.nodeSize) {
+                            imagePos = nodePos;
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+                
+                if (imagePos !== null) {
+                    const imageNode = editor.state.doc.nodeAt(imagePos);
+                    if (imageNode && imageNode.type.name === 'image') {
+                        const imageEndPos = imagePos + imageNode.nodeSize;
+                        const tr = editor.state.tr.setSelection(
+                            TextSelection.create(editor.state.doc, imageEndPos)
+                        );
+                        editor.view.dispatch(tr);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }, [editor]);
 
     /**
      * 画像サイズを変更

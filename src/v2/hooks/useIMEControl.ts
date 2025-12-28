@@ -13,14 +13,18 @@ import { TiptapKeyDownHandler } from '@/types/tiptap';
  * 【解決策】
  * compositionend イベント後50ms以内のEnterキーを無視
  */
-export const useIMEControl = (editor: Editor | null) => {
+export const useIMEControl = () => {
     const isComposingRef = useRef(false);
     const compositionEndTsRef = useRef(0);
+
+    // 文脈：これらのハンドラは、実際のDOMイベントリスナーとして登録する必要があります。
+    // Tiptapの editorProps.handleKeyDown だけでは compositionstart/end を捕捉できません。
+    // そのため、useEffect等でエディタのDOM要素に直接登録することを検討します。
 
     /**
      * Tiptapの editorProps.handleKeyDown で使用するハンドラ
      */
-    const handleKeyDown = useCallback<TiptapKeyDownHandler>((view, event): boolean => {
+    const handleKeyDown = useCallback<TiptapKeyDownHandler>((_view, event): boolean => {
         // IME入力中かチェック
         if (event.isComposing || event.keyCode === 229 || isComposingRef.current) {
             return false; // Tiptapのデフォルト処理を継続
@@ -35,24 +39,9 @@ export const useIMEControl = (editor: Editor | null) => {
         return false; // Tiptapのデフォルト処理を継続
     }, []);
 
-    /**
-     * compositionstart イベントハンドラ
-     */
-    const handleCompositionStart = useCallback(() => {
-        isComposingRef.current = true;
-    }, []);
-
-    /**
-     * compositionend イベントハンドラ
-     */
-    const handleCompositionEnd = useCallback(() => {
-        isComposingRef.current = false;
-        compositionEndTsRef.current = Date.now();
-    }, []);
-
     return {
         handleKeyDown,
-        handleCompositionStart,
-        handleCompositionEnd
+        isComposingRef,
+        compositionEndTsRef
     };
 };

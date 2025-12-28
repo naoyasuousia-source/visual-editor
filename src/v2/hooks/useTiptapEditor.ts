@@ -23,26 +23,16 @@ import { TiptapKeyDownHandler, TiptapPasteHandler } from '@/types/tiptap';
 
 /**
  * Tiptap Editor Hook
- * 
- * Tiptapエディタインスタンスの初期化とライフサイクル管理を行います。
- * App.tsx からエディタ設定ロジックを分離し、hooks/ に配置することで、
- * rules.md の「Reactライブラリの外部化（Encapsulation）」原則に準拠します。
- * 
- * @param handleIMEKeyDown - IME制御のキーダウンハンドラ
- * @param handlePaste - ペースト制御ハンドラ
- * @param onEditorCreate - エディタ作成時のコールバック
- * @returns Tiptap Editor インスタンス
  */
 export const useTiptapEditor = (
     handleIMEKeyDown: TiptapKeyDownHandler,
-    handlePaste: TiptapPasteHandler,
-    onEditorCreate?: (editor: Editor) => void
+    handlePaste: TiptapPasteHandler
 ) => {
     const editor = useEditor({
         extensions: [
-            CustomDocument, // カスタムDocument: doc > page+
+            CustomDocument,
             StarterKit.configure({
-                document: false, // デフォルトのDocumentを無効化
+                document: false,
             }),
             Underline,
             Subscript,
@@ -80,11 +70,8 @@ export const useTiptapEditor = (
                 class: 'outline-none',
                 spellcheck: 'false',
             },
-            // IME制御: V1の堅牢なロジックを使用
             handleKeyDown: handleIMEKeyDown,
-            // ペースト制御: 画像の直接ペーストを禁止
             handlePaste: handlePaste,
-            // リンククリック制御: 内部リンクはスクロール
             handleClick: (view, pos, event) => {
                 const target = event.target as HTMLElement;
                 const link = target.closest('a');
@@ -102,11 +89,6 @@ export const useTiptapEditor = (
                 }
                 return false;
             },
-        },
-        onCreate: ({ editor }) => {
-            if (onEditorCreate) {
-                onEditorCreate(editor);
-            }
         },
     });
 

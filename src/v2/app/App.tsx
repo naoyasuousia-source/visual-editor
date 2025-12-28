@@ -44,28 +44,40 @@ export const EditorV3 = () => {
     // Browser Check (ロジック分離)
     const { showWarning: showBrowserWarning, setShowWarning: setShowBrowserWarning } = useBrowserCheck();
 
-    // 一時的なeditorインスタンス（フック初期化のため）
-    const [tempEditor, setTempEditor] = useState<Editor | null>(null);
-
     // IME Control (ロジック分離)
-    const { handleKeyDown: handleIMEKeyDown } = useIMEControl(tempEditor);
+    const { handleKeyDown: handleIMEKeyDown, isComposingRef, compositionEndTsRef } = useIMEControl();
 
     // Paste Control (ロジック分離)
-    const { handlePaste } = usePasteControl(tempEditor);
+    const { handlePaste } = usePasteControl();
 
     // Tiptap Editor (ロジック分離)
-    const editor = useTiptapEditor(handleIMEKeyDown, handlePaste, (editor) => {
-        setTempEditor(editor);
-    });
+    const editor = useTiptapEditor(handleIMEKeyDown, handlePaste);
+
+    // IME Event Registration: Tiptap外のDOMイベントを監視
+    useEffect(() => {
+        if (!editor) return;
+
+        const dom = editor.view.dom;
+        const handleStart = () => { isComposingRef.current = true; };
+        const handleEnd = () => {
+            isComposingRef.current = false;
+            compositionEndTsRef.current = Date.now();
+        };
+
+        dom.addEventListener('compositionstart', handleStart);
+        dom.addEventListener('compositionend', handleEnd);
+
+        return () => {
+            dom.removeEventListener('compositionstart', handleStart);
+            dom.removeEventListener('compositionend', handleEnd);
+        };
+    }, [editor, isComposingRef, compositionEndTsRef]);
 
     // Dialogs (ロジック分離)
     const { confirm, prompt, confirmState, promptState, handleConfirmClose, handlePromptClose } = useDialogs();
 
     // Page Operations (ロジック分離)
     const { addPage, removePage } = usePageOperations(editor, { confirm });
-
-    // Image Index (ロジック分離) - 現在未使用だが将来の拡張のために保持
-    // const { rebuildImageIndex, updateImageMeta } = useImageIndex(editor, isWordMode);
 
     // File IO (ロジック分離)
     const { saveFile, saveAsFile, downloadFile, openFileWithHandle } = useFileIO(editor, isWordMode);

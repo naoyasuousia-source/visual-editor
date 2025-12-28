@@ -12,11 +12,11 @@ import { TiptapPasteHandler } from '@/types/tiptap';
  * - HTML形式での画像ペーストを禁止
  * - ユーザーには「ファイルメニューから挿入」を促す
  */
-export const usePasteControl = (editor: Editor | null) => {
+export const usePasteControl = () => {
     /**
      * Tiptapの editorProps.handlePaste で使用するハンドラ
      */
-    const handlePaste = useCallback<TiptapPasteHandler>((view, event): boolean => {
+    const handlePaste = useCallback<TiptapPasteHandler>((_view, event): boolean => {
         const clipboardData = event.clipboardData;
         if (!clipboardData) return false;
 

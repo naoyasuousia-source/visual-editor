@@ -61,6 +61,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         toggleStrike,
         toggleSuperscript,
         toggleSubscript,
+        toggleHeading,
+        setParagraph,
         isActive
     } = useTextFormatting(editor);
 
@@ -134,17 +136,17 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                             className="h-[36px] px-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 outline-none cursor-pointer min-w-[100px]"
                             onChange={(e) => {
                                 const value = e.target.value;
-                                if (value === 'p') editor.chain().focus().setParagraph().run();
+                                if (value === 'p') setParagraph();
                                 else if (value.startsWith('h')) {
                                     const level = parseInt(value.substring(1)) as 1 | 2 | 3 | 4 | 5 | 6;
-                                    editor.chain().focus().toggleHeading({ level }).run();
+                                    toggleHeading(level);
                                 }
                             }}
                             value={
-                                editor.isActive('heading', { level: 1 }) ? 'h1' :
-                                editor.isActive('heading', { level: 2 }) ? 'h2' :
-                                editor.isActive('heading', { level: 3 }) ? 'h3' :
-                                editor.isActive('heading', { level: 6 }) ? 'h6' :
+                                isActive('heading', { level: 1 }) ? 'h1' :
+                                isActive('heading', { level: 2 }) ? 'h2' :
+                                isActive('heading', { level: 3 }) ? 'h3' :
+                                isActive('heading', { level: 6 }) ? 'h6' :
                                 'p'
                             }
                         >

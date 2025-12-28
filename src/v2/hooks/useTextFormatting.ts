@@ -60,13 +60,33 @@ export const useTextFormatting = (editor: Editor | null) => {
     };
 
     /**
+     * 見出しの切り替え
+     */
+    const toggleHeading = (level: 1 | 2 | 3 | 4 | 5 | 6) => {
+        if (!editor) return;
+        editor.chain().focus().toggleHeading({ level }).run();
+    };
+
+    /**
+     * 段落に設定
+     */
+    const setParagraph = () => {
+        if (!editor) return;
+        editor.chain().focus().setParagraph().run();
+    };
+
+    /**
      * 書式がアクティブかどうかを確認
      * @param format - 確認する書式名
+     * @param attributes - 属性（見出しレベル等）
      * @returns アクティブな場合true
      */
-    const isActive = (format: 'bold' | 'italic' | 'underline' | 'strike' | 'superscript' | 'subscript'): boolean => {
+    const isActive = (
+        format: 'bold' | 'italic' | 'underline' | 'strike' | 'superscript' | 'subscript' | 'heading' | 'paragraph',
+        attributes?: Record<string, unknown>
+    ): boolean => {
         if (!editor) return false;
-        return editor.isActive(format);
+        return editor.isActive(format, attributes as Record<string, any>);
     };
 
     return {
@@ -76,6 +96,8 @@ export const useTextFormatting = (editor: Editor | null) => {
         toggleStrike,
         toggleSuperscript,
         toggleSubscript,
+        toggleHeading,
+        setParagraph,
         isActive,
     };
 };

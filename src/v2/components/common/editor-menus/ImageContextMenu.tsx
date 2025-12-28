@@ -38,7 +38,8 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({ editor, chil
         editTitle,
         editCaption,
         editTags,
-        getCurrentImageAttrs
+        getCurrentImageAttrs,
+        selectImageAt
     } = useImageActions(editor, { openDialog });
 
     // 画像上の右クリックかどうかを追跡
@@ -55,60 +56,16 @@ export const ImageContextMenu: React.FC<ImageContextMenuProps> = ({ editor, chil
         if (!editor) return;
         
         const target = e.target as HTMLElement;
-        // 画像要素を取得
-        const imgElement = target.tagName === 'IMG' 
-            ? target 
-            : target.closest('img');
+        const success = selectImageAt(target);
         
-        // 画像コンテナを取得
-        const imageContainer = target.closest('.image-container');
-        
-        const isImage = imgElement !== null || imageContainer !== null;
-        
-        if (isImage) {
-            // 画像の場合はカスタムメニューを表示
+        if (success) {
             setIsImageRightClick(true);
-            
-            // 画像の右辺にキャレットを移動させる
-            // これにより $from.nodeBefore が画像を指すようになる
-            const targetImg = imgElement || imageContainer?.querySelector('img');
-            if (targetImg) {
-                // ProseMirrorのpositionを取得
-                const pos = editor.view.posAtDOM(targetImg, 0);
-                if (typeof pos === 'number') {
-                    // ドキュメント内の画像ノードを探す
-                    let imagePos: number | null = null;
-                    editor.state.doc.descendants((node, nodePos) => {
-                        if (node.type.name === 'image' && imagePos === null) {
-                            // posAtDOMで取得した位置が画像ノードの範囲内かチェック
-                            if (nodePos <= pos && pos <= nodePos + node.nodeSize) {
-                                imagePos = nodePos;
-                                return false; // 探索終了
-                            }
-                        }
-                        return true;
-                    });
-                    
-                    if (imagePos !== null) {
-                        // 画像ノードを取得
-                        const imageNode = editor.state.doc.nodeAt(imagePos);
-                        if (imageNode && imageNode.type.name === 'image') {
-                            // 画像の直後（右辺）にキャレットを配置
-                            const imageEndPos = imagePos + imageNode.nodeSize;
-                            const tr = editor.state.tr.setSelection(
-                                TextSelection.create(editor.state.doc, imageEndPos)
-                            );
-                            editor.view.dispatch(tr);
-                        }
-                    }
-                }
-            }
         } else {
             // 画像でない場合はブラウザのデフォルトメニューを表示
             setIsImageRightClick(false);
             e.stopPropagation();
         }
-    }, [editor]);
+    }, [editor, selectImageAt]);
 
     /**
      * メニューの開閉状態変更時のハンドラ
