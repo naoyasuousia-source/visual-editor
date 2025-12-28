@@ -43,6 +43,14 @@ interface AppState {
     shouldFocusJumpInput: boolean;
     triggerJumpInputFocus: () => void;
     resetJumpInputFocus: () => void;
+
+    // AI Sync
+    isAiSyncEnabled: boolean;
+    isEditorLocked: boolean;
+    lastAiSyncTime: number | null;
+    setAiSyncEnabled: (enabled: boolean) => void;
+    setEditorLocked: (locked: boolean) => void;
+    setLastAiSyncTime: (time: number) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -103,4 +111,12 @@ export const useAppStore = create<AppState>((set) => ({
     shouldFocusJumpInput: false,
     triggerJumpInputFocus: () => set({ shouldFocusJumpInput: true }),
     resetJumpInputFocus: () => set({ shouldFocusJumpInput: false }),
+
+    // AI Sync
+    isAiSyncEnabled: false,
+    isEditorLocked: false,
+    lastAiSyncTime: null,
+    setAiSyncEnabled: (enabled) => set({ isAiSyncEnabled: enabled }),
+    setEditorLocked: (locked) => set({ isEditorLocked: locked }),
+    setLastAiSyncTime: (time) => set({ lastAiSyncTime: time }),
 }));
