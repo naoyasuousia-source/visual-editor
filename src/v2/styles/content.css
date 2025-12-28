@@ -5,6 +5,25 @@
   --tab-width: 0px;
 }
 
+/* 出力HTML用の基盤スタイル */
+body {
+  background-color: #525659;
+  margin: 0;
+  padding: 48px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+#pages-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
 /* Tiptap ProseMirror Container - v1の#pages-containerと同じレイアウト */
 .ProseMirror {
   display: flex;
@@ -385,6 +404,8 @@ body.hide-para-numbers .page-inner [data-para]::before {
     overflow: visible;
     height: auto;
     width: 100%;
+    display: block;
+    padding: 0;
   }
 
 

@@ -61,7 +61,21 @@ export function buildFullHTML(
     // 5. bodyクラスを設定
     const bodyClass = isWordMode ? ' class="mode-word"' : '';
 
-    // 6. 完全なHTML文書を構築
+    // 6. 出力用HTMLのクリーンアップ
+    let cleanedHtml = htmlContent;
+
+    // contenteditable="true" を削除
+    cleanedHtml = cleanedHtml.replace(/\scontenteditable="true"/g, '');
+
+    // 段落(p)と見出し(h1-h6)から data-page 属性を削除
+    cleanedHtml = cleanedHtml.replace(/(<(?:p|h1|h2|h3|h4|h5|h6)[^>]*)(\sdata-page="[^"]*")([^>]*>)/g, '$1$3');
+
+    // imgタグから data-caption と data-tag 属性を削除
+    // ※複数の属性を確実に削除するため、個別に置換
+    cleanedHtml = cleanedHtml.replace(/(<img[^>]*)(\sdata-caption="[^"]*")([^>]*>)/g, '$1$3');
+    cleanedHtml = cleanedHtml.replace(/(<img[^>]*)(\sdata-tag="[^"]*")([^>]*>)/g, '$1$3');
+
+    // 7. 完全なHTML文書を構築
     return `<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -76,7 +90,7 @@ ${contentCss}
 <body${bodyClass}>
 ${aiMetaGuide}
 <div id="pages-container">
-${htmlContent}
+${cleanedHtml}
 </div>
 ${aiImageIndex}
 </body>
