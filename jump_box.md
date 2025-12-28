@@ -41,24 +41,23 @@ v2のジャンプウィジェットはv1と異なる構造になっていた。
 - v2: 横並び構造（左:ラベル2行、右:input）
 
 **方針:**
-v1のHTML構造とCSSを参考に、v2を縦2段構造に修正
+v1のHTML構造を参考に、v2を縦2段構造に修正。
+全スタイルはTailwindクラスで記述（style属性、CSS追記は禁止）。
 
 **変更内容:**
-1. `src/v2/components/features/Toolbar.tsx` (182-204行)
-   - `flex items-center` → `flex flex-col` に変更（横並び→縦並び）
-   - ラベルをspan2行からlabel要素1行に変更
-   - inputにid属性追加、labelのfor属性でリンク
-   - フォントサイズをv1準拠に調整（ラベル7pt、入力11pt）
-   - 幅を220px固定に変更
-
-2. `src/v2/styles/index.css`
-   - プレースホルダースタイルを追加（7pt、#999）
+`src/v2/components/features/Toolbar.tsx` (182-202行)
+- `flex items-center` → `flex flex-col` に変更（横並び→縦並び）
+- ラベルをspan2行からlabel要素1行に変更
+- inputにid属性追加、labelのhtmlFor属性でリンク
+- フォントサイズをTailwind任意値で設定（ラベル`text-[7pt]`、入力`text-[11pt]`）
+- プレースホルダースタイルをTailwindの`placeholder:`修飾子で設定
+- 幅を220px固定に変更
 
 ## 3. 分析中に気づいた重要ポイント
 - v1のラベルには`cursor: text`が設定されており、ラベルをクリックするとinputにフォーカスが移る
-- v1では`for`属性でlabelとinputを関連付けている
-- プレースホルダーのフォントサイズはCSSの::placeholder擬似要素で設定する必要がある
-- Tailwindのインラインスタイルでは::placeholderを直接設定できないため、CSSファイルで対応
+- ReactではhtmlFor属性でlabelとinputを関連付ける
+- プレースホルダーのスタイルはTailwindの`placeholder:`修飾子（例：`placeholder:text-[7pt]`）で設定可能
+- **ルール:** style属性とindex.cssへの追記は禁止。全てコンポーネント内のTailwindクラスで対応
 
 ## 4. 解決済み要件とその解決方法
 

@@ -183,16 +183,14 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <div className="flex flex-col justify-center items-start ml-2 bg-white border border-gray-300 rounded px-1.5 h-[36px] w-[220px] box-border">
                 <label
                     htmlFor={isWordMode ? 'toolbar-jump-input-word' : 'toolbar-jump-input'}
-                    className="text-gray-400 cursor-text leading-tight"
-                    style={{ fontSize: '7pt', letterSpacing: '-0.5px' }}
+                    className="text-gray-400 cursor-text leading-tight text-[7pt] tracking-tight"
                 >
                     ジャンプ機能　[ ctrl+J ]
                 </label>
                 <input
                     type="text"
                     id={isWordMode ? 'toolbar-jump-input-word' : 'toolbar-jump-input'}
-                    className="w-full bg-transparent border-none outline-none text-black leading-none"
-                    style={{ fontSize: '11pt', letterSpacing: '-0.5px', padding: 0 }}
+                    className="w-full bg-transparent border-none outline-none text-black leading-none text-[11pt] tracking-tight p-0 placeholder:text-gray-400 placeholder:text-[7pt] placeholder:opacity-100"
                     placeholder={isWordMode ? "(例：15)…へジャンプ" : "(例：1-1)…へジャンプ"}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {

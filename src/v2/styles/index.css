@@ -2,10 +2,3 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Jump Widget - v1準拠のプレースホルダースタイル */
-#toolbar-jump-input::placeholder,
-#toolbar-jump-input-word::placeholder {
-    color: #999;
-    font-size: 7pt;
-    opacity: 1;
-}
