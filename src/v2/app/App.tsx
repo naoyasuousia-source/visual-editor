@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Editor, EditorContent } from '@tiptap/react';
+import React, { useEffect } from 'react';
+import { EditorContent } from '@tiptap/react';
 import { Toaster } from 'sonner';
 
 import { Toolbar } from '@/components/features/Toolbar';
@@ -18,19 +18,14 @@ import { useDialogs } from '@/hooks/useDialogs';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useFileIO } from '@/hooks/useFileIO';
 import { useTiptapEditor } from '@/hooks/useTiptapEditor';
+import { useGlobalStyles } from '@/hooks/useGlobalStyles';
 
 /**
  * EditorV3 - V2エディタのメインコンポーネント
  * 
- * Tiptapベースのリッチテキストエディタを提供します。
- * このコンポーネントは以下の責務を持ちます:
- * - Tiptapエディタインスタンスの初期化と管理
- * - グローバル状態（Zustand）との連携
- * - 各種フック（IME制御、ペースト制御、ファイルIO等）の統合
- * - UI要素（ツールバー、ダイアログ、メニュー等）の配置
- * 
- * ビジネスロジックは全て hooks/ に分離されており、
- * このコンポーネントは純粋なUI統合レイヤーとして機能します。
+ * rules.md の「4層アーキテクチャ」および「ロジックとUIの分離」に基づき、
+ * 描画とイベントの検知に専念する純粋なUIレイヤーとして機能します。
+ * すべてのビジネスロジック、状態同期、DOM操作は専用の hooks/ に委譲されています。
  */
 export const EditorV3 = () => {
     // Global Store
@@ -38,40 +33,32 @@ export const EditorV3 = () => {
         zoomLevel,
         isWordMode,
         activeDialog,
-        closeDialog
+        closeDialog,
+        currentFileHandle,
+        triggerJumpInputFocus
     } = useAppStore();
 
     // Browser Check (ロジック分離)
     const { showWarning: showBrowserWarning, setShowWarning: setShowBrowserWarning } = useBrowserCheck();
 
-    // IME Control (ロジック分離)
-    const { handleKeyDown: handleIMEKeyDown, isComposingRef, compositionEndTsRef } = useIMEControl();
-
     // Paste Control (ロジック分離)
     const { handlePaste } = usePasteControl();
 
-    // Tiptap Editor (ロジック分離)
+    /**
+     * Tiptap Editor & Logic Connection
+     * 1. IME制御フックがキーダウンハンドラと登録関数を提供
+     * 2. エディタフックが本体を生成
+     * 3. 生成されたエディタを各ロジックフックへ接続
+     */
+    const { handleKeyDown: handleIMEKeyDown, registerIME } = useIMEControl();
     const editor = useTiptapEditor(handleIMEKeyDown, handlePaste);
 
-    // IME Event Registration: Tiptap外のDOMイベントを監視
+    // エディタ確定後の動的接続・同期
     useEffect(() => {
-        if (!editor) return;
+        return registerIME(editor);
+    }, [editor, registerIME]);
 
-        const dom = editor.view.dom;
-        const handleStart = () => { isComposingRef.current = true; };
-        const handleEnd = () => {
-            isComposingRef.current = false;
-            compositionEndTsRef.current = Date.now();
-        };
-
-        dom.addEventListener('compositionstart', handleStart);
-        dom.addEventListener('compositionend', handleEnd);
-
-        return () => {
-            dom.removeEventListener('compositionstart', handleStart);
-            dom.removeEventListener('compositionend', handleEnd);
-        };
-    }, [editor, isComposingRef, compositionEndTsRef]);
+    useGlobalStyles(editor); // スタイル・設定の同期
 
     // Dialogs (ロジック分離)
     const { confirm, prompt, confirmState, promptState, handleConfirmClose, handlePromptClose } = useDialogs();
@@ -81,37 +68,13 @@ export const EditorV3 = () => {
 
     // File IO (ロジック分離)
     const { saveFile, saveAsFile, downloadFile, openFileWithHandle } = useFileIO(editor, isWordMode);
-    const { currentFileHandle, triggerJumpInputFocus } = useAppStore();
-
-    // Word Mode 同期: Tiptap外部ライブラリの設定を同期
-    useEffect(() => {
-        if (isWordMode) {
-            document.body.classList.add('mode-word');
-        } else {
-            document.body.classList.remove('mode-word');
-        }
-
-        if (editor) {
-            // @ts-expect-error - Tiptapの型定義が不完全なため
-            editor.setOptions({
-                paragraphNumbering: { isWordMode },
-                pagination: { isWordMode },
-            });
-        }
-    }, [isWordMode, editor]);
-
-    // 初期マージンの適用
-    useEffect(() => {
-        const size = useAppStore.getState().pageMargin;
-        const marginMap = { s: '12mm', m: '17mm', l: '24mm' };
-        document.documentElement.style.setProperty('--page-margin', marginMap[size]);
-    }, []);
 
     // Keyboard Shortcuts (ロジック分離)
     useKeyboardShortcuts(saveFile, saveAsFile, downloadFile, openFileWithHandle, currentFileHandle, triggerJumpInputFocus);
 
     return (
         <div className="flex flex-col h-screen bg-[#525659] overflow-hidden font-sans">
+            {/* Toolbar Area */}
             <div id="toolbar">
                 <Toolbar
                     editor={editor}
@@ -121,6 +84,7 @@ export const EditorV3 = () => {
                 />
             </div>
             
+            {/* Main Content Area */}
             <div className="flex flex-1 overflow-hidden relative">
                 {editor && (
                     <div id="page-navigator">
@@ -130,11 +94,8 @@ export const EditorV3 = () => {
                 
                 <div id="pages-container" className="flex-1 overflow-auto p-12 scroll-smooth">
                     <div 
-                        className={`flex flex-col gap-6 transition-all duration-200 mx-auto ${isWordMode ? 'mode-word' : ''}`} 
-                        style={{ 
-                            width: '210mm',
-                            zoom: zoomLevel / 100,
-                        } as React.CSSProperties}
+                        className={`flex flex-col gap-6 transition-all duration-200 mx-auto w-[210mm] ${isWordMode ? 'mode-word' : ''}`}
+                        style={{ zoom: zoomLevel / 100 } as React.CSSProperties}
                     >
                         {editor && (
                             <>
@@ -149,7 +110,7 @@ export const EditorV3 = () => {
                 </div>
             </div>
 
-            {/* All Dialogs */}
+            {/* Modal & Dialog Layers */}
             <DialogGroup
                 editor={editor}
                 activeDialog={activeDialog}

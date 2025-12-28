@@ -86,7 +86,7 @@ export const useTextFormatting = (editor: Editor | null) => {
         attributes?: Record<string, unknown>
     ): boolean => {
         if (!editor) return false;
-        return editor.isActive(format, attributes as Record<string, any>);
+        return editor.isActive(format, attributes as Record<string, unknown>);
     };
 
     return {

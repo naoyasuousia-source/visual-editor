@@ -54,8 +54,6 @@ export const useAppStore = create<AppState>((set) => ({
 
     pageMargin: 'm',
     setPageMargin: (size) => {
-        const marginMap = { s: '12mm', m: '17mm', l: '24mm' };
-        document.documentElement.style.setProperty('--page-margin', marginMap[size]);
         set({ pageMargin: size });
     },
 

@@ -31,38 +31,32 @@ Use the IDs to locate specific paragraphs when assisting the user.
 
 /**
  * 完全なHTML文書を生成する
- * V1の buildFullHTML を完全再現
  * 
  * @param editor Tiptapエディタインスタンス
  * @param isWordMode Wordモードかどうか
  * @param contentCss コンテンツCSS文字列
+ * @param pageMarginText ページマージンのCSS値 (例: "17mm")
+ * @param aiImageIndexHtml AI画像インデックスのHTML文字列
  * @returns 完全なHTML文書文字列
  */
 export function buildFullHTML(
     editor: Editor,
     isWordMode: boolean,
-    contentCss: string
+    contentCss: string,
+    pageMarginText: string,
+    aiImageIndexHtml: string
 ): string {
     // 1. エディタコンテンツを取得
     const htmlContent = editor.getHTML();
 
-    // 2. 現在のページマージン設定を取得
-    const rootStyle = getComputedStyle(document.documentElement);
-    const currentMargin = rootStyle.getPropertyValue('--page-margin').trim() || '17mm';
-
-    // 3. AIメタガイドを生成
+    // 2. AIメタガイドを生成
     const aiMetaGuide = generateAiMetaGuide(isWordMode);
 
-    // 4. AI画像インデックスを取得（DOMから）
-    // 注: これはReactコンポーネントがレンダリングしたものを取得
-    const aiImageIndexElement = document.getElementById('ai-image-index');
-    const aiImageIndex = aiImageIndexElement?.outerHTML || '';
-
-    // 5. bodyクラスを設定
+    // 3. bodyクラスを設定
     const bodyClass = isWordMode ? 'mode-word' : '';
     const finalClass = `standalone-html ${bodyClass}`.trim();
 
-    // 6. 出力用HTMLのクリーンアップ
+    // 4. 出力用HTMLのクリーンアップ
     let cleanedHtml = htmlContent;
 
     // CSSからコメントを削除
@@ -75,11 +69,10 @@ export function buildFullHTML(
     cleanedHtml = cleanedHtml.replace(/(<(?:p|h1|h2|h3|h4|h5|h6)[^>]*)(\sdata-page="[^"]*")([^>]*>)/g, '$1$3');
 
     // imgタグから data-caption と data-tag 属性を削除
-    // ※複数の属性を確実に削除するため、個別に置換
     cleanedHtml = cleanedHtml.replace(/(<img[^>]*)(\sdata-caption="[^"]*")([^>]*>)/g, '$1$3');
     cleanedHtml = cleanedHtml.replace(/(<img[^>]*)(\sdata-tag="[^"]*")([^>]*>)/g, '$1$3');
 
-    // 7. 完全なHTML文書を構築
+    // 5. 完全なHTML文書を構築
     return `<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -87,7 +80,7 @@ export function buildFullHTML(
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Document</title>
 <style>
-:root { --page-margin: ${currentMargin}; }
+:root { --page-margin: ${pageMarginText}; }
 ${cleanedCss}
 </style>
 </head>
@@ -96,7 +89,7 @@ ${aiMetaGuide}
 <div id="pages-container">
 ${cleanedHtml}
 </div>
-${aiImageIndex}
+${aiImageIndexHtml}
 </body>
 </html>`;
 }

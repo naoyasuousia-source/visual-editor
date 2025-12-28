@@ -5,53 +5,54 @@ import { buildFullHTML } from '@/utils/aiMetadata';
 import { parseAndSetContent, importDocxToEditor } from '@/utils/io';
 import contentCssText from '@/styles/content.css?raw';
 import { useAppStore } from '@/store/useAppStore';
+import * as fileService from '@/services/fileService';
 
 /**
  * ファイル入出力を管理するカスタムフック
- * V1のio.ts機能をReactフック化
  * 
- * 【重要】すべてのファイル操作はこのフックを経由する
+ * Tiptapエディタと外部ファイル（HTML/Docx）のやり取りを橋渡しします。
+ * 実際のファイルシステム操作は @/services/fileService に委譲します。
+ * 
+ * @param editor Tiptapエディタインスタンス
+ * @param isWordMode 現在のWordモード状態
  */
 export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
     const [isLoading, setIsLoading] = useState(false);
     
-    // グローバルストアからファイルハンドルを取得（共有状態）
+    // グローバルストアからファイルハンドルを取得・更新
     const { currentFileHandle, setCurrentFileHandle } = useAppStore();
 
     /**
-     * HTMLファイルを開く（File System Access API使用）
+     * HTMLファイルを開く
+     * @returns 成功した場合は true
      */
     const openFileWithHandle = async (): Promise<boolean> => {
         if (!editor) return false;
-        
-        if (!window.showOpenFilePicker) {
-            // フォールバック: input要素を使用
-            return false;
-        }
 
         try {
             setIsLoading(true);
-            const [handle] = await window.showOpenFilePicker({
-                types: [{
-                    description: 'HTML Files',
-                    accept: { 'text/html': ['.html', '.htm'] }
-                }],
-                multiple: false
-            });
-
-            const file = await handle.getFile();
-            const text = await file.text();
+            const result = await fileService.openHtmlFile();
             
-            const detectedWordMode = parseAndSetContent(editor, text, isWordMode);
+            if (!result) return false; // キャンセル
+
+            const { handle, content } = result;
+            const { isWordModeDetected, pageMargin: detectedMargin } = parseAndSetContent(editor, content);
+            
+            // 検出された設定をストアに反映
+            if (detectedMargin) {
+                useAppStore.getState().setPageMargin(detectedMargin);
+            }
+            if (isWordModeDetected !== isWordMode) {
+                useAppStore.getState().setWordMode(isWordModeDetected);
+            }
+
             setCurrentFileHandle(handle);
             
             toast.success('ファイルを開きました');
             return true;
         } catch (err) {
-            if (err instanceof Error && err.name !== 'AbortError') {
-                console.error('File open error:', err);
-                toast.error('ファイルを開けませんでした');
-            }
+            console.error('File open error:', err);
+            toast.error(err instanceof Error ? err.message : 'ファイルを開けませんでした');
             return false;
         } finally {
             setIsLoading(false);
@@ -59,46 +60,46 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
     };
 
     /**
-     * HTMLファイルを保存（名前を付けて保存）
+     * エディタの状態から完全なHTML文字列を構築する内部用ヘルパー
+     */
+    const getFullHTML = (): string => {
+        if (!editor) return '';
+        
+        const { pageMargin } = useAppStore.getState();
+        const marginMap = { s: '12mm', m: '17mm', l: '24mm' };
+        const pageMarginText = marginMap[pageMargin];
+        
+        // AI画像インデックスはDOMから直接取得（エクスポート用）
+        const aiImageIndexHtml = document.getElementById('ai-image-index')?.outerHTML || '';
+        
+        return buildFullHTML(editor, isWordMode, contentCssText, pageMarginText, aiImageIndexHtml);
+    };
+
+    /**
+     * 名前を付けて保存
      */
     const saveAsFile = async (): Promise<void> => {
         if (!editor) return;
 
-        if (!window.showSaveFilePicker) {
-            // フォールバック: ダウンロード
-            await downloadFile();
-            return;
-        }
-
         try {
             setIsLoading(true);
-            const handle = await window.showSaveFilePicker({
-                types: [{
-                    description: 'HTML Files',
-                    accept: { 'text/html': ['.html', '.htm'] }
-                }],
-                suggestedName: 'document.html'
-            });
+            const html = getFullHTML();
+            const handle = await fileService.saveHtmlFileAs(html);
 
-            const writable = await handle.createWritable();
-            const html = buildFullHTML(editor, isWordMode, contentCssText);
-            await writable.write(html);
-            await writable.close();
-
-            setCurrentFileHandle(handle);
-            toast.success('保存しました');
-        } catch (err) {
-            if (err instanceof Error && err.name !== 'AbortError') {
-                console.error('Save error:', err);
-                toast.error('保存に失敗しました');
+            if (handle) {
+                setCurrentFileHandle(handle);
+                toast.success('保存しました');
             }
+        } catch (err) {
+            console.error('Save error:', err);
+            toast.error(err instanceof Error ? err.message : '保存に失敗しました');
         } finally {
             setIsLoading(false);
         }
     };
 
     /**
-     * 現在のファイルに上書き保存
+     * 上書き保存
      */
     const saveFile = async (): Promise<void> => {
         if (!editor) return;
@@ -110,11 +111,8 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
 
         try {
             setIsLoading(true);
-            const writable = await currentFileHandle.createWritable();
-            const html = buildFullHTML(editor, isWordMode, contentCssText);
-            await writable.write(html);
-            await writable.close();
-
+            const html = getFullHTML();
+            await fileService.saveHtmlFile(currentFileHandle, html);
             toast.success('上書き保存しました');
         } catch (err) {
             console.error('Overwrite error:', err);
@@ -125,14 +123,14 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
     };
 
     /**
-     * ファイルをダウンロード（フォールバック）
+     * ファイルをダウンロード（Legacy/Fallback 用）
      */
     const downloadFile = async (): Promise<void> => {
         if (!editor) return;
 
         try {
             setIsLoading(true);
-            const html = buildFullHTML(editor, isWordMode, contentCssText);
+            const html = getFullHTML();
             const blob = new Blob([html], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -144,13 +142,17 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
             URL.revokeObjectURL(url);
 
             toast.success('ダウンロードしました');
+        } catch (err) {
+            console.error('Download error:', err);
+            toast.error('ダウンロードに失敗しました');
         } finally {
             setIsLoading(false);
         }
     };
 
     /**
-     * Docxファイルをインポート
+     * Wordファイルをインポート
+     * @param file インポートするWordファイル
      */
     const importDocx = async (file: File): Promise<void> => {
         if (!editor) return;

@@ -10,7 +10,7 @@ interface WordBlockMenuProps {
 export const WordBlockMenu: React.FC<WordBlockMenuProps> = ({ editor }) => {
     if (!editor) return null;
 
-    const isActive = (type: string, attrs?: any) => editor.isActive(type, attrs);
+    const isActive = (type: string, attrs?: Record<string, unknown>) => editor.isActive(type, attrs);
 
     const blocks = [
         { label: '本文', value: 'p', action: () => editor.chain().focus().setParagraph().run() },

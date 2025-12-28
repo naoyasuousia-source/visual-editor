@@ -197,10 +197,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                     onClick={toggleWordMode}
                     className={`px-3 py-1 rounded text-xs transition-all h-[36px] flex items-center gap-1 shadow-sm font-black tracking-wider ${
                         isWordMode 
-                        ? 'bg-gradient-to-br from-[#f39c12] to-[#d35400] text-white hover:brightness-110 !border-none' // v1 Sunset Orange
+                        ? 'bg-gradient-to-br from-[#f39c12] to-[#d35400] text-white hover:brightness-110 !border-none [text-shadow:0_1px_2px_rgba(0,0,0,0.3)]' // v1 Sunset Orange
                         : 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] border border-transparent' // Standard Mode active -> Show "Switch to Word" (Blue)
                     }`}
-                    style={isWordMode ? { textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' } : {}}
                 >
                     <FileType className="w-3.5 h-3.5" />
                     {isWordMode ? '標準モードに切替' : 'Word互換モードに切替'}

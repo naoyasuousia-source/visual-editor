@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import EditorV3 from './App';
+import EditorV3 from '@/app/App';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import '@/styles/index.css';
 import '@/styles/content.css';

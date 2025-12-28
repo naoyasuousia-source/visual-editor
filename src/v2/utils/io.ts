@@ -22,20 +22,34 @@ export function readTextFromFile(file: File): Promise<string> {
 }
 
 /**
- * Parses an HTML string and sets the editor content.
- * Also extracts page margins if present.
+ * 解析結果の型定義
  */
-export function parseAndSetContent(editor: Editor, html: string, isWordMode: boolean = false): boolean {
+export interface ParseResult {
+    isWordModeDetected: boolean;
+    pageMargin?: 's' | 'm' | 'l';
+}
+
+/**
+ * HTML文字列を解析し、エディタにコンテンツを設定します。
+ * 解析された設定値（モード、マージン）を返します。
+ */
+export function parseAndSetContent(editor: Editor, html: string): ParseResult {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
 
-    // Check for Word Mode class in body
+    // Word Mode の検出
     const isWordModeDetected = doc.body.classList.contains('mode-word');
 
-    // Check for root margin variable
+    // ページマージンの検出
+    let pageMargin: 's' | 'm' | 'l' | undefined;
     const rootStyle = doc.documentElement.style.getPropertyValue('--page-margin');
     if (rootStyle) {
-        document.documentElement.style.setProperty('--page-margin', rootStyle);
+        const reverseMarginMap: Record<string, 's' | 'm' | 'l'> = {
+            '12mm': 's',
+            '17mm': 'm',
+            '24mm': 'l'
+        };
+        pageMargin = reverseMarginMap[rootStyle.trim()];
     }
 
     const container = doc.getElementById('pages-container');
@@ -56,7 +70,7 @@ export function parseAndSetContent(editor: Editor, html: string, isWordMode: boo
 
     if (content) {
         editor.commands.setContent(content);
-        return isWordModeDetected;
+        return { isWordModeDetected, pageMargin };
     } else {
         throw new Error('有効なページデータが見つかりませんでした。');
     }
@@ -82,7 +96,7 @@ export async function importDocxToEditor(editor: Editor, file: File): Promise<vo
         const options = {
             styleMap: ["u => u"],
             // mammothの型定義が不完全なため、画像スキップのために必要な型アサーション
-            convertImage: (mammoth.images as unknown as { inline: (fn: () => Record<string, never>) => unknown }).inline(() => ({}))
+            convertImage: (mammoth.images as unknown as { inline: (fn: () => Record<string, never>) => unknown }).inline(() => ({})) as never
         };
 
         const result = await mammoth.convertToHtml({ arrayBuffer }, options);
