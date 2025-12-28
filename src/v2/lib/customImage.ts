@@ -1,23 +1,56 @@
 import { Image as TiptapImage } from '@tiptap/extension-image';
 import { mergeAttributes } from '@tiptap/core';
-import { NodeSelection } from '@tiptap/pm/state';
+import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
 
 /**
- * カスタム画像拡張
+ * カスタム画像拡張 (CustomImage)
  * 
- * 【重要な変更点】
- * - inline: true - 段落（p）内に画像を配置可能にする
- * - atom: true - 画像をアトムノードとして扱い、内部にキャレットを置かない
- * - selectable: true - 画像を選択可能にする（コンテキストメニュー操作のため必須）
- * - Backspaceで画像段落ごと削除
- * - 画像クリック時はNodeSelectionで画像を選択（右クリックメニューが動作するように）
+ * ============================================================================
+ * 【画像キャレットロジック - 概要】
+ * ============================================================================
+ * 
+ * このファイルは画像に関するすべてのキャレット制御ロジックの中心です。
+ * 
+ * ■ キャレット配置ルール:
+ *   1. 画像クリック → 画像の右辺（直後）にテキストキャレットを挿入
+ *   2. 画像左辺にはキャレット挿入不可 → 自動で右辺に移動
+ * 
+ * ■ キーボード操作:
+ *   - Enter (右辺キャレット) → 新段落を作成
+ *   - Backspace (右辺キャレット) → 画像段落ごと削除
+ * 
+ * ■ 実装箇所:
+ *   - addKeyboardShortcuts(): Enter/Backspace処理
+ *   - addProseMirrorPlugins(): 左辺キャレット禁止プラグイン (imageCaretPlugin)
+ *   - addNodeView(): 画像クリック → 右辺キャレット配置
+ * 
+ * ============================================================================
+ * 【関連ファイル】
+ * ============================================================================
+ * 
+ * - src/v2/hooks/useImageActions.ts
+ *     画像操作（サイズ変更、枠線トグル、削除）のロジック
+ *     キャレットの直前のノード ($from.nodeBefore) から画像を特定
+ * 
+ * - src/v2/styles/content.css
+ *     .image-container: 画像+タイトルのコンテナスタイル
+ *     .image-title: タイトル表示スタイル（編集不可）
+ * 
+ * ============================================================================
+ * 【画像タイトル】
+ * ============================================================================
+ * 
+ * - タイトルがある場合は画像下に中央揃えで表示
+ * - タイトルは編集・選択・キャレット挿入不可 (contenteditable=false)
+ * 
+ * ============================================================================
  */
 export const CustomImage = TiptapImage.extend({
     inline: true,
     group: 'inline',
     atom: true,
-    selectable: true, // コンテキストメニューが動作するために必須
-    draggable: true,
+    selectable: false, // NodeSelectionを無効化し、テキストキャレットのみ使用
+    draggable: false,
 
     addAttributes() {
         return {
@@ -77,43 +110,46 @@ export const CustomImage = TiptapImage.extend({
 
     addKeyboardShortcuts() {
         return {
+            // Backspace: 画像の直後にキャレットがある場合、画像段落ごと削除
             Backspace: () => {
                 const { state, view } = this.editor;
                 const { selection } = state;
                 const { $from, empty } = selection;
                 
-                // NodeSelectionで画像が選択されている場合
-                if (selection instanceof NodeSelection && selection.node?.type.name === 'image') {
-                    const parentPos = $from.before($from.depth);
+                // キャレットが空の位置にあり、直前に画像がある場合
+                if (empty && $from.nodeBefore?.type.name === 'image') {
                     const parentNode = $from.node($from.depth);
                     
+                    // 段落が画像のみを含む場合、段落ごと削除
                     if (parentNode.type.name === 'paragraph' && parentNode.content.size === 1) {
+                        const parentPos = $from.before($from.depth);
                         const tr = state.tr.delete(parentPos, parentPos + parentNode.nodeSize);
                         view.dispatch(tr);
                         return true;
                     }
                     
-                    return this.editor.commands.deleteSelection();
+                    // 画像のみ削除
+                    const imagePos = $from.pos - $from.nodeBefore.nodeSize;
+                    const tr = state.tr.delete(imagePos, $from.pos);
+                    view.dispatch(tr);
+                    return true;
                 }
                 
+                return false;
+            },
+            
+            // Enter: 画像の直後にキャレットがある場合、新段落を作成
+            Enter: () => {
+                const { state, view } = this.editor;
+                const { selection } = state;
+                const { $from, empty } = selection;
+                
                 // キャレットが空の位置にあり、直前に画像がある場合
-                if (empty) {
-                    const nodeBefore = $from.nodeBefore;
-                    if (nodeBefore?.type.name === 'image') {
-                        const parentPos = $from.before($from.depth);
-                        const parentNode = $from.node($from.depth);
-                        
-                        if (parentNode.type.name === 'paragraph' && parentNode.content.size === 1) {
-                            const tr = state.tr.delete(parentPos, parentPos + parentNode.nodeSize);
-                            view.dispatch(tr);
-                            return true;
-                        }
-                        
-                        const pos = $from.pos - nodeBefore.nodeSize;
-                        const tr = state.tr.delete(pos, $from.pos);
-                        view.dispatch(tr);
-                        return true;
-                    }
+                if (empty && $from.nodeBefore?.type.name === 'image') {
+                    // 段落を分割して新段落を作成
+                    const tr = state.tr.split($from.pos);
+                    view.dispatch(tr);
+                    return true;
                 }
                 
                 return false;
@@ -121,49 +157,116 @@ export const CustomImage = TiptapImage.extend({
         };
     },
 
-    // カスタムNodeView: 画像クリック時に画像を選択（右クリックメニュー対応）
+    // ProseMirrorプラグイン: キャレット位置を監視し、画像左辺にキャレットがあれば右辺に移動
+    addProseMirrorPlugins() {
+        const editor = this.editor;
+        
+        return [
+            new Plugin({
+                key: new PluginKey('imageCaretPlugin'),
+                
+                appendTransaction: (transactions, oldState, newState) => {
+                    // 選択が変更されていない場合はスキップ
+                    const selectionChanged = transactions.some(tr => tr.selectionSet);
+                    if (!selectionChanged) return null;
+                    
+                    const { selection } = newState;
+                    if (!(selection instanceof TextSelection)) return null;
+                    
+                    const { $from, empty } = selection;
+                    if (!empty) return null;
+                    
+                    // 画像の直前（左辺）にキャレットがある場合
+                    const nodeAfter = $from.nodeAfter;
+                    if (nodeAfter?.type.name === 'image') {
+                        // 画像の直後（右辺）に移動
+                        const newPos = $from.pos + nodeAfter.nodeSize;
+                        const tr = newState.tr.setSelection(
+                            TextSelection.create(newState.doc, newPos)
+                        );
+                        return tr;
+                    }
+                    
+                    return null;
+                },
+            }),
+        ];
+    },
+
+    // カスタムNodeView: 画像クリック時にキャレットを画像右辺に配置
     addNodeView() {
         return ({ node, getPos, editor }) => {
-            const dom = document.createElement('img');
+            // コンテナ（inlineを維持するためspan）
+            const container = document.createElement('span');
+            container.classList.add('image-container');
+            container.setAttribute('contenteditable', 'false');
             
-            // 属性を設定
-            dom.src = node.attrs.src || '';
-            dom.alt = node.attrs.alt || '';
+            // 画像要素
+            const img = document.createElement('img');
+            img.src = node.attrs.src || '';
+            img.alt = node.attrs.alt || '';
             
             // クラスを設定
             if (node.attrs.size) {
-                dom.classList.add(`img-${node.attrs.size}`);
+                img.classList.add(`img-${node.attrs.size}`);
             }
             if (node.attrs.hasBorder) {
-                dom.classList.add('has-border');
+                img.classList.add('has-border');
             }
             
-            // データ属性を設定
-            if (node.attrs.title) dom.dataset.title = node.attrs.title;
-            if (node.attrs.titleSize) dom.dataset.titleSize = node.attrs.titleSize;
-            if (node.attrs.caption) dom.dataset.caption = node.attrs.caption;
-            if (node.attrs.tag) dom.dataset.tag = node.attrs.tag;
+            // データ属性を設定（画像要素に）
+            if (node.attrs.title) img.dataset.title = node.attrs.title;
+            if (node.attrs.titleSize) img.dataset.titleSize = node.attrs.titleSize;
+            if (node.attrs.caption) img.dataset.caption = node.attrs.caption;
+            if (node.attrs.tag) img.dataset.tag = node.attrs.tag;
             
-            // 左クリック: 画像をNodeSelectionで選択（これにより右クリックメニューが動作する）
-            dom.addEventListener('mousedown', (event) => {
+            container.appendChild(img);
+            
+            // タイトル要素（タイトルがある場合のみ表示）
+            let titleEl: HTMLSpanElement | null = null;
+            if (node.attrs.title) {
+                titleEl = document.createElement('span');
+                titleEl.classList.add('image-title');
+                if (node.attrs.titleSize === 'mini') {
+                    titleEl.classList.add('image-title-mini');
+                }
+                titleEl.textContent = node.attrs.title;
+                titleEl.setAttribute('contenteditable', 'false');
+                container.appendChild(titleEl);
+            }
+            
+            /**
+             * マウスダウンハンドラ: 画像クリック時にキャレットを画像右辺に配置
+             * - 左クリック: 画像の直後にテキストキャレットを配置
+             * - 右クリック: コンテキストメニュー用にスルー
+             */
+            const handleMouseDown = (event: MouseEvent) => {
                 // 右クリックはスルー（コンテキストメニュー用）
                 if (event.button === 2) return;
                 
                 event.preventDefault();
+                event.stopPropagation();
                 
                 const pos = getPos();
                 if (typeof pos === 'number') {
-                    // NodeSelectionで画像を選択
+                    // 画像の直後（右辺）にテキストキャレットを配置
+                    const imageEndPos = pos + node.nodeSize;
                     const tr = editor.state.tr.setSelection(
-                        NodeSelection.create(editor.state.doc, pos)
+                        TextSelection.create(editor.state.doc, imageEndPos)
                     );
                     editor.view.dispatch(tr);
                     editor.view.focus();
                 }
-            });
+            };
+            
+            img.addEventListener('mousedown', handleMouseDown);
+            // タイトルクリックでも画像右辺にキャレット
+            if (titleEl) {
+                titleEl.addEventListener('mousedown', handleMouseDown);
+            }
             
             return {
-                dom,
+                dom: container,
                 // 右クリックのみ通過させる
                 stopEvent: (event) => {
                     // contextmenu（右クリック）は通過
@@ -178,21 +281,42 @@ export const CustomImage = TiptapImage.extend({
                 update: (updatedNode) => {
                     if (updatedNode.type.name !== 'image') return false;
                     
-                    dom.src = updatedNode.attrs.src || '';
-                    dom.alt = updatedNode.attrs.alt || '';
+                    img.src = updatedNode.attrs.src || '';
+                    img.alt = updatedNode.attrs.alt || '';
                     
-                    dom.className = '';
-                    if (updatedNode.attrs.size) dom.classList.add(`img-${updatedNode.attrs.size}`);
-                    if (updatedNode.attrs.hasBorder) dom.classList.add('has-border');
+                    img.className = '';
+                    if (updatedNode.attrs.size) img.classList.add(`img-${updatedNode.attrs.size}`);
+                    if (updatedNode.attrs.hasBorder) img.classList.add('has-border');
                     
-                    if (updatedNode.attrs.title) dom.dataset.title = updatedNode.attrs.title;
-                    else delete dom.dataset.title;
-                    if (updatedNode.attrs.titleSize) dom.dataset.titleSize = updatedNode.attrs.titleSize;
-                    else delete dom.dataset.titleSize;
-                    if (updatedNode.attrs.caption) dom.dataset.caption = updatedNode.attrs.caption;
-                    else delete dom.dataset.caption;
-                    if (updatedNode.attrs.tag) dom.dataset.tag = updatedNode.attrs.tag;
-                    else delete dom.dataset.tag;
+                    if (updatedNode.attrs.title) img.dataset.title = updatedNode.attrs.title;
+                    else delete img.dataset.title;
+                    if (updatedNode.attrs.titleSize) img.dataset.titleSize = updatedNode.attrs.titleSize;
+                    else delete img.dataset.titleSize;
+                    if (updatedNode.attrs.caption) img.dataset.caption = updatedNode.attrs.caption;
+                    else delete img.dataset.caption;
+                    if (updatedNode.attrs.tag) img.dataset.tag = updatedNode.attrs.tag;
+                    else delete img.dataset.tag;
+                    
+                    // タイトル更新
+                    const existingTitle = container.querySelector('.image-title');
+                    if (updatedNode.attrs.title) {
+                        if (existingTitle) {
+                            existingTitle.textContent = updatedNode.attrs.title;
+                            existingTitle.classList.toggle('image-title-mini', updatedNode.attrs.titleSize === 'mini');
+                        } else {
+                            const newTitleEl = document.createElement('span');
+                            newTitleEl.classList.add('image-title');
+                            if (updatedNode.attrs.titleSize === 'mini') {
+                                newTitleEl.classList.add('image-title-mini');
+                            }
+                            newTitleEl.textContent = updatedNode.attrs.title;
+                            newTitleEl.setAttribute('contenteditable', 'false');
+                            newTitleEl.addEventListener('mousedown', handleMouseDown);
+                            container.appendChild(newTitleEl);
+                        }
+                    } else if (existingTitle) {
+                        existingTitle.remove();
+                    }
                     
                     return true;
                 },
@@ -204,3 +328,4 @@ export const CustomImage = TiptapImage.extend({
         return ['img', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes)];
     },
 });
+

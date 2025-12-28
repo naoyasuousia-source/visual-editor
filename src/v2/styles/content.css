@@ -126,18 +126,7 @@ body.hide-para-numbers .page-inner [data-para]::before {
   /* 強制中央 */
 }
 
-.page-inner .figure-inline {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  margin: 1em 0;
-}
-
-.page-inner .figure-inline img {
-  margin: 0;
-}
-
+/* 画像サイズクラス */
 .img-xs {
   width: 20%;
 }
@@ -158,20 +147,42 @@ body.hide-para-numbers .page-inner [data-para]::before {
   width: 85%;
 }
 
-/* .figure-title: Removed custom font/color styles to list block tag control style (e.g. h6) */
-.page-inner .figure-title {
-  display: inline;
-  /* blockからinlineへ変更（横並びや自然な配置のため） */
-  margin: 0;
+/* 画像コンテナ: 画像とタイトルをラップ（余計な行を削除） */
+.page-inner .image-container {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  line-height: 0;
+  font-size: 0;
+  vertical-align: top;
 }
 
-.page-inner .figure-inline .caret-slot {
-  font-size: 0;
-  line-height: 0;
+/* 画像タイトル: 画像下に中央揃え、編集・選択・キャレット挿入不可 */
+.page-inner .image-title {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-size: 11pt;
+  line-height: 1.4;
+  color: #333;
+  margin-top: 4px;
+  user-select: none;
+  pointer-events: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+/* 画像タイトル（miniサイズ）*/
+.page-inner .image-title-mini {
+  font-size: 9pt;
+  color: #666;
 }
 
 /* 画像の下に生じる余白（キャレット用の行）を完全に削除 */
-.page-inner p:has(> img:not(.ProseMirror-separator)) {
+/* 注: .image-container を含む段落にも適用 */
+.page-inner p:has(> img:not(.ProseMirror-separator)),
+.page-inner p:has(> .image-container) {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -181,7 +192,8 @@ body.hide-para-numbers .page-inner [data-para]::before {
 }
 
 /* 画像段落内の自動挿入されるbrを非表示にする */
-.page-inner p:has(> img:not(.ProseMirror-separator)) .ProseMirror-trailingBreak {
+.page-inner p:has(> img:not(.ProseMirror-separator)) .ProseMirror-trailingBreak,
+.page-inner p:has(> .image-container) .ProseMirror-trailingBreak {
   display: none;
 }
 
