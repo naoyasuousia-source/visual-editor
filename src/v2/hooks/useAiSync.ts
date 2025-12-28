@@ -5,12 +5,12 @@
 
 import { useEffect, useCallback, useRef } from 'react';
 import type { Editor } from '@tiptap/react';
-import { useAppStore } from '@/v2/store/useAppStore';
-import { useFileSystemWatcher } from '@/v2/hooks/useFileSystemWatcher';
-import { useCommandParser } from '@/v2/hooks/useCommandParser';
-import { useCommandExecutor } from '@/v2/hooks/useCommandExecutor';
-import { clearCommandArea } from '@/v2/utils/htmlCommentParser';
-import type { FileChangeEvent } from '@/v2/types/ai-sync.types';
+import { useAppStore } from '@/store/useAppStore';
+import { useFileSystemWatcher } from '@/hooks/useFileSystemWatcher';
+import { useCommandParser } from '@/hooks/useCommandParser';
+import { useCommandExecutor } from '@/hooks/useCommandExecutor';
+import { clearCommandArea } from '@/utils/htmlCommentParser';
+import type { FileChangeEvent } from '@/types/ai-sync.types';
 
 interface UseAiSyncReturn {
   /** AI同期を開始 */

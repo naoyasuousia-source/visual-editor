@@ -9,8 +9,8 @@ import type {
   Range,
   ParseResult,
   ParseError,
-} from '@/v2/types/ai-sync.types';
-import { isAllowedCommand, validateCommand } from '@/v2/utils/commandValidator';
+} from '@/types/ai-sync.types';
+import { isAllowedCommand, validateCommand } from '@/utils/commandValidator';
 
 /**
  * 位置指定文字列をパース（例: "3:10" → {paragraph: 3, offset: 10}）

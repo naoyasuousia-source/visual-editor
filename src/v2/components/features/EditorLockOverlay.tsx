@@ -3,7 +3,7 @@
  * AI編集実行中にエディタ全体を覆い、操作を無効化
  */
 
-import { useAppStore } from '@/v2/store/useAppStore';
+import { useAppStore } from '@/store/useAppStore';
 import { Loader2 } from 'lucide-react';
 
 /**

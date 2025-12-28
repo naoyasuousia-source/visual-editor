@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { FileChangeEvent } from '@/v2/types/ai-sync.types';
+import type { FileChangeEvent } from '@/types/ai-sync.types';
 
 interface UseFileSystemWatcherReturn {
   /** ファイルハンドル */

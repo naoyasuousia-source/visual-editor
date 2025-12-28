@@ -4,9 +4,9 @@
  */
 
 import { useCallback } from 'react';
-import { extractCommandArea, extractCommands } from '@/v2/utils/htmlCommentParser';
-import { parseCommands } from '@/v2/utils/commandParser';
-import type { ParseResult } from '@/v2/types/ai-sync.types';
+import { extractCommandArea, extractCommands } from '@/utils/htmlCommentParser';
+import { parseCommands } from '@/utils/commandParser';
+import type { ParseResult } from '@/types/ai-sync.types';
 
 interface UseCommandParserReturn {
   /** HTMLコンテンツからコマンドを解析 */

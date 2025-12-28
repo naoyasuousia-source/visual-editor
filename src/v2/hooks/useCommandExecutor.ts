@@ -11,7 +11,7 @@ import type {
   Range,
   InsertTextCommand,
   ReplaceTextCommand,
-} from '@/v2/types/ai-sync.types';
+} from '@/types/ai-sync.types';
 
 interface UseCommandExecutorReturn {
   /** コマンドを実行 */

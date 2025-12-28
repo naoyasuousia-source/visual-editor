@@ -4,10 +4,9 @@
  */
 
 import { useState } from 'react';
-import { useAppStore } from '@/v2/store/useAppStore';
-import { useAiSync } from '@/v2/hooks/useAiSync';
+import { useAppStore } from '@/store/useAppStore';
+import { useAiSync } from '@/hooks/useAiSync';
 import type { Editor } from '@tiptap/react';
-import { Button } from '@/v2/components/ui/button';
 import { PlayCircle, StopCircle, RotateCcw, Circle } from 'lucide-react';
 
 interface AiSyncPanelProps {
@@ -86,27 +85,24 @@ export function AiSyncPanel({ editor }: AiSyncPanelProps) {
 
       {/* トグルボタン */}
       {!aiSync.isWatching ? (
-        <Button
+        <button
           onClick={handleStart}
           disabled={isStarting}
-          size="sm"
-          className="gap-1.5"
+          className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="AI同期を開始"
         >
           <PlayCircle className="h-4 w-4" aria-hidden="true" />
           <span>AI同期を開始</span>
-        </Button>
+        </button>
       ) : (
-        <Button
+        <button
           onClick={handleStop}
-          variant="outline"
-          size="sm"
-          className="gap-1.5"
+          className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
           aria-label="AI同期を停止"
         >
           <StopCircle className="h-4 w-4" aria-hidden="true" />
           <span>AI同期を停止</span>
-        </Button>
+        </button>
       )}
 
       {/* 最終同期時刻 */}
@@ -116,16 +112,14 @@ export function AiSyncPanel({ editor }: AiSyncPanelProps) {
       </div>
 
       {/* 変更を破棄ボタン */}
-      <Button
+      <button
         onClick={handleDiscard}
-        variant="ghost"
-        size="sm"
-        className="gap-1.5 text-red-600 hover:text-red-700 hover:bg-red-50"
+        className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50"
         aria-label="変更を破棄してリロード"
       >
         <RotateCcw className="h-4 w-4" aria-hidden="true" />
         <span>変更を破棄</span>
-      </Button>
+      </button>
 
       {/* エラー表示 */}
       {aiSync.error && (
@@ -136,3 +130,4 @@ export function AiSyncPanel({ editor }: AiSyncPanelProps) {
     </div>
   );
 }
+

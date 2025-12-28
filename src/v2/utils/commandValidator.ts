@@ -8,7 +8,7 @@ import type {
   CommandType,
   Position,
   Range,
-} from '@/v2/types/ai-sync.types';
+} from '@/types/ai-sync.types';
 
 /**
  * 許可されたコマンドタイプのホワイトリスト
