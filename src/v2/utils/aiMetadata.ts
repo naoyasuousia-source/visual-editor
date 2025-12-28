@@ -59,7 +59,8 @@ export function buildFullHTML(
     const aiImageIndex = aiImageIndexElement?.outerHTML || '';
 
     // 5. bodyクラスを設定
-    const bodyClass = isWordMode ? ' class="mode-word"' : '';
+    const bodyClass = isWordMode ? 'mode-word' : '';
+    const finalClass = `standalone-html ${bodyClass}`.trim();
 
     // 6. 出力用HTMLのクリーンアップ
     let cleanedHtml = htmlContent;
@@ -87,7 +88,7 @@ export function buildFullHTML(
 ${contentCss}
 </style>
 </head>
-<body${bodyClass}>
+<body class="${finalClass}">
 ${aiMetaGuide}
 <div id="pages-container">
 ${cleanedHtml}

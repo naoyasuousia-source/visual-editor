@@ -33,8 +33,6 @@ export const createImageNodeView = ({ node, getPos, editor }: NodeViewRendererPr
             container.classList.add('title-mini');
         }
     }
-    if (node.attrs.caption) img.dataset.caption = node.attrs.caption;
-    if (node.attrs.tag) img.dataset.tag = node.attrs.tag;
     
     container.appendChild(img);
     
@@ -91,10 +89,6 @@ export const createImageNodeView = ({ node, getPos, editor }: NodeViewRendererPr
                 container.classList.remove('has-title', 'title-mini');
             }
             
-            if (updatedNode.attrs.caption) img.dataset.caption = updatedNode.attrs.caption;
-            else delete img.dataset.caption;
-            if (updatedNode.attrs.tag) img.dataset.tag = updatedNode.attrs.tag;
-            else delete img.dataset.tag;
             
             return true;
         },

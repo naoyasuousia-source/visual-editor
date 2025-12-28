@@ -56,17 +56,15 @@ export const CustomImage = TiptapImage.extend({
             caption: {
                 default: '',
                 parseHTML: element => element.getAttribute('data-caption'),
-                renderHTML: attributes => {
-                    if (!attributes.caption) return {};
-                    return { 'data-caption': attributes.caption };
+                renderHTML: () => {
+                    return {};
                 },
             },
             tag: {
                 default: '',
                 parseHTML: element => element.getAttribute('data-tag'),
-                renderHTML: attributes => {
-                    if (!attributes.tag) return {};
-                    return { 'data-tag': attributes.tag };
+                renderHTML: () => {
+                    return {};
                 },
             },
         };
