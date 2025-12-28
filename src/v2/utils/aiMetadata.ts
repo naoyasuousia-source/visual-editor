@@ -65,6 +65,9 @@ export function buildFullHTML(
     // 6. 出力用HTMLのクリーンアップ
     let cleanedHtml = htmlContent;
 
+    // CSSからコメントを削除
+    const cleanedCss = contentCss.replace(/\/\*[\s\S]*?\*\//g, '');
+
     // contenteditable="true" を削除
     cleanedHtml = cleanedHtml.replace(/\scontenteditable="true"/g, '');
 
@@ -85,7 +88,7 @@ export function buildFullHTML(
 <title>Document</title>
 <style>
 :root { --page-margin: ${currentMargin}; }
-${contentCss}
+${cleanedCss}
 </style>
 </head>
 <body class="${finalClass}">
