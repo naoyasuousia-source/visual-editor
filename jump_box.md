@@ -27,32 +27,30 @@
 ----------------------------------------
 
 ## 1. 未解決要件
-・ジャンプ用入力ボックスのスタイリングをv1と同じにする。
-・二段、全部同じフォントサイズ、キャレットは、ボックスの一番左のみに入るようにする。
-（現状は（例）の先頭にキャレットが挿入されてしまい、期待通りではない。）
-・v1のスタイリングコードを積極的に参考にすること。
+・ジャンプウィジェットのフォントサイズを1.3倍にする
+・フォントサイズ増加分、行間をつめる
+・入力ボックスの幅を0.7倍（220px → 154px）にする
 
 ## 2. 未解決要件に関するコード変更履歴
 
 ### 変更1: 2025-12-28
 **分析結果:**
-v2のジャンプウィジェットはv1と異なる構造になっていた。
-- v1: 縦2段構造（1段目:ラベル、2段目:input）
-- v2: 横並び構造（左:ラベル2行、右:input）
+現在のスタイル値を1.3倍、0.7倍に調整する必要あり。
+- ラベル: `text-[7pt]` → `text-[9.1pt]`
+- 入力: `text-[11pt]` → `text-[14.3pt]`
+- プレースホルダー: `placeholder:text-[7pt]` → `placeholder:text-[9.1pt]`
+- 幅: `w-[220px]` → `w-[154px]`
+- 行間: `leading-tight` → `leading-none`
 
 **方針:**
-v1のHTML構造を参考に、v2を縦2段構造に修正。
-全スタイルはTailwindクラスで記述（style属性、CSS追記は禁止）。
+Tailwind任意値を計算後の値に更新
 
 **変更内容:**
 `src/v2/components/features/Toolbar.tsx` (182-202行)
-- `flex items-center` → `flex flex-col` に変更（横並び→縦並び）
-- ラベルをspan2行からlabel要素1行に変更
-- inputにid属性追加、labelのhtmlFor属性でリンク
-- フォントサイズをTailwind任意値で設定（ラベル`text-[7pt]`、入力`text-[11pt]`）
-- プレースホルダースタイルをTailwindの`placeholder:`修飾子で設定
-- 幅を220px固定に変更
-
+- 幅: `w-[220px]` → `w-[154px]`
+- ラベル: `text-[7pt]` → `text-[9.1pt]`、`leading-tight` → `leading-none`
+- 入力: `text-[11pt]` → `text-[14.3pt]`
+- プレースホルダー: `placeholder:text-[7pt]` → `placeholder:text-[9.1pt]`
 ## 3. 分析中に気づいた重要ポイント
 - v1のラベルには`cursor: text`が設定されており、ラベルをクリックするとinputにフォーカスが移る
 - ReactではhtmlFor属性でlabelとinputを関連付ける
@@ -61,41 +59,31 @@ v1のHTML構造を参考に、v2を縦2段構造に修正。
 
 ## 4. 解決済み要件とその解決方法
 
+### 解決済み: ジャンプウィジェットのv1準拠スタイリング
+**元の要件:**
+・ジャンプ用入力ボックスのスタイリングをv1と同じにする
+・二段、全部同じフォントサイズ、キャレットはボックスの一番左のみに入るようにする
+・v1のスタイリングコードを積極的に参考にすること
+
+**解決方法:**
+`src/v2/components/features/Toolbar.tsx` (182-202行)
+- 横並び→縦2段構造に変更（`flex items-center` → `flex flex-col`）
+- ラベルをlabel要素に変更し、htmlForでinputと連携
+- フォントサイズ: ラベル`text-[7pt]`、入力`text-[11pt]`
+- プレースホルダー: `placeholder:text-gray-400 placeholder:text-[7pt]`
+- 幅: `w-[220px]`固定
+
 ## 5. 要件に関連する全ファイルのファイル構成
-- **v1 (参考元)**
-  - `index.html` (353-360行): ジャンプウィジェットのHTML構造
-  - `src/v1/styles/ui.css` (1031-1084行): ジャンプウィジェットのCSS
-- **v2 (修正対象)**
-  - `src/v2/components/features/Toolbar.tsx` (182-199行): ジャンプウィジェットのReactコンポーネント
+- `src/v2/components/features/Toolbar.tsx` (182-202行): ジャンプウィジェット
 
 ## 6. 要件に関連する技術スタック
-- v1: Vanilla HTML/CSS/TypeScript
-- v2: React + Tiptap + Tailwind CSS
+- React + Tailwind CSS（任意値使用）
 
 ## 7. 要件に関する機能の動作原理
-### v1のジャンプウィジェット構造
-```html
-<div class="jump-widget">
-  <label for="toolbar-jump-input">ジャンプ機能　[ ctrl+J ]</label>
-  <input type="text" id="toolbar-jump-input" placeholder='(例：1-1)…へジャンプ'>
-</div>
-```
-- flex-direction: column（縦並び）
-- 1行目: ラベル（font-size: 7pt、color: #999、cursor: text）
-- 2行目: input（font-size: 11pt、border無し、背景透明）
-- ラベルにcursor: textがあるため、ラベルクリックでinputにフォーカス
-
-### v2の現状の問題点
-```jsx
-<div className="... flex items-center ...">  {/* 横並び - 問題! */}
-  <div className="flex flex-col ...">
-    <span>ジャンプ機能</span>  
-    <span>[ ctrl+J ]</span>    
-  </div>
-  <input placeholder="(例：1-1)…へジャンプ" />  
-</div>
-```
-1. 横並び構造でラベルとinputが並んでいる（v1は縦並び）
-2. ラベルをクリックしてもinputにフォーカスしない（label要素ではなくspan）
-3. フォントサイズがv1と異なる
+### 現在のスタイル値
+- ラベル: `text-[7pt]` → 1.3倍 = `text-[9.1pt]`
+- 入力: `text-[11pt]` → 1.3倍 = `text-[14.3pt]`
+- プレースホルダー: `placeholder:text-[7pt]` → 1.3倍 = `placeholder:text-[9.1pt]`
+- 幅: `w-[220px]` → 0.7倍 = `w-[154px]`
+- 行間: `leading-tight` → より詰める `leading-none`
 
