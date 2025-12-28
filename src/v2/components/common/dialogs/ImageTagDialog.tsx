@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Editor } from '@tiptap/react';
 import { BaseDialog } from '@/components/ui/BaseDialog';
-import { Tag, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 
 interface ImageTagDialogProps {
     open: boolean;
@@ -10,26 +10,56 @@ interface ImageTagDialogProps {
 }
 
 /**
- * 画像タグ編集ダイアログ（Radix UI版）
+ * 画像タグ編集ダイアログ
+ * 
+ * 【重要】selectable: falseの画像に対応するため、
+ * キャレットの直前のノード（$from.nodeBefore）から画像を特定します。
+ * 
+ * 注意: 属性名は「tag」（単数形）です。
  */
 export const ImageTagDialog: React.FC<ImageTagDialogProps> = ({ open, editor, onClose }) => {
-    const [tags, setTags] = useState('');
+    const [tag, setTag] = useState('');
 
     useEffect(() => {
         if (open) {
-            const attrs = editor.getAttributes('image');
-            if (attrs.tags) setTags(attrs.tags);
+            // キャレットの直前のノードから画像属性を取得
+            const { state } = editor;
+            const { $from } = state.selection;
+            const nodeBefore = $from.nodeBefore;
+            
+            if (nodeBefore?.type.name === 'image') {
+                setTag(nodeBefore.attrs.tag || '');
+            } else {
+                // フォールバック
+                const attrs = editor.getAttributes('image');
+                if (attrs.tag) setTag(attrs.tag);
+            }
         }
     }, [editor, open]);
 
     const handleApply = () => {
         // タグをカンマまたは全角カンマで分割し、トリム
-        const tagArray = tags.split(/[,、]/).map(t => t.trim()).filter(t => t.length > 0);
-        const normalizedTags = tagArray.join(',');
+        const tagArray = tag.split(/[,、]/).map(t => t.trim()).filter(t => t.length > 0);
+        const normalizedTag = tagArray.join(',');
         
-        editor.chain().focus().updateAttributes('image', {
-            tags: normalizedTags
-        }).run();
+        const { state, view } = editor;
+        const { $from, empty } = state.selection;
+        
+        // キャレットの直前のノードが画像かチェック
+        if (empty && $from.nodeBefore?.type.name === 'image') {
+            const imagePos = $from.pos - $from.nodeBefore.nodeSize;
+            const tr = state.tr.setNodeMarkup(imagePos, undefined, {
+                ...$from.nodeBefore.attrs,
+                tag: normalizedTag
+            });
+            view.dispatch(tr);
+        } else {
+            // フォールバック
+            editor.chain().focus().updateAttributes('image', {
+                tag: normalizedTag
+            }).run();
+        }
+        
         onClose();
     };
 
@@ -48,8 +78,8 @@ export const ImageTagDialog: React.FC<ImageTagDialogProps> = ({ open, editor, on
                     </label>
                     <input
                         type="text"
-                        value={tags}
-                        onChange={(e) => setTags(e.target.value)}
+                        value={tag}
+                        onChange={(e) => setTag(e.target.value)}
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
                         placeholder="例: 風景, 自然, 山"
                         autoFocus
@@ -79,3 +109,4 @@ export const ImageTagDialog: React.FC<ImageTagDialogProps> = ({ open, editor, on
         </BaseDialog>
     );
 };
+

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Editor } from '@tiptap/react';
 import { BaseDialog } from '@/components/ui/BaseDialog';
-import { MessageSquare, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 
 interface ImageCaptionDialogProps {
     open: boolean;
@@ -10,22 +10,50 @@ interface ImageCaptionDialogProps {
 }
 
 /**
- * 画像キャプション編集ダイアログ（Radix UI版）
+ * 画像キャプション編集ダイアログ
+ * 
+ * 【重要】selectable: falseの画像に対応するため、
+ * キャレットの直前のノード（$from.nodeBefore）から画像を特定します。
  */
 export const ImageCaptionDialog: React.FC<ImageCaptionDialogProps> = ({ open, editor, onClose }) => {
     const [caption, setCaption] = useState('');
 
     useEffect(() => {
         if (open) {
-            const attrs = editor.getAttributes('image');
-            if (attrs.caption) setCaption(attrs.caption);
+            // キャレットの直前のノードから画像属性を取得
+            const { state } = editor;
+            const { $from } = state.selection;
+            const nodeBefore = $from.nodeBefore;
+            
+            if (nodeBefore?.type.name === 'image') {
+                setCaption(nodeBefore.attrs.caption || '');
+            } else {
+                // フォールバック
+                const attrs = editor.getAttributes('image');
+                if (attrs.caption) setCaption(attrs.caption);
+            }
         }
     }, [editor, open]);
 
     const handleApply = () => {
-        editor.chain().focus().updateAttributes('image', {
-            caption: caption.trim()
-        }).run();
+        const { state, view } = editor;
+        const { $from, empty } = state.selection;
+        
+        // キャレットの直前のノードが画像かチェック
+        if (empty && $from.nodeBefore?.type.name === 'image') {
+            const imagePos = $from.pos - $from.nodeBefore.nodeSize;
+            const tr = state.tr.setNodeMarkup(imagePos, undefined, {
+                ...$from.nodeBefore.attrs,
+                caption: caption.trim()
+            });
+            view.dispatch(tr);
+        } else {
+            // フォールバック
+            editor.chain().focus().updateAttributes('image', {
+                caption: caption.trim()
+            }).run();
+        }
+        
         onClose();
     };
 
@@ -72,3 +100,4 @@ export const ImageCaptionDialog: React.FC<ImageCaptionDialogProps> = ({ open, ed
         </BaseDialog>
     );
 };
+
