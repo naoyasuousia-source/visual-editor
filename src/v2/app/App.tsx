@@ -100,6 +100,13 @@ export const EditorV3 = () => {
         }
     }, [isWordMode, editor]);
 
+    // 初期マージンの適用
+    useEffect(() => {
+        const size = useAppStore.getState().pageMargin;
+        const marginMap = { s: '12mm', m: '17mm', l: '24mm' };
+        document.documentElement.style.setProperty('--page-margin', marginMap[size]);
+    }, []);
+
     // Keyboard Shortcuts (ロジック分離)
     useKeyboardShortcuts(saveFile, saveAsFile, downloadFile, openFileWithHandle, currentFileHandle, triggerJumpInputFocus);
 

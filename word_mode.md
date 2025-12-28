@@ -37,6 +37,8 @@
 - wordモードのブロック要素選択メニューは、現在変更するとメニューが閉じてしまうが、メニューはメニュー外の領域をクリックするまで閉じず、連続切り替えできるようにする。
 - ハイライトメニューはwordモードでは、実装しないので、Wordモードでは完全に消す。
 
+- **モード切替時のデータ破棄とリフレッシュ**: モード切り替え時に確認ダイアログ（v1互換メッセージ）を表示し、承認された場合にのみ `localStorage` を更新して `window.location.reload()` を実行するようにしました。
+
 ## 2. 未解決要件に関するコード変更履歴
 - **2025-12-29 実装完了**:
     - `useParagraphNumberToggle.ts`: `toggleParagraphNumbers` へのリネームにより、Toolbarからの呼び出しを正常化。
@@ -45,6 +47,7 @@
     - `content.css`: Wordモード用の無限ページスタイル (`height: auto`, `min-height: 297mm`, `padding-bottom` 余白) を追加。段落番号非表示の `!important` 適用。
     - `Toolbar.tsx`: 段落番号チェックボックスを「ファイル」と「B」の間に移動。モード切替ボタンをオレンジグラデーションに。ハイライトメニューをWordモードで非表示化。
     - `WordBlockMenu.tsx`: Radix UI ベースの新規コンポーネント。選択しても閉じない挙動を実現。
+    - `useAppStore.ts`: `toggleWordMode` に確認ダイアログとリロード処理を追加。初期状態を `localStorage` から取得するように変更。
 
 ## 3. 分析中に気づいた重要ポイント
 - **Wordモードの無限ページ**: `Pagination` エクステンションに `isWordMode` オプションを追加し、`update` フック内でスキップ。CSSで `height: auto` と `min-height: 297mm` を強制。

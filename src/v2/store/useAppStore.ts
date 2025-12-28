@@ -59,9 +59,25 @@ export const useAppStore = create<AppState>((set) => ({
         set({ pageMargin: size });
     },
 
-    isWordMode: false,
-    toggleWordMode: () => set((state) => ({ isWordMode: !state.isWordMode })),
-    setWordMode: (isWordMode) => set({ isWordMode }),
+    isWordMode: localStorage.getItem('ailing_editor_mode') === 'word',
+    toggleWordMode: async () => {
+        // v1互換の挙動: 切り替え時に確認を出し、許可されたらリフレッシュ
+        const currentState = useAppStore.getState().isWordMode;
+        const nextMode = !currentState ? 'word' : 'standard';
+        
+        const msg = nextMode === 'word'
+            ? 'Word互換モードに切り替えまますか？\n現在の編集内容は破棄されます。'
+            : '通常モードに切り替えますか？\n現在の編集内容は破棄されます。';
+
+        if (window.confirm(msg)) {
+            localStorage.setItem('ailing_editor_mode', nextMode);
+            window.location.reload();
+        }
+    },
+    setWordMode: (isWordMode) => {
+        localStorage.setItem('ailing_editor_mode', isWordMode ? 'word' : 'standard');
+        set({ isWordMode });
+    },
 
     activeDialog: null,
     openDialog: (dialogId) => set({ activeDialog: dialogId }),
