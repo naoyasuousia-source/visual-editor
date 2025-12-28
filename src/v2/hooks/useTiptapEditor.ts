@@ -19,6 +19,7 @@ import { FirstParagraphProtection } from '@/lib/firstParagraphProtection';
 import { CustomDocument } from '@/lib/customDocument';
 import { CrossPageMerge } from '@/lib/crossPageMerge';
 import { Bookmark } from '@/lib/bookmarkExtension';
+import { InlineTab } from '@/lib/inlineTabExtension';
 import { TiptapKeyDownHandler, TiptapPasteHandler } from '@/types/tiptap';
 
 /**
@@ -59,6 +60,7 @@ export const useTiptapEditor = (
             FirstParagraphProtection,
             CrossPageMerge,
             Bookmark,
+            InlineTab,
         ],
         content: `
       <section class="page" data-page="1">
