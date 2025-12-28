@@ -86,27 +86,27 @@ function highlightAllInTextNode(textNode: Text, query: string): HTMLElement | nu
             const matchStartNode: Text = currentNode.splitText(idx);
             const afterNode: Text = matchStartNode.splitText(query.length);
             
-            // span要素を作成してTailwindクラスを適用
-            const span = document.createElement('span');
-            // Tailwindクラスでオレンジ系ハイライトを適用
-            span.className = 'bg-orange-400 text-black font-bold rounded px-0.5 shadow-md';
-            span.setAttribute('data-search-match', 'true');
-            span.textContent = matchStartNode.nodeValue;
-            
-            // マッチ部分のテキストノードをspanで置換
-            parent.replaceChild(span, matchStartNode);
-            
-            if (!firstSpan) firstSpan = span;
-            
-            // 後のテキストノードで続行
-            currentNode = afterNode;
-        } catch (e) {
-            // エラー発生時はスキップ
-            break;
-        }
+        // span要素を作成してTailwindクラスを適用
+        const span = document.createElement('span');
+        // Tailwindクラスでオレンジ系ハイライトを適用 (!importantで強制)
+        span.className = '!bg-orange-400 !text-black !font-bold rounded px-0.5 shadow-md relative inline-block';
+        span.setAttribute('data-search-match', 'true');
+        span.textContent = matchStartNode.nodeValue;
+        
+        // マッチ部分のテキストノードをspanで置換
+        parent.replaceChild(span, matchStartNode);
+        
+        if (!firstSpan) firstSpan = span;
+        
+        // 後のテキストノードで続行
+        currentNode = afterNode;
+    } catch (e) {
+        // エラー発生時はスキップ
+        break;
     }
-    
-    return firstSpan;
+}
+
+return firstSpan;
 }
 
 /**
@@ -165,8 +165,9 @@ export function highlightSearchMatches(
     // Mark first match as current with brighter style
     if (firstFound) {
         // currentクラスをTailwindで適用（より明るいオレンジ）
-        firstFound.classList.remove('bg-orange-400');
-        firstFound.classList.add('bg-orange-500', 'text-white', 'scale-110', 'z-10');
+        // !importantを使用して確実に優先
+        firstFound.classList.remove('!bg-orange-400');
+        firstFound.classList.add('!bg-orange-500', '!text-white', 'scale-125', 'z-50', 'ring-2', 'ring-orange-600');
     }
     
     return firstFound;
