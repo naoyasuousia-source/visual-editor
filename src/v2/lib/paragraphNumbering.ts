@@ -57,7 +57,17 @@ export const ParagraphNumbering = Extension.create<ParagraphNumberingOptions>({
 
                     newState.doc.descendants((node, pos) => {
                         if (node.type.name === 'page') {
-                            const pageNum = node.attrs['data-page'] || String(pageCounter++);
+                            const expectedPageNum = String(pageCounter++);
+                            
+                            // ページ番号を強制更新
+                            if (node.attrs['data-page'] !== expectedPageNum) {
+                                tr.setNodeMarkup(pos, undefined, {
+                                    ...node.attrs,
+                                    'data-page': expectedPageNum,
+                                });
+                            }
+
+                            const pageNum = expectedPageNum;
                             let innerCounter = 1;
 
                             node.descendants((child, childPos) => {
