@@ -27,7 +27,7 @@ COMMAND AREA located at the beginning of <body>.
 
 ## COMMAND AREA LOCATION
 The COMMAND AREA is located immediately after the <body> tag opening.
-Look for: <!-- AI_COMMAND_START --> and <!-- AI_COMMAND_END -->
+Look for the markers: [AI_COMMAND_START] and [AI_COMMAND_END]
 
 ## SUPPORTED COMMANDS
 
