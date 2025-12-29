@@ -9,7 +9,6 @@ export type CommandType =
   | 'INSERT_TEXT'
   | 'REPLACE_TEXT'
   | 'DELETE_TEXT'
-  | 'FORMAT_TEXT'
   | 'INSERT_PARAGRAPH'
   | 'DELETE_PARAGRAPH'
   | 'MOVE_PARAGRAPH';
@@ -53,6 +52,11 @@ export interface InsertTextCommand extends BaseCommand {
   position: Position;
   /** 挿入するテキスト */
   text: string;
+  /** 属性（オプション） */
+  attributes?: {
+    /** 太字にするか */
+    bold?: boolean;
+  };
 }
 
 /**
@@ -85,17 +89,6 @@ export interface DeleteTextCommand extends BaseCommand {
 }
 
 /**
- * 書式変更コマンド
- */
-export interface FormatTextCommand extends BaseCommand {
-  type: 'FORMAT_TEXT';
-  /** 対象範囲 */
-  range: Range;
-  /** 書式タイプ */
-  format: 'bold' | 'italic' | 'underline' | 'strikethrough' | 'code';
-}
-
-/**
  * 段落挿入コマンド
  */
 export interface InsertParagraphCommand extends BaseCommand {
@@ -104,6 +97,17 @@ export interface InsertParagraphCommand extends BaseCommand {
   position: number;
   /** 段落テキスト */
   text: string;
+  /** オプション */
+  options?: {
+    /** ブロックタイプ (初期値: paragraph) */
+    type?: 'paragraph' | 'heading';
+    /** 見出しレベル (type=headingの場合) */
+    level?: 1 | 2 | 3;
+    /** 配置 */
+    align?: 'left' | 'center' | 'right';
+    /** インデントレベル */
+    indent?: number;
+  };
 }
 
 /**
@@ -133,7 +137,6 @@ export type Command =
   | InsertTextCommand
   | ReplaceTextCommand
   | DeleteTextCommand
-  | FormatTextCommand
   | InsertParagraphCommand
   | DeleteParagraphCommand
   | MoveParagraphCommand;
