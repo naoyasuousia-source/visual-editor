@@ -110,6 +110,7 @@ export function useCommandExecutor(editor: Editor | null): UseCommandExecutorRet
       }
 
       try {
+        const { search, replace, options } = command;
         const changedRanges: Range[] = [];
         
         // 検索と置換用の正規表現を準備

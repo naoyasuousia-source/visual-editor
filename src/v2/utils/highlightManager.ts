@@ -41,24 +41,27 @@ export function highlightRanges(editor: Editor, ranges: Range[]): void {
   // スタイルを注入
   injectHighlightStyles();
 
+  console.log('[highlightManager] highlightRanges called with ranges:', JSON.stringify(ranges));
+
   // 各範囲にハイライトを適用
-  ranges.forEach((range) => {
+  ranges.forEach((range, index) => {
+    console.log(`[highlightManager] Processing range ${index}:`, JSON.stringify(range));
+    
     const { from, to } = convertRangeToProseMirrorPosition(editor, range);
     
-    if (from !== null && to !== null) {
-      console.log(`[highlightManager] Apply mark: ${from} to ${to}`);
+    console.log(`[highlightManager] Converted positions: from=${from}, to=${to}`);
+    
+    if (from !== null && to !== null && to > from) {
+      console.log(`[highlightManager] Apply mark: from=${from} to=${to}, textLength=${to - from}`);
+      
       // 範囲内のテキストをマークで囲む
-      // highlightエディションの機能を使う形に変更（あるいはtextStyleにclass属性が必要）
-      // ここでは既存の highlight 拡張を利用しつつ、カスタムクラスを付与する
       editor.chain()
+        .focus()
         .setTextSelection({ from, to })
         .setHighlight({ color: '#fef08a' }) // 基本のハイライト色
         .run();
-        
-      // さらにカスタムクラスを付与するために、nodeを直接走査して更新するか、
-      // 拡張機能側でHTMLレンダリングを調整するのが本来だが、
-      // ここでは取り急ぎ Tiptap の highlight 属性で代用。
-      // もし特定のクラスが必要なら、markの属性として追加する必要がある。
+    } else {
+      console.warn(`[highlightManager] Invalid range: from=${from}, to=${to}`);
     }
   });
 }
@@ -68,15 +71,32 @@ export function highlightRanges(editor: Editor, ranges: Range[]): void {
  * @param editor - Tiptapエディタインスタンス
  */
 export function clearAllHighlights(editor: Editor): void {
-  const { state } = editor;
-  const { doc } = state;
-  // 文書全体から highlight マークを削除
-  editor.chain()
-    .setTextSelection({ from: 0, to: doc.content.size })
-    .unsetHighlight()
-    .run();
-  
-  console.log('[highlightManager] 全てのハイライトを削除しました');
+  try {
+    const { state } = editor;
+    const { doc } = state;
+    
+    // ProseMirrorでは位置0はドキュメントルートの前なので、1から開始
+    const from = 1;
+    const to = doc.content.size - 1;
+    
+    if (to <= from) {
+      console.log('[highlightManager] 文書が空のためハイライト削除をスキップ');
+      return;
+    }
+    
+    console.log(`[highlightManager] ハイライトを削除: from=${from}, to=${to}`);
+    
+    // selectAll → unsetHighlight のパターンを試行
+    editor.chain()
+      .focus()
+      .selectAll()
+      .unsetHighlight()
+      .run();
+    
+    console.log('[highlightManager] 全てのハイライトを削除しました');
+  } catch (error) {
+    console.error('[highlightManager] ハイライト削除エラー:', error);
+  }
 }
 
 /**

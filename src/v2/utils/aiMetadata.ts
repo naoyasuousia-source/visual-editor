@@ -1,23 +1,23 @@
 import { Editor } from '@tiptap/react';
 
 /**
- * AIエージェント向け総合ガイド（命令書 + 仕様書）
+ * AIエージェント向けガイド（head内に配置するコメント）
  */
-export function generateAiMetadata(isWordMode: boolean): string {
+export function generateAiGuide(isWordMode: boolean): string {
     const modeDesc = isWordMode 
         ? "Word Mode: A continuous document flow." 
         : "Paginated Mode: Split into A4 sections (<section class=\"page\">).";
 
     return `
-<!-- 
+<!--
 ===============================================================================
 AI ASSISTANT GUIDE & COMMAND API SPECIFICATIONS
 ===============================================================================
 
 ## OVERVIEW
-This document is being edited by a human using a visual editor. 
-As an AI Assistant, you can perform automated edits by writing commands in the 
-COMMAND AREA defined below.
+This document is being edited by a human using a visual editor.
+As an AI Assistant, you can perform automated edits by writing commands in the
+COMMAND AREA located at the beginning of <body>.
 
 ## DOCUMENT STRUCTURE
 - ${modeDesc}
@@ -25,41 +25,42 @@ COMMAND AREA defined below.
 - Every paragraph/heading has a [data-para] attribute (e.g., [1], [2]).
 - Images are wrapped in "image-container" and may have "data-title".
 
-## COMMAND AREA
-Place your commands between the following markers. 
-The editor will detect changes, ask the user for approval, and execute them.
-
-[AI_COMMAND_START]
-<!-- Write your commands here. Example: <!-- INSERT_TEXT[1:0][Hello] --> -->
-[AI_COMMAND_END]
+## COMMAND AREA LOCATION
+The COMMAND AREA is located immediately after the <body> tag opening.
+Look for: <!-- AI_COMMAND_START --> and <!-- AI_COMMAND_END -->
 
 ## SUPPORTED COMMANDS
 
 1. INSERT_TEXT[paragraph:offset][text]
-   - Description: Inserts text at the specified offset in a paragraph.
-   - Arguments:
-     - paragraph: The [data-para] number (starting from 1).
-     - offset: Character position within the paragraph (starting from 0).
-     - text: The string to insert.
-   - Example: <!-- INSERT_TEXT[1:0][Important: ] -->
+   - Inserts text at the specified offset in a paragraph.
+   - paragraph: The [data-para] number (1-indexed).
+   - offset: Character position (0-indexed).
+   - Example: <!-- INSERT_TEXT[1:0][Hello ] -->
 
 2. REPLACE_TEXT[search][replace][options]
-   - Description: Searches and replaces text within the document.
-   - Arguments:
-     - search: String or Regex to find.
-     - replace: Replacement string.
-     - options: "all" (replace all), "regex" (use regex), "caseSensitive".
+   - Searches and replaces text within the document.
+   - options: "all", "regex", "caseSensitive" (comma-separated)
    - Example: <!-- REPLACE_TEXT[apple][orange][all] -->
 
 ## IMPORTANT RULES
 - Commands must be wrapped in HTML comments: <!-- COMMAND[...] -->
 - Only one command per line inside the COMMAND AREA.
-- Do NOT edit any content outside the COMMAND AREA. The editor will 
-  ignore/overwrite external changes to the content itself during auto-edit.
-- Always use the [data-para] numbers displayed in the editor for targeting.
+- Do NOT edit any content outside the COMMAND AREA.
+- The editor ignores/overwrites external changes to content during auto-edit.
 
 ===============================================================================
 -->
+`;
+}
+
+/**
+ * コマンドエリアを生成（body直後に配置）
+ */
+export function generateCommandArea(): string {
+    return `
+<!-- AI_COMMAND_START -->
+<!-- ここにコマンドを記述してください / Write your commands here -->
+<!-- AI_COMMAND_END -->
 `;
 }
 
@@ -83,8 +84,9 @@ export function buildFullHTML(
     // 1. エディタコンテンツを取得
     const htmlContent = editor.getHTML();
 
-    // 2. AIメタデータ（ガイド+コマンドエリア）を生成
-    const aiMetadata = generateAiMetadata(isWordMode);
+    // 2. AIガイド（head内）とコマンドエリア（body直後）を生成
+    const aiGuide = generateAiGuide(isWordMode);
+    const commandArea = generateCommandArea();
 
     // 3. bodyクラスを設定
     const bodyClass = isWordMode ? 'mode-word' : '';
@@ -101,22 +103,27 @@ export function buildFullHTML(
     cleanedHtml = cleanedHtml.replace(/(<(?:p|h1|h2|h3|h4|h5|h6)[^>]*)(\sdata-page="[^"]*")([^>]*>)/g, '$1$3');
     cleanedHtml = cleanedHtml.replace(/(<img[^>]*)(\sdata-caption="[^"]*")([^>]*>)/g, '$1$3');
     cleanedHtml = cleanedHtml.replace(/(<img[^>]*)(\sdata-tag="[^"]*")([^>]*>)/g, '$1$3');
+    
+    // ハイライトマークを削除（承認後のクリーンな状態で保存）
+    cleanedHtml = cleanedHtml.replace(/<mark[^>]*data-color[^>]*>([^<]*)<\/mark>/g, '$1');
 
     // 5. 完全なHTML文書を構築
-    // ガイドとコマンドエリアを <head> の直後（bodyの前）または bodyの最上部に配置
+    // - head内: AIガイド（ドキュメント構造と仕様説明）
+    // - body直後: コマンドエリア（AIがコマンドを記述する場所）
     return `<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Document</title>
+${aiGuide}
 <style>
 :root { --page-margin: ${pageMarginText}; }
 ${cleanedCss}
 </style>
-${aiMetadata}
 </head>
 <body class="${finalClass}">
+${commandArea}
 <div id="pages-container">
 ${cleanedHtml}
 </div>

@@ -1,0 +1,29 @@
+src/v1/editor/io.ts(265,42): error TS2339: Property 'inline' does not exist on type 'Images'.
+src/v2/app/App.tsx(70,65): error TS2322: Type '(options: ConfirmOptions) => Promise<boolean>' is not assignable to type '(options: { title: string; description: string; variant?: "default" | "danger" | undefined; }) => Promise<boolean>'.
+  Types of parameters 'options' and 'options' are incompatible.
+    Type '{ title: string; description: string; variant?: "default" | "danger" | undefined; }' is not assignable to type 'ConfirmOptions'.
+      Types of property 'variant' are incompatible.
+        Type '"default" | "danger" | undefined' is not assignable to type '"default" | "destructive" | undefined'.
+          Type '"danger"' is not assignable to type '"default" | "destructive" | undefined'.
+src/v2/components/common/DialogGroup.tsx(90,21): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/v2/components/common/DialogGroup.tsx(93,21): error TS2322: Type '"default" | "destructive" | undefined' is not assignable to type '"default" | "danger" | undefined'.
+  Type '"destructive"' is not assignable to type '"default" | "danger" | undefined'.
+src/v2/components/common/toolbar/FileMenu.tsx(54,75): error TS2554: Expected 2 arguments, but got 3.
+src/v2/components/common/toolbar/FileMenu.tsx(55,21): error TS2367: This comparison appears to be unintentional because the types 'ParseResult' and 'boolean' have no overlap.
+src/v2/components/common/toolbar/FileMenu.tsx(133,74): error TS2554: Expected 0 arguments, but got 1.
+src/v2/components/common/toolbar/FileMenu.tsx(136,66): error TS2554: Expected 0 arguments, but got 1.
+src/v2/components/common/toolbar/FileMenu.tsx(139,66): error TS2345: Argument of type 'Editor | null' is not assignable to parameter of type 'HTMLAnchorElement | undefined'.
+  Type 'null' is not assignable to type 'HTMLAnchorElement | undefined'.
+src/v2/components/common/toolbar/ViewMenu.tsx(11,9): error TS2339: Property 'toggleParaNumbers' does not exist on type '{ showPageNumbers: boolean; showParaNumbers: boolean; togglePageNumbers: (show: boolean) => void; toggleParagraphNumbers: (show: boolean) => void; }'.
+src/v2/components/features/PageNavigator.tsx(22,31): error TS2345: Argument of type 'RefObject<HTMLDivElement | null>' is not assignable to parameter of type 'RefObject<HTMLDivElement>'.
+  Type 'HTMLDivElement | null' is not assignable to type 'HTMLDivElement'.
+    Type 'null' is not assignable to type 'HTMLDivElement'.
+src/v2/hooks/useGlobalStyles.ts(28,13): error TS2578: Unused '@ts-expect-error' directive.
+src/v2/hooks/useGlobalStyles.ts(31,17): error TS2353: Object literal may only specify known properties, and 'pagination' does not exist in type 'Partial<EditorOptions>'.
+src/v2/lib/bookmarkExtension.ts(40,37): error TS7031: Binding element 'commands' implicitly has an 'any' type.
+src/v2/lib/crossPageMerge.ts(92,30): error TS2339: Property 'forEach' does not exist on type 'never'.
+src/v2/lib/crossPageMerge.ts(92,39): error TS7006: Parameter 'child' implicitly has an 'any' type.
+src/v2/lib/crossPageMerge.ts(92,46): error TS7006: Parameter 'offset' implicitly has an 'any' type.
+src/v2/lib/crossPageMerge.ts(92,54): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/v2/lib/crossPageMerge.ts(107,72): error TS2339: Property 'nodeSize' does not exist on type 'never'.

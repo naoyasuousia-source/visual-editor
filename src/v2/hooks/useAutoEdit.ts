@@ -98,7 +98,41 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
 
       try {
         // コマンドが存在するかチェック
-        if (!commandParser.hasCommands(event.content)) {
+        const hasValidCommands = commandParser.hasCommands(event.content);
+        
+        if (!hasValidCommands) {
+          // コマンドエリアがない、またはコマンドが空の場合
+          // これは外部からの不正な編集の可能性があるため、ダイアログを表示
+          console.log('[AutoEdit] コマンドなしの外部変更を検知');
+          
+          // エディタを一時的にロック
+          editor.setEditable(false);
+          
+          const protectContent = window.confirm(
+            '外部からのファイル変更を検知しましたが、有効なコマンドが見つかりませんでした。\n\n' +
+            '「OK」を押すと、現在のエディタの内容でファイルを上書き保存し、外部からの変更を破棄します。\n' +
+            '「キャンセル」を押すと、ファイルの変更をそのまま維持します（エディタは古い内容のままになります）。'
+          );
+          
+          if (protectContent) {
+            // エディタの現在の状態で上書き保存
+            console.log('[AutoEdit] エディタ状態で上書き保存して保護します');
+            const { isWordMode, pageMargin } = useAppStore.getState();
+            const marginMap: Record<string, string> = { s: '12mm', m: '17mm', l: '24mm' };
+            const pageMarginText = marginMap[pageMargin] || '17mm';
+            const aiImageIndexHtml = document.getElementById('ai-image-index')?.outerHTML || '';
+            const fullHtml = buildFullHTML(editor, isWordMode, contentCssText, pageMarginText, aiImageIndexHtml);
+            
+            setInternalSaving(true);
+            try {
+              await writeToFile(event.fileHandle, fullHtml);
+              toast.success('外部変更を検知したため、エディタの内容でファイルを保護しました', { position: 'top-center' });
+            } finally {
+              setInternalSaving(false);
+            }
+          }
+          
+          editor.setEditable(true);
           return;
         }
 
