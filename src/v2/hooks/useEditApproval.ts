@@ -6,6 +6,7 @@
 import { useCallback, useRef } from 'react';
 import type { Editor } from '@tiptap/react';
 import { useAppStore } from '@/store/useAppStore';
+import { useChangeHighlight } from '@/hooks/useChangeHighlight';
 
 interface UseEditApprovalReturn {
   /** 変更を承認 */
@@ -28,6 +29,7 @@ export function useEditApproval(
   fileHandle: FileSystemFileHandle | null
 ): UseEditApprovalReturn {
   const { isEditPendingApproval, setEditPendingApproval } = useAppStore();
+  const { clearHighlights } = useChangeHighlight(editor);
 
   // 編集前の状態を保存（HTMLコンテンツ）
   const preEditHtmlRef = useRef<string | null>(null);
@@ -74,13 +76,19 @@ export function useEditApproval(
       const currentHtml = editor.getHTML();
       await writeToFile(fileHandle, currentHtml);
 
+      // ハイライトを削除
+      clearHighlights();
+
       // 承認待ちフラグを解除
       setEditPendingApproval(false);
+
+      // エディタロックを解除
+      editor.setEditable(true);
 
       // 保存した状態をクリア
       preEditHtmlRef.current = null;
 
-      console.log('[EditApproval] 承認完了');
+      console.log('[EditApproval] 承認完了（エディタロック解除）');
     } catch (error) {
       console.error('[EditApproval] 承認処理エラー:', error);
       throw error;
@@ -102,16 +110,22 @@ export function useEditApproval(
       // エディタを編集前の状態に復元
       editor.commands.setContent(preEditHtmlRef.current);
 
+      // ハイライトを削除
+      clearHighlights();
+
       // 復元後の状態でファイルを保存
       await writeToFile(fileHandle, preEditHtmlRef.current);
 
       // 承認待ちフラグを解除
       setEditPendingApproval(false);
 
+      // エディタロックを解除
+      editor.setEditable(true);
+
       // 保存した状態をクリア
       preEditHtmlRef.current = null;
 
-      console.log('[EditApproval] 破棄完了');
+      console.log('[EditApproval] 破棄完了（エディタロック解除）');
     } catch (error) {
       console.error('[EditApproval] 破棄処理エラー:', error);
       throw error;
@@ -125,3 +139,4 @@ export function useEditApproval(
     savePreEditState,
   };
 }
+

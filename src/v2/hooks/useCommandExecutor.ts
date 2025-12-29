@@ -11,6 +11,10 @@ import type {
   Range,
   InsertTextCommand,
   ReplaceTextCommand,
+  DeleteTextCommand,
+  FormatTextCommand,
+  InsertParagraphCommand,
+  DeleteParagraphCommand,
 } from '@/types/ai-sync.types';
 
 interface UseCommandExecutorReturn {
@@ -118,7 +122,6 @@ export function useCommandExecutor(editor: Editor | null): UseCommandExecutorRet
         const newContent = currentContent.replace(searchRegex, (match, offset) => {
           if (options?.all || matchCount === 0) {
             matchCount++;
-            // 変更範囲を記録（簡易版）
             return replace;
           }
           return match;
@@ -152,6 +155,134 @@ export function useCommandExecutor(editor: Editor | null): UseCommandExecutorRet
   );
 
   /**
+   * DELETE_TEXTコマンドを実行
+   */
+  const executeDeleteText = useCallback(
+    (command: DeleteTextCommand): ExecutionResult => {
+      if (!editor) {
+        return {
+          success: false,
+          error: 'エディタが初期化されていません',
+          timestamp: Date.now(),
+        };
+      }
+
+      try {
+        const { range } = command;
+        // DELETE_TEXTは複雑なため、基本実装のみ
+        return {
+          success: false,
+          error: 'DELETE_TEXTは現在未実装です',
+          timestamp: Date.now(),
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : '不明なエラー',
+          timestamp: Date.now(),
+        };
+      }
+    },
+    [editor]
+  );
+
+  /**
+   * FORMAT_TEXTコマンドを実行
+   */
+  const executeFormatText = useCallback(
+    (command: FormatTextCommand): ExecutionResult => {
+      if (!editor) {
+        return {
+          success: false,
+          error: 'エディタが初期化されていません',
+          timestamp: Date.now(),
+        };
+      }
+
+      try {
+        const { format } = command;
+        // FORMAT_TEXTは複雑なため、基本実装のみ
+        return {
+          success: false,
+          error: 'FORMAT_TEXTは現在未実装です',
+          timestamp: Date.now(),
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : '不明なエラー',
+          timestamp: Date.now(),
+        };
+      }
+    },
+    [editor]
+  );
+
+  /**
+   * INSERT_PARAGRAPHコマンドを実行
+   */
+  const executeInsertParagraph = useCallback(
+    (command: InsertParagraphCommand): ExecutionResult => {
+      if (!editor) {
+        return {
+          success: false,
+          error: 'エディタが初期化されていません',
+          timestamp: Date.now(),
+        };
+      }
+
+      try {
+        const { text } = command;
+        // INSERT_PARAGRAPHは複雑なため、基本実装のみ
+        return {
+          success: false,
+          error: 'INSERT_PARAGRAPHは現在未実装です',
+          timestamp: Date.now(),
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : '不明なエラー',
+          timestamp: Date.now(),
+        };
+      }
+    },
+    [editor]
+  );
+
+  /**
+   * DELETE_PARAGRAPHコマンドを実行
+   */
+  const executeDeleteParagraph = useCallback(
+    (command: DeleteParagraphCommand): ExecutionResult => {
+      if (!editor) {
+        return {
+          success: false,
+          error: 'エディタが初期化されていません',
+          timestamp: Date.now(),
+        };
+      }
+
+      try {
+        const { paragraph } = command;
+        // DELETE_PARAGRAPHは複雑なため、基本実装のみ
+        return {
+          success: false,
+          error: 'DELETE_PARAGRAPHは現在未実装です',
+          timestamp: Date.now(),
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : '不明なエラー',
+          timestamp: Date.now(),
+        };
+      }
+    },
+    [editor]
+  );
+
+  /**
    * 単一のコマンドを実行
    */
   const executeCommand = useCallback(
@@ -164,13 +295,21 @@ export function useCommandExecutor(editor: Editor | null): UseCommandExecutorRet
           return executeReplaceText(command);
 
         case 'DELETE_TEXT':
+          return executeDeleteText(command);
+
         case 'FORMAT_TEXT':
+          return executeFormatText(command);
+
         case 'INSERT_PARAGRAPH':
+          return executeInsertParagraph(command);
+
         case 'DELETE_PARAGRAPH':
+          return executeDeleteParagraph(command);
+
         case 'MOVE_PARAGRAPH':
           return {
             success: false,
-            error: `コマンド ${command.type} はまだ実装されていません`,
+            error: 'MOVE_PARAGRAPHは現在未実装です',
             timestamp: Date.now(),
           };
 
@@ -182,7 +321,14 @@ export function useCommandExecutor(editor: Editor | null): UseCommandExecutorRet
           };
       }
     },
-    [executeInsertText, executeReplaceText]
+    [
+      executeInsertText,
+      executeReplaceText,
+      executeDeleteText,
+      executeFormatText,
+      executeInsertParagraph,
+      executeDeleteParagraph,
+    ]
   );
 
   /**
