@@ -100,13 +100,9 @@ export function useCommandExecutor(editor: Editor | null): UseCommandExecutorRet
       }
 
       try {
-        const { search, replace, options } = command;
         const changedRanges: Range[] = [];
-
-        // エディタの全テキストを取得
-        const currentContent = editor.getText();
-
-        // 検索と置換
+        
+        // 検索と置換用の正規表現を準備
         let searchRegex: RegExp;
         if (options?.regex) {
           const flags = options.caseSensitive ? 'g' : 'gi';
@@ -117,14 +113,65 @@ export function useCommandExecutor(editor: Editor | null): UseCommandExecutorRet
           searchRegex = new RegExp(escapedSearch, flags);
         }
 
-        // 置換を実行
+        // 文書を走査して置換対象を探す
+        const { state } = editor;
+        const { doc } = state;
         let matchCount = 0;
-        const newContent = currentContent.replace(searchRegex, (match, offset) => {
-          if (options?.all || matchCount === 0) {
-            matchCount++;
-            return replace;
+        let paragraphIndex = 0;
+
+        // トランザクションを開始
+        let tr = state.tr;
+        // 置換による位置ズレを追補するためのオフセット
+        let accumulatedOffset = 0;
+
+        doc.descendants((node, pos) => {
+          if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+            paragraphIndex++;
+            const textContent = node.textContent;
+            
+            // この段落内でのマッチを探す
+            let match;
+            // 正規表現をリセット（gフラグなどのため）
+            searchRegex.lastIndex = 0;
+
+            const paragraphMatches: { start: number, end: number, text: string }[] = [];
+            
+            if (options?.all) {
+              while ((match = searchRegex.exec(textContent)) !== null) {
+                paragraphMatches.push({
+                  start: match.index,
+                  end: match.index + match[0].length,
+                  text: match[0]
+                });
+              }
+            } else if (matchCount === 0) {
+              match = searchRegex.exec(textContent);
+              if (match) {
+                paragraphMatches.push({
+                  start: match.index,
+                  end: match.index + match[0].length,
+                  text: match[0]
+                });
+              }
+            }
+
+            // 見つかったマッチを後ろから順に置換（前方への影響を避ける）
+            for (let i = paragraphMatches.length - 1; i >= 0; i--) {
+              const m = paragraphMatches[i];
+              const from = pos + 1 + m.start;
+              const to = pos + 1 + m.end;
+              
+              tr = tr.insertText(replace, from, to);
+              matchCount++;
+
+              // ハイライト用の範囲を追加
+              changedRanges.push({
+                start: { paragraph: paragraphIndex, offset: m.start },
+                end: { paragraph: paragraphIndex, offset: m.start + replace.length }
+              });
+            }
           }
-          return match;
+          return true;
         });
 
         if (matchCount === 0) {
@@ -135,8 +182,8 @@ export function useCommandExecutor(editor: Editor | null): UseCommandExecutorRet
           };
         }
 
-        // エディタの内容を更新
-        editor.commands.setContent(newContent);
+        // 変更を適用
+        editor.view.dispatch(tr);
 
         return {
           success: true,

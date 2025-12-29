@@ -143,39 +143,49 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
         // これにより、AIがコマンドエリア以外を勝手に編集していても、それは破棄される。
         console.log('[AutoEdit] 正規のHTMLを再構築して保存します');
         
-        const { isWordMode, pageMargin } = useAppStore.getState();
-        const marginMap: Record<string, string> = { s: '12mm', m: '17mm', l: '24mm' };
-        const pageMarginText = marginMap[pageMargin] || '17mm';
-        
-        // AI画像インデックスはDOMから取得
-        const aiImageIndexHtml = document.getElementById('ai-image-index')?.outerHTML || '';
-        
-        // 完全なHTMLを構築
-        let fullHtml = buildFullHTML(
-          editor,
-          isWordMode,
-          contentCssText,
-          pageMarginText,
-          aiImageIndexHtml
-        );
+        // ヘルパー: 完全なHTMLを構築してファイルに保存
+        const buildAndSaveFullHtml = async (currentEditor: Editor, handle: FileSystemFileHandle) => {
+          const { isWordMode, pageMargin } = useAppStore.getState();
+          const marginMap: Record<string, string> = { s: '12mm', m: '17mm', l: '24mm' };
+          const pageMarginText = marginMap[pageMargin] || '17mm';
+          
+          // AI画像インデックスはDOMから取得
+          const aiImageIndexHtml = document.getElementById('ai-image-index')?.outerHTML || '';
+          
+          // 完全なHTMLを構築
+          let fullHtml = buildFullHTML(
+            currentEditor,
+            isWordMode,
+            contentCssText,
+            pageMarginText,
+            aiImageIndexHtml
+          );
 
-        // コマンドエリアを注入（AIが再び書き込めるように）
-        const commandAreaPlaceholder = `
+          // content.cssからAPIドキュメント部分を抽出（最初の<!-- -->コメントブロック）
+          const apiSpecMatch = contentCssText.match(/<!--[\s\S]*?-->/);
+          const apiSpec = apiSpecMatch ? apiSpecMatch[0] : '<!-- AI Command API Placeholder -->';
+
+          // コマンドエリアを注入（AIが再び書き込めるように）
+          const commandAreaPlaceholder = `
+${apiSpec}
 <!-- AI_COMMAND_START -->
 <!-- ここにコマンドを記述してください -->
 <!-- AI_COMMAND_END -->
 `;
-        // pages-containerの直前に挿入
-        fullHtml = fullHtml.replace('<div id="pages-container">', `${commandAreaPlaceholder}\n<div id="pages-container">`);
+          // pages-containerの直前に挿入
+          fullHtml = fullHtml.replace('<div id="pages-container">', `${commandAreaPlaceholder}\n<div id="pages-container">`);
 
-        setBaseFullHtml(fullHtml);
-        
-        try {
-          setInternalSaving(true);
-          await writeToFile(event.fileHandle, fullHtml);
-        } finally {
-          setInternalSaving(false);
-        }
+          setBaseFullHtml(fullHtml);
+          
+          try {
+            setInternalSaving(true);
+            await writeToFile(handle, fullHtml);
+          } finally {
+            setInternalSaving(false);
+          }
+        };
+
+        await buildAndSaveFullHtml(editor, event.fileHandle);
 
         // 実行結果をログ
         const successCount = results.filter((r) => r.success).length;
@@ -190,13 +200,15 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
         setLastAutoEditTime(Date.now());
         setEditPendingApproval(true);
 
-        // ハイライト表示
+        // ハイライト表示 (エディタがロックされていると効かない可能性があるため、一時的に解除して適用)
         const allChangedRanges = results
           .filter((r) => r.success && r.changedRanges)
           .flatMap((r) => r.changedRanges!);
         
         if (allChangedRanges.length > 0) {
+          editor.setEditable(true);
           highlightChanges(allChangedRanges);
+          editor.setEditable(false);
         }
 
         toast.success(`自動編集完了: ${successCount}個のコマンドを実行しました`, { position: 'top-center' });
@@ -204,6 +216,27 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
 
       } catch (error) {
         console.error('[AutoEdit] エラー:', error);
+        
+        // エラー時もエディタの現在の状態で上書き保存する（AIによる破壊的編集を元に戻すため）
+        if (editor && event.fileHandle) {
+          console.log('[AutoEdit] エラー発生のため、現在のエディタ状態で上書き保存します');
+          try {
+            const { isWordMode, pageMargin } = useAppStore.getState();
+            const marginMap: Record<string, string> = { s: '12mm', m: '17mm', l: '24mm' };
+            const pageMarginText = marginMap[pageMargin] || '17mm';
+            const aiImageIndexHtml = document.getElementById('ai-image-index')?.outerHTML || '';
+            const fullHtml = buildFullHTML(editor, isWordMode, contentCssText, pageMarginText, aiImageIndexHtml);
+            
+            setInternalSaving(true);
+            await writeToFile(event.fileHandle, fullHtml);
+            toast.info('不完全な編集を破棄してファイルを正規化しました');
+          } catch (saveError) {
+            console.error('[AutoEdit] エラー時の保存に失敗:', saveError);
+          } finally {
+            setInternalSaving(false);
+          }
+        }
+
         setEditPendingApproval(false);
         setAutoEditProcessing(false);
         if (editor) {
