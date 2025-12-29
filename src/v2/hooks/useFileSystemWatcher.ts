@@ -25,19 +25,15 @@ interface UseFileSystemWatcherReturn {
   error: string | null;
 }
 
-/**
- * ポーリング間隔（ミリ秒）
- */
-const POLLING_INTERVAL = 1000;
+const POLLING_INTERVAL = 1000; // 1秒ごとにチェック
 
-/**
- * File System Access APIを使用してファイル変更を監視するフック
- */
 export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
   const [fileHandle, setFileHandle] = useState<FileSystemFileHandle | null>(null);
   const [isWatching, setIsWatching] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { lastModified, setLastModified } = useAppStore();
+  
+  // setterのみ取得（値はgetStateで直接読む）
+  const { setLastModified } = useAppStore();
 
   const changeCallbackRef = useRef<((event: FileChangeEvent) => void) | null>(null);
   const fileHandleRef = useRef<FileSystemFileHandle | null>(null);
@@ -47,8 +43,13 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
    * ファイルの最終更新時刻を取得
    */
   const getLastModified = useCallback(async (handle: FileSystemFileHandle): Promise<number> => {
-    const file = await handle.getFile();
-    return file.lastModified;
+    try {
+      const file = await handle.getFile();
+      return file.lastModified;
+    } catch (err) {
+      console.error('[FileSystemWatcher] 時刻取得失敗:', err);
+      return 0;
+    }
   }, []);
 
   /**
@@ -61,26 +62,33 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
 
   /**
    * ファイル変更をチェック
+   * クロージャ問題を避けるため、実行時にgetState()で最新の状態を取得する
    */
   const checkForChanges = useCallback(async () => {
     const handle = fileHandleRef.current;
-    if (!handle || !changeCallbackRef.current) {
-      return;
-    }
+    if (!handle || !changeCallbackRef.current) return;
 
     try {
+      // ストアから最新の既知時刻を取得
+      const knownLastModified = useAppStore.getState().lastModified;
       const currentModified = await getLastModified(handle);
 
-      // 初回または変更があった場合
-      if (lastModified === 0) {
+      if (currentModified === 0) return;
+
+      // 初回同期
+      if (knownLastModified === 0) {
         setLastModified(currentModified);
         return;
       }
 
-      if (currentModified > lastModified) {
+      // 変更検知
+      if (currentModified > knownLastModified) {
+        console.log(`[FileSystemWatcher] 変更検知: ${knownLastModified} -> ${currentModified}`);
+        
+        // 即座に既知時刻を更新して重複発火を防ぐ
         setLastModified(currentModified);
 
-        // ファイル内容を読み取り、コールバックを呼び出す
+        // ファイル内容を読み取り、コールバックを呼び出し
         const content = await readFileContent(handle);
         const event: FileChangeEvent = {
           fileHandle: handle,
@@ -88,35 +96,31 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
           content,
         };
 
-        changeCallbackRef.current(event);
+        if (changeCallbackRef.current) {
+          changeCallbackRef.current(event);
+        }
       }
     } catch (err) {
-      console.error('ファイル変更チェックエラー:', err);
-      setError(err instanceof Error ? err.message : '不明なエラー');
-      stopWatching();
+      console.error('[FileSystemWatcher] チェックエラー:', err);
+      // パーミッションエラーなどの場合は停止させる
+      if (err instanceof Error && err.name === 'NotAllowedError') {
+        setError('ファイルへのアクセス権限がありません');
+        // stopWatching(); // ユーザー操作なしで止めると不便なのでログのみ
+      }
     }
-  }, [lastModified, setLastModified, getLastModified, readFileContent]);
+  }, [setLastModified, getLastModified, readFileContent]);
 
   /**
    * ファイルを開いて監視を開始
    */
   const startWatching = useCallback(async () => {
     try {
-      // File System Access APIがサポートされているかチェック
       if (!('showOpenFilePicker' in window)) {
         throw new Error('このブラウザはFile System Access APIをサポートしていません');
       }
 
-      // ファイル選択ダイアログを表示
       const [handle] = await window.showOpenFilePicker({
-        types: [
-          {
-            description: 'HTMLファイル',
-            accept: {
-              'text/html': ['.html', '.htm'],
-            },
-          },
-        ],
+        types: [{ description: 'HTMLファイル', accept: { 'text/html': ['.html', '.htm'] } }],
         multiple: false,
       });
 
@@ -125,21 +129,18 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
       setIsWatching(true);
       setError(null);
 
-      // 初期の最終更新時刻を記録
       const initialModified = await getLastModified(handle);
       setLastModified(initialModified);
 
-      // ポーリング開始
+      if (pollingIntervalRef.current !== null) {
+        window.clearInterval(pollingIntervalRef.current);
+      }
       pollingIntervalRef.current = window.setInterval(checkForChanges, POLLING_INTERVAL);
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
-        // ユーザーがキャンセルした場合は何もしない
-        return;
-      }
-      console.error('ファイル監視開始エラー:', err);
-      setError(err instanceof Error ? err.message : '不明なエラー');
+      console.error('[FileSystemWatcher] 開始エラー:', err);
+      setError(err instanceof Error ? err.message : '監視を開始できませんでした');
     }
-  }, [checkForChanges, getLastModified]);
+  }, [checkForChanges, getLastModified, setLastModified]);
 
   /**
    * 外部ファイルハンドルで監視を開始
@@ -152,22 +153,17 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
         setIsWatching(true);
         setError(null);
 
-        // 初期の最終更新時刻を記録
         const initialModified = await getLastModified(handle);
         setLastModified(initialModified);
 
-        // 既にポーリング中の場合は停止
         if (pollingIntervalRef.current !== null) {
           window.clearInterval(pollingIntervalRef.current);
         }
-
-        // ポーリング開始
         pollingIntervalRef.current = window.setInterval(checkForChanges, POLLING_INTERVAL);
         
-        console.log('[FileSystemWatcher] 外部ハンドルで監視を開始しました');
+        console.log('[FileSystemWatcher] 監視を開始しました:', handle.name);
       } catch (err) {
-        console.error('[FileSystemWatcher] 監視開始エラー:', err);
-        setError(err instanceof Error ? err.message : '不明なエラー');
+        console.error('[FileSystemWatcher] 外部ハンドル監視開始エラー:', err);
       }
     },
     [checkForChanges, getLastModified, setLastModified]
@@ -201,13 +197,10 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
     if (handle) {
       const currentModified = await getLastModified(handle);
       setLastModified(currentModified);
-      console.log('[FileSystemWatcher] 時刻を同期しました（変更検知スキップ）');
+      console.log('[FileSystemWatcher] 時刻を同期しました（次の監視から有効）:', currentModified);
     }
   }, [getLastModified, setLastModified]);
 
-  /**
-   * クリーンアップ
-   */
   useEffect(() => {
     return () => {
       if (pollingIntervalRef.current !== null) {
