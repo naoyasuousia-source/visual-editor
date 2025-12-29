@@ -12,6 +12,8 @@ interface UseFileSystemWatcherReturn {
   isWatching: boolean;
   /** ファイルを開いて監視を開始 */
   startWatching: () => Promise<void>;
+  /** 外部ファイルハンドルで監視を開始 */
+  startWatchingWithHandle: (handle: FileSystemFileHandle) => void;
   /** 監視を停止 */
   stopWatching: () => void;
   /** ファイル変更イベントのコールバックを設定 */
@@ -133,6 +135,36 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
   }, [checkForChanges, getLastModified]);
 
   /**
+   * 外部ファイルハンドルで監視を開始
+   */
+  const startWatchingWithHandle = useCallback(
+    async (handle: FileSystemFileHandle) => {
+      try {
+        setFileHandle(handle);
+        setIsWatching(true);
+        setError(null);
+
+        // 初期の最終更新時刻を記録
+        lastModifiedRef.current = await getLastModified(handle);
+
+        // 既にポーリング中の場合は停止
+        if (pollingIntervalRef.current !== null) {
+          window.clearInterval(pollingIntervalRef.current);
+        }
+
+        // ポーリング開始
+        pollingIntervalRef.current = window.setInterval(checkForChanges, POLLING_INTERVAL);
+        
+        console.log('[FileSystemWatcher] 外部ハンドルで監視を開始しました');
+      } catch (err) {
+        console.error('[FileSystemWatcher] 監視開始エラー:', err);
+        setError(err instanceof Error ? err.message : '不明なエラー');
+      }
+    },
+    [checkForChanges, getLastModified]
+  );
+
+  /**
    * 監視を停止
    */
   const stopWatching = useCallback(() => {
@@ -166,6 +198,7 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
     fileHandle,
     isWatching,
     startWatching,
+    startWatchingWithHandle,
     stopWatching,
     onFileChange,
     error,

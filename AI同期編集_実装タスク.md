@@ -11,12 +11,12 @@
 
 - [x] **Phase 1: 基盤構築** (1-2日) ✅ 完了
 - [x] **Phase 2: コマンドシステム** (2-3日) ✅ 完了
-- [ ] **Phase 3: 自動編集フロー** (2-3日) 🔄 新規追加
-- [ ] **Phase 4: UIコンポーネント** (1-2日) 要更新
-- [ ] **Phase 5: 変更ハイライト** (1日)
-- [ ] **Phase 6: 残りのコマンド実装** (2-3日)
-- [ ] **Phase 7: テスト・最適化** (2-3日)
-- [ ] **Phase 8: ドキュメント・公開準備** (1日)
+- [x] **Phase 3: 自動編集フロー** (2-3日) ✅ 完了
+- [x] **Phase 4: UIコンポーネント** (1-2日) ✅ 完了
+- [x] **Phase 5: 変更ハイライト** (1日) ✅ 完了
+- [x] **Phase 6: 残りのコマンド実装** (2-3日) ⚠️ 基本実装完了（4つのコマンドはスケルトンのみ）
+- [ ] **Phase 7: テスト・最適化** (2-3日) ⬜ 未着手
+- [x] **Phase 8: ドキュメント・公開準備** (1日) ✅ 完了
 
 ---
 
@@ -100,33 +100,40 @@
 
 ---
 
-## Phase 3: 自動編集フロー 🆕 新規追加
+## Phase 3: 自動編集フロー ✅ 完了
 
 ### タスク一覧
-- [ ] `useAutoEdit` フック実装（統合フック）
-  - [ ] エディタ起動時に自動監視開始
-  - [ ] ファイル変更検知
-  - [ ] 承認待ちロック機能
-  - [ ] エラーハンドリング
-- [ ] `useEditApproval` フック実装（承認/破棄管理）
-  - [ ] 編集前の状態保存（エディタHTML）
-  - [ ] 承認処理（ファイル自動保存）
-  - [ ] 破棄処理（状態復元 + ファイル自動保存）
-- [ ] ストア更新
-  - [ ] `isAutoEditProcessing` フラグ追加
-  - [ ] `isEditPendingApproval` フラグ追加
-  - [ ] `lastAutoEditTime` 追加
-  - [ ] ~`isAiSyncEnabled`~ 削除
-  - [ ] ~`isEditorLocked`~ を `isAutoEditProcessing` に統合
-- [ ] エディタロックメッセージを「自動編集中」に変更
+- [x] `useAutoEdit` フック実装（統合フック）
+  - [x] currentFileHandleからの自動監視開始
+  - [x] ファイル変更検知
+  - [x] 承認待ちロック機能
+  - [x] エラーハンドリング
+  - [x] ハイライト表示統合
+- [x] `useEditApproval` フック実装（承認/破棄管理）
+  - [x] 編集前の状態保存（エディタHTML）
+  - [x] 承認処理（ファイル自動保存）
+  - [x] 破棄処理（状態復元 + ファイル自動保存）
+  - [x] エディタロック解除（承認/破棄時）
+  - [x] ハイライトクリア統合
+- [x] `useFileSystemWatcher` 拡張
+  - [x] startWatchingWithHandle関数追加
+  - [x] 外部ハンドルからの監視開始
+- [x] ストア更新
+  - [x] `isAutoEditProcessing` フラグ追加
+  - [x] `isEditPendingApproval` フラグ追加
+  - [x] `lastAutoEditTime` 追加
+  - [x] ~`isAiSyncEnabled`~ 削除済み
+  - [x] ~`isEditorLocked`~ を `isAutoEditProcessing` に名前変更済み
+- [x] エディタロックメッセージを「自動編集中」に変更
 
-### 予定ファイル
-- `src/v2/hooks/useAutoEdit.ts` - 自動編集統合フック
-- `src/v2/hooks/useEditApproval.ts` - 承認/破棄管理フック
+### 作成したファイル
+- `src/v2/hooks/useAutoEdit.ts` - 自動編集統合フック（完全実装）
+- `src/v2/hooks/useEditApproval.ts` - 承認/破棄管理フック（エディタロック解除含む）
 
-### 既存ファイルの更新
-- `src/v2/store/useAppStore.ts` - 状態管理の更新
-- `src/v2/components/features/EditorLockOverlay.tsx` - メッセージ変更
+### 更新したファイル
+- `src/v2/store/useAppStore.ts` - v2.1仕様に更新済み
+- `src/v2/components/features/EditorLockOverlay.tsx` - メッセージ変更済み
+- `src/v2/hooks/useFileSystemWatcher.ts` - startWatchingWithHandle追加
 
 ### 削除予定ファイル
 - `src/v2/hooks/useAiSync.ts` - v1.0の統合フック（不要）
@@ -297,4 +304,5 @@
 
 ---
 
-**最終更新**: 2025-12-29 12:39
+**最終更新**: 2025-12-29 12:52
+
