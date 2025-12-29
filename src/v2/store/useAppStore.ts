@@ -44,13 +44,13 @@ interface AppState {
     triggerJumpInputFocus: () => void;
     resetJumpInputFocus: () => void;
 
-    // AI Sync
-    isAiSyncEnabled: boolean;
-    isEditorLocked: boolean;
-    lastAiSyncTime: number | null;
-    setAiSyncEnabled: (enabled: boolean) => void;
-    setEditorLocked: (locked: boolean) => void;
-    setLastAiSyncTime: (time: number) => void;
+    // Auto Edit (v2.0)
+    isAutoEditProcessing: boolean;     // 自動編集中かどうか
+    isEditPendingApproval: boolean;    // 承認待ちかどうか
+    lastAutoEditTime: number | null;   // 最終自動編集時刻
+    setAutoEditProcessing: (processing: boolean) => void;
+    setEditPendingApproval: (pending: boolean) => void;
+    setLastAutoEditTime: (time: number) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -112,11 +112,11 @@ export const useAppStore = create<AppState>((set) => ({
     triggerJumpInputFocus: () => set({ shouldFocusJumpInput: true }),
     resetJumpInputFocus: () => set({ shouldFocusJumpInput: false }),
 
-    // AI Sync
-    isAiSyncEnabled: false,
-    isEditorLocked: false,
-    lastAiSyncTime: null,
-    setAiSyncEnabled: (enabled) => set({ isAiSyncEnabled: enabled }),
-    setEditorLocked: (locked) => set({ isEditorLocked: locked }),
-    setLastAiSyncTime: (time) => set({ lastAiSyncTime: time }),
+    // Auto Edit (v2.0)
+    isAutoEditProcessing: false,
+    isEditPendingApproval: false,
+    lastAutoEditTime: null,
+    setAutoEditProcessing: (processing) => set({ isAutoEditProcessing: processing }),
+    setEditPendingApproval: (pending) => set({ isEditPendingApproval: pending }),
+    setLastAutoEditTime: (time) => set({ lastAutoEditTime: time }),
 }));

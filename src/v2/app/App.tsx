@@ -20,7 +20,6 @@ import { useFileIO } from '@/hooks/useFileIO';
 import { useTiptapEditor } from '@/hooks/useTiptapEditor';
 import { useGlobalStyles } from '@/hooks/useGlobalStyles';
 import { EditorLockOverlay } from '@/components/features/EditorLockOverlay';
-import { AiSyncPanel } from '@/components/features/AiSyncPanel';
 
 /**
  * EditorV3 - V2エディタのメインコンポーネント
@@ -74,9 +73,6 @@ export const EditorV3 = () => {
     // Keyboard Shortcuts (ロジック分離)
     useKeyboardShortcuts(saveFile, saveAsFile, downloadFile, openFileWithHandle, currentFileHandle, triggerJumpInputFocus);
 
-    // AI Sync は別途手動で有効化（自動起動しない）
-    // ユーザーがAiSyncPanelから明示的に開始する必要がある
-
     return (
         <div className="flex flex-col h-screen bg-[#525659] overflow-hidden font-sans">
             {/* Toolbar Area */}
@@ -87,11 +83,6 @@ export const EditorV3 = () => {
                     onRemovePage={removePage}
                     prompt={prompt}
                 />
-            </div>
-
-            {/* AI Sync Panel */}
-            <div className="px-4 py-2 bg-gray-50 border-b border-gray-200">
-                <AiSyncPanel editor={editor} />
             </div>
             
             {/* Main Content Area */}
