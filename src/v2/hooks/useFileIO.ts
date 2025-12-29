@@ -6,7 +6,6 @@ import { parseAndSetContent, importDocxToEditor } from '@/utils/io';
 import contentCssText from '@/styles/content.css?raw';
 import { useAppStore } from '@/store/useAppStore';
 import * as fileService from '@/services/fileService';
-import { useFileSystemWatcher } from '@/hooks/useFileSystemWatcher';
 
 /**
  * ファイル入出力を管理するカスタムフック
@@ -15,10 +14,23 @@ import { useFileSystemWatcher } from '@/hooks/useFileSystemWatcher';
  */
 export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
     const [isLoading, setIsLoading] = useState(false);
-    const { syncLastModified } = useFileSystemWatcher();
     
     // グローバルストアからファイルハンドルを取得・更新
-    const { currentFileHandle, setCurrentFileHandle, setInternalSaving } = useAppStore();
+    const { currentFileHandle, setCurrentFileHandle, setInternalSaving, setLastModified } = useAppStore();
+
+    /**
+     * ファイルの最終更新時刻を取得してストアに同期
+     * useFileSystemWatcherを使わず直接実装することで、正しいファイルハンドルを使用
+     */
+    const syncLastModifiedForHandle = useCallback(async (handle: FileSystemFileHandle) => {
+        try {
+            const file = await handle.getFile();
+            setLastModified(file.lastModified);
+            console.log('[FileIO] ファイル時刻を同期しました:', file.lastModified);
+        } catch (err) {
+            console.error('[FileIO] ファイル時刻の同期に失敗:', err);
+        }
+    }, [setLastModified]);
 
     /**
      * HTMLファイルを開く
@@ -88,7 +100,7 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
             if (handle) {
                 setCurrentFileHandle(handle);
                 // 自身の保存による変更検知を回避するために時刻を同期
-                await syncLastModified();
+                await syncLastModifiedForHandle(handle);
                 toast.success('保存しました');
             }
         } catch (err) {
@@ -117,7 +129,7 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
             const html = getFullHTML();
             await fileService.saveHtmlFile(currentFileHandle, html);
             // 自身の保存による変更検知を回避するために時刻を同期
-            await syncLastModified();
+            await syncLastModifiedForHandle(currentFileHandle);
             toast.success('上書き保存しました');
         } catch (err) {
             console.error('Overwrite error:', err);

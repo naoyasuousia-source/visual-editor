@@ -59,10 +59,14 @@ export function useCommandParser(): UseCommandParserReturn {
   const hasCommands = useCallback((htmlContent: string): boolean => {
     const commandArea = extractCommandArea(htmlContent);
     if (!commandArea) {
+      console.log('[CommandParser] hasCommands: コマンドエリアなし');
       return false;
     }
 
+    console.log('[CommandParser] hasCommands: コマンドエリア内容:', commandArea);
+
     const commandStrings = extractCommands(commandArea);
+    console.log('[CommandParser] hasCommands: 抽出されたコマンド数:', commandStrings.length, commandStrings);
     return commandStrings.length > 0;
   }, []);
 

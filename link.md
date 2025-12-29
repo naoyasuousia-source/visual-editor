@@ -32,38 +32,48 @@
 
 ## 2. 未解決要件に関するコード変更履歴
 
-### 2024/12/29 - 初期分析および修正
+### 2024/12/29 - 再修正
 
 **問題の特定:**
 
 1. **コマンドパースエラー問題**: 
-   - 原因特定中。パースロジック自体は正しく見えるため、デバッグログを追加して実際のコマンド文字列を確認できるようにした。
+   - 詳細なデバッグログを追加して、コマンド抽出・パースの各ステップを確認できるようにした。
+   - WindowsのCRLF改行に対応するため、`split('\n')` を `split(/\r?\n/)` に修正。
    
 2. **内部保存時の自動編集ダイアログ問題**:
-   - **原因特定**: `useAutoEdit.ts` の `handleFileChange` コールバックで、`isInternalSaving` がクロージャにより古い値を参照している。
-   - `useFileSystemWatcher.ts` の `checkForChanges` では `useAppStore.getState()` を使用して最新の状態を取得しているが、`handleFileChange` では依存配列に含まれていても、実際にはコールバックがファイル変更検知より先に更新されない。
+   - **追加の原因特定**: `useFileIO.ts` で `useFileSystemWatcher` を呼び出していたが、これは新しいフックインスタンスを作成するため、`syncLastModified` が正しいファイルハンドルを参照していなかった。
+   - `useFileIO` 内の `useFileSystemWatcher` インスタンスの `fileHandleRef` は `null` のため、`syncLastModified` は何も行わない状態だった。
 
 **変更内容:**
 
-#### 問題2の修正（完了）
-- `useAutoEdit.ts`: 
-  - `handleFileChange` 内で `isInternalSaving` を直接参照せず、`useAppStore.getState().isInternalSaving` で最新値を取得するように修正
-  - 依存配列から `isInternalSaving` を削除
-  - デストラクチャリングから未使用となった `isInternalSaving` を削除
+#### 問題2の根本原因修正
+- `useFileIO.ts`: 
+  - `useFileSystemWatcher` のインポートを削除
+  - `syncLastModifiedForHandle(handle)` 関数を新規作成し、直接ファイルから時刻を取得して `setLastModified` を呼び出すように変更
+  - `saveAsFile` と `saveFile` で `syncLastModifiedForHandle(handle)` を使用
+
+- `useAutoEdit.ts`:
+  - `handleFileChange` 内で `isInternalSaving` をクロージャから参照せず、`useAppStore.getState().isInternalSaving` で最新値を取得
 
 #### 問題1のデバッグログ追加
-- `useCommandParser.ts`: 
-  - `parseFromHtml` にコマンドエリア抽出とコマンド文字列のログを追加
-- `commandParser.ts`: 
-  - `parseSingleCommand` にコマンドタイプと引数のログを追加
+- `htmlCommentParser.ts`:
+  - `extractCommands`: 改行コードをCRLF/LF両対応に修正、行数と処理中の行をログ出力
+  - `extractCommandFromComment`: 各ステップ（HTMLコメント判定、内容抽出、除外判定）でログ出力
+- `useCommandParser.ts`:
+  - `hasCommands`: コマンドエリアの内容と抽出されたコマンド数をログ出力
+  - `parseFromHtml`: コマンドエリア抽出結果とコマンド文字列をログ出力
+- `commandParser.ts`:
+  - `parseSingleCommand`: コマンドタイプと抽出された引数をログ出力
 
 ## 3. 分析中に気づいた重要ポイント
 
 1. **クロージャ問題**: Reactフックのコールバック関数内で状態を参照する場合、依存配列に含めても、非同期イベント（ポーリングなど）で呼び出される際に古い値が参照される可能性がある。`useAppStore.getState()` を使用することで、常に最新の状態を取得できる。
 
-2. **ファイル監視のタイミング**: `useFileSystemWatcher` は1秒間隔でポーリングしている。保存処理が完了する前に次のポーリングが発生すると、`isInternalSaving` がまだ `true` に設定されていない可能性がある。
+2. **カスタムフックのインスタンス**: `useFileSystemWatcher` のようなカスタムフックは、異なるコンポーネント/フックで呼び出すと**別々のインスタンス**（別々の状態）を持つ。状態を共有するには、Zustandのようなグローバルストアを使用するか、同じインスタンスを共有する必要がある。
 
-3. **コマンドパーサーの仕様**: コマンドエリア内のHTMLコメント形式 `<!-- COMMAND[arg1][arg2] -->` を正しく処理する必要がある。
+3. **ファイル監視のタイミング**: `useFileSystemWatcher` は1秒間隔でポーリングしている。保存処理が完了する前に次のポーリングが発生すると、`isInternalSaving` がまだ `true` に設定されていない可能性がある。
+
+4. **改行コードの違い**: WindowsはCRLF (`\r\n`)、UnixはLF (`\n`) を使用。`split('\n')` では `\r` が残る可能性があるため、`split(/\r?\n/)` を使用する。
 
 ## 4. 解決済み要件とその解決方法
 
