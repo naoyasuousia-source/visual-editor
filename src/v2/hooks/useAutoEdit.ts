@@ -126,6 +126,10 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
             setInternalSaving(true);
             try {
               await writeToFile(event.fileHandle, fullHtml);
+              
+              // 重要: ファイル保存後に時刻を同期
+              await fileSystemWatcher.syncLastModified();
+              
               toast.success('外部変更を検知したため、エディタの内容でファイルを保護しました', { position: 'top-center' });
             } finally {
               setInternalSaving(false);
@@ -200,6 +204,10 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
           try {
             setInternalSaving(true);
             await writeToFile(handle, fullHtml);
+            
+            // 重要: ファイル保存後に時刻を同期し、次の変更検知を防止
+            await fileSystemWatcher.syncLastModified();
+            console.log('[AutoEdit] ファイル保存完了、時刻を同期しました');
           } finally {
             setInternalSaving(false);
           }
@@ -251,6 +259,10 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
             
             setInternalSaving(true);
             await writeToFile(event.fileHandle, fullHtml);
+            
+            // 重要: ファイル保存後に時刻を同期
+            await fileSystemWatcher.syncLastModified();
+            
             toast.info('不完全な編集内容を検知したため、ファイルを正常な状態に復旧しました', { position: 'top-center' });
           } catch (saveError) {
             console.error('[AutoEdit] エラー時の保存（正規化）に失敗:', saveError);
