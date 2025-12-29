@@ -70,7 +70,6 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
         const hasValidCommands = commandParser.hasCommands(event.content);
         
         if (!hasValidCommands) {
-          console.log('[AutoEdit] コマンドなしの外部変更を検知 → 自動保護を実行');
           editor.setEditable(false);
           
           window.alert(
@@ -115,7 +114,6 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
         // 編集前の状態（HTML）を保存
         editApproval.savePreEditState(editor.getHTML());
 
-        console.log('[AutoEdit] コマンドを実行:', parseResult.commands.length, '個');
         const results = commandExecutor.executeCommands(parseResult.commands);
 
         const { isWordMode, pageMargin } = useAppStore.getState();

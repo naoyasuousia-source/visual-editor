@@ -58,8 +58,7 @@ export const CrossPageMerge = Extension.create({
                 }
 
                 if (!pageNode || pagePos === -1) return false;
-                
-                console.log('CrossPageMerge: page found', { paragraphIndex, paragraphCount });
+
 
                 // ページの最初の段落でない場合は通常のBackspace処理
                 if (paragraphIndex !== 0) return false;
@@ -67,7 +66,6 @@ export const CrossPageMerge = Extension.create({
                 // 1ページ目の場合は処理しない（FirstParagraphProtectionに任せる）
                 if (pagePos === 0) return false;
 
-                console.log('CrossPageMerge: attempting merge');
 
                 // 前のページを探す
                 let prevPageNode = null;
@@ -83,7 +81,6 @@ export const CrossPageMerge = Extension.create({
 
                 if (!prevPageNode || prevPagePos === -1) return false;
 
-                console.log('CrossPageMerge: prev page found at pos', prevPagePos);
 
                 // 前のページの最後の段落を見つける
                 let lastParagraphNode = null;
@@ -98,7 +95,6 @@ export const CrossPageMerge = Extension.create({
 
                 if (!lastParagraphNode || lastParagraphPos === -1) return false;
 
-                console.log('CrossPageMerge: merging into paragraph at pos', lastParagraphPos);
 
                 // マージ操作を実行
                 const { tr } = state;
@@ -113,7 +109,7 @@ export const CrossPageMerge = Extension.create({
 
                 if (paragraphCount === 1) {
                     // ページ内に段落が1つしかない場合は、ページごと削除
-                    console.log('CrossPageMerge: deleting entire page');
+
                     
                     // 注意: insertによりposが変わる
                     const contentSize = currentNode.content.size;
@@ -122,7 +118,7 @@ export const CrossPageMerge = Extension.create({
                     tr.delete(pageDeletePos, pageDeletePos + pageNode.nodeSize);
                 } else {
                     // 他にも段落がある場合は、現在の段落のみ削除
-                    console.log('CrossPageMerge: deleting paragraph only');
+
                     
                     const currentParagraphPos = $from.pos - $from.parentOffset - 1;
                     const shift = currentNode.content.size;

@@ -83,7 +83,7 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
 
       // 変更検知
       if (currentModified > knownLastModified) {
-        console.log(`[FileSystemWatcher] 変更検知: ${knownLastModified} -> ${currentModified}`);
+
         
         // 即座に既知時刻を更新して重複発火を防ぐ
         setLastModified(currentModified);
@@ -160,8 +160,7 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
           window.clearInterval(pollingIntervalRef.current);
         }
         pollingIntervalRef.current = window.setInterval(checkForChanges, POLLING_INTERVAL);
-        
-        console.log('[FileSystemWatcher] 監視を開始しました:', handle.name);
+
       } catch (err) {
         console.error('[FileSystemWatcher] 外部ハンドル監視開始エラー:', err);
       }
@@ -197,7 +196,6 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
     if (handle) {
       const currentModified = await getLastModified(handle);
       setLastModified(currentModified);
-      console.log('[FileSystemWatcher] 時刻を同期しました（次の監視から有効）:', currentModified);
     }
   }, [getLastModified, setLastModified]);
 

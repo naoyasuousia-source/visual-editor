@@ -47,7 +47,6 @@ export function useEditApproval(
    */
   const savePreEditState = useCallback((html: string) => {
     preEditHtmlRef.current = html;
-    console.log('[EditApproval] 編集前の状態を保存しました');
   }, []);
 
   /**
@@ -59,7 +58,7 @@ export function useEditApproval(
         const writable = await handle.createWritable();
         await writable.write(content);
         await writable.close();
-        console.log('[EditApproval] ファイルを保存しました');
+
       } catch (error) {
         console.error('[EditApproval] ファイル保存エラー:', error);
         throw error;
@@ -78,7 +77,7 @@ export function useEditApproval(
     }
 
     try {
-      console.log('[EditApproval] 変更を承認します');
+
 
       // 現在のエディタのHTMLを取得
       const editorHtml = editor.getHTML();
@@ -112,8 +111,6 @@ export function useEditApproval(
       // 保存した状態をクリア
       preEditHtmlRef.current = null;
       setBaseFullHtml(null);
-
-      console.log('[EditApproval] 承認完了（エディタロック解除）');
     } catch (error) {
       console.error('[EditApproval] 承認処理エラー:', error);
       throw error;
@@ -130,7 +127,7 @@ export function useEditApproval(
     }
 
     try {
-      console.log('[EditApproval] 変更を破棄します');
+
 
       // エディタを編集前の状態に復元
       editor.commands.setContent(preEditHtmlRef.current);
@@ -164,8 +161,6 @@ export function useEditApproval(
       // 保存した状態をクリア
       preEditHtmlRef.current = null;
       setBaseFullHtml(null);
-
-      console.log('[EditApproval] 破棄完了（エディタロック解除）');
     } catch (error) {
       console.error('[EditApproval] 破棄処理エラー:', error);
       throw error;

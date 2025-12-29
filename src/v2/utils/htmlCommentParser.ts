@@ -63,25 +63,19 @@ export function extractCommandFromComment(line: string): string | null {
   const trimmed = line.trim();
 
   if (!isHtmlComment(trimmed)) {
-    console.log('[htmlCommentParser] HTMLコメントではない:', JSON.stringify(trimmed));
     return null;
   }
 
-  // <!-- と --> を除去
   const content = trimmed
     .replace(/^<!--\s*/, '')
     .replace(/\s*-->$/, '')
     .trim();
 
-  console.log('[htmlCommentParser] コメント内容抽出:', JSON.stringify(content));
-
-  // 空行やプレースホルダーは除外
   if (
     !content ||
     content.startsWith('ここにコマンドを記述') ||
     content.startsWith('AI_COMMAND_')
   ) {
-    console.log('[htmlCommentParser] 除外対象（空またはプレースホルダー）');
     return null;
   }
 
@@ -98,13 +92,9 @@ export function extractCommands(commandArea: string): string[] {
   const lines = commandArea.split(/\r?\n/);
   const commands: string[] = [];
 
-  console.log('[htmlCommentParser] extractCommands: 行数:', lines.length);
-
   for (const line of lines) {
-    console.log('[htmlCommentParser] 処理中の行:', JSON.stringify(line));
     const command = extractCommandFromComment(line);
     if (command) {
-      console.log('[htmlCommentParser] 抽出されたコマンド:', command);
       commands.push(command);
     }
   }

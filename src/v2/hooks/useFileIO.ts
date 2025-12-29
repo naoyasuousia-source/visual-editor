@@ -27,7 +27,6 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
         try {
             const file = await handle.getFile();
             setLastModified(file.lastModified);
-            console.log('[FileIO] ファイル時刻を同期しました:', file.lastModified);
         } catch (err) {
             console.error('[FileIO] ファイル時刻の同期に失敗:', err);
         }

@@ -49,7 +49,7 @@ export const Pagination = Extension.create<PaginationOptions>({
 
                                 // Check if content overflows (1px buffer for rounding)
                                 if (inner.scrollHeight > inner.clientHeight + 1) {
-                                    console.log(`Page ${i + 1} overflow detected`);
+
 
                                     // Find the page node in Tiptap document
                                     const domPos = editorView.posAtDOM(page, 0);
@@ -77,7 +77,7 @@ export const Pagination = Extension.create<PaginationOptions>({
                                     // Check if next node is a page
                                     if (!nextNode || nextNode.type.name !== 'page') {
                                         // Create new page with the overflowed content
-                                        console.log(`Creating new page ${i + 2}`);
+
                                         
                                         // Create new page with the last child as its content
                                         const newPage = state.schema.nodes.page.create(

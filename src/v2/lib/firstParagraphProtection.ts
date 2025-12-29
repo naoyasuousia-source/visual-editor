@@ -50,7 +50,6 @@ export const FirstParagraphProtection = Extension.create({
 
                     // 1ページ目に段落が残らない場合は阻止
                     if (!firstPageHasParagraph) {
-                        console.log('Cannot delete last paragraph from page 1');
                         return false;
                     }
 
