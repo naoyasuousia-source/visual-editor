@@ -46,9 +46,6 @@ export function useCommandExecutor(editor: Editor | null): UseCommandExecutorRet
         case 'DELETE_TEXT':
           return CommandExecutors.executeDeleteText(editor, command);
 
-        case 'FORMAT_TEXT':
-          return CommandExecutors.executeFormatText(editor, command);
-
         case 'INSERT_PARAGRAPH':
           return CommandExecutors.executeInsertParagraph(editor, command);
 
@@ -56,11 +53,7 @@ export function useCommandExecutor(editor: Editor | null): UseCommandExecutorRet
           return CommandExecutors.executeDeleteParagraph(editor, command);
 
         case 'MOVE_PARAGRAPH':
-          return {
-            success: false,
-            error: 'MOVE_PARAGRAPHは現在未実装です',
-            timestamp: Date.now(),
-          };
+          return CommandExecutors.executeMoveParagraph(editor, command);
 
         default:
           return {

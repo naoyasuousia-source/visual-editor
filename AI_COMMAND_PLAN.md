@@ -4,42 +4,75 @@
 現在、AI自動編集機能（Auto-Edit）では、テキストの挿入 (`INSERT_TEXT`) と置換 (`REPLACE_TEXT`) のみが実装されています。
 より高度で人間らしい編集操作（段落の削除、装飾、スタイルの変更など）をAIが実行できるように、コマンドセットを拡張します。
 
+---
+
+## 📋 実装状況サマリー
+
+**ステータス**: ✅ **全て完了** (2025-12-30)
+
+### 実装完了項目
+1. **INSERT_TEXT拡張**: 太字属性 (`bold`) のサポート追加
+2. **INSERT_PARAGRAPH拡張**: ブロックタイプ、見出しレベル、配置、インデント指定のサポート追加
+3. **DELETE_TEXT実装**: 指定範囲のテキスト削除機能を実装
+4. **DELETE_PARAGRAPH実装**: 段落単位での削除機能を実装
+5. **MOVE_PARAGRAPH実装**: 段落の位置移動機能を実装
+6. **FORMAT_TEXT削除**: ユーザー要望により既存テキストへの装飾機能を削除
+
+### 変更ファイル一覧
+- `src/v2/types/ai-sync.types.ts`: 型定義の更新
+- `src/v2/utils/commandParser.ts`: パーサー拡張
+- `src/v2/utils/commandValidator.ts`: バリデーション追加
+- `src/v2/services/commandExecutionService.ts`: 実装ロジック追加
+- `src/v2/services/moveParagraphService.ts`: MOVE_PARAGRAPH専用サービス新規作成
+- `src/v2/hooks/useCommandExecutor.ts`: フック統合
+
+---
+
 ## 2. 現在のステータス
 - **実装済み**:
-    - `INSERT_TEXT`: テキスト挿入（**太字指定追加予定**）
+    - `INSERT_TEXT`: テキスト挿入（**太字指定サポート済み** ✅）
     - `REPLACE_TEXT`: テキスト置換（正規表現対応）
-- **定義済み・実装予定**:
-    - `INSERT_PARAGRAPH`: 段落挿入（**ブロック要素指定、配置、インデント追加予定**）
-    - `DELETE_TEXT`: テキスト削除
-    - `DELETE_PARAGRAPH`: 段落削除
-    - `MOVE_PARAGRAPH`: 段落移動
+    - `INSERT_PARAGRAPH`: 段落挿入（**ブロック要素指定、配置、インデント対応済み** ✅）
+    - `DELETE_TEXT`: テキスト削除 ✅
+    - `DELETE_PARAGRAPH`: 段落削除 ✅
+    - `MOVE_PARAGRAPH`: 段落移動 ✅
 
 ## 3. 実装ロードマップ & 進捗記録
 
 ### フェーズ 1: コマンド仕様の改修と実装
 ユーザーフィードバックに基づき、既存コマンドの仕様を拡張し、不要なコマンドを削除します。
 
-- [ ] **INSERT_TEXT (仕様変更)**
-    - [ ] Update `ai-sync.types.ts`: `attributes: { bold?: boolean }` を追加
-    - [ ] Logic Update (`commandExecutionService.ts`): 太字での挿入に対応
-    - [ ] Validator Update (`commandValidator.ts`)
+- [x] **INSERT_TEXT (仕様変更)** ✅ 完了
+    - [x] Update `ai-sync.types.ts`: `attributes: { bold?: boolean }` を追加
+    - [x] Logic Update (`commandExecutionService.ts`): 太字での挿入に対応
+    - [x] Validator Update (`commandValidator.ts`)
+    - [x] Parser Update (`commandParser.ts`)
 
-- [ ] **INSERT_PARAGRAPH (仕様変更)**
-    - [ ] Update `ai-sync.types.ts`: `options` (type, align, indent) を追加
-    - [ ] Logic Update (`commandExecutionService.ts`): 指定されたスタイルでの段落挿入に対応
-    - [ ] Validator Update (`commandValidator.ts`)
+- [x] **INSERT_PARAGRAPH (仕様変更)** ✅ 完了
+    - [x] Update `ai-sync.types.ts`: `options` (type, align, indent) を追加
+    - [x] Logic Update (`commandExecutionService.ts`): 指定されたスタイルでの段落挿入に対応
+    - [x] Validator Update (`commandValidator.ts`)
+    - [x] Parser Update (`commandParser.ts`)
 
-- [ ] **DELETE_TEXT**
-    - [ ] Logic Implementation (`commandExecutionService.ts`)
-    - [ ] Validator Check (`commandValidator.ts`)
+- [x] **DELETE_TEXT** ✅ 完了
+    - [x] Logic Implementation (`commandExecutionService.ts`)
+    - [x] Validator Check (`commandValidator.ts`)
 
-- [ ] **DELETE_PARAGRAPH**
-    - [ ] Logic Implementation (`commandExecutionService.ts`)
-    - [ ] Validator Check (`commandValidator.ts`)
+- [x] **DELETE_PARAGRAPH** ✅ 完了
+    - [x] Logic Implementation (`commandExecutionService.ts`)
+    - [x] Validator Check (`commandValidator.ts`)
 
-- [ ] **MOVE_PARAGRAPH**
-    - [ ] Logic Implementation (`commandExecutionService.ts`)
-    - [ ] Validator Check (`commandValidator.ts`)
+- [x] **MOVE_PARAGRAPH** ✅ 完了
+    - [x] Logic Implementation (`moveParagraphService.ts`)
+    - [x] Export from `commandExecutionService.ts`
+    - [x] Hook Integration (`useCommandExecutor.ts`)
+
+- [x] **FORMAT_TEXT 削除** ✅ 完了
+    - [x] Remove from `ai-sync.types.ts`
+    - [x] Remove from `commandParser.ts`
+    - [x] Remove from `commandValidator.ts`
+    - [x] Remove from `commandExecutionService.ts`
+    - [x] Remove from `useCommandExecutor.ts`
 
 
 ## 4. コマンド仕様詳細 (改定版)

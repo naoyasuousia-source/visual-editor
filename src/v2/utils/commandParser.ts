@@ -130,10 +130,13 @@ function parseSingleCommand(
         if (!position) {
           throw new Error(`位置指定が不正です: ${args[0]}`);
         }
+        // 3番目の引数が 'bold' の場合は太字フラグを立てる
+        const attributes = args[2] === 'bold' ? { bold: true } : undefined;
         command = {
           type: 'INSERT_TEXT',
           position,
           text: args[1],
+          ...(attributes && { attributes }),
           lineNumber,
         };
         break;
@@ -173,23 +176,7 @@ function parseSingleCommand(
         break;
       }
 
-      case 'FORMAT_TEXT': {
-        if (args.length < 2) {
-          throw new Error('引数が不足しています（範囲、書式が必要）');
-        }
-        const range = parseRange(args[0]);
-        if (!range) {
-          throw new Error(`範囲指定が不正です: ${args[0]}`);
-        }
-        const format = args[1] as 'bold' | 'italic' | 'underline' | 'strikethrough' | 'code';
-        command = {
-          type: 'FORMAT_TEXT',
-          range,
-          format,
-          lineNumber,
-        };
-        break;
-      }
+
 
       case 'INSERT_PARAGRAPH': {
         if (args.length < 2) {
@@ -199,10 +186,40 @@ function parseSingleCommand(
         if (isNaN(position)) {
           throw new Error(`段落位置が不正です: ${args[0]}`);
         }
+        
+        // オプションのパース (args[2]以降)
+        // 形式: type:[paragraph|heading], level:[1-3], align:[left|center|right], indent:[number]
+        const options: {
+          type?: 'paragraph' | 'heading';
+          level?: 1 | 2 | 3;
+          align?: 'left' | 'center' | 'right';
+          indent?: number;
+        } = {};
+        
+        for (let i = 2; i < args.length; i++) {
+          const option = args[i];
+          if (option === 'heading') {
+            options.type = 'heading';
+          } else if (option === 'paragraph') {
+            options.type = 'paragraph';
+          } else if (option.match(/^level:([123])$/)) {
+            options.level = parseInt(option.split(':')[1], 10) as 1 | 2 | 3;
+          } else if (option === 'center') {
+            options.align = 'center';
+          } else if (option === 'right') {
+            options.align = 'right';
+          } else if (option === 'left') {
+            options.align = 'left';
+          } else if (option.match(/^indent:(\d+)$/)) {
+            options.indent = parseInt(option.split(':')[1], 10);
+          }
+        }
+        
         command = {
           type: 'INSERT_PARAGRAPH',
           position,
           text: args[1],
+          ...(Object.keys(options).length > 0 && { options }),
           lineNumber,
         };
         break;

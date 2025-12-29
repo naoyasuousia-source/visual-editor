@@ -17,7 +17,6 @@ const ALLOWED_COMMANDS: CommandType[] = [
   'INSERT_TEXT',
   'REPLACE_TEXT',
   'DELETE_TEXT',
-  'FORMAT_TEXT',
   'INSERT_PARAGRAPH',
   'DELETE_PARAGRAPH',
   'MOVE_PARAGRAPH',
@@ -90,6 +89,10 @@ export function validateCommand(
       if (typeof command.text !== 'string' || command.text.length === 0) {
         return { valid: false, error: '挿入テキストが空です' };
       }
+      // attributes.bold のバリデーション
+      if (command.attributes?.bold !== undefined && typeof command.attributes.bold !== 'boolean') {
+        return { valid: false, error: 'bold属性はboolean型である必要があります' };
+      }
       break;
     }
 
@@ -117,16 +120,7 @@ export function validateCommand(
       break;
     }
 
-    case 'FORMAT_TEXT': {
-      if (!isValidRange(command.range)) {
-        return { valid: false, error: '無効な書式範囲' };
-      }
-      const allowedFormats = ['bold', 'italic', 'underline', 'strikethrough', 'code'];
-      if (!allowedFormats.includes(command.format)) {
-        return { valid: false, error: `サポートされていない書式: ${command.format}` };
-      }
-      break;
-    }
+
 
     case 'INSERT_PARAGRAPH': {
       if (!Number.isInteger(command.position) || command.position < 1) {
@@ -134,6 +128,27 @@ export function validateCommand(
       }
       if (typeof command.text !== 'string') {
         return { valid: false, error: '段落テキストが不正です' };
+      }
+      // オプションのバリデーション
+      if (command.options) {
+        const { type, level, align, indent } = command.options;
+        if (type && !['paragraph', 'heading'].includes(type)) {
+          return { valid: false, error: '無効なブロックタイプ' };
+        }
+        if (level !== undefined) {
+          if (![1, 2, 3].includes(level)) {
+            return { valid: false, error: '見出しレベルは1-3である必要があります' };
+          }
+          if (type !== 'heading') {
+            return { valid: false, error: 'levelはtype=headingの場合のみ指定可能です' };
+          }
+        }
+        if (align && !['left', 'center', 'right'].includes(align)) {
+          return { valid: false, error: '無効な配置指定' };
+        }
+        if (indent !== undefined && (!Number.isInteger(indent) || indent < 0)) {
+          return { valid: false, error: 'インデントは0以上の整数である必要があります' };
+        }
       }
       break;
     }

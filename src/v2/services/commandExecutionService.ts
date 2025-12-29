@@ -3,19 +3,20 @@ import type {
   InsertTextCommand,
   ReplaceTextCommand,
   DeleteTextCommand,
-  FormatTextCommand,
   InsertParagraphCommand,
   DeleteParagraphCommand,
+  MoveParagraphCommand,
   ExecutionResult,
   Range,
 } from '@/types/ai-sync.types';
+import { executeMoveParagraph } from './moveParagraphService';
 
 /**
  * INSERT_TEXTコマンドを実行
  */
 export function executeInsertText(editor: Editor, command: InsertTextCommand): ExecutionResult {
   try {
-    const { position, text } = command;
+    const { position, text, attributes } = command;
 
     // 段落を特定（doc.descendants を使用して正確な位置を取得）
     const { state } = editor;
@@ -44,8 +45,16 @@ export function executeInsertText(editor: Editor, command: InsertTextCommand): E
       };
     }
 
-    // テキストを挿入
-    editor.chain().focus().insertContentAt(targetPos, text).run();
+    // テキストを挿入 (太字属性がある場合はマークを付与)
+    if (attributes?.bold) {
+      editor.chain().focus().insertContentAt(targetPos, {
+        type: 'text',
+        text,
+        marks: [{ type: 'bold' }],
+      }).run();
+    } else {
+      editor.chain().focus().insertContentAt(targetPos, text).run();
+    }
 
     return {
       success: true,
@@ -172,43 +181,192 @@ export function executeReplaceText(editor: Editor, command: ReplaceTextCommand):
 /**
  * DELETE_TEXTコマンドを実行
  */
-export function executeDeleteText(_editor: Editor, _command: DeleteTextCommand): ExecutionResult {
-  return {
-    success: false,
-    error: 'DELETE_TEXTは現在未実装です',
-    timestamp: Date.now(),
-  };
+export function executeDeleteText(editor: Editor, command: DeleteTextCommand): ExecutionResult {
+  try {
+    const { range } = command;
+
+    // 段落を特定して削除範囲の位置を特定
+    const { state } = editor;
+    const { doc } = state;
+    let pIdx = 0;
+    let fromPos: number | null = null;
+    let toPos: number | null = null;
+
+    doc.descendants((node, pos) => {
+      if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+        pIdx++;
+        if (pIdx === range.start.paragraph) {
+          fromPos = pos + 1 + range.start.offset;
+          toPos = pos + 1 + range.end.offset;
+          return false;
+        }
+      }
+      return true;
+    });
+
+    if (fromPos === null || toPos === null) {
+      return {
+        success: false,
+        error: `段落 ${range.start.paragraph} が見つかりませんでした`,
+        timestamp: Date.now(),
+      };
+    }
+
+    // テキストを削除
+    const tr = state.tr.delete(fromPos, toPos);
+    editor.view.dispatch(tr);
+
+    return {
+      success: true,
+      changedRanges: [range],
+      timestamp: Date.now(),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '不明なエラー',
+      timestamp: Date.now(),
+    };
+  }
 }
 
-/**
- * FORMAT_TEXTコマンドを実行
- */
-export function executeFormatText(_editor: Editor, _command: FormatTextCommand): ExecutionResult {
-  return {
-    success: false,
-    error: 'FORMAT_TEXTは現在未実装です',
-    timestamp: Date.now(),
-  };
-}
+
 
 /**
  * INSERT_PARAGRAPHコマンドを実行
  */
-export function executeInsertParagraph(_editor: Editor, _command: InsertParagraphCommand): ExecutionResult {
-  return {
-    success: false,
-    error: 'INSERT_PARAGRAPHは現在未実装です',
-    timestamp: Date.now(),
-  };
+export function executeInsertParagraph(editor: Editor, command: InsertParagraphCommand): ExecutionResult {
+  try {
+    const { position, text, options } = command;
+
+    // 段落を特定
+    const { state } = editor;
+    const { doc } = state;
+    let pIdx = 0;
+    let targetPos: number | null = null;
+
+    // position 番目の段落の直前に挿入
+    if (position === 1) {
+      targetPos = 0;
+    } else {
+      doc.descendants((node, pos) => {
+        if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+          pIdx++;
+          if (pIdx === position - 1) {
+            targetPos = pos + node.nodeSize;
+            return false;
+          }
+        }
+        return true;
+      });
+    }
+
+    if (targetPos === null && position > 1) {
+      return {
+        success: false,
+        error: `段落 ${position} の挿入位置が見つかりませんでした`,
+        timestamp: Date.now(),
+      };
+    }
+
+    // ノードタイプと属性を決定
+    const nodeType = options?.type === 'heading' ? 'heading' : 'paragraph';
+    const attrs: Record<string, unknown> = {};
+    
+    if (nodeType === 'heading' && options?.level) {
+      attrs.level = options.level;
+    }
+    if (options?.align) {
+      attrs.textAlign = options.align;
+    }
+    if (options?.indent !== undefined) {
+      attrs.indent = options.indent;
+    }
+
+    // 段落を挿入
+    const content = {
+      type: nodeType,
+      ...(Object.keys(attrs).length > 0 && { attrs }),
+      content: text ? [{ type: 'text', text }] : [],
+    };
+
+    editor.chain().focus().insertContentAt(targetPos!, content).run();
+
+    return {
+      success: true,
+      changedRanges: [
+        {
+          start: { paragraph: position, offset: 0 },
+          end: { paragraph: position, offset: text.length },
+        },
+      ],
+      timestamp: Date.now(),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '不明なエラー',
+      timestamp: Date.now(),
+    };
+  }
 }
 
 /**
  * DELETE_PARAGRAPHコマンドを実行
  */
-export function executeDeleteParagraph(_editor: Editor, _command: DeleteParagraphCommand): ExecutionResult {
-  return {
-    success: false,
-    error: 'DELETE_PARAGRAPHは現在未実装です',
-    timestamp: Date.now(),
-  };
+export function executeDeleteParagraph(editor: Editor, command: DeleteParagraphCommand): ExecutionResult {
+  try {
+    const { paragraph } = command;
+
+    // 段落を特定
+    const { state } = editor;
+    const { doc } = state;
+    let pIdx = 0;
+    let targetPos: number | null = null;
+    let targetNode: typeof doc.firstChild | null = null;
+
+    doc.descendants((node, pos) => {
+      if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+        pIdx++;
+        if (pIdx === paragraph) {
+          targetPos = pos;
+          targetNode = node;
+          return false;
+        }
+      }
+      return true;
+    });
+
+    if (targetPos === null || !targetNode) {
+      return {
+        success: false,
+        error: `段落 ${paragraph} が見つかりませんでした`,
+        timestamp: Date.now(),
+      };
+    }
+
+    // 段落を削除
+    const tr = state.tr.delete(targetPos, targetPos + targetNode.nodeSize);
+    editor.view.dispatch(tr);
+
+    return {
+      success: true,
+      changedRanges: [
+        {
+          start: { paragraph, offset: 0 },
+          end: { paragraph, offset: 0 },
+        },
+      ],
+      timestamp: Date.now(),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '不明なエラー',
+      timestamp: Date.now(),
+    };
+  }
 }
+
+// Re-export executeMoveParagraph for convenience
+export { executeMoveParagraph };
