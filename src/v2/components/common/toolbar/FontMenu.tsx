@@ -100,9 +100,8 @@ export const FontMenu: React.FC<FontMenuProps> = ({ editor }) => {
                     <button
                         type="button"
                         onClick={() => toggleExpanded('family')}
-                        className={`${boxBase} px-2 justify-between gap-1.5 ${expanded === 'family' ? activeBox : ''}`}
+                        className={`${boxBase} px-2 justify-between gap-1.5 min-w-[80px] ${expanded === 'family' ? activeBox : ''}`}
                         title="フォントファミリー"
-                        style={{ minWidth: '80px' }}
                     >
                         <span className="text-[12px] font-bold leading-none truncate max-w-[80px]">
                             {fontFamilies.find(f => f.value === editor.getAttributes('textStyle').fontFamily)?.name || 'フォント'}

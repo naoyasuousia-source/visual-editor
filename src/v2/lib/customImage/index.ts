@@ -1,7 +1,7 @@
 import { Image as TiptapImage } from '@tiptap/extension-image';
 import { mergeAttributes } from '@tiptap/core';
 import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
-import { createImageNodeView } from './nodeView';
+import { createImageNodeView } from '@/lib/customImage/nodeView';
 
 /**
  * カスタム画像拡張 (CustomImage)

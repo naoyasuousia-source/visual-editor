@@ -1,7 +1,7 @@
 
 import { Editor } from '@tiptap/react';
 import mammoth from 'mammoth';
-import { buildFullHTML } from './aiMetadata';
+import { buildFullHTML } from '@/utils/aiMetadata';
 import contentCssText from '@/styles/content.css?raw'; // Import CSS as raw string
 
 /**

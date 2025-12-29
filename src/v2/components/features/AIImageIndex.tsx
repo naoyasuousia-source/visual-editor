@@ -61,7 +61,7 @@ export const AIImageIndex: React.FC<AIImageIndexProps> = ({ editor }) => {
     if (isWordMode) return null;
 
     return (
-        <div id="ai-image-index" style={{ display: 'none' }} aria-hidden="true">
+        <div id="ai-image-index" className="hidden" aria-hidden="true">
             {metaList.map((meta, index) => (
                 <div
                     key={`${meta.src}-${index}`}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BaseDialog } from './BaseDialog';
+import { BaseDialog } from '@/components/ui/BaseDialog';
 
 interface PromptDialogProps {
     open: boolean;
