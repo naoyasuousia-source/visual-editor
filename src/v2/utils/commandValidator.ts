@@ -162,17 +162,4 @@ export function validateCommand(
   return { valid: true };
 }
 
-/**
- * テキストのサニタイズ（XSS対策）
- * @param text - サニタイズするテキスト
- * @returns サニタイズ済みテキスト
- */
-export function sanitizeText(text: string): string {
-  // HTML特殊文字をエスケープ
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+

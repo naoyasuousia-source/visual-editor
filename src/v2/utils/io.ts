@@ -77,14 +77,7 @@ export function parseAndSetContent(editor: Editor, html: string): ParseResult {
     }
 }
 
-/**
- * Generates the full HTML document string from the editor content.
- * 【重要】この関数は後方互換性のために残されています。
- * 新しいコードでは useFileIO フックを使用してください。
- */
-export function generateFullHtml(editor: Editor, isWordMode: boolean = false): string {
-    return buildFullHTML(editor, isWordMode, contentCssText, '17mm', '');
-}
+
 
 /**
  * Imports a Docx file and sets the editor content.

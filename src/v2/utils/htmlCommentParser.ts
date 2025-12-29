@@ -30,25 +30,7 @@ export function extractCommandArea(htmlContent: string): string | null {
   return commandArea;
 }
 
-/**
- * コマンドエリアをクリア（空にする）したHTML文字列を返す
- * @param htmlContent - 元のHTML文字列
- * @returns コマンドエリアがクリアされたHTML文字列
- */
-export function clearCommandArea(htmlContent: string): string {
-  const startIndex = htmlContent.indexOf(COMMAND_START_MARKER);
-  const endIndex = htmlContent.indexOf(COMMAND_END_MARKER);
 
-  if (startIndex === -1 || endIndex === -1 || startIndex >= endIndex) {
-    return htmlContent;
-  }
-
-  const before = htmlContent.substring(0, startIndex + COMMAND_START_MARKER.length);
-  const after = htmlContent.substring(endIndex);
-
-  // コマンドエリアを空にして再構成
-  return `${before}\n<!-- ここにコマンドを記述してください -->\n${after}`;
-}
 
 /**
  * コマンドエリアが存在するかチェック

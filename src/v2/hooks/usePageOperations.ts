@@ -1,9 +1,10 @@
 import { Editor } from '@tiptap/react';
 import { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { toast } from 'sonner';
+import { ConfirmOptions } from '@/hooks/useDialogs';
 
 interface UsePageOperationsOptions {
-    confirm: (options: { title: string; description: string; variant?: 'default' | 'danger' }) => Promise<boolean>;
+    confirm: (options: ConfirmOptions) => Promise<boolean>;
 }
 
 interface PageInfo {
@@ -51,7 +52,7 @@ export const usePageOperations = (editor: Editor | null, options: UsePageOperati
         const confirmed = await options.confirm({
             title: 'ページ削除の確認',
             description: '現在のページを削除してもよろしいですか？この操作は取り消せません。',
-            variant: 'danger'
+            variant: 'destructive'
         });
         
         if (!confirmed) return;
