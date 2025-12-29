@@ -13,9 +13,6 @@
     - `DELETE_TEXT`: テキスト削除
     - `DELETE_PARAGRAPH`: 段落削除
     - `MOVE_PARAGRAPH`: 段落移動
-- **廃止/不要**:
-    - `FORMAT_TEXT`: 既存テキストへの装飾は不要との判断により廃止
-    - `UPDATE_STYLE`: 不採用
 
 ## 3. 実装ロードマップ & 進捗記録
 
@@ -44,8 +41,6 @@
     - [ ] Logic Implementation (`commandExecutionService.ts`)
     - [ ] Validator Check (`commandValidator.ts`)
 
-- [ ] **FORMAT_TEXT & UPDATE_STYLE**
-    - [ ] Update `ai-sync.types.ts`: 定義から削除
 
 ## 4. コマンド仕様詳細 (改定版)
 
