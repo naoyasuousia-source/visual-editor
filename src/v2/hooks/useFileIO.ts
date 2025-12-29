@@ -20,7 +20,7 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
     const [isLoading, setIsLoading] = useState(false);
     
     // グローバルストアからファイルハンドルを取得・更新
-    const { currentFileHandle, setCurrentFileHandle } = useAppStore();
+    const { currentFileHandle, setCurrentFileHandle, setInternalSaving } = useAppStore();
 
     /**
      * HTMLファイルを開く
@@ -83,6 +83,7 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
 
         try {
             setIsLoading(true);
+            setInternalSaving(true);
             const html = getFullHTML();
             const handle = await fileService.saveHtmlFileAs(html);
 
@@ -95,6 +96,7 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
             toast.error(err instanceof Error ? err.message : '保存に失敗しました');
         } finally {
             setIsLoading(false);
+            setInternalSaving(false);
         }
     };
 
@@ -111,6 +113,7 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
 
         try {
             setIsLoading(true);
+            setInternalSaving(true);
             const html = getFullHTML();
             await fileService.saveHtmlFile(currentFileHandle, html);
             toast.success('上書き保存しました');
@@ -119,6 +122,7 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
             toast.error('保存に失敗しました');
         } finally {
             setIsLoading(false);
+            setInternalSaving(false);
         }
     };
 

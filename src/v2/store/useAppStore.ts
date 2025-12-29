@@ -49,10 +49,12 @@ interface AppState {
     isEditPendingApproval: boolean;    // 承認待ちかどうか
     lastAutoEditTime: number | null;   // 最終自動編集時刻
     baseFullHtml: string | null;       // 保存時に元の構造を維持するためのベースHTML
+    isInternalSaving: boolean;         // エディタ自身が保存処理中かどうか
     setAutoEditProcessing: (processing: boolean) => void;
     setEditPendingApproval: (pending: boolean) => void;
     setLastAutoEditTime: (time: number | null) => void;
     setBaseFullHtml: (html: string | null) => void;
+    setInternalSaving: (saving: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -119,8 +121,10 @@ export const useAppStore = create<AppState>((set) => ({
     isEditPendingApproval: false,
     lastAutoEditTime: null,
     baseFullHtml: null,
+    isInternalSaving: false,
     setAutoEditProcessing: (processing) => set({ isAutoEditProcessing: processing }),
     setEditPendingApproval: (pending) => set({ isEditPendingApproval: pending }),
     setLastAutoEditTime: (time) => set({ lastAutoEditTime: time }),
     setBaseFullHtml: (html) => set({ baseFullHtml: html }),
+    setInternalSaving: (saving) => set({ isInternalSaving: saving }),
 }));

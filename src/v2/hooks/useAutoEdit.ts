@@ -38,10 +38,13 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
     isAutoEditProcessing,
     isEditPendingApproval,
     lastAutoEditTime,
+    isInternalSaving,
+    baseFullHtml,
     setAutoEditProcessing,
     setEditPendingApproval,
     setLastAutoEditTime,
     setBaseFullHtml,
+    setInternalSaving,
   } = useAppStore();
 
   const fileSystemWatcher = useFileSystemWatcher();
@@ -50,16 +53,19 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
   const editApproval = useEditApproval(editor, currentFileHandle);
   const { highlightChanges } = useChangeHighlight(editor);
 
-  const isWatchingRef = useRef(false);
-
   /**
-   * ファイルに書き込み
+   * ファイルに直接書き込み（User Gestureがある場合のみ成功）
    */
   const writeToFile = useCallback(
     async (handle: FileSystemFileHandle, content: string): Promise<void> => {
-      const writable = await handle.createWritable();
-      await writable.write(content);
-      await writable.close();
+      try {
+        const writable = await handle.createWritable();
+        await writable.write(content);
+        await writable.close();
+      } catch (error) {
+        console.error('[AutoEdit] ファイル書き込み失敗:', error);
+        throw error;
+      }
     },
     []
   );
@@ -69,19 +75,16 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
    */
   const handleFileChange = useCallback(
     async (event: FileChangeEvent) => {
-      console.log('[AutoEdit] 変更イベント受信:', event.fileHandle.name, '時刻:', event.timestamp);
-
-      // 承認待ち中は新しい編集をブロック
-      if (isEditPendingApproval) {
-        console.error('[AutoEdit] 承認待ち中です。前回の編集を承認または破棄してください。');
-        toast.error('前回の自動編集を承認または破棄してください', {
-          position: 'top-center',
-        });
+      // エディタ自身による保存の場合は無視
+      if (isInternalSaving) {
+        console.log('[AutoEdit] 内部保存による変更検知をスキップします');
         return;
       }
 
-      // 処理中は重複実行を防止
-      if (isAutoEditProcessing) {
+      console.log('[AutoEdit] 変更イベント受信:', event.fileHandle.name, '時刻:', event.timestamp);
+
+      // 承認待ち中または処理中は新しい編集をブロック
+      if (isEditPendingApproval || isAutoEditProcessing) {
         return;
       }
 
@@ -91,76 +94,69 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
       }
 
       try {
-        console.log('[AutoEdit] ファイル変更を検知:', event.timestamp);
-
         // コマンドが存在するかチェック
         if (!commandParser.hasCommands(event.content)) {
-          console.log('[AutoEdit] コマンドが見つかりません');
           return;
         }
 
-        // ステップ1: エディタをロック
-        console.log('[AutoEdit] エディタをロック');
-        setAutoEditProcessing(true);
+        // --- ここからユーザー確認（User Gesture） ---
+        // エディタを一時的にロック
         editor.setEditable(false);
+        
+        const confirmed = window.confirm(
+          '外部からのAI編集コマンドを検知しました。\n' +
+          '現在の変更を保存して、自動編集を実行しますか？'
+        );
+
+        if (!confirmed) {
+          console.log('[AutoEdit] ユーザーによりキャンセルされました');
+          editor.setEditable(true);
+          return;
+        }
+
+        // ポジティブアクション開始
+        setAutoEditProcessing(true);
+
+        // ステップ1: コマンドをパース（エラーチェック）
+        const parseResult = commandParser.parseFromHtml(event.content);
+        if (parseResult.errors.length > 0) {
+          const firstError = parseResult.errors[0].message;
+          console.error('[AutoEdit] パースエラー:', parseResult.errors);
+          toast.error(`コマンドエラー: ${firstError}`, { position: 'top-center' });
+          throw new Error(`パースエラー: ${firstError}`);
+        }
 
         // ステップ2: 編集前の状態を保存
         const preEditHtml = editor.getHTML();
         editApproval.savePreEditState(preEditHtml);
 
-        // ステップ3: コマンドをパース
-        const parseResult = commandParser.parseFromHtml(event.content);
-        console.log('[AutoEdit] パース結果:', parseResult);
-
-        if (parseResult.errors.length > 0) {
-          console.error('[AutoEdit] パースエラー:', parseResult.errors);
-          toast.error(`コマンドパースエラー: ${parseResult.errors[0].message}`, {
-            position: 'top-center',
-          });
-          throw new Error(`コマンドパースエラー: ${parseResult.errors[0].message}`);
-        }
-
-        if (parseResult.commands.length === 0) {
-          console.log('[AutoEdit] 実行可能なコマンドがありません');
-          return;
-        }
-
-        // ステップ4: コマンドエリアをクリア
-        console.log('[AutoEdit] コマンドエリアをクリアしてベースHTMLを更新');
+        // ステップ3: ファイル側のコマンドをクリア保存
+        // (confirmの直後なのでUser Gestureとして権利が残っている)
+        console.log('[AutoEdit] ファイル上のコマンドをクリアして保存します');
         const clearedContent = clearCommandArea(event.content);
         setBaseFullHtml(clearedContent);
+        
+        try {
+          setInternalSaving(true);
+          await writeToFile(event.fileHandle, clearedContent);
+        } finally {
+          setInternalSaving(false);
+        }
 
-        // ステップ5: 自動保存（スキップ）
-        // ブラウザの制限によりユーザー操作なしでの書き込みは不可
-        console.log('[AutoEdit] ステップ5 (自動保存) をスキップします（承認時に実行されます）');
-
-        // 少し待機
-        await new Promise((resolve) => setTimeout(resolve, 50));
-
-        // ステップ6: コマンドを実行
+        // ステップ4: コマンドを実行
         console.log('[AutoEdit] コマンドを実行:', parseResult.commands.length, '個');
         const results = commandExecutor.executeCommands(parseResult.commands);
 
-        // 実行結果をログとトースト
+        // 実行結果をログ
         const successCount = results.filter((r) => r.success).length;
         const failureCount = results.length - successCount;
 
-        results.forEach((result, index) => {
-          if (result.success) {
-            console.log(`[AutoEdit] コマンド${index + 1}実行成功`);
-          } else {
-            console.error(`[AutoEdit] コマンド${index + 1}実行失敗:`, result.error);
-          }
-        });
-
         if (failureCount > 0) {
-          toast.error(`自動編集失敗: ${failureCount}個のコマンドが実行できませんでした`, {
-            position: 'top-center',
-          });
+          toast.error(`自動編集失敗: 一部のコマンドが実行できませんでした`, { position: 'top-center' });
           throw new Error('一部のコマンドが実行できませんでした');
         }
 
-        // ステップ7: 成功時の処理
+        // ステップ5: 成功時の処理
         setLastAutoEditTime(Date.now());
         setEditPendingApproval(true);
 
@@ -173,38 +169,25 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
           highlightChanges(allChangedRanges);
         }
 
-        // 承認待ち中はエディタをロックしたまま（setEditableは呼ばない）
-
-        toast.success(`自動編集成功: ${successCount}個のコマンドを実行しました`, {
-          position: 'top-center',
-        });
-
+        toast.success(`自動編集完了: ${successCount}個のコマンドを実行しました`, { position: 'top-center' });
         console.log('[AutoEdit] 処理完了（承認待ち、エディタロックを維持）');
+
       } catch (error) {
         console.error('[AutoEdit] エラー:', error);
-        // エラー時は承認待ちにしない
         setEditPendingApproval(false);
-        // エディタのロックを解除
         setAutoEditProcessing(false);
         if (editor) {
           editor.setEditable(true);
         }
       } finally {
-        // 成功時はisAutoEditProcessingだけ解除
-        // エディタのロック（setEditable(false)）は承認/破棄まで維持
-        if (!isEditPendingApproval) {
-          // エラー時のみここに到達
-          setAutoEditProcessing(false);
-        } else {
-          // 成功時
-          setAutoEditProcessing(false);
-        }
+        setAutoEditProcessing(false);
       }
     },
     [
       editor,
       isAutoEditProcessing,
       isEditPendingApproval,
+      isInternalSaving,
       commandParser,
       commandExecutor,
       editApproval,
@@ -212,6 +195,8 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
       setAutoEditProcessing,
       setEditPendingApproval,
       setLastAutoEditTime,
+      setBaseFullHtml,
+      setInternalSaving,
       writeToFile,
     ]
   );
@@ -227,30 +212,24 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
       return;
     }
 
-    // ハンドルが変更されたかチェック
-    const handleName = (currentFileHandle as any).name;
-    if (lastHandleRef.current === handleName) {
+    const handle = currentFileHandle as any;
+    const handleId = handle.name || 'unknown';
+    if (lastHandleRef.current === handleId) {
       return;
     }
 
-    console.log(`[AutoEdit] ファイル監視を(再)開始します: ${handleName}`);
-    lastHandleRef.current = handleName;
+    console.log(`[AutoEdit] ファイル監視を(再)開始します: ${handleId}`);
+    lastHandleRef.current = handleId;
 
-    // ファイル変更イベントのリスナーを設定
     fileSystemWatcher.onFileChange(handleFileChange);
 
-    // 既に監視中の場合は一旦停止
     if (fileSystemWatcher.isWatching) {
       fileSystemWatcher.stopWatching();
     }
 
-    // 外部ハンドルで監視を開始
     fileSystemWatcher.startWatchingWithHandle(currentFileHandle);
 
-    return () => {
-      // クリーンアップでは停止しない（エディタが開いている間は監視し続けるため）
-      // ただしハンドルが変わった場合は上記if文で停止される
-    };
+    return () => {};
   }, [currentFileHandle, editor, fileSystemWatcher, handleFileChange]);
 
   return {
