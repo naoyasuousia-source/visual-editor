@@ -14,6 +14,8 @@ import { useEditApproval } from '@/hooks/useEditApproval';
 import { useChangeHighlight } from '@/hooks/useChangeHighlight';
 import { clearCommandArea } from '@/utils/htmlCommentParser';
 import type { FileChangeEvent } from '@/types/ai-sync.types';
+import { buildFullHTML } from '@/utils/aiMetadata';
+import contentCssText from '@/styles/content.css?raw';
 
 interface UseAutoEditReturn {
   /** 自動編集中かどうか */
@@ -131,22 +133,49 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
         const preEditHtml = editor.getHTML();
         editApproval.savePreEditState(preEditHtml);
 
-        // ステップ3: ファイル側のコマンドをクリア保存
-        // (confirmの直後なのでUser Gestureとして権利が残っている)
-        console.log('[AutoEdit] ファイル上のコマンドをクリアして保存します');
-        const clearedContent = clearCommandArea(event.content);
-        setBaseFullHtml(clearedContent);
+        // ステップ3: コマンドを実行
+        console.log('[AutoEdit] コマンドを実行:', parseResult.commands.length, '個');
+        const results = commandExecutor.executeCommands(parseResult.commands);
+
+        // ステップ4: その結果をファイルに保存
+        // 重要: event.content（AIが編集したファイル）をそのまま保存せず、
+        // エディタの状態から正規のHTMLを再構築して保存する。
+        // これにより、AIがコマンドエリア以外を勝手に編集していても、それは破棄される。
+        console.log('[AutoEdit] 正規のHTMLを再構築して保存します');
+        
+        const { isWordMode, pageMargin } = useAppStore.getState();
+        const marginMap: Record<string, string> = { s: '12mm', m: '17mm', l: '24mm' };
+        const pageMarginText = marginMap[pageMargin] || '17mm';
+        
+        // AI画像インデックスはDOMから取得
+        const aiImageIndexHtml = document.getElementById('ai-image-index')?.outerHTML || '';
+        
+        // 完全なHTMLを構築
+        let fullHtml = buildFullHTML(
+          editor,
+          isWordMode,
+          contentCssText,
+          pageMarginText,
+          aiImageIndexHtml
+        );
+
+        // コマンドエリアを注入（AIが再び書き込めるように）
+        const commandAreaPlaceholder = `
+<!-- AI_COMMAND_START -->
+<!-- ここにコマンドを記述してください -->
+<!-- AI_COMMAND_END -->
+`;
+        // pages-containerの直前に挿入
+        fullHtml = fullHtml.replace('<div id="pages-container">', `${commandAreaPlaceholder}\n<div id="pages-container">`);
+
+        setBaseFullHtml(fullHtml);
         
         try {
           setInternalSaving(true);
-          await writeToFile(event.fileHandle, clearedContent);
+          await writeToFile(event.fileHandle, fullHtml);
         } finally {
           setInternalSaving(false);
         }
-
-        // ステップ4: コマンドを実行
-        console.log('[AutoEdit] コマンドを実行:', parseResult.commands.length, '個');
-        const results = commandExecutor.executeCommands(parseResult.commands);
 
         // 実行結果をログ
         const successCount = results.filter((r) => r.success).length;
