@@ -218,8 +218,10 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
         }
 
         // ステップ5: 成功時の処理
+        console.log('[AutoEdit] 成功！承認待ち状態を設定します...');
         setLastAutoEditTime(Date.now());
         setEditPendingApproval(true);
+        console.log('[AutoEdit] 状態設定完了: isPendingApproval=true, lastEditTime=', Date.now());
 
         // ハイライト表示 (エディタがロックされていると効かない可能性があるため、一時的に解除して適用)
         const allChangedRanges = results

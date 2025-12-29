@@ -78,6 +78,15 @@ export const EditorV3 = () => {
     // Auto Edit (v2.0 - 自動編集フロー)
     const autoEdit = useAutoEdit(editor);
 
+    // デバッグ: autoEditの状態変化を監視
+    useEffect(() => {
+        console.log('[App] autoEdit state changed:', {
+            isPendingApproval: autoEdit.isPendingApproval,
+            lastEditTime: autoEdit.lastEditTime,
+            isProcessing: autoEdit.isProcessing
+        });
+    }, [autoEdit.isPendingApproval, autoEdit.lastEditTime, autoEdit.isProcessing]);
+
     return (
         <div className="flex flex-col h-screen bg-[#525659] overflow-hidden font-sans">
             {/* Toolbar Area */}
