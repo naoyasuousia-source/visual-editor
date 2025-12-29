@@ -93,12 +93,13 @@ function parseSingleCommand(
 ): Command | ParseError {
   const trimmed = commandStr.trim();
   
-  console.log('[CommandParser] パース中:', trimmed);
+  console.log('[CommandParser] パース中 (raw):', JSON.stringify(commandStr));
+  console.log('[CommandParser] パース中 (trimmed):', JSON.stringify(trimmed));
 
   // コマンドタイプを抽出
   const typeMatch = trimmed.match(/^([A-Z_]+)/);
   if (!typeMatch) {
-    console.log('[CommandParser] コマンドタイプ識別失敗');
+    console.log('[CommandParser] コマンドタイプ識別失敗 - rawCommand:', JSON.stringify(commandStr));
     return {
       message: 'コマンドタイプが識別できません',
       lineNumber,
