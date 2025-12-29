@@ -71,11 +71,20 @@ export function extractCommandFromComment(line: string): string | null {
     .replace(/\s*-->$/, '')
     .trim();
 
+  // 空行、説明、ガイド文などを除外
   if (
     !content ||
     content.startsWith('ここにコマンドを記述') ||
-    content.startsWith('AI_COMMAND_')
+    content.startsWith('Write your commands') ||
+    content.startsWith('AI_COMMAND_') ||
+    content.startsWith('テスト') ||
+    (content.includes(':') && !content.match(/\d+:\d+/)) // コロンを含むが位置指定でないもの（説明文）
   ) {
+    return null;
+  }
+
+  // コマンドとして有効な形式かチェック（大文字の英字で始まり、[ を含む）
+  if (!content.match(/^[A-Z_]+\[/)) {
     return null;
   }
 
