@@ -6,6 +6,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { useFileIO } from '@/hooks/useFileIO';
 import { useImageInsert } from '@/hooks/useImageInsert';
 import { useLinkActions } from '@/hooks/useLinkActions';
+import { readTextFromFile } from '@/utils/io';
+import { setEditorContentFromHtml } from '@/services/contentService';
 
 interface FileMenuProps {
     editor: Editor | null;
@@ -47,16 +49,20 @@ export const FileMenu: React.FC<FileMenuProps> = ({ editor, prompt }) => {
 
     const handleOpenHtmlFallback = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0 && editor) {
-            const { readTextFromFile, parseAndSetContent } = await import('@/utils/io');
-            const { toggleWordMode } = useAppStore.getState();
             try {
                 const text = await readTextFromFile(e.target.files[0]);
-                const detectedWordMode = parseAndSetContent(editor, text, isWordMode);
-                if (detectedWordMode !== isWordMode) {
-                    toggleWordMode();
+                const { isWordModeDetected, pageMargin: detectedMargin } = setEditorContentFromHtml(editor, text);
+                
+                if (detectedMargin) {
+                    setPageMargin(detectedMargin);
+                }
+                
+                if (isWordModeDetected !== isWordMode) {
+                    // Toggle mode if detected mode differs
+                     useAppStore.getState().setWordMode(isWordModeDetected);
                 }
             } catch (err) {
-                console.error(err);
+                // Ignore error
             }
         }
         e.target.value = '';
@@ -67,7 +73,7 @@ export const FileMenu: React.FC<FileMenuProps> = ({ editor, prompt }) => {
             try {
                 await importDocx(e.target.files[0]);
             } catch (err) {
-                console.error(err);
+                // Ignore error
             }
         }
         e.target.value = '';

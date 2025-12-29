@@ -30,7 +30,7 @@ export function clearAllHighlights(editor: Editor): void {
       .unsetHighlight()
       .run();
   } catch (error) {
-    console.error('[highlightService] ハイライト削除エラー:', error);
+    // エラーは無視
   }
 }
 
@@ -71,7 +71,6 @@ function convertRangeToProseMirrorPosition(
 
     return { from: startPos, to: endPos };
   } catch (error) {
-    console.error('[highlightService] 位置変換エラー:', error);
     return { from: null, to: null };
   }
 }

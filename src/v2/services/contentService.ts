@@ -102,7 +102,6 @@ export async function importDocxToEditor(editor: Editor, file: File): Promise<vo
         }
 
     } catch (err) {
-        console.error('Docx import error:', err);
         throw new Error('Wordファイルのインポート中にエラーが発生しました。');
     }
 }
