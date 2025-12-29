@@ -1,6 +1,7 @@
 
 import { Editor } from '@tiptap/react';
 import mammoth from 'mammoth';
+import { buildFullHTML } from './aiMetadata';
 import contentCssText from '@/styles/content.css?raw'; // Import CSS as raw string
 
 /**
@@ -82,9 +83,7 @@ export function parseAndSetContent(editor: Editor, html: string): ParseResult {
  * 新しいコードでは useFileIO フックを使用してください。
  */
 export function generateFullHtml(editor: Editor, isWordMode: boolean = false): string {
-    // 新しいbuildFullHTML関数を使用（AIメタガイドを含む）
-    const { buildFullHTML } = require('./aiMetadata');
-    return buildFullHTML(editor, isWordMode, contentCssText);
+    return buildFullHTML(editor, isWordMode, contentCssText, '17mm', '');
 }
 
 /**

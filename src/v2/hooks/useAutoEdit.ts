@@ -241,8 +241,8 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
       return;
     }
 
-    const handle = currentFileHandle as any;
-    const handleId = handle.name || 'unknown';
+    const handle = currentFileHandle;
+    const handleId = handle?.name || 'unknown';
     if (lastHandleRef.current === handleId) {
       return;
     }

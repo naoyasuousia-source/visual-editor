@@ -5,7 +5,7 @@ import { BaseDropdownMenu, MenuItem, SubMenu, MenuSeparator } from '@/components
 import { useAppStore } from '@/store/useAppStore';
 import { useFileIO } from '@/hooks/useFileIO';
 import { useImageInsert } from '@/hooks/useImageInsert';
-import { addLinkDestination, createLink, removeLink } from '@/hooks/useLinkActions';
+import { useLinkActions } from '@/hooks/useLinkActions';
 
 interface FileMenuProps {
     editor: Editor | null;
@@ -30,6 +30,7 @@ export const FileMenu: React.FC<FileMenuProps> = ({ editor, prompt }) => {
     const { setPageMargin, isWordMode, openDialog } = useAppStore();
     const { saveFile, saveAsFile, downloadFile, openFileWithHandle, importDocx } = useFileIO(editor, isWordMode);
     const { insertFromDropbox, insertFromWeb } = useImageInsert(editor, { prompt });
+    const { addLinkDestination, createLink, removeLink } = useLinkActions(editor, { prompt });
     
     const htmlInputRef = useRef<HTMLInputElement>(null);
     const docxInputRef = useRef<HTMLInputElement>(null);

@@ -1,14 +1,14 @@
 import { useState, useCallback } from 'react';
 
-interface ConfirmOptions {
+export interface ConfirmOptions {
     title: string;
     description: string;
     confirmText?: string;
     cancelText?: string;
-    variant?: 'default' | 'danger';
+    variant?: 'default' | 'destructive';
 }
 
-interface PromptOptions {
+export interface PromptOptions {
     title: string;
     description?: string;
     placeholder?: string;

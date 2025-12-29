@@ -114,7 +114,7 @@ export const EditorV3 = () => {
                     >
                         {editor && (
                             <>
-                                <LinkBubbleMenu editor={editor} />
+                                <LinkBubbleMenu editor={editor} prompt={prompt} />
                                 <AIImageIndex editor={editor} />
                                 <ImageContextMenu editor={editor}>
                                     <EditorContent editor={editor} />

@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Editor } from '@tiptap/react';
 import { Edit2, Link2Off } from 'lucide-react';
+import { useLinkActions } from '@/hooks/useLinkActions';
+import { PromptOptions } from '@/hooks/useDialogs';
 
 interface LinkBubbleMenuProps {
     editor: Editor;
+    prompt: (options: PromptOptions) => Promise<string | null>;
 }
 
 interface PopupPosition {
@@ -11,11 +14,20 @@ interface PopupPosition {
     left: number;
 }
 
-export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({ editor }) => {
+/**
+ * リンク用バブルメニュー
+ * 
+ * rules.md に基づき、ビジネスロジックを useLinkActions フックへ委譲し、
+ * 直接的なDOM操作を排除しています。
+ */
+export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({ editor, prompt }) => {
     const [hoveredLink, setHoveredLink] = useState<HTMLAnchorElement | null>(null);
     const [popupPosition, setPopupPosition] = useState<PopupPosition | null>(null);
     const [isPopupHovered, setIsPopupHovered] = useState(false);
     const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // リンク操作ロジックをフックから取得
+    const { changeLinkDestination, removeLink } = useLinkActions(editor, { prompt });
 
     useEffect(() => {
         if (!editor) return;
@@ -60,72 +72,19 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({ editor }) => {
         };
     }, [editor, isPopupHovered]);
 
-    if (!editor) return null;
+    if (!editor || !hoveredLink || !popupPosition) return null;
 
-    const changeDestination = () => {
-        if (!hoveredLink) return;
-        
-        const { state } = editor;
-        
-        // エディタのドキュメント内の全ブックマークを検索
-        const bookmarks: Array<{ id: string; text: string }> = [];
-        
-        state.doc.descendants((node) => {
-            if (node.marks) {
-                node.marks.forEach(mark => {
-                    if (mark.type.name === 'bookmark' && mark.attrs.id) {
-                        const text = node.textContent.substring(0, 50);
-                        if (!bookmarks.find(b => b.id === mark.attrs.id)) {
-                            bookmarks.push({ id: mark.attrs.id, text });
-                        }
-                    }
-                });
-            }
-        });
-
-        if (bookmarks.length === 0) {
-            alert('リンク先が登録されていません。');
-            return;
-        }
-
-        let promptMessage = 'どのリンク先にリンクしますか？番号を入力してください。\n\n';
-        bookmarks.forEach((bookmark, index) => {
-            promptMessage += `${index + 1}: ${bookmark.text}\n`;
-        });
-
-        const choice = window.prompt(promptMessage);
-        if (!choice) return;
-
-        const choiceNum = parseInt(choice.trim(), 10);
-        if (isNaN(choiceNum) || choiceNum < 1 || choiceNum > bookmarks.length) {
-            alert('無効な番号です。');
-            return;
-        }
-
-        const selectedBookmark = bookmarks[choiceNum - 1];
-        hoveredLink.href = `#${selectedBookmark.id}`;
-        
+    const handleChangeDestination = () => {
+        changeLinkDestination(hoveredLink);
         setHoveredLink(null);
         setPopupPosition(null);
     };
 
-    const removeLink = () => {
-        if (!hoveredLink) return;
-        
-        const parent = hoveredLink.parentNode;
-        if (parent) {
-            while (hoveredLink.firstChild) {
-                parent.insertBefore(hoveredLink.firstChild, hoveredLink);
-            }
-            parent.removeChild(hoveredLink);
-            parent.normalize();
-        }
-        
+    const handleRemoveLink = () => {
+        removeLink(hoveredLink);
         setHoveredLink(null);
         setPopupPosition(null);
     };
-
-    if (!hoveredLink || !popupPosition) return null;
 
     const btnCls = "flex items-center gap-1.5 px-3 py-1.5 hover:bg-gray-100 text-sm transition-colors whitespace-nowrap text-gray-700";
 
@@ -144,11 +103,11 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({ editor }) => {
                 setPopupPosition(null);
             }}
         >
-            <button type="button" className={btnCls} onClick={changeDestination}>
+            <button type="button" className={btnCls} onClick={handleChangeDestination}>
                 <Edit2 className="w-4 h-4 text-blue-500" />
                 <span>リンク先変更</span>
             </button>
-            <button type="button" className={`${btnCls} text-red-600 hover:bg-red-50`} onClick={removeLink}>
+            <button type="button" className={`${btnCls} text-red-600 hover:bg-red-50`} onClick={handleRemoveLink}>
                 <Link2Off className="w-4 h-4" />
                 <span>削除</span>
             </button>
