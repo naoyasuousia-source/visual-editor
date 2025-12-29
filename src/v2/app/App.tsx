@@ -20,6 +20,8 @@ import { useFileIO } from '@/hooks/useFileIO';
 import { useTiptapEditor } from '@/hooks/useTiptapEditor';
 import { useGlobalStyles } from '@/hooks/useGlobalStyles';
 import { EditorLockOverlay } from '@/components/features/EditorLockOverlay';
+import { AutoEditBar } from '@/components/features/AutoEditBar';
+import { useAutoEdit } from '@/hooks/useAutoEdit';
 
 /**
  * EditorV3 - V2エディタのメインコンポーネント
@@ -73,6 +75,9 @@ export const EditorV3 = () => {
     // Keyboard Shortcuts (ロジック分離)
     useKeyboardShortcuts(saveFile, saveAsFile, downloadFile, openFileWithHandle, currentFileHandle, triggerJumpInputFocus);
 
+    // Auto Edit (v2.0 - 自動編集フロー)
+    const autoEdit = useAutoEdit(editor);
+
     return (
         <div className="flex flex-col h-screen bg-[#525659] overflow-hidden font-sans">
             {/* Toolbar Area */}
@@ -84,6 +89,15 @@ export const EditorV3 = () => {
                     prompt={prompt}
                 />
             </div>
+
+            {/* Auto Edit Bar - 承認待ち時のみ表示 */}
+            {autoEdit.isPendingApproval && autoEdit.lastEditTime && (
+                <AutoEditBar
+                    lastEditTime={autoEdit.lastEditTime}
+                    onApprove={autoEdit.approveEdit}
+                    onReject={autoEdit.rejectEdit}
+                />
+            )}
             
             {/* Main Content Area */}
             <div className="flex flex-1 overflow-hidden relative">
