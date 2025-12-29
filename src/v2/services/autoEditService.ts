@@ -17,7 +17,7 @@ export async function protectDocument(
   const pageMarginText = marginMap[pageMargin] || '17mm';
   const aiImageIndexHtml = document.getElementById('ai-image-index')?.outerHTML || '';
   
-  const fullHtml = buildFullHTML(editor, isWordMode, contentCssText, pageMarginText, aiImageIndexHtml);
+  const fullHtml = buildFullHTML(editor.getHTML(), isWordMode, contentCssText, pageMarginText, aiImageIndexHtml);
   
   await saveHtmlFile(handle, fullHtml);
 }
@@ -38,7 +38,7 @@ export async function saveExecutionResult(
   const aiImageIndexHtml = document.getElementById('ai-image-index')?.outerHTML || '';
   
   const fullHtml = buildFullHTML(
-    editor,
+    editor.getHTML(),
     isWordMode,
     contentCssText,
     pageMarginText,

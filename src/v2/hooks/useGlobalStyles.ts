@@ -2,6 +2,15 @@ import { useEffect } from 'react';
 import { Editor } from '@tiptap/react';
 import { useAppStore } from '@/store/useAppStore';
 
+const HIGHLIGHT_STYLE_ID = 'auto-edit-highlight-styles';
+const HIGHLIGHT_CSS = `
+  .auto-edit-highlight {
+    background-color: #fef08a !important;
+    transition: background-color 0.3s ease;
+    display: inline;
+  }
+`;
+
 /**
  * グローバルなスタイル同期とエディタ設定を担当するフック
  * 
@@ -40,4 +49,16 @@ export const useGlobalStyles = (editor: Editor | null) => {
         const marginMap = { s: '12mm', m: '17mm', l: '24mm' };
         document.documentElement.style.setProperty('--page-margin', marginMap[pageMargin]);
     }, [pageMargin]);
+
+    /**
+     * ハイライト用の共通スタイルを注入
+     */
+    useEffect(() => {
+        if (!document.getElementById(HIGHLIGHT_STYLE_ID)) {
+            const style = document.createElement('style');
+            style.id = HIGHLIGHT_STYLE_ID;
+            style.textContent = HIGHLIGHT_CSS;
+            document.head.appendChild(style);
+        }
+    }, []);
 };

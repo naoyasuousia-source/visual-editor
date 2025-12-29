@@ -2,10 +2,11 @@ import { useState, useCallback } from 'react';
 import { Editor } from '@tiptap/react';
 import { toast } from 'sonner';
 import { buildFullHTML } from '@/utils/aiMetadata';
-import { parseAndSetContent, importDocxToEditor } from '@/utils/io';
+
 import contentCssText from '@/styles/content.css?raw';
 import { useAppStore } from '@/store/useAppStore';
 import * as fileService from '@/services/fileService';
+import * as contentService from '@/services/contentService';
 
 /**
  * ファイル入出力を管理するカスタムフック
@@ -46,7 +47,7 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
             if (!result) return false; // キャンセル
 
             const { handle, content } = result;
-            const { isWordModeDetected, pageMargin: detectedMargin } = parseAndSetContent(editor, content);
+            const { isWordModeDetected, pageMargin: detectedMargin } = contentService.setEditorContentFromHtml(editor, content);
             
             // 検出された設定をストアに反映
             if (detectedMargin) {
@@ -82,7 +83,7 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
         // AI画像インデックスはDOMから直接取得（エクスポート用）
         const aiImageIndexHtml = document.getElementById('ai-image-index')?.outerHTML || '';
         
-        return buildFullHTML(editor, isWordMode, contentCssText, pageMarginText, aiImageIndexHtml);
+        return buildFullHTML(editor.getHTML(), isWordMode, contentCssText, pageMarginText, aiImageIndexHtml);
     };
 
     /**
@@ -176,7 +177,7 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
 
         try {
             setIsLoading(true);
-            await importDocxToEditor(editor, file);
+            await contentService.importDocxToEditor(editor, file);
             toast.success('Wordファイルをインポートしました');
         } catch (err) {
             console.error('Docx import error:', err);

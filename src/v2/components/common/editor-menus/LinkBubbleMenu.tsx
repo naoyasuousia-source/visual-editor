@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { Editor } from '@tiptap/react';
 import { Edit2, Link2Off } from 'lucide-react';
 import { useLinkActions } from '@/hooks/useLinkActions';
+import { useLinkBubblePosition } from '@/hooks/useLinkBubblePosition';
 import { PromptOptions } from '@/hooks/useDialogs';
 
 interface LinkBubbleMenuProps {
@@ -9,81 +10,31 @@ interface LinkBubbleMenuProps {
     prompt: (options: PromptOptions) => Promise<string | null>;
 }
 
-interface PopupPosition {
-    top: number;
-    left: number;
-}
-
 /**
  * リンク用バブルメニュー
- * 
- * rules.md に基づき、ビジネスロジックを useLinkActions フックへ委譲し、
- * 直接的なDOM操作を排除しています。
  */
 export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({ editor, prompt }) => {
-    const [hoveredLink, setHoveredLink] = useState<HTMLAnchorElement | null>(null);
-    const [popupPosition, setPopupPosition] = useState<PopupPosition | null>(null);
-    const [isPopupHovered, setIsPopupHovered] = useState(false);
-    const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // 位置計算ロジックをフックに委譲
+    const { 
+        hoveredLink, 
+        popupPosition, 
+        setIsPopupHovered, 
+        closePopup 
+    } = useLinkBubblePosition(editor);
 
     // リンク操作ロジックをフックから取得
     const { changeLinkDestination, removeLink } = useLinkActions(editor, { prompt });
-
-    useEffect(() => {
-        if (!editor) return;
-
-        const editorDom = editor.view.dom as HTMLElement;
-
-        const handleMouseMove = (e: MouseEvent) => {
-            const target = e.target as HTMLElement;
-            const link = target.closest('a[href^="#bm-"]') as HTMLAnchorElement | null;
-            
-            if (link) {
-                // リンク上にいる場合、タイマーをクリアしてポップアップを表示
-                if (hideTimerRef.current) {
-                    clearTimeout(hideTimerRef.current);
-                    hideTimerRef.current = null;
-                }
-                const rect = link.getBoundingClientRect();
-                setHoveredLink(link);
-                setPopupPosition({
-                    top: rect.top - 45,
-                    left: rect.left + rect.width / 2,
-                });
-            } else if (!isPopupHovered) {
-                // リンク外でポップアップにもホバーしていない場合、遅延して非表示
-                if (!hideTimerRef.current) {
-                    hideTimerRef.current = setTimeout(() => {
-                        setHoveredLink(null);
-                        setPopupPosition(null);
-                        hideTimerRef.current = null;
-                    }, 300);
-                }
-            }
-        };
-
-        editorDom.addEventListener('mousemove', handleMouseMove);
-
-        return () => {
-            editorDom.removeEventListener('mousemove', handleMouseMove);
-            if (hideTimerRef.current) {
-                clearTimeout(hideTimerRef.current);
-            }
-        };
-    }, [editor, isPopupHovered]);
 
     if (!editor || !hoveredLink || !popupPosition) return null;
 
     const handleChangeDestination = () => {
         changeLinkDestination(hoveredLink);
-        setHoveredLink(null);
-        setPopupPosition(null);
+        closePopup();
     };
 
     const handleRemoveLink = () => {
         removeLink(hoveredLink);
-        setHoveredLink(null);
-        setPopupPosition(null);
+        closePopup();
     };
 
     const btnCls = "flex items-center gap-1.5 px-3 py-1.5 hover:bg-gray-100 text-sm transition-colors whitespace-nowrap text-gray-700";
@@ -99,8 +50,7 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({ editor, prompt }
             onMouseEnter={() => setIsPopupHovered(true)}
             onMouseLeave={() => {
                 setIsPopupHovered(false);
-                setHoveredLink(null);
-                setPopupPosition(null);
+                closePopup();
             }}
         >
             <button type="button" className={btnCls} onClick={handleChangeDestination}>
@@ -114,3 +64,4 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({ editor, prompt }
         </div>
     );
 };
+

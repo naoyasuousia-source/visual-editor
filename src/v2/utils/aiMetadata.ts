@@ -1,4 +1,4 @@
-import { Editor } from '@tiptap/react';
+
 
 /**
  * AIエージェント向けガイド（head内に配置するコメント）
@@ -67,7 +67,7 @@ export function generateCommandArea(): string {
 /**
  * 完全なHTML文書を生成する
  * 
- * @param editor Tiptapエディタインスタンス
+ * @param htmlContent エディタから取得したHTML文字列
  * @param isWordMode Wordモードかどうか
  * @param contentCss コンテンツCSS文字列
  * @param pageMarginText ページマージンのCSS値 (例: "17mm")
@@ -75,15 +75,12 @@ export function generateCommandArea(): string {
  * @returns 完全なHTML文書文字列
  */
 export function buildFullHTML(
-    editor: Editor,
+    htmlContent: string,
     isWordMode: boolean,
     contentCss: string,
     pageMarginText: string,
     aiImageIndexHtml: string
 ): string {
-    // 1. エディタコンテンツを取得
-    const htmlContent = editor.getHTML();
-
     // 2. AIガイド（head内）とコマンドエリア（body直後）を生成
     const aiGuide = generateAiGuide(isWordMode);
     const commandArea = generateCommandArea();
