@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Editor } from '@tiptap/react';
 import { toast } from 'sonner';
 import { buildFullHTML } from '@/utils/aiMetadata';
@@ -6,18 +6,16 @@ import { parseAndSetContent, importDocxToEditor } from '@/utils/io';
 import contentCssText from '@/styles/content.css?raw';
 import { useAppStore } from '@/store/useAppStore';
 import * as fileService from '@/services/fileService';
+import { useFileSystemWatcher } from '@/hooks/useFileSystemWatcher';
 
 /**
  * ファイル入出力を管理するカスタムフック
  * 
  * Tiptapエディタと外部ファイル（HTML/Docx）のやり取りを橋渡しします。
- * 実際のファイルシステム操作は @/services/fileService に委譲します。
- * 
- * @param editor Tiptapエディタインスタンス
- * @param isWordMode 現在のWordモード状態
  */
 export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
     const [isLoading, setIsLoading] = useState(false);
+    const { syncLastModified } = useFileSystemWatcher();
     
     // グローバルストアからファイルハンドルを取得・更新
     const { currentFileHandle, setCurrentFileHandle, setInternalSaving } = useAppStore();
@@ -89,6 +87,8 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
 
             if (handle) {
                 setCurrentFileHandle(handle);
+                // 自身の保存による変更検知を回避するために時刻を同期
+                await syncLastModified();
                 toast.success('保存しました');
             }
         } catch (err) {
@@ -116,6 +116,8 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
             setInternalSaving(true);
             const html = getFullHTML();
             await fileService.saveHtmlFile(currentFileHandle, html);
+            // 自身の保存による変更検知を回避するために時刻を同期
+            await syncLastModified();
             toast.success('上書き保存しました');
         } catch (err) {
             console.error('Overwrite error:', err);
@@ -127,7 +129,7 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
     };
 
     /**
-     * ファイルをダウンロード（Legacy/Fallback 用）
+     * ファイルをダウンロード
      */
     const downloadFile = async (): Promise<void> => {
         if (!editor) return;
@@ -156,7 +158,6 @@ export const useFileIO = (editor: Editor | null, isWordMode: boolean) => {
 
     /**
      * Wordファイルをインポート
-     * @param file インポートするWordファイル
      */
     const importDocx = async (file: File): Promise<void> => {
         if (!editor) return;

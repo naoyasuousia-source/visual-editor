@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { FileChangeEvent } from '@/types/ai-sync.types';
+import { useAppStore } from '@/store/useAppStore';
 
 interface UseFileSystemWatcherReturn {
   /** ファイルハンドル */
@@ -18,6 +19,8 @@ interface UseFileSystemWatcherReturn {
   stopWatching: () => void;
   /** ファイル変更イベントのコールバックを設定 */
   onFileChange: (callback: (event: FileChangeEvent) => void) => void;
+  /** 現在のファイルの時刻を同期（次の変更検知をスキップ用） */
+  syncLastModified: () => Promise<void>;
   /** エラーメッセージ */
   error: string | null;
 }
@@ -34,10 +37,10 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
   const [fileHandle, setFileHandle] = useState<FileSystemFileHandle | null>(null);
   const [isWatching, setIsWatching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { lastModified, setLastModified } = useAppStore();
 
   const changeCallbackRef = useRef<((event: FileChangeEvent) => void) | null>(null);
   const fileHandleRef = useRef<FileSystemFileHandle | null>(null);
-  const lastModifiedRef = useRef<number>(0);
   const pollingIntervalRef = useRef<number | null>(null);
 
   /**
@@ -69,13 +72,13 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
       const currentModified = await getLastModified(handle);
 
       // 初回または変更があった場合
-      if (lastModifiedRef.current === 0) {
-        lastModifiedRef.current = currentModified;
+      if (lastModified === 0) {
+        setLastModified(currentModified);
         return;
       }
 
-      if (currentModified > lastModifiedRef.current) {
-        lastModifiedRef.current = currentModified;
+      if (currentModified > lastModified) {
+        setLastModified(currentModified);
 
         // ファイル内容を読み取り、コールバックを呼び出す
         const content = await readFileContent(handle);
@@ -92,7 +95,7 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
       setError(err instanceof Error ? err.message : '不明なエラー');
       stopWatching();
     }
-  }, [fileHandle, getLastModified, readFileContent]);
+  }, [lastModified, setLastModified, getLastModified, readFileContent]);
 
   /**
    * ファイルを開いて監視を開始
@@ -123,7 +126,8 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
       setError(null);
 
       // 初期の最終更新時刻を記録
-      lastModifiedRef.current = await getLastModified(handle);
+      const initialModified = await getLastModified(handle);
+      setLastModified(initialModified);
 
       // ポーリング開始
       pollingIntervalRef.current = window.setInterval(checkForChanges, POLLING_INTERVAL);
@@ -149,7 +153,8 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
         setError(null);
 
         // 初期の最終更新時刻を記録
-        lastModifiedRef.current = await getLastModified(handle);
+        const initialModified = await getLastModified(handle);
+        setLastModified(initialModified);
 
         // 既にポーリング中の場合は停止
         if (pollingIntervalRef.current !== null) {
@@ -165,7 +170,7 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
         setError(err instanceof Error ? err.message : '不明なエラー');
       }
     },
-    [checkForChanges, getLastModified]
+    [checkForChanges, getLastModified, setLastModified]
   );
 
   /**
@@ -177,9 +182,9 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
       pollingIntervalRef.current = null;
     }
     setIsWatching(false);
-    lastModifiedRef.current = 0;
+    setLastModified(0);
     fileHandleRef.current = null;
-  }, []);
+  }, [setLastModified]);
 
   /**
    * ファイル変更イベントのコールバックを設定
@@ -187,6 +192,18 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
   const onFileChange = useCallback((callback: (event: FileChangeEvent) => void) => {
     changeCallbackRef.current = callback;
   }, []);
+
+  /**
+   * 現在のファイルの時刻を同期
+   */
+  const syncLastModified = useCallback(async () => {
+    const handle = fileHandleRef.current;
+    if (handle) {
+      const currentModified = await getLastModified(handle);
+      setLastModified(currentModified);
+      console.log('[FileSystemWatcher] 時刻を同期しました（変更検知スキップ）');
+    }
+  }, [getLastModified, setLastModified]);
 
   /**
    * クリーンアップ
@@ -206,6 +223,7 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
     startWatchingWithHandle,
     stopWatching,
     onFileChange,
+    syncLastModified,
     error,
   };
 }

@@ -55,6 +55,8 @@ interface AppState {
     setLastAutoEditTime: (time: number | null) => void;
     setBaseFullHtml: (html: string | null) => void;
     setInternalSaving: (saving: boolean) => void;
+    lastModified: number;             // 監視中のファイルの最終更新時刻（共有用）
+    setLastModified: (time: number) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -127,4 +129,6 @@ export const useAppStore = create<AppState>((set) => ({
     setLastAutoEditTime: (time) => set({ lastAutoEditTime: time }),
     setBaseFullHtml: (html) => set({ baseFullHtml: html }),
     setInternalSaving: (saving) => set({ isInternalSaving: saving }),
+    lastModified: 0,
+    setLastModified: (time) => set({ lastModified: time }),
 }));
