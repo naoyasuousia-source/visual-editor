@@ -88,14 +88,14 @@ export function useEditApproval(
 
       await writeToFile(fileHandle, finalHtml);
 
+      // エディタロックを解除
+      editor.setEditable(true);
+
       // ハイライトを削除
       clearHighlights();
 
       // 承認待ちフラグを解除
       setEditPendingApproval(false);
-
-      // エディタロックを解除
-      editor.setEditable(true);
 
       // 保存した状態をクリア
       preEditHtmlRef.current = null;
@@ -123,9 +123,6 @@ export function useEditApproval(
       // エディタを編集前の状態に復元
       editor.commands.setContent(preEditHtmlRef.current);
 
-      // ハイライトを削除
-      clearHighlights();
-
       // 破棄時も構造を維持しつつ、編集前の状態を保存
       const finalHtml = baseFullHtml 
         ? injectContentToHtml(baseFullHtml, preEditHtmlRef.current)
@@ -133,11 +130,14 @@ export function useEditApproval(
 
       await writeToFile(fileHandle, finalHtml);
 
-      // 承認待ちフラグを解除
-      setEditPendingApproval(false);
-
       // エディタロックを解除
       editor.setEditable(true);
+
+      // ハイライトを削除
+      clearHighlights();
+
+      // 承認待ちフラグを解除
+      setEditPendingApproval(false);
 
       // 保存した状態をクリア
       preEditHtmlRef.current = null;

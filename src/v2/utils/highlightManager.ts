@@ -68,8 +68,15 @@ export function highlightRanges(editor: Editor, ranges: Range[]): void {
  * @param editor - Tiptapエディタインスタンス
  */
 export function clearAllHighlights(editor: Editor): void {
-  // highlightマークを解除
-  editor.chain().unsetHighlight().run();
+  const { state } = editor;
+  const { doc } = state;
+  // 文書全体から highlight マークを削除
+  editor.chain()
+    .setTextSelection({ from: 0, to: doc.content.size })
+    .unsetHighlight()
+    .run();
+  
+  console.log('[highlightManager] 全てのハイライトを削除しました');
 }
 
 /**

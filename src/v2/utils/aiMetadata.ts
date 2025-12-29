@@ -1,32 +1,66 @@
 import { Editor } from '@tiptap/react';
 
 /**
- * AIメタガイド生成ユーティリティ
- * V1の ai-meta.ts の機能を再現
- * 
- * 【重要】直接DOM操作は行わず、HTML文字列として生成する
+ * AIエージェント向け総合ガイド（命令書 + 仕様書）
  */
-export function generateAiMetaGuide(isWordMode: boolean): string {
-    if (isWordMode) {
-        return `
-<!-- AI ASSISTANT GUIDE
-This HTML structure represents a continuous document (Word Mode).
-- Paragraphs have simple sequential IDs like "p1", "p2", etc.
-- Use these IDs to locate specific paragraphs when assisting the user.
+export function generateAiMetadata(isWordMode: boolean): string {
+    const modeDesc = isWordMode 
+        ? "Word Mode: A continuous document flow." 
+        : "Paginated Mode: Split into A4 sections (<section class=\"page\">).";
+
+    return `
+<!-- 
+===============================================================================
+AI ASSISTANT GUIDE & COMMAND API SPECIFICATIONS
+===============================================================================
+
+## OVERVIEW
+This document is being edited by a human using a visual editor. 
+As an AI Assistant, you can perform automated edits by writing commands in the 
+COMMAND AREA defined below.
+
+## DOCUMENT STRUCTURE
+- ${modeDesc}
+- Editable content is inside elements with class "page-inner".
+- Every paragraph/heading has a [data-para] attribute (e.g., [1], [2]).
+- Images are wrapped in "image-container" and may have "data-title".
+
+## COMMAND AREA
+Place your commands between the following markers. 
+The editor will detect changes, ask the user for approval, and execute them.
+
+[AI_COMMAND_START]
+<!-- Write your commands here. Example: <!-- INSERT_TEXT[1:0][Hello] --> -->
+[AI_COMMAND_END]
+
+## SUPPORTED COMMANDS
+
+1. INSERT_TEXT[paragraph:offset][text]
+   - Description: Inserts text at the specified offset in a paragraph.
+   - Arguments:
+     - paragraph: The [data-para] number (starting from 1).
+     - offset: Character position within the paragraph (starting from 0).
+     - text: The string to insert.
+   - Example: <!-- INSERT_TEXT[1:0][Important: ] -->
+
+2. REPLACE_TEXT[search][replace][options]
+   - Description: Searches and replaces text within the document.
+   - Arguments:
+     - search: String or Regex to find.
+     - replace: Replacement string.
+     - options: "all" (replace all), "regex" (use regex), "caseSensitive".
+   - Example: <!-- REPLACE_TEXT[apple][orange][all] -->
+
+## IMPORTANT RULES
+- Commands must be wrapped in HTML comments: <!-- COMMAND[...] -->
+- Only one command per line inside the COMMAND AREA.
+- Do NOT edit any content outside the COMMAND AREA. The editor will 
+  ignore/overwrite external changes to the content itself during auto-edit.
+- Always use the [data-para] numbers displayed in the editor for targeting.
+
+===============================================================================
 -->
 `;
-    } else {
-        return `
-<!-- AI ASSISTANT GUIDE
-This HTML structure represents a paginated document.
-- <section class="page"> represents a physical A4 page.
-- .page-inner contains the editable content.
-- Paragraphs have IDs like "p1-1" (Page 1, Paragraph 1).
-- Images and figure metadata are stored in #ai-image-index at the bottom.
-Use the IDs to locate specific paragraphs when assisting the user.
--->
-`;
-    }
 }
 
 /**
@@ -49,8 +83,8 @@ export function buildFullHTML(
     // 1. エディタコンテンツを取得
     const htmlContent = editor.getHTML();
 
-    // 2. AIメタガイドを生成
-    const aiMetaGuide = generateAiMetaGuide(isWordMode);
+    // 2. AIメタデータ（ガイド+コマンドエリア）を生成
+    const aiMetadata = generateAiMetadata(isWordMode);
 
     // 3. bodyクラスを設定
     const bodyClass = isWordMode ? 'mode-word' : '';
@@ -59,20 +93,17 @@ export function buildFullHTML(
     // 4. 出力用HTMLのクリーンアップ
     let cleanedHtml = htmlContent;
 
-    // CSSからコメントを削除
+    // CSSからコメントを削除（ライブラリ用のスタイル維持）
     const cleanedCss = contentCss.replace(/\/\*[\s\S]*?\*\//g, '');
 
-    // contenteditable="true" を削除
+    // 不要な属性の削除
     cleanedHtml = cleanedHtml.replace(/\scontenteditable="true"/g, '');
-
-    // 段落(p)と見出し(h1-h6)から data-page 属性を削除
     cleanedHtml = cleanedHtml.replace(/(<(?:p|h1|h2|h3|h4|h5|h6)[^>]*)(\sdata-page="[^"]*")([^>]*>)/g, '$1$3');
-
-    // imgタグから data-caption と data-tag 属性を削除
     cleanedHtml = cleanedHtml.replace(/(<img[^>]*)(\sdata-caption="[^"]*")([^>]*>)/g, '$1$3');
     cleanedHtml = cleanedHtml.replace(/(<img[^>]*)(\sdata-tag="[^"]*")([^>]*>)/g, '$1$3');
 
     // 5. 完全なHTML文書を構築
+    // ガイドとコマンドエリアを <head> の直後（bodyの前）または bodyの最上部に配置
     return `<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -83,9 +114,9 @@ export function buildFullHTML(
 :root { --page-margin: ${pageMarginText}; }
 ${cleanedCss}
 </style>
+${aiMetadata}
 </head>
 <body class="${finalClass}">
-${aiMetaGuide}
 <div id="pages-container">
 ${cleanedHtml}
 </div>

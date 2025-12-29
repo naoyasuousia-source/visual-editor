@@ -45,25 +45,35 @@ export function useCommandExecutor(editor: Editor | null): UseCommandExecutorRet
       try {
         const { position, text } = command;
 
-        // 段落を特定
-        const paragraphElement = editor.view.dom.querySelector(
-          `p[data-para="${position.paragraph}"]`
-        );
+        // 段落を特定（doc.descendants を使用して正確な位置を取得）
+        const { state } = editor;
+        const { doc } = state;
+        let pIdx = 0;
+        let targetPos: number | null = null;
 
-        if (!paragraphElement) {
+        doc.descendants((node, pos) => {
+          if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+            pIdx++;
+            if (pIdx === position.paragraph) {
+              // 段落内のオフセットを考慮した挿入位置
+              // pos + 1 が段落内コンテンツの開始位置
+              targetPos = pos + 1 + Math.min(position.offset, node.content.size);
+              return false;
+            }
+          }
+          return true;
+        });
+
+        if (targetPos === null) {
           return {
             success: false,
-            error: `段落 ${position.paragraph} が見つかりません`,
+            error: `段落 ${position.paragraph} が見つかりませんでした`,
             timestamp: Date.now(),
           };
         }
 
-        // 段落内の位置を計算
-        const paragraphPos = editor.view.posAtDOM(paragraphElement, 0);
-        const insertPos = paragraphPos + position.offset + 1; // +1はpタグの開始タグ分
-
         // テキストを挿入
-        editor.chain().focus().insertContentAt(insertPos, text).run();
+        editor.chain().focus().insertContentAt(targetPos, text).run();
 
         return {
           success: true,

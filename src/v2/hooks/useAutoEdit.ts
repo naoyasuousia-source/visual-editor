@@ -152,28 +152,14 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
           // AI画像インデックスはDOMから取得
           const aiImageIndexHtml = document.getElementById('ai-image-index')?.outerHTML || '';
           
-          // 完全なHTMLを構築
-          let fullHtml = buildFullHTML(
+          // 完全なHTMLを構築（新しい buildFullHTML は内部でガイドとコマンドエリアを付加する）
+          const fullHtml = buildFullHTML(
             currentEditor,
             isWordMode,
             contentCssText,
             pageMarginText,
             aiImageIndexHtml
           );
-
-          // content.cssからAPIドキュメント部分を抽出（最初の<!-- -->コメントブロック）
-          const apiSpecMatch = contentCssText.match(/<!--[\s\S]*?-->/);
-          const apiSpec = apiSpecMatch ? apiSpecMatch[0] : '<!-- AI Command API Placeholder -->';
-
-          // コマンドエリアを注入（AIが再び書き込めるように）
-          const commandAreaPlaceholder = `
-${apiSpec}
-<!-- AI_COMMAND_START -->
-<!-- ここにコマンドを記述してください -->
-<!-- AI_COMMAND_END -->
-`;
-          // pages-containerの直前に挿入
-          fullHtml = fullHtml.replace('<div id="pages-container">', `${commandAreaPlaceholder}\n<div id="pages-container">`);
 
           setBaseFullHtml(fullHtml);
           
@@ -192,8 +178,9 @@ ${apiSpec}
         const failureCount = results.length - successCount;
 
         if (failureCount > 0) {
-          toast.error(`自動編集失敗: 一部のコマンドが実行できませんでした`, { position: 'top-center' });
-          throw new Error('一部のコマンドが実行できませんでした');
+          const firstError = results.find(r => !r.success)?.error || '不明なエラー';
+          toast.error(`自動編集失敗: ${firstError}`, { position: 'top-center' });
+          throw new Error(`自動編集失敗: ${firstError}`);
         }
 
         // ステップ5: 成功時の処理
@@ -215,11 +202,10 @@ ${apiSpec}
         console.log('[AutoEdit] 処理完了（承認待ち、エディタロックを維持）');
 
       } catch (error) {
-        console.error('[AutoEdit] エラー:', error);
+        console.error('[AutoEdit] エラーが発生しました。ファイルを正規化（上書き保存）します:', error);
         
         // エラー時もエディタの現在の状態で上書き保存する（AIによる破壊的編集を元に戻すため）
         if (editor && event.fileHandle) {
-          console.log('[AutoEdit] エラー発生のため、現在のエディタ状態で上書き保存します');
           try {
             const { isWordMode, pageMargin } = useAppStore.getState();
             const marginMap: Record<string, string> = { s: '12mm', m: '17mm', l: '24mm' };
@@ -229,9 +215,9 @@ ${apiSpec}
             
             setInternalSaving(true);
             await writeToFile(event.fileHandle, fullHtml);
-            toast.info('不完全な編集を破棄してファイルを正規化しました');
+            toast.info('不完全な編集内容を検知したため、ファイルを正常な状態に復旧しました', { position: 'top-center' });
           } catch (saveError) {
-            console.error('[AutoEdit] エラー時の保存に失敗:', saveError);
+            console.error('[AutoEdit] エラー時の保存（正規化）に失敗:', saveError);
           } finally {
             setInternalSaving(false);
           }
