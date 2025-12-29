@@ -102,38 +102,36 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
         
         if (!hasValidCommands) {
           // コマンドエリアがない、またはコマンドが空の場合
-          // これは外部からの不正な編集の可能性があるため、ダイアログを表示
-          console.log('[AutoEdit] コマンドなしの外部変更を検知');
+          // 外部からの不正な編集の可能性があるため、エディタをロックして通知
+          console.log('[AutoEdit] コマンドなしの外部変更を検知 → 自動保護を実行');
           
-          // エディタを一時的にロック
+          // エディタをロック
           editor.setEditable(false);
           
-          const protectContent = window.confirm(
+          // ユーザーに通知（OKのみ、キャンセルなし）
+          window.alert(
             '外部からのファイル変更を検知しましたが、有効なコマンドが見つかりませんでした。\n\n' +
-            '「OK」を押すと、現在のエディタの内容でファイルを上書き保存し、外部からの変更を破棄します。\n' +
-            '「キャンセル」を押すと、ファイルの変更をそのまま維持します（エディタは古い内容のままになります）。'
+            '不正な変更からドキュメントを保護するため、エディタの内容でファイルを上書き保存します。'
           );
           
-          if (protectContent) {
-            // エディタの現在の状態で上書き保存
-            console.log('[AutoEdit] エディタ状態で上書き保存して保護します');
-            const { isWordMode, pageMargin } = useAppStore.getState();
-            const marginMap: Record<string, string> = { s: '12mm', m: '17mm', l: '24mm' };
-            const pageMarginText = marginMap[pageMargin] || '17mm';
-            const aiImageIndexHtml = document.getElementById('ai-image-index')?.outerHTML || '';
-            const fullHtml = buildFullHTML(editor, isWordMode, contentCssText, pageMarginText, aiImageIndexHtml);
+          // 自動的にエディタの現在の状態で上書き保存（AIの不正書き換え防止）
+          console.log('[AutoEdit] エディタ状態で上書き保存して保護します');
+          const { isWordMode, pageMargin } = useAppStore.getState();
+          const marginMap: Record<string, string> = { s: '12mm', m: '17mm', l: '24mm' };
+          const pageMarginText = marginMap[pageMargin] || '17mm';
+          const aiImageIndexHtml = document.getElementById('ai-image-index')?.outerHTML || '';
+          const fullHtml = buildFullHTML(editor, isWordMode, contentCssText, pageMarginText, aiImageIndexHtml);
+          
+          setInternalSaving(true);
+          try {
+            await writeToFile(event.fileHandle, fullHtml);
             
-            setInternalSaving(true);
-            try {
-              await writeToFile(event.fileHandle, fullHtml);
-              
-              // 重要: ファイル保存後に時刻を同期
-              await fileSystemWatcher.syncLastModified();
-              
-              toast.success('外部変更を検知したため、エディタの内容でファイルを保護しました', { position: 'top-center' });
-            } finally {
-              setInternalSaving(false);
-            }
+            // 重要: ファイル保存後に時刻を同期
+            await fileSystemWatcher.syncLastModified();
+            
+            toast.success('不正な外部変更からドキュメントを保護しました', { position: 'top-center' });
+          } finally {
+            setInternalSaving(false);
           }
           
           editor.setEditable(true);

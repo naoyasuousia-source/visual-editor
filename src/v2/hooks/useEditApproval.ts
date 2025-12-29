@@ -7,6 +7,7 @@ import { useCallback, useRef } from 'react';
 import type { Editor } from '@tiptap/react';
 import { useAppStore } from '@/store/useAppStore';
 import { useChangeHighlight } from '@/hooks/useChangeHighlight';
+import { useFileSystemWatcher } from '@/hooks/useFileSystemWatcher';
 import { injectContentToHtml } from '@/utils/htmlUtils';
 
 interface UseEditApprovalReturn {
@@ -36,6 +37,7 @@ export function useEditApproval(
     setBaseFullHtml
   } = useAppStore();
   const { clearHighlights } = useChangeHighlight(editor);
+  const fileSystemWatcher = useFileSystemWatcher();
 
   // 編集前の状態を保存（HTMLコンテンツ）
   const preEditHtmlRef = useRef<string | null>(null);
@@ -87,6 +89,9 @@ export function useEditApproval(
         : editorHtml;
 
       await writeToFile(fileHandle, finalHtml);
+      
+      // 重要: ファイル保存後に時刻を同期し、再検知を防止
+      await fileSystemWatcher.syncLastModified();
 
       // エディタロックを解除
       editor.setEditable(true);
@@ -106,7 +111,7 @@ export function useEditApproval(
       console.error('[EditApproval] 承認処理エラー:', error);
       throw error;
     }
-  }, [editor, fileHandle, baseFullHtml, setEditPendingApproval, setBaseFullHtml, clearHighlights, writeToFile]);
+  }, [editor, fileHandle, baseFullHtml, setEditPendingApproval, setBaseFullHtml, clearHighlights, writeToFile, fileSystemWatcher]);
 
   /**
    * 変更を破棄
@@ -129,6 +134,9 @@ export function useEditApproval(
         : preEditHtmlRef.current;
 
       await writeToFile(fileHandle, finalHtml);
+      
+      // 重要: ファイル保存後に時刻を同期し、再検知を防止
+      await fileSystemWatcher.syncLastModified();
 
       // エディタロックを解除
       editor.setEditable(true);
@@ -148,7 +156,7 @@ export function useEditApproval(
       console.error('[EditApproval] 破棄処理エラー:', error);
       throw error;
     }
-  }, [editor, fileHandle, baseFullHtml, setEditPendingApproval, setBaseFullHtml, clearHighlights, writeToFile]);
+  }, [editor, fileHandle, baseFullHtml, setEditPendingApproval, setBaseFullHtml, clearHighlights, writeToFile, fileSystemWatcher]);
 
   return {
     approveEdit,
