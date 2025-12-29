@@ -41,6 +41,7 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
     setAutoEditProcessing,
     setEditPendingApproval,
     setLastAutoEditTime,
+    setBaseFullHtml,
   } = useAppStore();
 
   const fileSystemWatcher = useFileSystemWatcher();
@@ -125,15 +126,16 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
         }
 
         // ステップ4: コマンドエリアをクリア
-        console.log('[AutoEdit] コマンドエリアをクリア');
+        console.log('[AutoEdit] コマンドエリアをクリアしてベースHTMLを更新');
         const clearedContent = clearCommandArea(event.content);
+        setBaseFullHtml(clearedContent);
 
-        // ステップ5: ファイルを自動保存
-        console.log('[AutoEdit] ファイルを自動保存');
-        await writeToFile(event.fileHandle, clearedContent);
+        // ステップ5: 自動保存（スキップ）
+        // ブラウザの制限によりユーザー操作なしでの書き込みは不可
+        console.log('[AutoEdit] ステップ5 (自動保存) をスキップします（承認時に実行されます）');
 
-        // 少し待機（ファイル書き込みの完了を確実にする）
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        // 少し待機
+        await new Promise((resolve) => setTimeout(resolve, 50));
 
         // ステップ6: コマンドを実行
         console.log('[AutoEdit] コマンドを実行:', parseResult.commands.length, '個');
