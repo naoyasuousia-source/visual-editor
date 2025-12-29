@@ -38,7 +38,6 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
     isAutoEditProcessing,
     isEditPendingApproval,
     lastAutoEditTime,
-    isInternalSaving,
     baseFullHtml,
     setAutoEditProcessing,
     setEditPendingApproval,
@@ -76,7 +75,9 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
   const handleFileChange = useCallback(
     async (event: FileChangeEvent) => {
       // エディタ自身による保存の場合は無視
-      if (isInternalSaving) {
+      // クロージャ問題を回避するため、getState()で最新の状態を取得
+      const currentIsInternalSaving = useAppStore.getState().isInternalSaving;
+      if (currentIsInternalSaving) {
         console.log('[AutoEdit] 内部保存による変更検知をスキップします');
         return;
       }
@@ -187,7 +188,6 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
       editor,
       isAutoEditProcessing,
       isEditPendingApproval,
-      isInternalSaving,
       commandParser,
       commandExecutor,
       editApproval,

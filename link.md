@@ -32,13 +32,99 @@
 
 ## 2. 未解決要件に関するコード変更履歴
 
+### 2024/12/29 - 初期分析および修正
+
+**問題の特定:**
+
+1. **コマンドパースエラー問題**: 
+   - 原因特定中。パースロジック自体は正しく見えるため、デバッグログを追加して実際のコマンド文字列を確認できるようにした。
+   
+2. **内部保存時の自動編集ダイアログ問題**:
+   - **原因特定**: `useAutoEdit.ts` の `handleFileChange` コールバックで、`isInternalSaving` がクロージャにより古い値を参照している。
+   - `useFileSystemWatcher.ts` の `checkForChanges` では `useAppStore.getState()` を使用して最新の状態を取得しているが、`handleFileChange` では依存配列に含まれていても、実際にはコールバックがファイル変更検知より先に更新されない。
+
+**変更内容:**
+
+#### 問題2の修正（完了）
+- `useAutoEdit.ts`: 
+  - `handleFileChange` 内で `isInternalSaving` を直接参照せず、`useAppStore.getState().isInternalSaving` で最新値を取得するように修正
+  - 依存配列から `isInternalSaving` を削除
+  - デストラクチャリングから未使用となった `isInternalSaving` を削除
+
+#### 問題1のデバッグログ追加
+- `useCommandParser.ts`: 
+  - `parseFromHtml` にコマンドエリア抽出とコマンド文字列のログを追加
+- `commandParser.ts`: 
+  - `parseSingleCommand` にコマンドタイプと引数のログを追加
+
 ## 3. 分析中に気づいた重要ポイント
+
+1. **クロージャ問題**: Reactフックのコールバック関数内で状態を参照する場合、依存配列に含めても、非同期イベント（ポーリングなど）で呼び出される際に古い値が参照される可能性がある。`useAppStore.getState()` を使用することで、常に最新の状態を取得できる。
+
+2. **ファイル監視のタイミング**: `useFileSystemWatcher` は1秒間隔でポーリングしている。保存処理が完了する前に次のポーリングが発生すると、`isInternalSaving` がまだ `true` に設定されていない可能性がある。
+
+3. **コマンドパーサーの仕様**: コマンドエリア内のHTMLコメント形式 `<!-- COMMAND[arg1][arg2] -->` を正しく処理する必要がある。
 
 ## 4. 解決済み要件とその解決方法
 
+（まだなし）
+
 ## 5. 要件に関連する全ファイルのファイル構成
+
+```
+src/v2/
+├── hooks/
+│   ├── useAutoEdit.ts          # 自動編集フローの統合管理
+│   ├── useFileSystemWatcher.ts # ファイル監視（ポーリング）
+│   ├── useFileIO.ts            # ファイル入出力（保存時にisInternalSavingを設定）
+│   ├── useCommandParser.ts     # HTMLからコマンドを抽出
+│   └── useCommandExecutor.ts   # コマンドの実行
+├── utils/
+│   ├── htmlCommentParser.ts    # HTMLコメントからコマンド文字列を抽出
+│   ├── commandParser.ts        # コマンド文字列をパース
+│   └── commandValidator.ts     # コマンドのバリデーション
+├── store/
+│   └── useAppStore.ts          # グローバル状態（isInternalSaving等）
+└── types/
+    └── ai-sync.types.ts        # 型定義
+```
 
 ## 6. 要件に関連する技術スタック
 
+- **React 18**: フック（useState, useCallback, useEffect）
+- **Zustand**: グローバル状態管理（useAppStore）
+- **File System Access API**: ファイルの読み書き・監視
+- **Tiptap**: リッチテキストエディタ
+
 ## 7. 要件に関する機能の動作原理
+
+### 自動編集フローの依存関係
+
+```
+[外部AIエージェント] 
+    ↓ ファイルに書き込み
+[useFileSystemWatcher] 
+    ↓ ポーリング（1秒間隔）で変更検知
+    ↓ FileChangeEvent発火
+[useAutoEdit.handleFileChange]
+    ↓ isInternalSavingチェック ← ★問題箇所：クロージャにより古い値を参照
+    ↓ hasCommands()でコマンド有無チェック
+    ↓ window.confirm()でユーザー確認
+    ↓ parseFromHtml()でコマンドパース
+    ↓ executeCommands()で実行
+```
+
+### 内部保存フロー
+
+```
+[ユーザーがCtrl+S]
+    ↓
+[useFileIO.saveFile()]
+    ↓ setInternalSaving(true)
+    ↓ ファイル書き込み
+    ↓ syncLastModified() ← ファイル時刻を同期
+    ↓ setInternalSaving(false)
+```
+
+**ポイント**: `syncLastModified()` 後に次のポーリングが発生すると、ファイル時刻が既知時刻と一致するため変更として検知されない。しかし、タイミングによっては `setInternalSaving(true)` が設定される前にポーリングが発生する可能性がある。
 

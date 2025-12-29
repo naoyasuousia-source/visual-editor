@@ -92,10 +92,13 @@ function parseSingleCommand(
   lineNumber?: number
 ): Command | ParseError {
   const trimmed = commandStr.trim();
+  
+  console.log('[CommandParser] パース中:', trimmed);
 
   // コマンドタイプを抽出
   const typeMatch = trimmed.match(/^([A-Z_]+)/);
   if (!typeMatch) {
+    console.log('[CommandParser] コマンドタイプ識別失敗');
     return {
       message: 'コマンドタイプが識別できません',
       lineNumber,
@@ -104,6 +107,8 @@ function parseSingleCommand(
   }
 
   const type = typeMatch[1];
+  console.log('[CommandParser] コマンドタイプ:', type);
+  
   if (!isAllowedCommand(type)) {
     return {
       message: `許可されていないコマンド: ${type}`,
@@ -114,6 +119,7 @@ function parseSingleCommand(
 
   // 引数を抽出
   const args = extractArguments(trimmed);
+  console.log('[CommandParser] 抽出された引数:', args);
 
   try {
     let command: Command;
