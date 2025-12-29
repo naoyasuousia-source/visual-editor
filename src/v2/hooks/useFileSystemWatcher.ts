@@ -36,6 +36,7 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
   const [error, setError] = useState<string | null>(null);
 
   const changeCallbackRef = useRef<((event: FileChangeEvent) => void) | null>(null);
+  const fileHandleRef = useRef<FileSystemFileHandle | null>(null);
   const lastModifiedRef = useRef<number>(0);
   const pollingIntervalRef = useRef<number | null>(null);
 
@@ -59,12 +60,13 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
    * ファイル変更をチェック
    */
   const checkForChanges = useCallback(async () => {
-    if (!fileHandle || !changeCallbackRef.current) {
+    const handle = fileHandleRef.current;
+    if (!handle || !changeCallbackRef.current) {
       return;
     }
 
     try {
-      const currentModified = await getLastModified(fileHandle);
+      const currentModified = await getLastModified(handle);
 
       // 初回または変更があった場合
       if (lastModifiedRef.current === 0) {
@@ -76,9 +78,9 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
         lastModifiedRef.current = currentModified;
 
         // ファイル内容を読み取り、コールバックを呼び出す
-        const content = await readFileContent(fileHandle);
+        const content = await readFileContent(handle);
         const event: FileChangeEvent = {
-          fileHandle,
+          fileHandle: handle,
           timestamp: currentModified,
           content,
         };
@@ -116,6 +118,7 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
       });
 
       setFileHandle(handle);
+      fileHandleRef.current = handle;
       setIsWatching(true);
       setError(null);
 
@@ -141,6 +144,7 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
     async (handle: FileSystemFileHandle) => {
       try {
         setFileHandle(handle);
+        fileHandleRef.current = handle;
         setIsWatching(true);
         setError(null);
 
@@ -174,6 +178,7 @@ export function useFileSystemWatcher(): UseFileSystemWatcherReturn {
     }
     setIsWatching(false);
     lastModifiedRef.current = 0;
+    fileHandleRef.current = null;
   }, []);
 
   /**

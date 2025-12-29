@@ -68,6 +68,8 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
    */
   const handleFileChange = useCallback(
     async (event: FileChangeEvent) => {
+      console.log('[AutoEdit] 変更イベント受信:', event.fileHandle.name, '時刻:', event.timestamp);
+
       // 承認待ち中は新しい編集をブロック
       if (isEditPendingApproval) {
         console.error('[AutoEdit] 承認待ち中です。前回の編集を承認または破棄してください。');
@@ -212,6 +214,8 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
     ]
   );
 
+  const lastHandleRef = useRef<string | null>(null);
+
   /**
    * ファイル監視の自動開始
    * currentFileHandleが設定されたときに監視を開始
@@ -221,25 +225,29 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
       return;
     }
 
-    // 既に監視中の場合はスキップ
-    if (isWatchingRef.current) {
+    // ハンドルが変更されたかチェック
+    const handleName = (currentFileHandle as any).name;
+    if (lastHandleRef.current === handleName) {
       return;
     }
 
-    console.log('[AutoEdit] ファイル監視を開始します');
-    isWatchingRef.current = true;
+    console.log(`[AutoEdit] ファイル監視を(再)開始します: ${handleName}`);
+    lastHandleRef.current = handleName;
 
     // ファイル変更イベントのリスナーを設定
     fileSystemWatcher.onFileChange(handleFileChange);
+
+    // 既に監視中の場合は一旦停止
+    if (fileSystemWatcher.isWatching) {
+      fileSystemWatcher.stopWatching();
+    }
 
     // 外部ハンドルで監視を開始
     fileSystemWatcher.startWatchingWithHandle(currentFileHandle);
 
     return () => {
-      if (fileSystemWatcher.isWatching) {
-        fileSystemWatcher.stopWatching();
-        isWatchingRef.current = false;
-      }
+      // クリーンアップでは停止しない（エディタが開いている間は監視し続けるため）
+      // ただしハンドルが変わった場合は上記if文で停止される
     };
   }, [currentFileHandle, editor, fileSystemWatcher, handleFileChange]);
 

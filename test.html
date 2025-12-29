@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    :root {
+      --page-margin: 17mm;
+    }
+
+    < !--===============================================================================AIエージェント向けコマンドAPI仕様書===============================================================================このHTMLファイルを編集する際、以下のコマンドエリアにコマンドを記述することで エディタに自動的に反映させることができます。 ## コマンドエリアの形式 HTMLファイル内の任意の位置（推奨: <body>直後）に以下の形式でコマンドエリアを配置してください。 ```html < !-- AI_COMMAND_START -->< !-- コマンド1 -->< !-- コマンド2 -->< !-- AI_COMMAND_END -->``` ## サポートされているコマンド ### 1. INSERT_TEXT - テキスト挿入 **形式**: `< !-- INSERT_TEXT[段落:位置][テキスト] -->` **説明**: 指定した段落の指定位置にテキストを挿入します **引数**: - 段落: 段落番号（1始まり、画面左に表示されている[n]の数字） - 位置: 段落内の文字位置（0始まり） - テキスト: 挿入するテキスト **使用例**: ```html < !-- INSERT_TEXT[1:0][こんにちは] -->< !-- INSERT_TEXT[3:5][追加テキスト] -->``` ### 2. REPLACE_TEXT - テキスト置換 **形式**: `< !-- REPLACE_TEXT[検索文字列][置換文字列][オプション] -->` **説明**: 文書内の文字列を検索して置換します **引数**: - 検索文字列: 検索する文字列 - 置換文字列: 置換後の文字列 - オプション: 置換オプション（省略可） - all: すべて置換 - regex: 正規表現を使用 - caseSensitive: 大文字小文字を区別 **使用例**: ```html < !-- REPLACE_TEXT[Hello][こんにちは][] -->< !-- REPLACE_TEXT[Hello][こんにちは][all] -->< !-- REPLACE_TEXT[\d+][数字][regex,
+    all] -->``` ### 3. DELETE_TEXT - テキスト削除（未実装） **形式**: `< !-- DELETE_TEXT[開始段落:開始位置][終了段落:終了位置] -->` **説明**: 指定範囲のテキストを削除します **引数**: - 開始段落:開始位置: 削除開始位置 - 終了段落:終了位置: 削除終了位置 ### 4. FORMAT_TEXT - 書式変更（未実装） **形式**: `< !-- FORMAT_TEXT[開始段落:開始位置][終了段落:終了位置][書式] -->` **説明**: 指定範囲に書式を適用します **引数**: - 書式: bold | italic | underline | strikethrough | code ### 5. INSERT_PARAGRAPH - 段落挿入（未実装） **形式**: `< !-- INSERT_PARAGRAPH[位置][テキスト] -->` **説明**: 指定位置に新しい段落を挿入します ### 6. DELETE_PARAGRAPH - 段落削除（未実装） **形式**: `< !-- DELETE_PARAGRAPH[段落番号] -->` **説明**: 指定した段落を削除します ## 実行フロー 1. AIエージェントがHTMLファイルにコマンドを記述して保存 2. エディタが自動的にファイル変更を検知 3. コマンドエリアを解析してコマンドを実行 4. コマンドエリアをクリアしてファイルを自動保存 5. 変更箇所を黄色でハイライト表示 6. ユーザーに承認/破棄を促すバーを表示 7. ユーザーが承認または破棄を選択 8. 選択に応じてファイルを自動保存 ## 注意事項 - コマンドは1行に1つずつ記述してください - 不正なコマンドはエラーメッセージが表示されます - 段落番号は画面左側に [1],
+    [2],
+    [3] のように表示されています - セキュリティのため、ホワイトリストに登録されたコマンドのみ実行されます - XSS攻撃を防ぐため、テキストは自動的にサニタイズされます ## 対応ブラウザ - Google Chrome（最新版） - Microsoft Edge（最新版）===============================================================================-->:root {
+      --page-margin: 17mm;
+      --editor-font-family: inherit;
+      --tab-width: 0px;
+    }
+
+    body.standalone-html {
+      background-color: #525659;
+      margin: 0;
+      padding: 48px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    #pages-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      width: 100%;
+    }
+
+    .ProseMirror {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    section.page {
+      position: relative;
+      width: 210mm;
+      min-width: 210mm;
+      height: 297mm;
+      min-height: 297mm;
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      box-sizing: border-box;
+      overflow: hidden;
+      margin: 0 auto;
+    }
+
+    section.page::after {
+      content: attr(data-page);
+      position: absolute;
+      left: 50%;
+      bottom: 6mm;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: #666;
+    }
+
+    .page-inner {
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      padding: var(--page-margin);
+      position: relative;
+      overflow-y: auto;
+      outline: none;
+      font-family: var(--editor-font-family, inherit);
+      font-size: 11pt;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    .page-inner p,
+    .page-inner h1,
+    .page-inner h2,
+    .page-inner h3,
+    .page-inner h6 {
+      margin: 0 0 1em;
+      position: relative;
+      padding-left: 0;
+    }
+
+    .page-inner h1,
+    .page-inner h2,
+    .page-inner h3,
+    .page-inner h6 {
+      font-weight: revert;
+      font-size: revert;
+      line-height: revert;
+      color: revert;
+    }
+
+    .page-inner p {
+      font-size: 1em;
+      font-weight: 400;
+    }
+
+    .page-inner p[data-para]::before,
+    .page-inner h1[data-para]::before,
+    .page-inner h2[data-para]::before,
+    .page-inner h3[data-para]::before,
+    .page-inner h6[data-para]::before {
+      content: "[" attr(data-para) "]";
+      position: absolute;
+      left: -11mm;
+      top: 1px;
+      width: 2.4rem;
+      text-align: right;
+      color: #999;
+      font-size: 10.5pt !important;
+      font-weight: 400 !important;
+      line-height: 1.5 !important;
+      user-select: none;
+      pointer-events: none;
+      font-family: var(--editor-font-family, inherit);
+    }
+
+    body.hide-page-numbers section.page::after {
+      display: none !important;
+    }
+
+    body.hide-para-numbers .page-inner [data-para]::before,
+    body.hide-para-numbers .ProseMirror [data-para]::before {
+      display: none !important;
+    }
+
+    .page-inner img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0.8em auto;
+    }
+
+    .page-inner .image-container.img-xs {
+      width: 20%;
+    }
+
+    .page-inner .image-container.img-s {
+      width: 35%;
+    }
+
+    .page-inner .image-container.img-m {
+      width: 50%;
+    }
+
+    .page-inner .image-container.img-l {
+      width: 65%;
+    }
+
+    .page-inner .image-container.img-xl {
+      width: 85%;
+    }
+
+    .page-inner p:has(> .image-container) {
+      display: block;
+      text-align: center;
+      padding: 0;
+      line-height: 1;
+      font-size: inherit;
+      caret-color: #000;
+    }
+
+    .page-inner .image-container {
+      display: inline-block;
+      vertical-align: top;
+      width: auto;
+      max-width: 100%;
+      line-height: 0;
+      font-size: 0;
+      position: relative;
+      margin-right: 1.5pt;
+      margin-bottom: 0;
+      transition: margin-bottom 0.2s;
+    }
+
+    .page-inner .image-container.has-title {
+      margin-bottom: 24px;
+    }
+
+    .page-inner .image-container.has-title.title-mini {
+      margin-bottom: 20px;
+    }
+
+    .page-inner .image-container img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .page-inner .image-container.has-title::after {
+      content: attr(data-title);
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      display: block;
+      width: max-content;
+      max-width: 200%;
+      text-align: center;
+      font-size: 11pt;
+      line-height: 1.4;
+      color: #333;
+      padding-top: 4px;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .page-inner .image-container.has-title.title-mini::after {
+      font-size: calc(11pt * 0.67);
+      font-weight: bold;
+      color: #666;
+    }
+
+    .page-inner p:has(> img:not(.ProseMirror-separator)) .ProseMirror-trailingBreak,
+    .page-inner p:has(> .image-container) .ProseMirror-trailingBreak {
+      display: none;
+    }
+
+    .page-inner img.has-border {
+      border: 1px solid currentColor;
+    }
+
+    .page.line-height-s .page-inner {
+      line-height: 1.25;
+    }
+
+    .page.line-height-l .page-inner {
+      line-height: 2.0;
+    }
+
+    .inline-tab {
+      display: inline-block;
+      vertical-align: bottom;
+      height: 1em;
+    }
+
+    .page-inner .indent-1 {
+      padding-left: 36pt;
+    }
+
+    .page-inner .indent-2 {
+      padding-left: 72pt;
+    }
+
+    .page-inner .indent-3 {
+      padding-left: 108pt;
+    }
+
+    .page-inner .indent-4 {
+      padding-left: 144pt;
+    }
+
+    .page-inner .indent-5 {
+      padding-left: 180pt;
+    }
+
+    .page-inner .hanging-indent {
+      text-indent: -1em;
+    }
+
+    .page-inner .indent-1.hanging-indent {
+      padding-left: 36pt;
+      text-indent: -36pt;
+    }
+
+    .page-inner .indent-2.hanging-indent {
+      padding-left: 72pt;
+      text-indent: -72pt;
+    }
+
+    .page-inner .indent-3.hanging-indent {
+      padding-left: 108pt;
+      text-indent: -108pt;
+    }
+
+    .page-inner .indent-4.hanging-indent {
+      padding-left: 144pt;
+      text-indent: -144pt;
+    }
+
+    .page-inner .indent-5.hanging-indent {
+      padding-left: 180pt;
+      text-indent: -180pt;
+    }
+
+
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+
+
+      html,
+      body,
+      body.standalone-html {
+        background: #fff !important;
+        overflow: visible !important;
+        height: auto !important;
+        min-height: 0 !important;
+        width: 100% !important;
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+
+      #toolbar,
+      #page-navigator,
+      #ai-image-index,
+      #ai-meta-guide,
+      .sonner,
+      [data-sonner-toaster],
+      button,
+      dialog,
+      [role="menu"],
+      [role="dialog"],
+      [role="tooltip"],
+      .bubble-menu,
+      .no-print {
+        display: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+      }
+
+
+      .flex.flex-col.h-screen {
+        display: block !important;
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+        background: #fff !important;
+      }
+
+      .flex.flex-1.overflow-hidden {
+        display: block !important;
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+      }
+
+      #pages-container {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        overflow: visible !important;
+        gap: 0 !important;
+      }
+
+
+      #pages-container>div {
+        display: block !important;
+        width: 210mm !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 auto !important;
+        zoom: 1 !important;
+        gap: 0 !important;
+        font-size: 0 !important;
+        line-height: 0 !important;
+      }
+
+
+      section.page {
+        position: relative;
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        outline: none !important;
+        background: #fff !important;
+        overflow: hidden !important;
+        break-after: page !important;
+        page-break-after: always !important;
+        display: block !important;
+      }
+
+      section.page:last-child {
+        break-after: auto !important;
+        page-break-after: auto !important;
+        margin-bottom: 0 !important;
+      }
+
+      .page-inner {
+        width: 100% !important;
+        height: 100% !important;
+        padding: var(--page-margin) !important;
+        overflow: visible !important;
+      }
+
+
+      .page-inner,
+      .page-inner * {
+        user-select: text !important;
+        -webkit-user-select: text !important;
+        pointer-events: auto !important;
+      }
+
+
+      .ProseMirror-trailingBreak {
+        display: none !important;
+      }
+    }
+
+
+
+
+    body.mode-word #pages-container {
+      background-color: #e0e0e0;
+    }
+
+    body.mode-word section.page {
+      height: auto !important;
+      min-height: 297mm !important;
+      box-shadow: 10px 0 10px -5px rgba(0, 0, 0, 0.1), -10px 0 10px -5px rgba(0, 0, 0, 0.1) !important;
+      overflow: visible !important;
+    }
+
+    body.mode-word .page-inner {
+      height: auto !important;
+      min-height: 297mm !important;
+      padding-bottom: calc(297mm - var(--page-margin)) !important;
+      overflow: visible !important;
+    }
+
+    body.mode-word section.page::after {
+      display: none !important;
+    }
+
+    body.mode-word #page-navigator,
+    body.mode-word #sidebar-toggle-overlay,
+    body.mode-word #sidebar-toggle-btn,
+    body.mode-word #ai-image-index {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body class="standalone-html">
+  <!-- AI_COMMAND_START -->
+  <!-- INSERT_TEXT[1:0][【自動挿入テスト2】] -->
+  <!-- AI_COMMAND_END -->
+
+
+  <!-- AI ASSISTANT GUIDE
+This HTML structure represents a paginated document.
+- <section class="page"> represents a physical A4 page.
+- .page-inner contains the editable content.
+- Paragraphs have IDs like "p1-1" (Page 1, Paragraph 1).
+- Images and figure metadata are stored in #ai-image-index at the bottom.
+Use the IDs to locate specific paragraphs when assisting the user.
+-->
+
+  <div id="pages-container">
+    <section data-page="1" class="page">
+      <div class="page-inner">
+        <p data-para="1" id="p1-1">テスト文書</p>
+        <p data-para="2" id="p1-2">これはテストです。</p>
+        <p data-para="3" id="p1-3"></p>
+      </div>
+    </section>
+  </div>
+  <div id="ai-image-index" aria-hidden="true" style="display: none;"></div>
+</body>
+
+</html>
