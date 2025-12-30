@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新コマンドシステムテスト</title>
+</head>
+<body>
+    <h1>新コマンドシステムテスト文書</h1>
+    
+    <section class="page" data-page="1">
+        <p id="p1-1" data-para="1">これは最初の段落です。</p>
+        <p id="p1-2" data-para="2">これは2番目の段落です。この段落を修正テストに使います。</p>
+        <p id="p1-3" data-para="3">これは3番目の段落です。</p>
+    </section>
+
+    <section class="page" data-page="2">
+        <p id="p2-1" data-para="1">2ページ目の最初の段落です。</p>
+        <p id="p2-2" data-para="2">2ページ目の2番目の段落。削除テストに使います。</p>
+        <p id="p2-3" data-para="3">2ページ目の3番目の段落。移動テストに使います。</p>
+        <p id="p2-4" data-para="4">2ページ目の4番目の段落。分割テストに使います。この段落を2つに分割します。</p>
+    </section>
+
+    <section class="page" data-page="3">
+        <p id="p3-1" data-para="1">3ページ目の最初の段落。結合テスト元です。</p>
+        <p id="p3-2" data-para="2">3ページ目の2番目の段落。結合テスト先です。</p>
+    </section>
+
+    <!-- AI_COMMAND_START -->
+REPLACE_PARAGRAPH(p1-2, これは<b>修正された</b>2番目の段落です。, blockType=p, textAlign=left)
+INSERT_PARAGRAPH(p1-3, これは<b>挿入された</b>新しい段落です。<br>改行も含みます。, blockType=p, indent=1)
+DELETE_PARAGRAPH(p2-2)
+MOVE_PARAGRAPH(p2-3, p1-3)
+SPLIT_PARAGRAPH(p2-4, 分割します。, この段落を)
+MERGE_PARAGRAPH(p3-1, p3-2)
+    <!-- AI_COMMAND_END -->
+
+</body>
+</html>

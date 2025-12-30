@@ -15,7 +15,7 @@ import { isValidParagraphId } from '@/utils/paragraphIdManager';
  * @param paragraphId - 検索する段落ID
  * @returns 段落ノードとその位置、見つからない場合はnull
  */
-export function findParagraphByI	d(
+export function findParagraphById(
   editor: Editor,
   paragraphId: ParagraphId
 ): { node: ProseMirrorNode; pos: number } | null {

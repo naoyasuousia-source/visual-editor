@@ -309,6 +309,86 @@
 - `executeNewCommand()`: コマンド実行のディスパッチ
 - `executeNewCommands()`: 複数コマンドの順次実行
 
+### 2025-12-30 フェーズ4～5: エディタ統合とテスト準備（完了）
+
+#### 作成ファイル6: `src/v2/lib/paragraphCommandAttributes.ts`
+**分析結果:**
+- Tiptapの段落ノードに新コマンドシステム用のカスタム属性を追加する必要がある
+- data-temp-id, data-command-type, data-command-id等のハイライト用属性が必要
+- blockType, spacing, indent等の段落オプション用属性が必要
+
+**方針:**
+- Tiptap Extensionとして段落・見出しノードにカスタム属性を追加
+- 既存のParagraphNumbering拡張と共存できる設計
+- keepOnSplitフラグを適切に設定（コマンド関連属性はfalse、オプション属性はtrue）
+
+**変更内容:**
+- GlobalAttributesを使用して段落・見出しノードに属性を追加
+- `data-temp-id`: 仮ID属性
+- `data-command-type`: コマンドタイプ属性（ハイライト用）
+- `data-command-id`: コマンドID属性（ハイライト管理用）
+- `data-move-from`: 移動元位置属性
+- `blockType`: ブロック要素タイプ（p, h1, h2, h3）
+- `spacing`: 段落下余白（none, small, medium, large）
+- `indent`: インデントレベル（0～4）
+
+#### 修正ファイル1: `src/v2/hooks/useTiptapEditor.ts`
+**変更内容:**
+- `ParagraphCommandAttributes`拡張をインポート
+- extensionsリストに`ParagraphCommandAttributes`を追加
+
+#### 作成ファイル7: `src/v2/hooks/useNewCommandExecutor.ts`
+**分析結果:**
+- 新コマンド実行サービスをReactフックとしてラップする必要がある
+- エディタの初期化状態チェックとエラーハンドリングが必要
+- 単一コマンドと複数コマンドの両方をサポート
+
+**方針:**
+- useCallbackを使用してメモ化された実行関数を提供
+- エラーハンドリングとログ出力を統合
+- CommandExecutionResultを返す型安全な設計
+
+**変更内容:**
+- `executeSingleCommand()`: 単一コマンド実行
+- `executeMultipleCommands()`: 複数コマンド順次実行
+- エディタ未初期化チェック
+- try-catchによる例外ハンドリング
+
+#### 作成ファイル8: `src/v2/hooks/useNewCommandParser.ts`
+**分析結果:**
+- 新コマンドパーサーをReactフックとしてラップする必要がある
+- コマンドテキストの前処理（空行除外、コメント除外）が必要
+- コマンド存在チェック機能が必要
+
+**方針:**
+- useCallbackを使用してメモ化されたパース関数を提供
+- パース結果をステートとして保持
+- 複数の入力形式をサポート（配列、単一文字列、複数行テキスト）
+
+**変更内容:**
+- `parseCommands()`: コマンド文字列配列のパース
+- `parseSingleCommand()`: 単一コマンド文字列のパース
+- `parseCommandText()`: 複数行テキストのパース
+- `hasCommands()`: コマンド存在チェック
+- `lastParseResult`: 最後のパース結果を保持
+
+#### 作成ファイル9: `test-new-commands.html`
+**分析結果:**
+- 新コマンドシステムの動作確認用テストファイルが必要
+- 6種類すべてのコマンドを含むサンプルが必要
+- 段落IDが正しく設定されたHTMLが必要
+
+**方針:**
+- 3ページ構成のテストドキュメント
+- 各ページに複数の段落を配置
+- コマンドエリアに6種類のコマンドサンプルを記述
+
+**変更内容:**
+- ページ1: REPLACE_PARAGRAPH, INSERT_PARAGRAPH用の段落
+- ページ2: DELETE_PARAGRAPH, MOVE_PARAGRAPH, SPLIT_PARAGRAPH用の段落
+- ページ3: MERGE_PARAGRAPH用の段落
+- コマンドエリア: 6種類のコマンドサンプル（オプション引数含む）
+
 ## 3. 分析中に気づいた重要ポイント
 
 ### 段落ID管理の課題
@@ -360,6 +440,34 @@
 - 段落操作にはProseMirrorのTransac tionの深い理解が必要
 - ノードの挿入・削除・移動は位置計算が複雑
 - エディタの状態管理とトランザクションの同期が重要
+
+### 統合作業時の発見事項
+
+#### Tiptap Extension の共存
+- 既存のParagraphNumbering拡張がid属性とdata-para属性を管理
+- 新しいParagraphCommandAttributes拡張と問題なく共存
+- GlobalAttributesを使用することで複数の拡張から同じノードタイプに属性を追加可能
+
+#### keepOnSplitフラグの重要性
+- コマンド関連属性（data-command-type等）はkeepOnSplit: false
+  → 段落分割時に新しい段落には引き継がれない
+- オプション属性（blockType, spacing等）はkeepOnSplit: true
+  → 段落分割時に新しい段落にも引き継がれる
+
+#### HTMLパースとTiptapノード変換
+- parseHtmlText()は簡易的な正規表現ベース
+- Tiptapのcontent配列形式に変換する必要がある
+- マークの順序とネストに注意が必要
+
+#### 位置計算の複雑性
+- ProseMirrorの位置は文字位置ではなくノード間の位置
+- ノードのnodeSizeを考慮する必要がある
+- 削除・挿入後は位置が変動するため、複数操作時は注意が必要
+
+#### テスト環境の課題
+- 既存のuseCommandExecutor/useCommandParserとの統合はまだ未実装
+- 実際のファイル監視フローとの統合が必要
+- ハイライトUIと承認/破棄UIはまだ実装されていない
 
 ## 4. 解決済み要件とその解決方法
 

@@ -21,6 +21,7 @@ import { CustomDocument } from '@/lib/customDocument';
 import { CrossPageMerge } from '@/lib/crossPageMerge';
 import { Bookmark } from '@/lib/bookmarkExtension';
 import { InlineTab } from '@/lib/inlineTabExtension';
+import { ParagraphCommandAttributes } from '@/lib/paragraphCommandAttributes';
 import { TiptapKeyDownHandler, TiptapPasteHandler } from '@/types/tiptap';
 
 /**
@@ -64,6 +65,7 @@ export const useTiptapEditor = (
             CrossPageMerge,
             Bookmark,
             InlineTab,
+            ParagraphCommandAttributes,
         ],
         content: `
       <section class="page" data-page="1">
