@@ -72,8 +72,10 @@ section.page::after {
 .page-inner h1,
 .page-inner h2,
 .page-inner h3,
+.page-inner h4,
+.page-inner h5,
 .page-inner h6 {
-  margin: 0 0 1em;
+  margin: 0 0 1.25em;
   position: relative;
   padding-left: 0;
 }
@@ -97,6 +99,8 @@ section.page::after {
 .page-inner h1[data-para]::before,
 .page-inner h2[data-para]::before,
 .page-inner h3[data-para]::before,
+.page-inner h4[data-para]::before,
+.page-inner h5[data-para]::before,
 .page-inner h6[data-para]::before {
   content: "[" attr(data-para) "]";
   position: absolute;
@@ -245,21 +249,29 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
   text-align: right;
 }
 
-/* Spacings */
+/* Spacings (XS, S=標準, M, L, XL) */
 .page-inner .inline-spacing-none {
-  margin-bottom: 0 !important;
+  margin-bottom: 1.25em;
 }
 
-.page-inner .inline-spacing-small {
-  margin-bottom: 0.5em !important;
+.page-inner .inline-spacing-xs {
+  margin-bottom: 4px !important;
 }
 
-.page-inner .inline-spacing-medium {
-  margin-bottom: 1em !important;
+.page-inner .inline-spacing-s {
+  margin-bottom: 1.25em !important;
 }
 
-.page-inner .inline-spacing-large {
+.page-inner .inline-spacing-m {
   margin-bottom: 2em !important;
+}
+
+.page-inner .inline-spacing-l {
+  margin-bottom: 3em !important;
+}
+
+.page-inner .inline-spacing-xl {
+  margin-bottom: 4em !important;
 }
 
 .page-inner .indent-1 {

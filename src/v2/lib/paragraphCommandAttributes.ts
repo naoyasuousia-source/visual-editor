@@ -70,11 +70,11 @@ export const ParagraphCommandAttributes = Extension.create({
 
           // 段落下余白
           spacing: {
-            default: 'none',
+            default: null,
             keepOnSplit: true,
-            parseHTML: (element) => element.getAttribute('data-spacing') || 'none',
+            parseHTML: (element) => element.getAttribute('data-spacing'),
             renderHTML: (attributes) => {
-              if (!attributes.spacing || attributes.spacing === 'none') return {};
+              if (!attributes.spacing) return {};
               return { 'data-spacing': attributes.spacing };
             },
           },
