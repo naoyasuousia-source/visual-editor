@@ -85,6 +85,76 @@ const config: Config = {
           pointerEvents: 'auto',
           cursor: 'pointer',
         },
+        /* コマンドハイライトスタイル - editor.cssから移行 */
+        /* REPLACE_PARAGRAPH - 青色ハイライト */
+        '.page-inner p[data-command-type="replace"], .page-inner h1[data-command-type="replace"], .page-inner h2[data-command-type="replace"], .page-inner h3[data-command-type="replace"]': {
+          backgroundColor: 'rgba(59, 130, 246, 0.2) !important',
+          borderLeft: '4px solid #3b82f6 !important',
+          paddingLeft: '8px !important',
+          transition: 'background-color 0.3s, border-color 0.3s',
+          cursor: 'pointer',
+        },
+        '.page-inner p[data-command-type="replace"]:hover, .page-inner h1[data-command-type="replace"]:hover, .page-inner h2[data-command-type="replace"]:hover, .page-inner h3[data-command-type="replace"]:hover': {
+          backgroundColor: 'rgba(59, 130, 246, 0.3) !important',
+        },
+        /* INSERT_PARAGRAPH - 緑色ハイライト */
+        '.page-inner p[data-command-type="insert"], .page-inner h1[data-command-type="insert"], .page-inner h2[data-command-type="insert"], .page-inner h3[data-command-type="insert"]': {
+          backgroundColor: 'rgba(34, 197, 94, 0.2) !important',
+          borderLeft: '4px solid #22c55e !important',
+          paddingLeft: '8px !important',
+          transition: 'background-color 0.3s, border-color 0.3s',
+          cursor: 'pointer',
+        },
+        '.page-inner p[data-command-type="insert"]:hover, .page-inner h1[data-command-type="insert"]:hover, .page-inner h2[data-command-type="insert"]:hover, .page-inner h3[data-command-type="insert"]:hover': {
+          backgroundColor: 'rgba(34, 197, 94, 0.3) !important',
+        },
+        /* DELETE_PARAGRAPH - 赤色ハイライト + 薄く表示 */
+        '.page-inner p[data-command-type="delete"], .page-inner h1[data-command-type="delete"], .page-inner h2[data-command-type="delete"], .page-inner h3[data-command-type="delete"]': {
+          backgroundColor: 'rgba(239, 68, 68, 0.2) !important',
+          borderLeft: '4px solid #ef4444 !important',
+          paddingLeft: '8px !important',
+          opacity: '0.5 !important',
+          textDecoration: 'line-through',
+          transition: 'background-color 0.3s, border-color 0.3s, opacity 0.3s',
+          cursor: 'pointer',
+        },
+        '.page-inner p[data-command-type="delete"]:hover, .page-inner h1[data-command-type="delete"]:hover, .page-inner h2[data-command-type="delete"]:hover, .page-inner h3[data-command-type="delete"]:hover': {
+          backgroundColor: 'rgba(239, 68, 68, 0.3) !important',
+          opacity: '0.7 !important',
+        },
+        /* MOVE_PARAGRAPH - 紫色ハイライト */
+        '.page-inner p[data-command-type="move"], .page-inner h1[data-command-type="move"], .page-inner h2[data-command-type="move"], .page-inner h3[data-command-type="move"]': {
+          backgroundColor: 'rgba(168, 85, 247, 0.2) !important',
+          borderLeft: '4px solid #a855f7 !important',
+          paddingLeft: '8px !important',
+          transition: 'background-color 0.3s, border-color 0.3s',
+          cursor: 'pointer',
+        },
+        '.page-inner p[data-command-type="move"]:hover, .page-inner h1[data-command-type="move"]:hover, .page-inner h2[data-command-type="move"]:hover, .page-inner h3[data-command-type="move"]:hover': {
+          backgroundColor: 'rgba(168, 85, 247, 0.3) !important',
+        },
+        /* SPLIT_PARAGRAPH - オレンジ色ハイライト */
+        '.page-inner p[data-command-type="split"], .page-inner h1[data-command-type="split"], .page-inner h2[data-command-type="split"], .page-inner h3[data-command-type="split"]': {
+          backgroundColor: 'rgba(249, 115, 22, 0.2) !important',
+          borderLeft: '4px solid #f97316 !important',
+          paddingLeft: '8px !important',
+          transition: 'background-color 0.3s, border-color 0.3s',
+          cursor: 'pointer',
+        },
+        '.page-inner p[data-command-type="split"]:hover, .page-inner h1[data-command-type="split"]:hover, .page-inner h2[data-command-type="split"]:hover, .page-inner h3[data-command-type="split"]:hover': {
+          backgroundColor: 'rgba(249, 115, 22, 0.3) !important',
+        },
+        /* MERGE_PARAGRAPH - 青緑色ハイライト */
+        '.page-inner p[data-command-type="merge"], .page-inner h1[data-command-type="merge"], .page-inner h2[data-command-type="merge"], .page-inner h3[data-command-type="merge"]': {
+          backgroundColor: 'rgba(20, 184, 166, 0.2) !important',
+          borderLeft: '4px solid #14b8a6 !important',
+          paddingLeft: '8px !important',
+          transition: 'background-color 0.3s, border-color 0.3s',
+          cursor: 'pointer',
+        },
+        '.page-inner p[data-command-type="merge"]:hover, .page-inner h1[data-command-type="merge"]:hover, .page-inner h2[data-command-type="merge"]:hover, .page-inner h3[data-command-type="merge"]:hover': {
+          backgroundColor: 'rgba(20, 184, 166, 0.3) !important',
+        },
       });
       addUtilities({
         '.scrollbar-hide': {
