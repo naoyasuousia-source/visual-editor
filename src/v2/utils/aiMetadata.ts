@@ -104,21 +104,52 @@ export function generateCommandArea(): string {
  * @returns 最適化されたCSS文字列
  */
 function optimizeCssForMode(contentCss: string, isWordMode: boolean): string {
-    // コメントを削除
+    // 1. コメント削除
     let cleanedCss = contentCss.replace(/\/\*[\s\S]*?\*\//g, '');
     
+    // 2. CSS変数の重複を削除（content.cssの:rootを削除、buildFullHTMLで再定義する）
+    cleanedCss = cleanedCss.replace(/:root\s*\{[^}]*\}/g, '');
+    
+    // 3. エディタ専用クラスを削除（出力HTMLには不要）
+    cleanedCss = cleanedCss.replace(/\.ProseMirror\s*\{[^}]*\}/g, '');
+    
+    // 4. 未使用のエディタ専用セレクタを削除
+    cleanedCss = cleanedCss.replace(/body\.hide-page-numbers[^{]*\{[^}]*\}/g, '');
+    cleanedCss = cleanedCss.replace(/body\.hide-para-numbers[^{]*\{[^}]*\}/g, '');
+    
+    // 5. @media print内のエディタ専用セレクタを削除（PDF出力には不要）
+    // .ProseMirror-trailingBreak は必要なので保持
+    // .flex, .flex-col などTailwindクラスは実際に存在する可能性があるが、
+    // 出力HTMLには含まれないため削除
+    cleanedCss = cleanedCss.replace(
+        /@media print\s*\{([\s\S]*?)\}/,
+        (match, printContent) => {
+            // エディタUI要素の非表示ルールを最適化
+            // #toolbar, .bubble-menu, .sonner など存在しない要素を削除
+            let optimizedPrint = printContent
+                .replace(/\.flex\.flex-col\.h-screen\s*\{[^}]*\}/g, '')
+                .replace(/\.flex\.flex-1\.overflow-hidden\s*\{[^}]*\}/g, '');
+            
+            return `@media print {${optimizedPrint}}`;
+        }
+    );
+    
+    // 6. モード別の最適化
     if (isWordMode) {
         // Wordモード: Paginatedモード専用スタイルを削除
-        // ページ番号（section.page::after）を削除
         cleanedCss = cleanedCss.replace(/section\.page::after\s*\{[^}]*\}/g, '');
-        // Paginatedモード用の固定高さを削除（Wordモードで上書きされるため不要）
-        cleanedCss = cleanedCss.replace(/section\.page\s*\{\s*position:\s*relative;\s*width:\s*210mm;\s*min-width:\s*210mm;\s*height:\s*297mm;\s*min-height:\s*297mm;[^}]*\}/g, 
-            'section.page { position: relative; width: 210mm; min-width: 210mm; background: #fff; box-shadow: 10px 0 10px -5px rgba(0, 0, 0, 0.1), -10px 0 10px -5px rgba(0, 0, 0, 0.1); box-sizing: border-box; overflow: visible; margin: 0 auto; height: auto; min-height: 297mm; }');
+        cleanedCss = cleanedCss.replace(
+            /section\.page\s*\{\s*position:\s*relative;\s*width:\s*210mm;\s*min-width:\s*210mm;\s*height:\s*297mm;\s*min-height:\s*297mm;[^}]*\}/g,
+            'section.page { position: relative; width: 210mm; min-width: 210mm; background: #fff; box-shadow: 10px 0 10px -5px rgba(0, 0, 0, 0.1), -10px 0 10px -5px rgba(0, 0, 0, 0.1); box-sizing: border-box; overflow: visible; margin: 0 auto; height: auto; min-height: 297mm; }'
+        );
     } else {
         // Paginatedモード: Wordモード専用スタイルを削除
-        // body.mode-word で始まるすべてのスタイルを削除
         cleanedCss = cleanedCss.replace(/body\.mode-word[^{]*\{[^}]*\}/g, '');
     }
+    
+    // 7. 空行の削除（3行以上の連続空行を2行に、末尾空白削除）
+    cleanedCss = cleanedCss.replace(/\n\s*\n\s*\n+/g, '\n\n');
+    cleanedCss = cleanedCss.trim();
     
     return cleanedCss;
 }
@@ -174,7 +205,11 @@ export function buildFullHTML(
 <title>Document</title>
 ${aiGuide}
 <style>
-:root { --page-margin: ${pageMarginText}; }
+:root { 
+  --page-margin: ${pageMarginText}; 
+  --editor-font-family: inherit;
+  --tab-width: 0px;
+}
 ${optimizedCss}
 </style>
 </head>
