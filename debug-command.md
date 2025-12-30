@@ -27,12 +27,19 @@
 
 ## 1. 未解決要件（移動許可がNGの要件は絶対に移動・編集しないこと）
 
-<requirement>
-<content></content>
-<current-situation></current-situation>
+<repuirement>
+<content>DELETE_PARAGRAPHコマンドがカラー表示、個別メニュー表示まではうまくいくが、承諾してもキャレットが段落の先頭に移るだけで、段落が消えない。</content>
+<current-situation>修正済み。approveHighlightにおいて、削除コマンドの場合はノードそのものを削除するロジックを追加した。</current-situation>
 <remarks></remarks>
 <permission-to-move>OK</permission-to-move>
-</requirement>
+</repuirement>
+
+<repuirement>
+<content>INSERT_PARAGRAPHコマンドは、全体破棄、個別破棄いずれでも、挿入予定段落が消えず、カラー表示のまま残存してしまう。</content>
+<current-situation></current-situation>
+<remarks></remarks>
+<permission-to-move>NG</permission-to-move>
+</repuirement>
 
 ## 2. 未解決要件に関するコード変更履歴（目的、変更内容、変更日時）
 
@@ -100,6 +107,13 @@
 - **メニューバー等のロック**: `Toolbar`, `PageNavigator` を囲むコンテナにも `shouldLock` による `pointer-events: none` を適用。
 - **セレクティブ・ロック**: エディタ全体を物理ロックしつつ、CSSセレクタ `.locked-editor .ProseMirror [data-command-type]` を用いて、ハイライト箇所のみ `pointer-events: auto` に設定。これにより承認ポップアップのホバー/クリック操作のみを許可。
 - **全体承認バーの閉じるボタン削除**: ユーザーが承認/破棄を回避できないよう、×ボタンを完全に削除。
+
+### 修正8: DELETE_PARAGRAPH 承認時の段落削除処理の実装 (2025-12-30 23:55)
+
+**ファイル**: `src/v2/hooks/useCommandHighlight.ts`  
+**修正**: 
+- `approveHighlight` において、`commandType` を判定し、`DELETE_PARAGRAPH` の場合は属性クリアではなく `deleteSelection()` によるノード削除を実行。
+- `rejectHighlight` を整理し、削除却下時は属性クリアのみ、書き換え却下時はスナップショットからの復元を明確に分離。
 
 ### 重要な実装詳細
 
@@ -235,5 +249,10 @@
 
 ### 個別承認の仕組み
 
-- `data-command-type` 等の属性をノードに付与することでCSS（content.css）でのハイライトを実現。
-- 承認時はそれらの属性を削除し、破棄時はキャプチャしておいたスナップショットに戻す。
+- **属性付与**: `data-command-type` 等の属性をノードに付与することでCSS（content.css）でのハイライトを実現。
+- **承認 (Approve)**:
+    - `REPLACE`, `INSERT` 等: ハイライト属性（`data-command-*`）を削除して確定。
+    - `DELETE`: `deleteSelection()` により対象段落を物理的に削除。
+- **破棄 (Reject)**:
+    - `REPLACE`, `INSERT` 等: 実行前のスナップショットからテキストと属性を復元。
+    - `DELETE`: 属性のみを削除し、段落を存続させることで削除予定を撤回。

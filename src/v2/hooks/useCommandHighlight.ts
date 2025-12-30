@@ -103,19 +103,27 @@ export function useCommandHighlight(editor: Editor | null) {
       // 承認済みマーク
       store.markAsApproved(commandId);
 
-      // data-command属性を削除
+      // ハイライトの影響を受ける段落を処理
       if (editor) {
         highlight.paragraphIds.forEach((paragraphId) => {
-          // 段落を検索して属性をクリア
+          // 段落を検索
           editor.state.doc.descendants((node, pos) => {
             if (
               (node.attrs.id === paragraphId || node.attrs['data-temp-id'] === paragraphId) &&
               node.attrs['data-command-id'] === commandId
             ) {
-              editor.chain().focus().setNodeSelection(pos).updateAttributes(node.type.name, {
-                'data-command-type': null,
-                'data-command-id': null,
-              }).run();
+              if (highlight.commandType === 'DELETE_PARAGRAPH') {
+                // DELETE_PARAGRAPH 承認時は段落ごと削除
+                editor.chain().focus().setNodeSelection(pos).deleteSelection().run();
+              } else {
+                // それ以外のコマンド承認時はハイライト属性のみをクリア（確定）
+                editor.chain().focus().setNodeSelection(pos).updateAttributes(node.type.name, {
+                  'data-command-type': null,
+                  'data-command-id': null,
+                }).run();
+              }
+              // 同じIDのノードは1つのはずなので、見つけたらこのパスの探索は終了
+              return false;
             }
           });
         });
@@ -143,45 +151,47 @@ export function useCommandHighlight(editor: Editor | null) {
       // 破棄済みマーク
       store.markAsRejected(commandId);
 
-      // 段落を元の状態に復元
-      if (editor && highlight.beforeSnapshot) {
-        highlight.beforeSnapshot.forEach((snapshot: ParagraphSnapshot) => {
-          editor.state.doc.descendants((node, pos) => {
-            if (
-              (node.attrs.id === snapshot.paragraphId || node.attrs['data-temp-id'] === snapshot.paragraphId) &&
-              node.attrs['data-command-id'] === commandId
-            ) {
-              // 段落を元のテキストで置換
-              editor.chain().focus().setNodeSelection(pos).deleteSelection().insertContentAt(pos, {
-                type: 'paragraph',
-                attrs: {
-                  id: snapshot.paragraphId,
-                  // data-command属性はクリア
+      // ハイライトを破棄（元に戻す）
+      if (editor) {
+        if (highlight.commandType === 'DELETE_PARAGRAPH') {
+          // 削除却下時は、段落を消さずに削除マーク（属性）を外すだけ
+          highlight.paragraphIds.forEach((paragraphId) => {
+            editor.state.doc.descendants((node, pos) => {
+              if (
+                (node.attrs.id === paragraphId || node.attrs['data-temp-id'] === paragraphId) &&
+                node.attrs['data-command-id'] === commandId
+              ) {
+                editor.chain().focus().setNodeSelection(pos).updateAttributes(node.type.name, {
                   'data-command-type': null,
                   'data-command-id': null,
-                },
-                content: [{ type: 'text', text: snapshot.text }],
-              }).run();
-            }
+                }).run();
+                return false;
+              }
+            });
           });
-        });
-      }
-
-      // DELETE_PARAGRAPHコマンドの場合は削除マークを解除
-      if (highlight.commandType === 'DELETE_PARAGRAPH' && editor) {
-        highlight.paragraphIds.forEach((paragraphId) => {
-          editor.state.doc.descendants((node, pos) => {
-            if (
-              (node.attrs.id === paragraphId || node.attrs['data-temp-id'] === paragraphId) &&
-              node.attrs['data-command-id'] === commandId
-            ) {
-              editor.chain().focus().setNodeSelection(pos).updateAttributes(node.type.name, {
-                'data-command-type': null,
-                'data-command-id': null,
-              }).run();
-            }
+        } else if (highlight.beforeSnapshot && highlight.beforeSnapshot.length > 0) {
+          // それ以外の変更却下時は、スナップショットから元の状態を復元
+          highlight.beforeSnapshot.forEach((snapshot: ParagraphSnapshot) => {
+            editor.state.doc.descendants((node, pos) => {
+              if (
+                (node.attrs.id === snapshot.paragraphId || node.attrs['data-temp-id'] === snapshot.paragraphId) &&
+                node.attrs['data-command-id'] === commandId
+              ) {
+                // 段落を元のテキストと属性で書き戻す
+                editor.chain().focus().setNodeSelection(pos).deleteSelection().insertContentAt(pos, {
+                  type: 'paragraph',
+                  attrs: {
+                    id: snapshot.paragraphId,
+                    'data-command-type': null,
+                    'data-command-id': null,
+                  },
+                  content: snapshot.text ? [{ type: 'text', text: snapshot.text }] : [],
+                }).run();
+                return false;
+              }
+            });
           });
-        });
+        }
       }
 
       // ハイライトを削除
