@@ -6,6 +6,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { Editor } from '@tiptap/react';
 import { useCommandHighlight } from '@/hooks/useCommandHighlight';
+import { useCommandHighlightStore } from '@/store/useCommandHighlightStore';
 import type { HighlightState } from '@/types/command';
 
 /**
@@ -16,9 +17,13 @@ import type { HighlightState } from '@/types/command';
  * @returns コントローラー関数群
  */
 export function useCommandApprovalController(editor: Editor | null, onApprovalChange?: () => void) {
+  // Storeから直接ハイライト状態を購読して再レンダリングを確実にする
+  const highlightsMap = useCommandHighlightStore((state) => state.highlights);
+  const pendingCount = useCommandHighlightStore((state) => {
+    return Array.from(state.highlights.values()).filter(h => !h.approved && !h.rejected).length;
+  });
+
   const {
-    getAllHighlights,
-    getPendingCount,
     approveHighlight,
     rejectHighlight,
     approveAllHighlights,
@@ -61,7 +66,10 @@ export function useCommandApprovalController(editor: Editor | null, onApprovalCh
 
       // 300ms後にポップアップ表示
       hoverTimeout = setTimeout(() => {
-        setActivePopup({ highlight, targetElement: paragraph });
+        const highlight = highlightsMap.get(commandId);
+        if (highlight) {
+          setActivePopup({ highlight, targetElement: paragraph });
+        }
       }, 300);
     };
 
@@ -75,31 +83,30 @@ export function useCommandApprovalController(editor: Editor | null, onApprovalCh
       }
     };
 
-    // イベントリスナーを登録 (デリゲーション)
+    // イベントリスナーを登録 (デリゲーション・キャプチャーフェーズ)
     const editorElement = editor.view.dom;
-    editorElement.addEventListener('mouseover', handleMouseOver);
-    editorElement.addEventListener('mouseout', handleMouseOut);
+    editorElement.addEventListener('mouseover', handleMouseOver, true);
+    editorElement.addEventListener('mouseout', handleMouseOut, true);
 
     return () => {
-      editorElement.removeEventListener('mouseover', handleMouseOver);
-      editorElement.removeEventListener('mouseout', handleMouseOut);
+      editorElement.removeEventListener('mouseover', handleMouseOver, true);
+      editorElement.removeEventListener('mouseout', handleMouseOut, true);
       if (hoverTimeout) {
         clearTimeout(hoverTimeout);
       }
     };
-  }, [editor, getAllHighlights, activePopup]);
+  }, [editor, highlightsMap, activePopup]);
 
   /**
    * 承認バーの表示/非表示を自動管理
    */
   useEffect(() => {
-    const pendingCount = getPendingCount();
     if (pendingCount > 0) {
       setShowApprovalBar(true);
     } else {
       setShowApprovalBar(false);
     }
-  }, [getPendingCount]);
+  }, [pendingCount]);
 
   /**
    * ポップアップを閉じる
@@ -157,10 +164,10 @@ export function useCommandApprovalController(editor: Editor | null, onApprovalCh
    * 承認バーを再表示
    */
   const showApprovalBarAgain = useCallback(() => {
-    if (getPendingCount() > 0) {
+    if (pendingCount > 0) {
       setShowApprovalBar(true);
     }
-  }, [getPendingCount]);
+  }, [pendingCount]);
 
   return {
     // ポップアップ状態
@@ -179,6 +186,6 @@ export function useCommandApprovalController(editor: Editor | null, onApprovalCh
     handleRejectAll,
     
     // 状態取得
-    pendingCount: getPendingCount(),
+    pendingCount,
   };
 }
