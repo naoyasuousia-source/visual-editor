@@ -12,6 +12,7 @@ import type {
   ParagraphSnapshot,
 } from '@/types/command';
 import { useCommandHighlightStore } from '@/store/useCommandHighlightStore';
+import { restoreParagraphFromSnapshot } from '@/utils/paragraphOperations';
 
 /**
  * コマンドハイライト管理フック
@@ -95,44 +96,44 @@ export function useCommandHighlight(editor: Editor | null) {
   const approveHighlight = useCallback(
     (commandId: string) => {
       const highlight = highlights.get(commandId);
-      if (!highlight) {
-        console.error('ハイライトが見つかりません:', commandId);
+      if (!highlight || !editor) {
+        if (!highlight) console.error('ハイライトが見つかりません:', commandId);
         return;
       }
 
       // 承認済みマーク
       store.markAsApproved(commandId);
 
-      // ハイライトの影響を受ける段落を処理
-      if (editor) {
-        highlight.paragraphIds.forEach((paragraphId) => {
-          // 段落を検索
-          editor.state.doc.descendants((node, pos) => {
-            if (
-              (node.attrs.id === paragraphId || node.attrs['data-temp-id'] === paragraphId) &&
-              node.attrs['data-command-id'] === commandId
-            ) {
-              if (highlight.commandType === 'DELETE_PARAGRAPH') {
-                // DELETE_PARAGRAPH 承認時は段落ごと削除
-                editor.chain().focus().setNodeSelection(pos).deleteSelection().run();
-              } else {
-                // それ以外のコマンド承認時はハイライト属性のみをクリア（確定）
-                editor.chain().focus().setNodeSelection(pos).updateAttributes(node.type.name, {
-                  'data-command-type': null,
-                  'data-command-id': null,
-                }).run();
-              }
-              // 同じIDのノードは1つのはずなので、見つけたらこのパスの探索は終了
-              return false;
-            }
-          });
+      // 1. 対象のノードを全列挙（属性ベースで確実に探す）
+      const targets: { node: any; pos: number }[] = [];
+      editor.state.doc.descendants((node, pos) => {
+        if (node.attrs['data-command-id'] === commandId) {
+          targets.push({ node, pos });
+          // SPLIT 等で複数ノードがある場合があるため、ここでは return false しない
+        }
+      });
+
+      if (targets.length > 0) {
+        // 2. ドキュメントの後ろから順に処理（pos のずれを防ぐ）
+        const sortedTargets = [...targets].sort((a, b) => b.pos - a.pos);
+        
+        sortedTargets.forEach(({ node, pos }) => {
+          if (highlight.commandType === 'DELETE_PARAGRAPH') {
+            // DELETE_PARAGRAPH 承認時は段落ごと削除
+            editor.chain().focus().setNodeSelection(pos).deleteSelection().run();
+          } else {
+            // それ以外のコマンド承認時はハイライト属性のみをクリア
+            editor.chain().focus().setNodeSelection(pos).updateAttributes(node.type.name, {
+              'data-command-type': null,
+              'data-command-id': null,
+            }).run();
+          }
         });
       }
 
       // ハイライトを削除
       store.removeHighlight(commandId);
-
-      console.log(`ハイライト承認: ${commandId}`);
+      console.log(`ハイライト承認完了: ${commandId}`);
     },
     [editor, highlights, store]
   );
@@ -143,112 +144,50 @@ export function useCommandHighlight(editor: Editor | null) {
   const rejectHighlight = useCallback(
     (commandId: string) => {
       const highlight = highlights.get(commandId);
-      if (!highlight) {
-        console.error('ハイライトが見つかりません:', commandId);
+      if (!highlight || !editor) {
+        if (!highlight) console.error('ハイライトが見つかりません:', commandId);
         return;
       }
 
       // 破棄済みマーク
       store.markAsRejected(commandId);
 
-      // ハイライトを破棄（元に戻す）
-      if (editor) {
-        const type = highlight.commandType;
-
-        if (type === 'DELETE_PARAGRAPH') {
-          // 削除却下時：マークを外すだけ
-          highlight.paragraphIds.forEach((paragraphId) => {
-            editor.state.doc.descendants((node, pos) => {
-              if (
-                (node.attrs.id === paragraphId || node.attrs['data-temp-id'] === paragraphId) &&
-                node.attrs['data-command-id'] === commandId
-              ) {
-                editor.chain().focus().setNodeSelection(pos).updateAttributes(node.type.name, {
-                  'data-command-type': null,
-                  'data-command-id': null,
-                }).run();
-                return false;
-              }
-            });
-          });
-        } else {
-          // INSERT, REPLACE, MOVE, SPLIT, MERGE の却下処理
-
-          // 1. このコマンドで新規作成された段落（または移動先の段落）を削除
-          // INSERT_PARAGRAPH, SPLIT_PARAGRAPH(新), MOVE_PARAGRAPH(新)などが対象
-          highlight.paragraphIds.forEach((paragraphId) => {
-            // スナップショットにあるID（元の段落）は削除してはいけない
-            const isOriginalParagraph = highlight.beforeSnapshot?.some(s => s.paragraphId === paragraphId);
-            
-            if (!isOriginalParagraph) {
-              editor.state.doc.descendants((node, pos) => {
-                if (
-                  (node.attrs.id === paragraphId || node.attrs['data-temp-id'] === paragraphId) &&
-                  node.attrs['data-command-id'] === commandId
-                ) {
-                  editor.chain().focus().setNodeSelection(pos).deleteSelection().run();
-                  return false;
-                }
-              });
-            }
-          });
-
-          // 2. 元の状態（スナップショット）がある場合は、それを元の位置に復元
-          // REPLACE, DELETE(マーク解除済み), MOVE(元位置へ), SPLIT(統合), MERGE(分割)
-          if (highlight.beforeSnapshot && highlight.beforeSnapshot.length > 0) {
-            highlight.beforeSnapshot.forEach((snapshot: ParagraphSnapshot) => {
-              // 既にエディタ上に存在する元の段落（REPLACE等で属性だけ変わったもの）を検索
-              let foundPos: number | null = null;
-              editor.state.doc.descendants((node, pos) => {
-                if (
-                  (node.attrs.id === snapshot.paragraphId || node.attrs['data-temp-id'] === snapshot.paragraphId)
-                ) {
-                  foundPos = pos;
-                  return false;
-                }
-              });
-
-              if (foundPos !== null) {
-                // 存在するなら置換
-                editor.chain().focus().setNodeSelection(foundPos).deleteSelection().insertContentAt(foundPos, {
-                  type: 'paragraph',
-                  attrs: {
-                    id: snapshot.paragraphId,
-                    'data-command-type': null,
-                    'data-command-id': null,
-                  },
-                  content: snapshot.text ? [{ type: 'text', text: snapshot.text }] : [],
-                }).run();
-              } else if (snapshot.id) {
-                // 存在しない場合（MOVEやMERGEで消された場合）は、スナップショットがあれば適切な位置に挿入したいが、
-                // 簡易的には現在の末尾や前の位置を特定する必要がある。
-                // 現状は安全のため、見つかった場合のみ復元。
-              }
-            });
-          }
-
-          // 3. 残っている属性を念のためクリア
-          highlight.paragraphIds.forEach((paragraphId) => {
-            editor.state.doc.descendants((node, pos) => {
-              if (
-                (node.attrs.id === paragraphId || node.attrs['data-temp-id'] === paragraphId) &&
-                node.attrs['data-command-id'] === commandId
-              ) {
-                editor.chain().focus().setNodeSelection(pos).updateAttributes(node.type.name, {
-                  'data-command-type': null,
-                  'data-command-id': null,
-                }).run();
-                return false;
-              }
-            });
-          });
+      // 1. エディタ上に存在する、このコマンドの影響を受けたノードを特定
+      const targets: { node: any; pos: number }[] = [];
+      editor.state.doc.descendants((node, pos) => {
+        if (node.attrs['data-command-id'] === commandId) {
+          targets.push({ node, pos });
         }
-      }
+      });
+
+      // 2. 後ろから順に処理
+      const sortedTargets = [...targets].sort((a, b) => b.pos - a.pos);
+
+      sortedTargets.forEach(({ node, pos }) => {
+        const paragraphId = node.attrs.id || node.attrs['data-temp-id'];
+        const snapshot = highlight.beforeSnapshot?.find(s => s.paragraphId === paragraphId);
+
+        if (highlight.commandType === 'DELETE_PARAGRAPH') {
+          // 削除却下：属性を外して元に戻す
+          editor.chain().focus().setNodeSelection(pos).updateAttributes(node.type.name, {
+            'data-command-type': null,
+            'data-command-id': null,
+          }).run();
+        } else if (snapshot) {
+          // 元の状態がある場合は復元（属性とスタイルも戻す）
+          restoreParagraphFromSnapshot(editor, pos, snapshot);
+        } else {
+          // 元の状態がない（新規挿入された）ノードは削除
+          editor.chain().focus().setNodeSelection(pos).deleteSelection().run();
+        }
+      });
+
+      // 3. スナップショットにあるがエディタ上に存在しないノードの処理（MOVE/MERGE却下用）
+      // ※簡易的には上記のループで処理されないものが残るが、現状は安全のため基本的な復元に留める
 
       // ハイライトを削除
       store.removeHighlight(commandId);
-
-      console.log(`ハイライト破棄: ${commandId}`);
+      console.log(`ハイライト破棄完了: ${commandId}`);
     },
     [editor, highlights, store]
   );

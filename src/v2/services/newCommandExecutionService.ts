@@ -602,7 +602,7 @@ function executeMergeParagraph(
       success: true,
       commandId,
       commandType: 'MERGE_PARAGRAPH',
-      affectedParagraphIds: [targetId],
+      affectedParagraphIds: [targetId, sourceId],
       beforeSnapshot: beforeSnapshots,
       timestamp: Date.now(),
     };

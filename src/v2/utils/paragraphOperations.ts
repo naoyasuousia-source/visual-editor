@@ -267,5 +267,48 @@ export function getParagraphIdAtPosition(
     return (node.attrs.id as ParagraphId) || (node.attrs['data-temp-id'] as ParagraphId) || null;
   }
 
-  return null;
+/**
+ * スナップショットから段落を完全に復元
+ * (ノードタイプ、属性、テキスト内容をすべて戻す)
+ * 
+ * @param editor - Tiptapエディタインスタンス
+ * @param pos - 復元位置
+ * @param snapshot - 段落スナップショット
+ */
+export function restoreParagraphFromSnapshot(
+  editor: Editor,
+  pos: number,
+  snapshot: ParagraphSnapshot
+): void {
+  const { options, paragraphId, text } = snapshot;
+  let typeName = 'paragraph';
+  const attrs: any = { id: paragraphId };
+
+  // ブロックタイプの決定
+  if (options.blockType && options.blockType !== 'p') {
+    typeName = 'heading';
+    attrs.level = parseInt(options.blockType.substring(1), 10);
+    attrs.blockType = options.blockType;
+  } else {
+    typeName = 'paragraph';
+    attrs.blockType = 'p';
+  }
+
+  // スタイル属性の設定 (StyleAttributes 拡張の属性名)
+  if (options.textAlign) attrs.align = options.textAlign;
+  if (options.spacing) attrs.spacing = options.spacing;
+  if (options.indent !== undefined) attrs.indent = options.indent !== 0 ? String(options.indent) : null;
+
+  // 置換実行
+  editor
+    .chain()
+    .focus()
+    .setNodeSelection(pos)
+    .deleteSelection()
+    .insertContentAt(pos, {
+      type: typeName,
+      attrs,
+      content: parseHtmlText(text || ''),
+    })
+    .run();
 }
