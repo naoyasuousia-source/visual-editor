@@ -267,6 +267,9 @@ export function getParagraphIdAtPosition(
     return (node.attrs.id as ParagraphId) || (node.attrs['data-temp-id'] as ParagraphId) || null;
   }
 
+  return null;
+}
+
 /**
  * スナップショットから段落を完全に復元
  * (ノードタイプ、属性、テキスト内容をすべて戻す)

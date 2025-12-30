@@ -28,10 +28,17 @@
 ## 1. 未解決要件（移動許可がNGの要件は絶対に移動・編集しないこと）（勝手に移動許可をOKに書き換えないこと）
 
 <repuirement>
+<content>splitコマンドが期待通りではなく、アップ画像のように、別の段落を跨いで分割されてしまう</content>
+<current-situation></current-situation>
+<remarks></remarks>
+<permission-to-move>NG</permission-to-move>
+</repuirement>
+
+<repuirement>
 <content>MOVE・MERGEは正常に動作するが、承諾後もカラー表示が解除されない (解決済み・修正済み)</content>
 <current-situation></current-situation>
 <remarks>承認・破棄ロジックのリファクタリングにより、属性ベースの全探索・一括消去を導入し解決。</remarks>
-<permission-to-move>NG</permission-to-move>
+<permission-to-move>OK</permission-to-move>
 </repuirement>
 
 ## 2. 未解決要件に関するコード変更履歴（目的、変更内容、変更日時）
