@@ -7,82 +7,82 @@
 
 <!--
 ===============================================================================
-AI ASSISTANT GUIDE & COMMAND API SPECIFICATIONS
+AI COMMAND API (v2.0 - Paragraph ID System)
 ===============================================================================
 
-## OVERVIEW
-This document is being edited by a human using a visual editor.
-As an AI Assistant, you can perform automated edits by writing commands in the
-COMMAND AREA located at the beginning of <body>.
+OVERVIEW:
+Visual editor document. Edit via commands targeting paragraph IDs in COMMAND AREA.
 
-## DOCUMENT STRUCTURE
-- Paginated Mode: Split into A4 sections (<section class="page">).
-- Editable content is inside elements with class "page-inner".
-- Every paragraph/heading has a [data-para] attribute (e.g., [1], [2]).
-- Images are wrapped in "image-container" and may have "data-title".
+STRUCTURE:
+- Paginated Mode: A4 sections, IDs like 'p1-1', 'p1-2' (page-paragraph).
+- Every paragraph/heading has unique 'id' (e.g., id="p1-1", id="p2-3")
+- Format: "p{page}-{paragraph}" (1-indexed)
+- Content inside class "page-inner"
 
-## COMMAND AREA LOCATION
-The COMMAND AREA is located immediately after the <body> tag opening.
-Look for the markers: [AI_COMMAND_START] and [AI_COMMAND_END]
+COMMAND AREA:
+Located after &lt;body&gt; tag:
+  &lt;!-- AI_COMMAND_START --&gt;
+  &lt;!-- AI_COMMAND_END --&gt;
 
-## SUPPORTED COMMANDS
+CRITICAL: Write commands BETWEEN markers, NOT replacing them!
 
-1. INSERT_TEXT[paragraph:offset][text][bold?]
-   - Inserts text at the specified offset in a paragraph.
-   - paragraph: The [data-para] number (1-indexed).
-   - offset: Character position (0-indexed).
-   - bold (optional): Specify "bold" to insert text in bold style.
-   - Examples: 
-     <!-- INSERT_TEXT[1:0][Hello ] -->
-     <!-- INSERT_TEXT[2:5][重要][bold] -->
+COMMAND FORMAT:
+Each command MUST be wrapped: &lt;!-- COMMAND --&gt;
 
-2. REPLACE_TEXT[search][replace][options?]
-   - Searches and replaces text within the document.
-   - options (optional): "all", "regex", "caseSensitive"
-   - Example: <!-- REPLACE_TEXT[apple][orange][all] -->
+Example:
+  &lt;!-- AI_COMMAND_START --&gt;
+  &lt;!-- REPLACE_PARAGRAPH(p1-2, New text) --&gt;
+  &lt;!-- INSERT_PARAGRAPH(p1-3, Another paragraph) --&gt;
+  &lt;!-- DELETE_PARAGRAPH(p2-1) --&gt;
+  &lt;!-- AI_COMMAND_END --&gt;
 
-3. DELETE_TEXT[paragraph:start-end]
-   - Deletes text in the specified range within a paragraph.
-   - Range is specified as "paragraph:startOffset-endOffset".
-   - Example: <!-- DELETE_TEXT[1:0-5] --> (deletes chars 0-5 in para 1)
+COMMANDS:
 
-4. INSERT_PARAGRAPH[position][text][options?]
-   - Inserts a new paragraph at the specified position.
-   - position: Paragraph number (1-indexed) where to insert.
-   - options (optional): "heading", "level:1-3", "center", "right", "left", "indent:N"
-   - Examples:
-     <!-- INSERT_PARAGRAPH[1][新しい段落] -->
-     <!-- INSERT_PARAGRAPH[2][見出し][heading][level:2][center] -->
-     <!-- INSERT_PARAGRAPH[3][本文][paragraph][indent:1] -->
+1. REPLACE_PARAGRAPH(targetId, text, [options])
+   Replace paragraph content.
+   Options: blockType=p|h1|h2|h3, textAlign=left|center|right, 
+            spacing=none|small|medium|large, indent=0|1|2|3|4
+   Example: &lt;!-- REPLACE_PARAGRAPH(p1-2, &lt;b&gt;Bold&lt;/b&gt; text, blockType=h1) --&gt;
 
-5. DELETE_PARAGRAPH[paragraph]
-   - Deletes the entire paragraph at the specified position.
-   - Example: <!-- DELETE_PARAGRAPH[3] -->
+2. INSERT_PARAGRAPH(targetId, text, [options])
+   Insert new paragraph AFTER target. Options same as REPLACE_PARAGRAPH.
+   Example: &lt;!-- INSERT_PARAGRAPH(p1-3, New paragraph) --&gt;
 
-6. MOVE_PARAGRAPH[from][to]
-   - Moves a paragraph from one position to another.
-   - Example: <!-- MOVE_PARAGRAPH[2][5] --> (move para 2 to position 5)
+3. DELETE_PARAGRAPH(targetId)
+   Mark for deletion (crossed out until approved).
+   Example: &lt;!-- DELETE_PARAGRAPH(p2-2) --&gt;
 
-## IMPORTANT RULES
-- Commands must be wrapped in HTML comments: <!-- COMMAND[...] -->
-- Only one command per line inside the COMMAND AREA.
-- Do NOT edit any content outside the COMMAND AREA.
-- The editor ignores/overwrites external changes to content during auto-edit.
-- Commands are executed sequentially in the order they appear.
+4. MOVE_PARAGRAPH(sourceId, targetId)
+   Move source paragraph to AFTER target.
+   Example: &lt;!-- MOVE_PARAGRAPH(p2-3, p1-5) --&gt;
+
+5. SPLIT_PARAGRAPH(targetId, beforeText, afterText)
+   Split paragraph at text boundary.
+   Example: &lt;!-- SPLIT_PARAGRAPH(p2-4, First part., Second part) --&gt;
+
+6. MERGE_PARAGRAPH(sourceId, targetId)
+   Merge source into target (source deleted).
+   Example: &lt;!-- MERGE_PARAGRAPH(p3-1, p3-2) --&gt;
+
+HTML TAGS IN TEXT:
+&lt;b&gt;bold&lt;/b&gt;, &lt;br&gt;, &lt;sup&gt;superscript&lt;/sup&gt;, &lt;sub&gt;subscript&lt;/sub&gt;
+
+RULES:
+1. Each command on own line with &lt;!-- --&gt;
+2. Use exact paragraph IDs (e.g., "p1-2", not "p1-02")
+3. Do NOT edit outside COMMAND AREA
+4. Do NOT replace/remove markers
+5. Commands execute sequentially
 
 ===============================================================================
 -->
 
 <style>
-:root { --page-margin: 17mm; }
-
-
-:root {
-  --page-margin: 17mm;
+:root { 
+  --page-margin: 17mm; 
   --editor-font-family: inherit;
   --tab-width: 0px;
 }
-
 body.standalone-html {
   background-color: #525659;
   margin: 0;
@@ -99,13 +99,6 @@ body.standalone-html {
   align-items: center;
   gap: 24px;
   width: 100%;
-}
-
-.ProseMirror {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
 }
 
 section.page {
@@ -137,8 +130,6 @@ section.page::after {
   box-sizing: border-box;
   padding: var(--page-margin);
   position: relative;
-  overflow-y: auto;
-  outline: none;
   font-family: var(--editor-font-family, inherit);
   font-size: 11pt;
   color: #333;
@@ -190,15 +181,6 @@ section.page::after {
   font-family: var(--editor-font-family, inherit);
 }
 
-body.hide-page-numbers section.page::after {
-  display: none !important;
-}
-
-body.hide-para-numbers .page-inner [data-para]::before,
-body.hide-para-numbers .ProseMirror [data-para]::before {
-  display: none !important;
-}
-
 .page-inner img {
   display: block;
   max-width: 100%;
@@ -232,7 +214,6 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
   padding: 0;
   line-height: 1;
   font-size: inherit;
-  caret-color: #000;
 }
 
 .page-inner .image-container {
@@ -245,7 +226,6 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
   position: relative;
   margin-right: 1.5pt;
   margin-bottom: 0;
-  transition: margin-bottom 0.2s;
 }
 
 .page-inner .image-container.has-title {
@@ -284,14 +264,7 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
   font-size: calc(11pt * 0.67);
   font-weight: bold;
   color: #666;
-}
-
-.page-inner p:has(> img:not(.ProseMirror-separator)) .ProseMirror-trailingBreak,
-.page-inner p:has(> .image-container) .ProseMirror-trailingBreak {
-  display: none;
-}
-
-.page-inner img.has-border {
+}.page-inner img.has-border {
   border: 1px solid currentColor;
 }
 
@@ -307,6 +280,34 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
   display: inline-block;
   vertical-align: bottom;
   height: 1em;
+}
+
+.page-inner .inline-align-left {
+  text-align: left;
+}
+
+.page-inner .inline-align-center {
+  text-align: center;
+}
+
+.page-inner .inline-align-right {
+  text-align: right;
+}
+
+.page-inner .inline-spacing-none {
+  margin-bottom: 0 !important;
+}
+
+.page-inner .inline-spacing-small {
+  margin-bottom: 0.5em !important;
+}
+
+.page-inner .inline-spacing-medium {
+  margin-bottom: 1em !important;
+}
+
+.page-inner .inline-spacing-large {
+  margin-bottom: 2em !important;
 }
 
 .page-inner .indent-1 {
@@ -358,14 +359,12 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
   text-indent: -180pt;
 }
 
-
 @media print {
   @page {
     size: A4 portrait;
     margin: 0;
   }
 
-  
   html,
   body, 
   body.standalone-html {
@@ -379,7 +378,6 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
     margin: 0 !important;
   }
 
-  
   #toolbar,
   #page-navigator,
   #ai-image-index,
@@ -399,7 +397,6 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
     overflow: hidden !important;
   }
 
-  
   .flex.flex-col.h-screen {
     display: block !important;
     height: auto !important;
@@ -427,7 +424,6 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
     gap: 0 !important;
   }
 
-  
   #pages-container > div {
     display: block !important;
     width: 210mm !important;
@@ -439,7 +435,6 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
     font-size: 0 !important; 
     line-height: 0 !important;
   }
-
 
   section.page {
     position: relative;
@@ -470,173 +465,12 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
     overflow: visible !important;
   }
 
-  
   .page-inner,
   .page-inner * {
     user-select: text !important;
     -webkit-user-select: text !important;
     pointer-events: auto !important;
-  }
-
-  
-  .ProseMirror-trailingBreak {
-    display: none !important;
-  }
-}
-
-
-
-
-body.mode-word #pages-container {
-  background-color: #e0e0e0;
-}
-
-body.mode-word section.page {
-  height: auto !important;
-  min-height: 297mm !important;
-  box-shadow: 10px 0 10px -5px rgba(0, 0, 0, 0.1), -10px 0 10px -5px rgba(0, 0, 0, 0.1) !important;
-  overflow: visible !important;
-}
-
-body.mode-word .page-inner {
-  height: auto !important;
-  min-height: 297mm !important;
-  padding-bottom: calc(297mm - var(--page-margin)) !important;
-  overflow: visible !important;
-}
-
-body.mode-word section.page::after {
-  display: none !important;
-}
-
-body.mode-word #page-navigator,
-body.mode-word #sidebar-toggle-overlay,
-body.mode-word #sidebar-toggle-btn,
-body.mode-word #ai-image-index {
-  display: none !important;
-}
-
-
-
-
-
-.page-inner p[data-command-type="replace"],
-.page-inner h1[data-command-type="replace"],
-.page-inner h2[data-command-type="replace"],
-.page-inner h3[data-command-type="replace"] {
-  background-color: rgba(59, 130, 246, 0.2) !important;
-  border-left: 4px solid #3b82f6 !important;
-  padding-left: 8px !important;
-  transition: background-color 0.3s, border-color 0.3s;
-  cursor: pointer;
-}
-
-.page-inner p[data-command-type="replace"]:hover,
-.page-inner h1[data-command-type="replace"]:hover,
-.page-inner h2[data-command-type="replace"]:hover,
-.page-inner h3[data-command-type="replace"]:hover {
-  background-color: rgba(59, 130, 246, 0.3) !important;
-}
-
-
-.page-inner p[data-command-type="insert"],
-.page-inner h1[data-command-type="insert"],
-.page-inner h2[data-command-type="insert"],
-.page-inner h3[data-command-type="insert"] {
-  background-color: rgba(34, 197, 94, 0.2) !important;
-  border-left: 4px solid #22c55e !important;
-  padding-left: 8px !important;
-  transition: background-color 0.3s, border-color 0.3s;
-  cursor: pointer;
-}
-
-.page-inner p[data-command-type="insert"]:hover,
-.page-inner h1[data-command-type="insert"]:hover,
-.page-inner h2[data-command-type="insert"]:hover,
-.page-inner h3[data-command-type="insert"]:hover {
-  background-color: rgba(34, 197, 94, 0.3) !important;
-}
-
-
-.page-inner p[data-command-type="delete"],
-.page-inner h1[data-command-type="delete"],
-.page-inner h2[data-command-type="delete"],
-.page-inner h3[data-command-type="delete"] {
-  background-color: rgba(239, 68, 68, 0.2) !important;
-  border-left: 4px solid #ef4444 !important;
-  padding-left: 8px !important;
-  opacity: 0.5 !important;
-  text-decoration: line-through;
-  transition: background-color 0.3s, border-color 0.3s, opacity 0.3s;
-  cursor: pointer;
-}
-
-.page-inner p[data-command-type="delete"]:hover,
-.page-inner h1[data-command-type="delete"]:hover,
-.page-inner h2[data-command-type="delete"]:hover,
-.page-inner h3[data-command-type="delete"]:hover {
-  background-color: rgba(239, 68, 68, 0.3) !important;
-  opacity: 0.7 !important;
-}
-
-
-.page-inner p[data-command-type="move"],
-.page-inner h1[data-command-type="move"],
-.page-inner h2[data-command-type="move"],
-.page-inner h3[data-command-type="move"] {
-  background-color: rgba(168, 85, 247, 0.2) !important;
-  border-left: 4px solid #a855f7 !important;
-  padding-left: 8px !important;
-  transition: background-color 0.3s, border-color 0.3s;
-  cursor: pointer;
-}
-
-.page-inner p[data-command-type="move"]:hover,
-.page-inner h1[data-command-type="move"]:hover,
-.page-inner h2[data-command-type="move"]:hover,
-.page-inner h3[data-command-type="move"]:hover {
-  background-color: rgba(168, 85, 247, 0.3) !important;
-}
-
-
-.page-inner p[data-command-type="split"],
-.page-inner h1[data-command-type="split"],
-.page-inner h2[data-command-type="split"],
-.page-inner h3[data-command-type="split"] {
-  background-color: rgba(249, 115, 22, 0.2) !important;
-  border-left: 4px solid #f97316 !important;
-  padding-left: 8px !important;
-  transition: background-color 0.3s, border-color 0.3s;
-  cursor: pointer;
-}
-
-.page-inner p[data-command-type="split"]:hover,
-.page-inner h1[data-command-type="split"]:hover,
-.page-inner h2[data-command-type="split"]:hover,
-.page-inner h3[data-command-type="split"]:hover {
-  background-color: rgba(249, 115, 22, 0.3) !important;
-}
-
-
-.page-inner p[data-command-type="merge"],
-.page-inner h1[data-command-type="merge"],
-.page-inner h2[data-command-type="merge"],
-.page-inner h3[data-command-type="merge"] {
-  background-color: rgba(20, 184, 166, 0.2) !important;
-  border-left: 4px solid #14b8a6 !important;
-  padding-left: 8px !important;
-  transition: background-color 0.3s, border-color 0.3s;
-  cursor: pointer;
-}
-
-.page-inner p[data-command-type="merge"]:hover,
-.page-inner h1[data-command-type="merge"]:hover,
-.page-inner h2[data-command-type="merge"]:hover,
-.page-inner h3[data-command-type="merge"]:hover {
-  background-color: rgba(20, 184, 166, 0.3) !important;
-}
-
-
+  }}
 </style>
 </head>
 <body class="standalone-html">
@@ -646,7 +480,7 @@ body.mode-word #ai-image-index {
 <!-- AI_COMMAND_END -->
 
 <div id="pages-container">
-<section data-page="1" class="page"><div class="page-inner"><h1 data-para="1" id="p1-1" class="inline-spacing-none">MBTIについて</h1><h2 data-para="2" id="p1-2" class="inline-spacing-none">MBTIとは？</h2><p data-para="3" id="p1-3" class="inline-spacing-none">MBTIは、スイスの心理学者ユングが提唱した「心理学的類型論」をベースに開発された性格検査である。</p><h2 data-para="4" id="p1-4" class="inline-spacing-none">1. 4つの心理機能と2つの方向</h2><p data-para="5" id="p1-5" class="inline-spacing-none">人間が情報を処理するプロセスを「知覚（認識）」と「判断」に分け、それぞれ2種類、計4つの機能として定義する。</p><p data-para="6" id="p1-6" class="inline-spacing-none"><strong>知覚機能</strong>： 感覚（S） / 直観（N）<br><strong>判断機能</strong>： 思考（T） / 感情（F）</p><h3 data-para="7" id="p1-7" class="inline-spacing-none"><u>感覚/直観について</u></h3><p data-para="8" id="p1-8" class="inline-spacing-none"><strong>・感覚</strong>→五感による情報の純度が高い、部分への集中<br><span><strong>・直観</strong>→全体像、背景、意味</span></p><p data-para="9" id="p1-9" class="inline-spacing-none"><strong><u>思考/感情について</u></strong></p><p data-para="10" id="p1-10" class="inline-spacing-none"><span><strong>・思考</strong>→対象物やその状況が論理的にどのようなものなのかを判断する力(左脳的)</span><br><strong>・感情</strong>→理屈無しに対象物が自分または他人にとって気持ち良いか不快かを判断する力(右脳的)</p><p data-para="11" id="p1-11" class="inline-spacing-none">これら4つの機能に対して、ユングは「心理的エネルギー（リビドー）がどこに向かうか」という方向性の違いを定義した。</p></div></section><section data-page="2" class="page"><div class="page-inner"><p data-para="1" id="p2-1" class="inline-spacing-none">ユングによれば、関心が外部の客観的な対象（人々や事象）に向かう**「外向」と、自分の内部にある主観的な世界（概念や内面的な反応）に向かう「内向」**の2パターンが存在する。<br>この「4つの機能」と「2つの方向性」が組み合わさることで、以下の8種類の心理機能が導き出される。</p><h3 data-para="2" id="p2-2" class="inline-spacing-none">知覚機能</h3><p data-para="3" id="p2-3" class="inline-spacing-none">外向的感覚（Se）：外部にある現実的な事実や刺激をそのまま受け取る。<br>内向的感覚<span>（Si）：過去の経験や身体感覚といった内的なデータと照らし合わせる。</span><br>外向的直観<span>（Ne）：外の世界にある物事のつながりから、新しい可能性を広げる。</span><br>内向的直観（Ni）：自分の内側でひらめきを収束させ、物事の本質や未来を予見する。</p><h3 data-para="4" id="p2-4" class="inline-spacing-none"><span>判断機能</span></h3><p data-para="5" id="p2-5" class="inline-spacing-none">外向的思考<span>（Te）：外部のルールや論理に基づいて、環境を効率的に整理・構築する。</span><br>内向的思考<span>（Ti）：自分の中にある整合性を重視し、独自の論理体系で深く分析する。</span><br>外向的感情<span>（Fe）：社会的な価値観や周囲の空気に合わせ、調和を保とうとする。</span><br>内向的感情（Fi）：自分自身の深い信念や感情を重んじ、独自の価値基準で判断する。</p><h2 data-para="6" id="p2-6" class="inline-spacing-none">2. 心理機能の階層構造と16タイプ</h2><p data-para="7" id="p2-7" class="inline-spacing-none"><span>人間は心のバランスを保つため、対照的な性質を補完し合って使用する。<strong>（補完性の原理）</strong></span></p><p data-para="8" id="p2-8" class="inline-spacing-none"><strong>主機能（第一機能）：</strong> 最も意識的に使いこなせる、その人の「核」となる機能。<br><strong>補助機能（第二機能）：</strong> 主機能を支える。主機能が「知覚」なら「判断」、「外向」なら「内向」というように、必ず逆の性質を持つ。<br><strong>代替機能（第三機能）：</strong> 補助機能の反対の性質。<br><strong>劣等機能（第四機能）： </strong>主機能の反対。最も無意識の領域にあり、未発達で扱いにくいが、ストレス下での暴走（グリップ状態）や、長期的な成長の鍵を握る重要な存在。<br></p><p data-para="9" id="p2-9" class="inline-spacing-none">これら4つの機能の優先順位の組み合わせにより、最終的に16タイプに分類される。<br>（例）第一機能Ni、第二機能Feの場合、INFPとなる。（P or Jは、第一機能が知覚か判断かどうか）</p><h3 data-para="10" id="p2-10" class="inline-spacing-none"><u>知覚タイプ（P）/判断タイプ（J）について</u></h3><p data-para="11" id="p2-11" class="inline-spacing-none">Ｐ型は知覚で充電→判断で爆発的行動<br><span>Ｊ型はずっと判断で手際良し→たまにエラー（ここで知覚必要になる）</span></p></div></section><section data-page="3" class="page"><div class="page-inner"><h2 data-para="1" id="p3-1" class="inline-spacing-none">3.心理機能の成長</h2><p data-para="2" id="p3-2" class="inline-spacing-none"><span>ユングのモデルでは、心は「意識・個人的無意識・普遍的無意識」の層から成るとされる。 主機能は意識の中心にあるが、劣等機能は無意識の深層に直結している。不健全な状態とは、意識的なコントロールが効かなくなり、無意識にある劣等機能が未熟な形で噴出することを指す。</span></p><p data-para="3" id="p3-3" class="inline-spacing-none">そのため、逆に、普段は無意識に隠れている劣等機能こそが、その人のコンプレックスや、逆に大きな変化のきっかけ（救済）になり、人生の後半にかけて、使い慣れた主機能だけでなく、未発達な劣等機能を統合していくことが人間としての成長（完成）である。</p><h3 data-para="4" id="p3-4" class="inline-spacing-none"><u>自己主張型（A）と慎重型（T）について</u></h3><p data-para="5" id="p3-5" class="inline-spacing-none">性格の土台というより、現在の「自分の能力や決断に対する自信」や「ストレスへの反応」を表す。</p><p data-para="6" id="p3-6" class="inline-spacing-none"><strong>自己主張型：</strong>ストレス耐性が高く、困難な状況でもリラックスして対処できる。周囲の目をあまり気にせず、過去の失敗を引きずらない。</p><p data-para="7" id="p3-7" class="inline-spacing-none"><strong>慎重型</strong>：ストレスに弱く、些細なことで自信を失ったり、精神的に疲弊したりしやすい。他人の視線や将来への不安を感じやすいが、その分、変化に敏感で、問題を事前に察知して改善する力が強い。</p><h2 data-para="8" id="p3-8" class="inline-spacing-none">4.提案</h2><p data-para="9" id="p3-9" class="inline-spacing-none">・現行のMBTIには、成熟度合いが加味されてないので、追加すべきでは。</p><p data-para="10" id="p3-10" class="inline-spacing-none">・子供用が無い。</p></div></section>
+<section data-page="1" class="page"><div class="page-inner"><h1 data-para="1" id="p1-1" class="inline-spacing-none">MBTIについて</h1><h2 data-para="2" id="p1-2" class="inline-spacing-none">MBTIとは？</h2><p data-para="3" id="p1-3" class="inline-spacing-none">MBTIは、スイスの心理学者ユングが提唱した「心理学的類型論」をベースに開発された性格検査である。</p><h2 data-para="4" id="p1-4" class="inline-spacing-none">1. 4つの心理機能と2つの方向</h2><p data-para="5" id="p1-5" class="inline-spacing-none">人間が情報を処理するプロセスを「知覚（認識）」と「判断」に分け、それぞれ2種類、計4つの機能として定義する。</p><p data-para="6" id="p1-6" class="inline-spacing-none"><strong>知覚機能</strong>： 感覚（S） / 直観（N）<br><strong>判断機能</strong>： 思考（T） / 感情（F）</p><h3 data-para="7" id="p1-7" class="inline-spacing-none"><u>感覚/直観について</u></h3><p data-para="8" id="p1-8" class="inline-spacing-none"><strong>・感覚</strong>→五感による情報の純度が高い、部分への集中<br><strong>・直観</strong>→全体像、背景、意味</p><p data-para="9" id="p1-9" class="inline-spacing-none"><strong><u>思考/感情について</u></strong></p><p data-para="10" id="p1-10" class="inline-spacing-none"><strong>・思考</strong>→対象物やその状況が論理的にどのようなものなのかを判断する力(左脳的)<br><strong>・感情</strong>→理屈無しに対象物が自分または他人にとって気持ち良いか不快かを判断する力(右脳的)</p><p data-para="11" id="p1-11" class="inline-spacing-none">これら4つの機能に対して、ユングは「心理的エネルギー（リビドー）がどこに向かうか」という方向性の違いを定義した。</p></div></section><section data-page="2" class="page"><div class="page-inner"><p data-para="1" id="p2-1" class="inline-spacing-none">ユングによれば、関心が外部の客観的な対象（人々や事象）に向かう**「外向」と、自分の内部にある主観的な世界（概念や内面的な反応）に向かう「内向」**の2パターンが存在する。<br>この「4つの機能」と「2つの方向性」が組み合わさることで、以下の8種類の心理機能が導き出される。</p><h3 data-para="2" id="p2-2" class="inline-spacing-none">知覚機能</h3><p data-para="3" id="p2-3" class="inline-spacing-none">外向的感覚（Se）：外部にある現実的な事実や刺激をそのまま受け取る。<br>内向的感覚（Si）：過去の経験や身体感覚といった内的なデータと照らし合わせる。<br>外向的直観（Ne）：外の世界にある物事のつながりから、新しい可能性を広げる。<br>内向的直観（Ni）：自分の内側でひらめきを収束させ、物事の本質や未来を予見する。</p><h3 data-para="4" id="p2-4" class="inline-spacing-none">判断機能</h3><p data-para="5" id="p2-5" class="inline-spacing-none">外向的思考（Te）：外部のルールや論理に基づいて、環境を効率的に整理・構築する。<br>内向的思考（Ti）：自分の中にある整合性を重視し、独自の論理体系で深く分析する。<br>外向的感情（Fe）：社会的な価値観や周囲の空気に合わせ、調和を保とうとする。<br>内向的感情（Fi）：自分自身の深い信念や感情を重んじ、独自の価値基準で判断する。</p><h2 data-para="6" id="p2-6" class="inline-spacing-none">2. 心理機能の階層構造と16タイプ</h2><p data-para="7" id="p2-7" class="inline-spacing-none">人間は心のバランスを保つため、対照的な性質を補完し合って使用する。<strong>（補完性の原理）</strong></p><p data-para="8" id="p2-8" class="inline-spacing-none"><strong>主機能（第一機能）：</strong> 最も意識的に使いこなせる、その人の「核」となる機能。<br><strong>補助機能（第二機能）：</strong> 主機能を支える。主機能が「知覚」なら「判断」、「外向」なら「内向」というように、必ず逆の性質を持つ。<br><strong>代替機能（第三機能）：</strong> 補助機能の反対の性質。<br><strong>劣等機能（第四機能）： </strong>主機能の反対。最も無意識の領域にあり、未発達で扱いにくいが、ストレス下での暴走（グリップ状態）や、長期的な成長の鍵を握る重要な存在。<br></p><p data-para="9" id="p2-9" class="inline-spacing-none">これら4つの機能の優先順位の組み合わせにより、最終的に16タイプに分類される。<br>（例）第一機能Ni、第二機能Feの場合、INFPとなる。（P or Jは、第一機能が知覚か判断かどうか）</p><h3 data-para="10" id="p2-10" class="inline-spacing-none"><u>知覚タイプ（P）/判断タイプ（J）について</u></h3><p data-para="11" id="p2-11" class="inline-spacing-none">Ｐ型は知覚で充電→判断で爆発的行動<br>Ｊ型はずっと判断で手際良し→たまにエラー（ここで知覚必要になる）</p></div></section><section data-page="3" class="page"><div class="page-inner"><h2 data-para="1" id="p3-1" class="inline-spacing-none">3.心理機能の成長</h2><p data-para="2" id="p3-2" class="inline-spacing-none">ユングのモデルでは、心は「意識・個人的無意識・普遍的無意識」の層から成るとされる。 主機能は意識の中心にあるが、劣等機能は無意識の深層に直結している。不健全な状態とは、意識的なコントロールが効かなくなり、無意識にある劣等機能が未熟な形で噴出することを指す。</p><p data-para="3" id="p3-3" class="inline-spacing-none">そのため、逆に、普段は無意識に隠れている劣等機能こそが、その人のコンプレックスや、逆に大きな変化のきっかけ（救済）になり、人生の後半にかけて、使い慣れた主機能だけでなく、未発達な劣等機能を統合していくことが人間としての成長（完成）である。</p><h3 data-para="4" id="p3-4" class="inline-spacing-none"><u>自己主張型（A）と慎重型（T）について</u></h3><p data-para="5" id="p3-5" class="inline-spacing-none">性格の土台というより、現在の「自分の能力や決断に対する自信」や「ストレスへの反応」を表す。</p><p data-para="6" id="p3-6" class="inline-spacing-none"><strong>自己主張型：</strong>ストレス耐性が高く、困難な状況でもリラックスして対処できる。周囲の目をあまり気にせず、過去の失敗を引きずらない。</p><p data-para="7" id="p3-7" class="inline-spacing-none"><strong>慎重型</strong>：ストレスに弱く、些細なことで自信を失ったり、精神的に疲弊したりしやすい。他人の視線や将来への不安を感じやすいが、その分、変化に敏感で、問題を事前に察知して改善する力が強い。</p><h2 data-para="8" id="p3-8" class="inline-spacing-none">4.提案</h2><p data-para="9" id="p3-9" class="inline-spacing-none">・現行のMBTIには、成熟度合いが加味されてないので、追加すべきでは。</p><p data-para="10" id="p3-10" class="inline-spacing-none">・子供用が無い。</p></div></section>
 </div>
 <div id="ai-image-index" class="hidden" aria-hidden="true"></div>
 </body>

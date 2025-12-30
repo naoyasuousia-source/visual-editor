@@ -26,21 +26,21 @@ STRUCTURE:
 - Content inside class "page-inner"
 
 COMMAND AREA:
-Located after <body> tag:
-  <!-- AI_COMMAND_START -->
-  <!-- AI_COMMAND_END -->
+Located after &lt;body&gt; tag:
+  &lt;!-- AI_COMMAND_START --&gt;
+  &lt;!-- AI_COMMAND_END --&gt;
 
 CRITICAL: Write commands BETWEEN markers, NOT replacing them!
 
 COMMAND FORMAT:
-Each command MUST be wrapped: <!-- COMMAND -->
+Each command MUST be wrapped: &lt;!-- COMMAND --&gt;
 
 Example:
-  <!-- AI_COMMAND_START -->
-  <!-- REPLACE_PARAGRAPH(p1-2, New text) -->
-  <!-- INSERT_PARAGRAPH(p1-3, Another paragraph) -->
-  <!-- DELETE_PARAGRAPH(p2-1) -->
-  <!-- AI_COMMAND_END -->
+  &lt;!-- AI_COMMAND_START --&gt;
+  &lt;!-- REPLACE_PARAGRAPH(p1-2, New text) --&gt;
+  &lt;!-- INSERT_PARAGRAPH(p1-3, Another paragraph) --&gt;
+  &lt;!-- DELETE_PARAGRAPH(p2-1) --&gt;
+  &lt;!-- AI_COMMAND_END --&gt;
 
 COMMANDS:
 
@@ -48,33 +48,33 @@ COMMANDS:
    Replace paragraph content.
    Options: blockType=p|h1|h2|h3, textAlign=left|center|right, 
             spacing=none|small|medium|large, indent=0|1|2|3|4
-   Example: <!-- REPLACE_PARAGRAPH(p1-2, <b>Bold</b> text, blockType=h1) -->
+   Example: &lt;!-- REPLACE_PARAGRAPH(p1-2, &lt;b&gt;Bold&lt;/b&gt; text, blockType=h1) --&gt;
 
 2. INSERT_PARAGRAPH(targetId, text, [options])
    Insert new paragraph AFTER target. Options same as REPLACE_PARAGRAPH.
-   Example: <!-- INSERT_PARAGRAPH(p1-3, New paragraph) -->
+   Example: &lt;!-- INSERT_PARAGRAPH(p1-3, New paragraph) --&gt;
 
 3. DELETE_PARAGRAPH(targetId)
    Mark for deletion (crossed out until approved).
-   Example: <!-- DELETE_PARAGRAPH(p2-2) -->
+   Example: &lt;!-- DELETE_PARAGRAPH(p2-2) --&gt;
 
 4. MOVE_PARAGRAPH(sourceId, targetId)
    Move source paragraph to AFTER target.
-   Example: <!-- MOVE_PARAGRAPH(p2-3, p1-5) -->
+   Example: &lt;!-- MOVE_PARAGRAPH(p2-3, p1-5) --&gt;
 
 5. SPLIT_PARAGRAPH(targetId, beforeText, afterText)
    Split paragraph at text boundary.
-   Example: <!-- SPLIT_PARAGRAPH(p2-4, First part., Second part) -->
+   Example: &lt;!-- SPLIT_PARAGRAPH(p2-4, First part., Second part) --&gt;
 
 6. MERGE_PARAGRAPH(sourceId, targetId)
    Merge source into target (source deleted).
-   Example: <!-- MERGE_PARAGRAPH(p3-1, p3-2) -->
+   Example: &lt;!-- MERGE_PARAGRAPH(p3-1, p3-2) --&gt;
 
 HTML TAGS IN TEXT:
-<b>bold</b>, <br>, <sup>superscript</sup>, <sub>subscript</sub>
+&lt;b&gt;bold&lt;/b&gt;, &lt;br&gt;, &lt;sup&gt;superscript&lt;/sup&gt;, &lt;sub&gt;subscript&lt;/sub&gt;
 
 RULES:
-1. Each command on own line with <!-- -->
+1. Each command on own line with &lt;!-- --&gt;
 2. Use exact paragraph IDs (e.g., "p1-2", not "p1-02")
 3. Do NOT edit outside COMMAND AREA
 4. Do NOT replace/remove markers
