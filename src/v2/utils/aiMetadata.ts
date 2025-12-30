@@ -98,6 +98,32 @@ export function generateCommandArea(): string {
 }
 
 /**
+ * CSSをモード別に最適化する
+ * @param contentCss 完全なCSS文字列
+ * @param isWordMode Wordモードかどうか
+ * @returns 最適化されたCSS文字列
+ */
+function optimizeCssForMode(contentCss: string, isWordMode: boolean): string {
+    // コメントを削除
+    let cleanedCss = contentCss.replace(/\/\*[\s\S]*?\*\//g, '');
+    
+    if (isWordMode) {
+        // Wordモード: Paginatedモード専用スタイルを削除
+        // ページ番号（section.page::after）を削除
+        cleanedCss = cleanedCss.replace(/section\.page::after\s*\{[^}]*\}/g, '');
+        // Paginatedモード用の固定高さを削除（Wordモードで上書きされるため不要）
+        cleanedCss = cleanedCss.replace(/section\.page\s*\{\s*position:\s*relative;\s*width:\s*210mm;\s*min-width:\s*210mm;\s*height:\s*297mm;\s*min-height:\s*297mm;[^}]*\}/g, 
+            'section.page { position: relative; width: 210mm; min-width: 210mm; background: #fff; box-shadow: 10px 0 10px -5px rgba(0, 0, 0, 0.1), -10px 0 10px -5px rgba(0, 0, 0, 0.1); box-sizing: border-box; overflow: visible; margin: 0 auto; height: auto; min-height: 297mm; }');
+    } else {
+        // Paginatedモード: Wordモード専用スタイルを削除
+        // body.mode-word で始まるすべてのスタイルを削除
+        cleanedCss = cleanedCss.replace(/body\.mode-word[^{]*\{[^}]*\}/g, '');
+    }
+    
+    return cleanedCss;
+}
+
+/**
  * 完全なHTML文書を生成する
  * 
  * @param htmlContent エディタから取得したHTML文字列
@@ -125,8 +151,8 @@ export function buildFullHTML(
     // 4. 出力用HTMLのクリーンアップ
     let cleanedHtml = htmlContent;
 
-    // CSSからコメントを削除（ライブラリ用のスタイル維持）
-    const cleanedCss = contentCss.replace(/\/\*[\s\S]*?\*\//g, '');
+    // CSSをモード別に最適化
+    const optimizedCss = optimizeCssForMode(contentCss, isWordMode);
 
     // 不要な属性の削除
     cleanedHtml = cleanedHtml.replace(/\scontenteditable="true"/g, '');
@@ -149,7 +175,7 @@ export function buildFullHTML(
 ${aiGuide}
 <style>
 :root { --page-margin: ${pageMarginText}; }
-${cleanedCss}
+${optimizedCss}
 </style>
 </head>
 <body class="${finalClass}">
