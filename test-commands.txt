@@ -1,0 +1,26 @@
+以下のコマンドを test-reset.html の <!-- AI_COMMAND_START --> と <!-- AI_COMMAND_END --> の間にコピー＆ペーストしてテストしてください。
+
+### 1. 基本的な置換とスタイリングのテスト
+<!-- REPLACE_PARAGRAPH(p1-1, <b>見出しに変更された一段落目</b>, blockType=h1, textAlign=center) -->
+
+### 2. 段落の挿入テスト（p1-2の後に挿入）
+<!-- INSERT_PARAGRAPH(p1-2, これは新しく挿入された中寄せの段落です。, textAlign=center, spacing=medium) -->
+
+### 3. 段落の削除テスト
+<!-- DELETE_PARAGRAPH(p1-3) -->
+
+### 4. 段落の移動テスト（p2-1をp1-1の後に移動）
+<!-- MOVE_PARAGRAPH(p2-1, p1-1) -->
+
+### 5. 段落の分割テスト
+<!-- SPLIT_PARAGRAPH(p2-2, 2ページ目の, 2段落目を分割しました) -->
+
+### 6. 段落の結合テスト（p1-2をp1-1に結合）
+<!-- MERGE_PARAGRAPH(p1-2, p1-1) -->
+
+### 複数コマンドの同時実行例（すべて一気に試す場合）
+<!-- REPLACE_PARAGRAPH(p1-1, <b>タイトル</b>, blockType=h1, textAlign=center) -->
+<!-- INSERT_PARAGRAPH(p1-1, 副題としての挿入段落, textAlign=center) -->
+<!-- REPLACE_PARAGRAPH(p1-2, 内容を更新しました。) -->
+<!-- DELETE_PARAGRAPH(p1-3) -->
+<!-- MOVE_PARAGRAPH(p2-1, p1-2) -->
