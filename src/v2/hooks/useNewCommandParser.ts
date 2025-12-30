@@ -39,11 +39,6 @@ export function useNewCommandParser() {
       console.groupEnd();
     }
 
-    // パース成功したコマンドを出力
-    if (result.commands.length > 0) {
-      console.log(`${result.commands.length}個のコマンドをパースしました:`, result.commands);
-    }
-
     return result;
   }, []);
 

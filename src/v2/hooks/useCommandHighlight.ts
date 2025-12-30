@@ -69,8 +69,6 @@ export function useCommandHighlight(editor: Editor | null) {
 
       const highlight = createHighlightFromResult(result, command);
       store.addHighlight(highlight);
-
-      console.log(`ハイライト登録: ${highlight.commandType} (影響段落: ${highlight.paragraphIds.join(', ')})`);
     },
     [createHighlightFromResult, store]
   );
@@ -133,7 +131,6 @@ export function useCommandHighlight(editor: Editor | null) {
 
       // ハイライトを削除
       store.removeHighlight(commandId);
-      console.log(`ハイライト承認完了: ${commandId}`);
     },
     [editor, highlights, store]
   );
@@ -187,7 +184,6 @@ export function useCommandHighlight(editor: Editor | null) {
 
       // ハイライトを削除
       store.removeHighlight(commandId);
-      console.log(`ハイライト破棄完了: ${commandId}`);
     },
     [editor, highlights, store]
   );
@@ -202,8 +198,6 @@ export function useCommandHighlight(editor: Editor | null) {
     pending.forEach((highlight) => {
       approveHighlight(highlight.commandId);
     });
-
-    console.log(`全ハイライト承認: ${pending.length}件`);
   }, [highlights, approveHighlight]);
 
   /**
@@ -216,8 +210,6 @@ export function useCommandHighlight(editor: Editor | null) {
     pending.forEach((highlight) => {
       rejectHighlight(highlight.commandId);
     });
-
-    console.log(`全ハイライト破棄: ${pending.length}件`);
   }, [highlights, rejectHighlight]);
 
   return {

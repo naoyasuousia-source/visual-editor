@@ -105,7 +105,6 @@ export function useCommandExecutor(editor: Editor | null): UseCommandExecutorRet
       try {
         return executeNewCommand(editor, command);
       } catch (error) {
-        console.error('新コマンド実行エラー:', error);
         return {
           success: false,
           commandId: command.commandId,
@@ -131,7 +130,6 @@ export function useCommandExecutor(editor: Editor | null): UseCommandExecutorRet
       try {
         return executeNewCommands(editor, commands);
       } catch (error) {
-        console.error('複数新コマンド実行エラー:', error);
         return [];
       }
     },
