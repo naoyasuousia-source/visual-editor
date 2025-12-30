@@ -18,20 +18,23 @@ import { v4 as uuidv4 } from 'uuid';
 
 /**
  * コマンド文字列から引数を抽出
- * カッコで囲まれた部分を抽出
+ * カッコで囲まれた部分からカンマ区切りの引数を抽出
  * 
  * @param commandStr - コマンド文字列
  * @returns 引数配列
  */
 function extractArguments(commandStr: string): string[] {
-  const args: string[] = [];
-  const regex = /\(([^)]+)\)/g;
-  let match;
-
-  while ((match = regex.exec(commandStr)) !== null) {
-    args.push(match[1].trim());
+  // カッコ内の文字列を抽出
+  const match = commandStr.match(/\(([^)]+)\)/);
+  if (!match || !match[1]) {
+    return [];
   }
 
+  const argsStr = match[1];
+  
+  // カンマで分割（簡易版：ネストしたカッコやクォート内のカンマは考慮しない）
+  const args = argsStr.split(',').map(arg => arg.trim());
+  
   return args;
 }
 
@@ -105,7 +108,10 @@ function parseReplaceParagraph(
     };
   }
 
-  const [targetId, text, optionsStr] = args;
+  const targetId = args[0];
+  const text = args[1];
+  // 3番目以降の引数をすべてオプションとして扱う（カンマで結合）
+  const optionsStr = args.length > 2 ? args.slice(2).join(', ') : undefined;
 
   if (!isValidParagraphId(targetId)) {
     return {
@@ -147,7 +153,10 @@ function parseInsertParagraph(
     };
   }
 
-  const [targetId, text, optionsStr] = args;
+  const targetId = args[0];
+  const text = args[1];
+  // 3番目以降の引数をすべてオプションとして扱う（カンマで結合）
+  const optionsStr = args.length > 2 ? args.slice(2).join(', ') : undefined;
 
   if (!isValidParagraphId(targetId)) {
     return {
