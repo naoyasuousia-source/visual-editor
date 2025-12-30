@@ -24,15 +24,18 @@ import { v4 as uuidv4 } from 'uuid';
  * @returns 引数配列
  */
 function extractArguments(commandStr: string): string[] {
-  // カッコ内の文字列を抽出
-  const match = commandStr.match(/\(([^)]+)\)/);
-  if (!match || !match[1]) {
+  // 最初の(から最後の)までを抽出（より堅牢な抽出）
+  const startIndex = commandStr.indexOf('(');
+  const endIndex = commandStr.lastIndexOf(')');
+  
+  if (startIndex === -1 || endIndex === -1 || startIndex >= endIndex) {
     return [];
   }
 
-  const argsStr = match[1];
+  const argsStr = commandStr.substring(startIndex + 1, endIndex);
   
-  // カンマで分割（簡易版：ネストしたカッコやクォート内のカンマは考慮しない）
+  // カンマで分割
+  // 注: 本来はクォートなどを考慮すべきだが、現状の簡易実装を維持しつつトリムのみ行う
   const args = argsStr.split(',').map(arg => arg.trim());
   
   return args;
@@ -109,9 +112,22 @@ function parseReplaceParagraph(
   }
 
   const targetId = args[0];
-  const text = args[1];
-  // 3番目以降の引数をすべてオプションとして扱う（カンマで結合）
-  const optionsStr = args.length > 2 ? args.slice(2).join(', ') : undefined;
+  
+  // 2番目以降の引数から、オプション(key=value)が始まる位置を探す
+  let firstOptionIndex = args.length;
+  for (let i = 2; i < args.length; i++) {
+    if (args[i].includes('=')) {
+      firstOptionIndex = i;
+      break;
+    }
+  }
+
+  // targetIdの次からオプション開始までの間をすべてtextとして結合（カンマを復元）
+  const textParts = args.slice(1, firstOptionIndex);
+  const text = textParts.join(', ');
+  
+  // オプション部分を抽出
+  const optionsStr = firstOptionIndex < args.length ? args.slice(firstOptionIndex).join(', ') : undefined;
 
   if (!isValidParagraphId(targetId)) {
     return {
@@ -154,9 +170,22 @@ function parseInsertParagraph(
   }
 
   const targetId = args[0];
-  const text = args[1];
-  // 3番目以降の引数をすべてオプションとして扱う（カンマで結合）
-  const optionsStr = args.length > 2 ? args.slice(2).join(', ') : undefined;
+  
+  // 2番目以降の引数から、オプション(key=value)が始まる位置を探す
+  let firstOptionIndex = args.length;
+  for (let i = 2; i < args.length; i++) {
+    if (args[i].includes('=')) {
+      firstOptionIndex = i;
+      break;
+    }
+  }
+
+  // targetIdの次からオプション開始までの間をすべてtextとして結合（カンマを復元）
+  const textParts = args.slice(1, firstOptionIndex);
+  const text = textParts.join(', ');
+  
+  // オプション部分を抽出
+  const optionsStr = firstOptionIndex < args.length ? args.slice(firstOptionIndex).join(', ') : undefined;
 
   if (!isValidParagraphId(targetId)) {
     return {

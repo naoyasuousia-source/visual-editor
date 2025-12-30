@@ -4,10 +4,10 @@
  */
 
 /**
- * コマンドエリアのマーカー
+ * コマンドエリアのマーカー（正規表現）
  */
-const COMMAND_START_MARKER = '<!-- AI_COMMAND_START -->';
-const COMMAND_END_MARKER = '<!-- AI_COMMAND_END -->';
+const COMMAND_START_REGEX = /<!--\s*AI_COMMAND_START\s*-->/;
+const COMMAND_END_REGEX = /<!--\s*AI_COMMAND_END\s*-->/;
 
 /**
  * HTMLコメント内のコマンドエリアを検出
@@ -15,22 +15,22 @@ const COMMAND_END_MARKER = '<!-- AI_COMMAND_END -->';
  * @returns コマンドエリアの内容（見つからない場合はnull）
  */
 export function extractCommandArea(htmlContent: string): string | null {
-  const startIndex = htmlContent.indexOf(COMMAND_START_MARKER);
-  const endIndex = htmlContent.indexOf(COMMAND_END_MARKER);
+  const startMatch = htmlContent.match(COMMAND_START_REGEX);
+  const endMatch = htmlContent.match(COMMAND_END_REGEX);
 
-  if (startIndex === -1 || endIndex === -1 || startIndex >= endIndex) {
+  if (!startMatch || !endMatch) {
     return null;
   }
 
-  const commandAreaStart = startIndex + COMMAND_START_MARKER.length;
-  const commandArea = htmlContent
-    .substring(commandAreaStart, endIndex)
-    .trim();
+  const startIndex = startMatch.index! + startMatch[0].length;
+  const endIndex = endMatch.index!;
 
-  return commandArea;
+  if (startIndex >= endIndex) {
+    return null;
+  }
+
+  return htmlContent.substring(startIndex, endIndex).trim();
 }
-
-
 
 /**
  * コマンドエリアが存在するかチェック
@@ -38,10 +38,7 @@ export function extractCommandArea(htmlContent: string): string | null {
  * @returns コマンドエリアが存在すればtrue
  */
 export function hasCommandArea(htmlContent: string): boolean {
-  return (
-    htmlContent.includes(COMMAND_START_MARKER) &&
-    htmlContent.includes(COMMAND_END_MARKER)
-  );
+  return COMMAND_START_REGEX.test(htmlContent) && COMMAND_END_REGEX.test(htmlContent);
 }
 
 /**
@@ -51,7 +48,7 @@ export function hasCommandArea(htmlContent: string): boolean {
  */
 export function isHtmlComment(line: string): boolean {
   const trimmed = line.trim();
-  return trimmed.startsWith('<!--') && trimmed.endsWith('-->');
+  return /^<!--[\s\S]*-->$/.test(trimmed);
 }
 
 /**
@@ -62,14 +59,13 @@ export function isHtmlComment(line: string): boolean {
 export function extractCommandFromComment(line: string): string | null {
   const trimmed = line.trim();
 
-  if (!isHtmlComment(trimmed)) {
+  // HTMLコメント形式かチェック
+  const commentMatch = trimmed.match(/^<!--\s*([\s\S]*?)\s*-->$/);
+  if (!commentMatch) {
     return null;
   }
 
-  const content = trimmed
-    .replace(/^<!--\s*/, '')
-    .replace(/\s*-->$/, '')
-    .trim();
+  const content = commentMatch[1].trim();
 
   // 空行、説明、ガイド文などを除外
   if (
@@ -106,6 +102,9 @@ export function extractCommands(commandArea: string): string[] {
       commands.push(command);
     }
   }
+
+  // 行を跨いで記述されている場合（<!-- ... --> が複数行にわたる場合）への対応は
+  // 現状の要件（1行1コマンド）に基づき、上記で行う
 
   return commands;
 }

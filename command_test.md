@@ -81,63 +81,42 @@
 
 #### 段落ID管理
 - 段落ID形式: Paginatedモードは`p{page}-{paragraph}` (例: p1-2)、Wordモードは`p{number}` (例: p5)
+- **修正**: `isOfficialId` が `p\d+-\d+` (Paginated) に加え、`p\d+` (Word) も許容するように正規表現を更新。
 - 仮ID形式: `temp-{uuid}` - INSERT/SPLIT実行時に自動生成
-- Tiptap Extensionで`id`と`data-temp-id`属性をサポート
 
-#### HTMLコメントパース
-- コマンドエリアマーカー: `<!-- AI_COMMAND_START -->` ~ `<!-- AI_COMMAND_END -->`
-- **重要**: 各コマンドは`<!-- COMMAND_NAME(...) -->`の形式で記述必須
-- HTMLコメントで囲まないとパーサーが認識しない
+#### HTMLコメントパースの堅牢化
+- **問題**: マーカーやコマンド内の空白（`<!--AI_COMMAND_START-->` vs `<!-- AI_COMMAND_START -->`）に敏感すぎてパースに失敗していた。
+- **修正**: `COMMAND_START_REGEX` 等に `/<!--\s*...\s*-->/` を使用し、ホワイトスペースを許容。
+- 各コマンド抽出も正規表現ベースで堅牢化。
 
-#### 引数パースの落とし穴
-- `extractArguments()`は当初カッコ内全体を1要素として扱っていた
-- **修正**: カンマで分割し、3番目以降をオプションとして再結合
-- カンマ区切りの正しい処理が必須
+#### 引数パース（カンマ問題）の解決
+- **問題**: `REPLACE_PARAGRAPH(p1, Text with, comma, blockType=p)` のようにテキスト内にカンマがあると、引数が分割されすぎてオプションが正しく抽出されなかった。
+- **修正**: 2番目以降の引数から `=` (key=value形式) を探すロジックを導入。`=` が最初に出現するまでの要素をすべて「テキスト」として再結合（カンマを復元）し、それ以降を「オプション」として扱うように改善。
+- 引数抽出全体も `indexOf('(')` から `lastIndexOf(')')` までを取得するよう変更し、ネストしたカッコへの耐性を向上。
 
-#### Tiptap Extension共存
-- ParagraphNumbering (既存) とParagraphCommandAttributes (新規) が共存
-- GlobalAttributesを使用して複数拡張から同じノードに属性追加可能
-- `keepOnSplit`フラグの設定が重要:
-  - コマンド属性 (data-command-type等): `false`
-  - オプション属性 (blockType, spacing等): `true`
+#### コマンド検出の一貫性
+- `hasNewCommands()` が単なる文字列マッチではなく、`extractCommands()` を通じて「実際に有効なコマンドが1つ以上あるか」を確認するように変更。
 
 ### 最終修正履歴（デバッグ用）
 
-#### 修正1: HTMLコメントパーサー
+#### 修正1: HTMLマーカー・コマンド抽出の正規表現化
 **ファイル**: `src/v2/utils/htmlCommentParser.ts`
-**問題**: 旧コマンド形式`/^[A-Z_]+\[/`のパターンマッチで新コマンドを除外
-**修正**: 新コマンド専用パターン`/^(REPLACE_PARAGRAPH|INSERT_PARAGRAPH|...)\s*\(/`に変更
+**修正**: 固定文字列マッチから `RegExp` マッチへ変更。空白許容。
 
-#### 修正2: newCommandParser引数抽出
+#### 修正2: WordモードIDのサポート
+**ファイル**: `src/v2/utils/paragraphIdManager.ts`
+**修正**: `isOfficialId`, `extractParagraphNumber` 等で `p{number}` 形式をサポート。
+
+#### 修正3: 引数の高度な抽出と再結合
 **ファイル**: `src/v2/utils/newCommandParser.ts`
-**問題**: `extractArguments()`がカッコ内全体を1要素配列として返していた
-**修正**:
-```typescript
-// カッコ内を取得後、カンマで分割
-const argsStr = match[1];
-const args = argsStr.split(',').map(arg => arg.trim());
-```
+**修正**: `extractArguments` の堅牢化、および `parseReplaceParagraph` / `parseInsertParagraph` でのテキストパーツ再結合ロジックの追加。
 
-#### 修正3: オプション引数の再結合
-**ファイル**: `src/v2/utils/newCommandParser.ts` (parseReplaceParagraph, parseInsertParagraph)
-**問題**: `[targetId, text, optionsStr]`の分割代入で3つ目以降のオプションが失われる
-**修正**:
-```typescript
-const optionsStr = args.length > 2 ? args.slice(2).join(', ') : undefined;
-```
-
-#### 修正4: AIガイドの全面書き換え
+#### 修正4: AIガイドの更新 (反映済み)
 **ファイル**: `src/v2/utils/aiMetadata.ts`
-**追加内容**:
-- HTMLコメント形式の強調 (⚠️ マーク付き)
-- 正しい例と間違った例の対比
-- COMPLETE WORKING EXAMPLE セクション
-- FINAL REMINDER
 
-#### 修正5: useAutoEditの簡略化
-**ファイル**: `src/v2/hooks/useAutoEdit.ts`
-**変更**: 旧コマンド分岐を完全削除、新コマンド専用化
-**削除**: `useChangeHighlight`, `highlightChanges`, 旧コマンド判定ロジック
+#### 修正5: 検出ロジックの同期
+**ファイル**: `src/v2/hooks/useCommandParser.ts`
+**修正**: `hasNewCommands` のロジックを `extractCommands` ベースに統一。
 
 ### 重要な実装詳細
 
@@ -154,38 +133,25 @@ const optionsStr = args.length > 2 ? args.slice(2).join(', ') : undefined;
 - `CommandPopup` - activePopupが存在する場合のみ表示
 - `CommandApprovalBar` - showApprovalBar && pendingCount > 0で表示
 
-#### コマンド実行フロー
-1. ファイル変更検知 (`useFileSystemWatcher`)
-2. HTMLコメントパース (`htmlCommentParser`)
-3. 新コマンド検出 (`hasNewCommands`)
-4. コマンドパース (`parseNewCommandsFromHtml`)
-5. コマンド実行 (`executeNewCommands`)
-6. ハイライト登録 (`registerMultipleHighlights`)
-7. 個別承認UI待機
-
 ## 3. 現在のシステム状態と既知の問題
 
 ### 実装済み機能
 - ✅ 6種類の新コマンド（REPLACE/INSERT/DELETE/MOVE/SPLIT/MERGE）
-- ✅ 段落IDシステム (正式ID + 仮ID)
-- ✅ HTMLコメントパーサー
-- ✅ コマンド実行エンジン
-- ✅ ハイライトシステム (6色)
-- ✅ 個別承認UI (ポップアップ + 承認バー)
-- ✅ 全体承認/破棄
-- ✅ AIガイド (HTMLコメント形式を明記)
+- ✅ 段落IDシステム (Paginated/Word両モード対応)
+- ✅ 堅牢なHTMLコメントパーサー（空白許容）
+- ✅ 高度な引数パーサー（テキスト内のカンマ対応）
+- ✅ ハイライトシステム (6色・個別承認UI)
+- ✅ AIガイド自動生成 (各モードのID形式を動的に反映)
 
 ### 既知の制約
-- HTMLパーサーはネストタグ未対応 (`<b><sup>text</sup></b>`等)
-- カンマを含むテキストは引数パースで問題になる可能性
-- ProseMirror位置計算はノード単位（文字単位ではない）
+- テキスト引数内に `=` が含まれていると、誤ってオプションの開始とみなされる可能性がある。
+- Tiptapのノード位置計算は常に更新が必要（コマンド実行によってPosがずれるため、一括実行が望ましい）。
 
 ### デバッグ時の確認ポイント
-1. コマンドが`<!-- -->`で囲まれているか
-2. `hasNewCommands()`が正しく検出しているか
-3. `extractArguments()`がカンマ分割しているか
-4. 段落IDが実際のHTML要素と一致しているか
-5. コンソールにパースエラーが出ていないか
+1. `htmlCommentParser` が `<!-- AI_COMMAND_START -->` を見つけられているか。
+2. `isOfficialId` が現在のエディタモード（Paginated/Word）のIDを正しく検証できているか。
+3. `extractArguments` がカッコ内の引数全てを配列として取得できているか。
+4. `parseReplaceParagraph` 等の再結合ロジックが、期待通りテキストとオプションを分離できているか。
 
 ## 4. 解決済み要件とその解決方法
 （ユーザーの指示待ち - このセクションはユーザーが更新）
@@ -196,101 +162,53 @@ const optionsStr = args.length > 2 ? args.slice(2).join(', ') : undefined;
 - `src/v2/types/command.ts` - 新コマンド型、オプション、実行結果
 
 ### ユーティリティ
-- `src/v2/utils/paragraphIdManager.ts` - ID生成・検証
-- `src/v2/utils/paragraphOperations.ts` - 段落検索・スナップショット
-- `src/v2/utils/newCommandParser.ts` - コマンドパース
-- `src/v2/utils/htmlCommentParser.ts` - HTMLコメント抽出
+- `src/v2/utils/paragraphIdManager.ts` - ID生成・検証 (Wordモード対応)
+- `src/v2/utils/paragraphOperations.ts` - 段落検索・操作
+- `src/v2/utils/newCommandParser.ts` - 引数再結合ロジック含む
+- `src/v2/utils/htmlCommentParser.ts` - 正規表現ベースへの進化
 - `src/v2/utils/aiMetadata.ts` - AIガイド生成
 
-### サービス
-- `src/v2/services/newCommandExecutionService.ts` - コマンド実行
-
 ### フック
-- `src/v2/hooks/useCommandParser.ts` - パーサーフック (新旧両対応)
-- `src/v2/hooks/useCommandExecutor.ts` - 実行フック (新旧両対応)
-- `src/v2/hooks/useCommandHighlight.ts` - ハイライト管理
-- `src/v2/hooks/useCommandApprovalController.ts` - UI制御
-- `src/v2/hooks/useAutoEdit.ts` - 自動編集フロー統合
-
-### UI コンポーネント
-- `src/v2/components/CommandPopup.tsx` - ホバーポップアップ
-- `src/v2/components/CommandApprovalBar.tsx` - 承認バー
-
-### ストア
-- `src/v2/store/useCommandHighlightStore.ts` - ハイライト状態管理
-
-### Tiptap拡張
-- `src/v2/lib/paragraphCommandAttributes.ts` - カスタム属性
-
-### スタイル
-- `src/v2/styles/content.css` - ハイライトCSS
+- `src/v2/hooks/useCommandParser.ts` - 検出ロジックを抽出ベースに統一
+- `src/v2/hooks/useAutoEdit.ts` - フロー全体を管理
 
 ## 6. 技術スタック詳細
 
 ### フロントエンド
-- **React 18** - UIコンポーネント
-- **TypeScript** - 型安全性
-- **Tiptap** - リッチテキストエディタ
-- **ProseMirror** - エディタ基盤（Transform API）
-- **Tailwind CSS** - スタイリング
-
-### 状態管理
-- **Zustand** - グローバル状態 (ハイライトストア)
-- **React Hooks** - ローカル状態
+- **React 18**
+- **TypeScript**
+- **Tiptap / ProseMirror**
+- **Tailwind CSS**
 
 ### ユーティリティ
-- **uuid (v4)** - 仮ID生成
-- **正規表現** - HTMLパース・コマンドマッチング
+- **正規表現 (RegExp)** - 堅牢なパースの中核
+- **uuid (v4)** - 仮ID生成用
 
 ### データフロー
 ```
 HTMLファイル保存
   ↓ (useFileSystemWatcher)
-コマンドエリア抽出
-  ↓ (htmlCommentParser)
-コマンドパース
-  ↓ (newCommandParser)
-コマンド実行
-  ↓ (newCommandExecutionService)
-ハイライト登録
-  ↓ (useCommandHighlight)
-UI表示・承認待ち
-  ↓ (CommandPopup, CommandApprovalBar)
-承認/破棄
+有効コマンドの検出 (useCommandParser -> htmlCommentParser)
+  ↓ (1つ以上あれば実行へ、無ければ保護上書き)
+コマンドパース (newCommandParser: テキストとオプションの分離)
   ↓
-自動保存
+コマンド実行 (newCommandExecutionService: ProseMirror Transform)
+  ↓
+ハイライト登録 & UI表示
 ```
 
 ## 7. 新コマンドシステム動作原理
 
-### コマンド検出フロー
-1. `useFileSystemWatcher` - ファイル変更を1秒ごとにポーリング
-2. `hasNewCommands()` - 新コマンドパターン正規表現でチェック
-3. `extractCommandArea()` - `<!-- AI_COMMAND_START/END -->` 間を抽出
-4. `extractCommands()` - 各行からHTMLコメント内のコマンド文字列を抽出
-5. `parseNewCommands()` - コマンド文字列配列をCommandオブジェクトに変換
+### コマンド検出・抽出フロー
+1. `useFileSystemWatcher` が変更を検知。
+2. `htmlCommentParser` (正規表現) を使用して、マーカーに囲まれたエリアを抽出。
+3. 同様に正規表現で、コメント形式のコマンド行をすべて取得。
 
-### コマンド実行原理
-- **REPLACE**: 段落検索 → スナップショット保存 → テキスト置換 → data属性付与
-- **INSERT**: 段落検索 → 仮ID生成 → 新段落挿入 → data属性付与
-- **DELETE**: 段落検索 → スナップショット保存 → data属性付与 (実削除は承認時)
-- **MOVE**: 両段落検索 → スナップショット保存 → 削除＆挿入 → data属性付与
-- **SPLIT**: 段落検索 → 分割位置特定 → 2段落に分割 → 仮ID付与 → data属性付与
-- **MERGE**: 両段落検索 → スナップショット保存 → 結合 → data属性付与
+### 引数パース原理 (Advanced Split)
+- カッコ内の文字列をカンマで機械的に分割。
+- 得られた要素の配列に対し、後ろから（オプションがある場合）処理を行い、オプションでない部分はすべて `text` としてカンマを付けて再結合する。これにより「テキスト内のカンマ」を安全に扱える。
 
-### ハイライトシステム
-- **ハイライト登録**: `registerMultipleHighlights()` - 実行結果からHighlightStateを生成
-- **表示**: `data-command-type`属性に基づくCSS（content.css）
-- **ホバー検知**: `useCommandApprovalController` - mouseenterイベント (500ms遅延)
-- **ポップアップ**: 段落位置に応じた座標計算（画面外回避）
-
-### 承認/破棄処理
-- **個別承認**: data属性削除 → ハイライトストアから削除
-- **個別破棄**: スナップショットから段落復元 → data属性削除 → ハイライトストアから削除
-- **全体承認**: 全ハイライトに対して個別承認を実行
-- **全体破棄**: 全ハイライトに対して個別破棄を実行
-
-### 段落ID昇格
-- INSERT/SPLITで生成される`temp-{uuid}`
-- 承認時に`p{page}-{paragraph}`形式に変換（実装予定）
+### 個別承認の仕組み
+- `data-command-type` 等の属性をノードに付与することでCSS（content.css）でのハイライトを実現。
+- 承認時はそれらの属性を削除し、破棄時はキャプチャしておいたスナップショットに戻す。
 

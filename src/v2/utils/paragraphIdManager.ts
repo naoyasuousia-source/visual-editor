@@ -38,7 +38,9 @@ export function generateTempId(): ParagraphId {
  * @returns 正式IDの場合true
  */
 export function isOfficialId(id: ParagraphId): boolean {
-  return /^p\d+-\d+$/.test(id);
+  // Paginated形式: p1-1, p2-3 など
+  // Word形式: p1, p2 など
+  return /^p\d+(-\d+)?$/.test(id);
 }
 
 /**
@@ -65,12 +67,13 @@ export function isValidParagraphId(id: ParagraphId): boolean {
  * 正式IDからページ番号を抽出
  * 
  * @param id - 正式段落ID
- * @returns ページ番号、抽出失敗時はnull
+ * @returns ページ番号、抽出失敗時または単一番号形式(Wordモード)時はnull
  */
 export function extractPageNumber(id: ParagraphId): number | null {
   if (!isOfficialId(id)) {
     return null;
   }
+  // p{page}-{para} 形式から抽出
   const match = id.match(/^p(\d+)-\d+$/);
   return match ? parseInt(match[1], 10) : null;
 }
@@ -85,8 +88,17 @@ export function extractParagraphNumber(id: ParagraphId): number | null {
   if (!isOfficialId(id)) {
     return null;
   }
-  const match = id.match(/^p\d+-(\d+)$/);
-  return match ? parseInt(match[1], 10) : null;
+  // p{page}-{para} 形式から抽出
+  const multiMatch = id.match(/^p\d+-(\d+)$/);
+  if (multiMatch) {
+    return parseInt(multiMatch[1], 10);
+  }
+  // p{number} 形式から抽出
+  const singleMatch = id.match(/^p(\d+)$/);
+  if (singleMatch) {
+    return parseInt(singleMatch[1], 10);
+  }
+  return null;
 }
 
 /**

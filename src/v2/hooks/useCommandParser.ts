@@ -99,14 +99,9 @@ export function useCommandParser(): UseCommandParserReturn {
       return false;
     }
 
-    const trimmed = commandArea.trim();
-    if (!trimmed) {
-      return false;
-    }
-
-    // 新コマンドのパターンにマッチするかチェック
-    const newCommandPattern = /(REPLACE_PARAGRAPH|INSERT_PARAGRAPH|DELETE_PARAGRAPH|MOVE_PARAGRAPH|SPLIT_PARAGRAPH|MERGE_PARAGRAPH)\s*\(/;
-    return newCommandPattern.test(trimmed);
+    // コマンド文字列を抽出して、1つ以上有効な新コマンドがあるか確認
+    const commandStrings = extractCommands(commandArea);
+    return commandStrings.length > 0;
   }, []);
 
   return {
