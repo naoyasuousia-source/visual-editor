@@ -15,17 +15,27 @@ const COMMAND_END_REGEX = /<!--\s*AI_COMMAND_END\s*-->/;
  * @returns コマンドエリアの内容（見つからない場合はnull）
  */
 export function extractCommandArea(htmlContent: string): string | null {
-  const startMatch = htmlContent.match(COMMAND_START_REGEX);
-  const endMatch = htmlContent.match(COMMAND_END_REGEX);
+  // 全てのマッチを取得するため、gフラグ付きの正規表現を使用
+  const startRegex = new RegExp(COMMAND_START_REGEX.source, 'g');
+  const endRegex = new RegExp(COMMAND_END_REGEX.source, 'g');
 
-  if (!startMatch || !endMatch) {
+  const startMatches = Array.from(htmlContent.matchAll(startRegex));
+  const endMatches = Array.from(htmlContent.matchAll(endRegex));
+
+  if (startMatches.length === 0 || endMatches.length === 0) {
     return null;
   }
 
-  const startIndex = startMatch.index! + startMatch[0].length;
-  const endIndex = endMatch.index!;
+  // 最後のマッチを使用（ガイド内の例ではなく、実際のコマンドエリアを優先）
+  const lastStartMatch = startMatches[startMatches.length - 1];
+  const lastEndMatch = endMatches[endMatches.length - 1];
+
+  const startIndex = lastStartMatch.index! + lastStartMatch[0].length;
+  const endIndex = lastEndMatch.index!;
 
   if (startIndex >= endIndex) {
+    // 逆転している場合は、おそらく最後から2番目のENDなどを探すべきだが、
+    // 基本的には最後同士が対になると想定
     return null;
   }
 

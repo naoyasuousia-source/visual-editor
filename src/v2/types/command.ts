@@ -5,13 +5,15 @@
 
 /**
  * 段落ID形式
- * 正式ID: p{ページ番号}-{段落番号} (例: p2-1)
- * 仮ID: temp-{uuid}
+ * - Paginatedモード: p{ページ番号}-{段落番号} (例: p1-1, p2-3)
+ * - Wordモード: p{通し番号} (例: p1, p2, p45)
+ * - 仮ID (AI発行/自動生成): temp-{uuid}
  */
 export type ParagraphId = string;
 
 /**
- * コマンドタイプ（6種類の段落操作コマンド）
+ * コマンドタイプ
+ * 以下の6種類に限定
  */
 export type CommandType =
   | 'REPLACE_PARAGRAPH'
@@ -22,38 +24,38 @@ export type CommandType =
   | 'MERGE_PARAGRAPH';
 
 /**
- * ブロック要素タイプ（4択）
+ * ブロック要素タイプ
  */
 export type BlockType = 'p' | 'h1' | 'h2' | 'h3';
 
 /**
- * 文字揃え（3択）
+ * 文字揃え
  */
 export type TextAlign = 'left' | 'center' | 'right';
 
 /**
- * 段落下余白（4択）
+ * 段落下余白
  */
 export type ParagraphSpacing = 'none' | 'small' | 'medium' | 'large';
 
 /**
  * インデントレベル（0～4）
+ * 0: なし, 1: 36pt, 2: 72pt, 3: 108pt, 4: 144pt
  */
 export type IndentLevel = 0 | 1 | 2 | 3 | 4;
 
 /**
  * 段落オプション
- * HTMLタグ（太字、改行、上付き下付き）はテキスト内に直書き
- * それ以外は引数として指定
+ * 太字タグ(<b>)、改行(<br>)などはテキスト内に直接記述する
  */
 export interface ParagraphOptions {
-  /** ブロック要素タイプ */
+  /** ブロックタイプ (p, h1, h2, h3) */
   blockType?: BlockType;
-  /** 文字揃え */
+  /** 文字揃え (left, center, right) */
   textAlign?: TextAlign;
-  /** 段落下余白 */
+  /** 段落下余白 (none, small, medium, large) */
   spacing?: ParagraphSpacing;
-  /** インデントレベル */
+  /** インデントレベル (0-4) */
   indent?: IndentLevel;
 }
 
@@ -61,96 +63,96 @@ export interface ParagraphOptions {
  * コマンドベース
  */
 interface BaseCommand {
-  /** コマンドタイプ */
+  /** コマンド種別 */
   type: CommandType;
-  /** コマンドID（ハイライト管理用） */
+  /** コマンドの一意識別子（ハイライトや承認管理用） */
   commandId: string;
-  /** コマンドが記述された行番号（デバッグ用） */
+  /** 元の行番号 */
   lineNumber?: number;
 }
 
 /**
  * REPLACE_PARAGRAPH コマンド
- * 既存段落の内容を新テキストで置換
+ * 指定した段落の内容を新しいテキスト（HTMLタグ含む）で置き換える
  */
 export interface ReplaceParagraphCommand extends BaseCommand {
   type: 'REPLACE_PARAGRAPH';
-  /** ターゲット段落ID */
+  /** 置換対象の段落ID */
   targetId: ParagraphId;
-  /** 新しいテキスト（HTMLタグ含む） */
+  /** 新しいテキスト（<b>, <br>, <sup>, <sub> を含めることが可能） */
   text: string;
-  /** 段落オプション */
+  /** 適用するスタイルオプション */
   options?: ParagraphOptions;
 }
 
 /**
  * INSERT_PARAGRAPH コマンド
- * 指定段落の直後に新段落を挿入
+ * 指定した段落の直後に新しい段落を挿入する
  */
 export interface InsertParagraphCommand extends BaseCommand {
   type: 'INSERT_PARAGRAPH';
-  /** ターゲット段落ID（この直後に挿入） */
+  /** 挿入の基準となる段落ID */
   targetId: ParagraphId;
   /** 挿入するテキスト（HTMLタグ含む） */
   text: string;
-  /** 段落オプション */
+  /** 適用するスタイルオプション */
   options?: ParagraphOptions;
-  /** 仮ID（AI側で発行） */
+  /** AI側で発行された仮ID（連続挿入を可能にするため） */
   tempId?: ParagraphId;
 }
 
 /**
  * DELETE_PARAGRAPH コマンド
- * 指定段落を削除
+ * 指定した段落を削除対象とする
  */
 export interface DeleteParagraphCommand extends BaseCommand {
   type: 'DELETE_PARAGRAPH';
-  /** 削除する段落ID */
+  /** 削除対象の段落ID */
   targetId: ParagraphId;
 }
 
 /**
  * MOVE_PARAGRAPH コマンド
- * 段落を移動
+ * 段落の順序を入れ替える
  */
 export interface MoveParagraphCommand extends BaseCommand {
   type: 'MOVE_PARAGRAPH';
-  /** 移動元段落ID */
+  /** 移動させる段落のID */
   sourceId: ParagraphId;
-  /** 移動先段落ID（この直後に移動） */
+  /** 移動先の基準段落ID（この直後に移動） */
   targetId: ParagraphId;
 }
 
 /**
  * SPLIT_PARAGRAPH コマンド
- * 段落を分割
+ * 1つの段落を特定の文字列位置で2つに分割する
  */
 export interface SplitParagraphCommand extends BaseCommand {
   type: 'SPLIT_PARAGRAPH';
-  /** 分割する段落ID */
+  /** 分割対象の段落ID */
   targetId: ParagraphId;
-  /** 分割位置直前の文字列 */
+  /** 前半部分の末尾文字列 */
   beforeText: string;
-  /** 分割位置直後の文字列 */
+  /** 後半部分の開始文字列 */
   afterText: string;
-  /** 新段落用の仮ID */
+  /** 分割後に生成される新しい段落の仮ID */
   tempId?: ParagraphId;
 }
 
 /**
  * MERGE_PARAGRAPH コマンド
- * 段落を結合
+ * 指定した段落の内容を別の段落の末尾に結合する
  */
 export interface MergeParagraphCommand extends BaseCommand {
   type: 'MERGE_PARAGRAPH';
-  /** 結合元段落ID */
+  /** 結合させる側の段落ID（処理後削除） */
   sourceId: ParagraphId;
-  /** 結合先段落ID（この直後に結合） */
+  /** 結合される側の段落ID */
   targetId: ParagraphId;
 }
 
 /**
- * コマンド型の統合
+ * 利用可能な全コマンドのユニオン型
  */
 export type Command =
   | ReplaceParagraphCommand
@@ -162,102 +164,102 @@ export type Command =
 
 /**
  * 段落スナップショット
- * 承認/破棄時の復元用
+ * 破棄（元に戻す）操作のために、変更前の状態を保持する
  */
 export interface ParagraphSnapshot {
   /** 段落ID */
   paragraphId: ParagraphId;
-  /** テキスト内容 */
+  /** プレーンテキスト内容 */
   text: string;
-  /** HTMLコンテンツ */
+  /** HTMLタグを含む完全な内容 */
   html: string;
-  /** オプション */
+  /** 適用されていたオプション */
   options: ParagraphOptions;
-  /** スナップショット作成時刻 */
+  /** 取得時タイムスタンプ */
   timestamp: number;
 }
 
 /**
- * コマンド実行結果
+ * コマンド一括実行の結果
  */
 export interface CommandExecutionResult {
-  /** 成功したか */
+  /** 成功可否 */
   success: boolean;
-  /** コマンドID */
+  /** 対応するコマンドID */
   commandId: string;
-  /** コマンドタイプ */
+  /** コマンド種別 */
   commandType: CommandType;
-  /** 影響を受けた段落ID */
+  /** 影響を受けた（ハイライト対象となる）段落IDの配列 */
   affectedParagraphIds: ParagraphId[];
   /** エラーメッセージ（失敗時） */
   error?: string;
-  /** 実行前スナップショット */
+  /** 復元用の実行前スナップショット */
   beforeSnapshot?: ParagraphSnapshot[];
-  /** 実行時刻 */
+  /** 完了時刻 */
   timestamp: number;
 }
 
 /**
- * ハイライト状態
+ * エディタ上のハイライト・承認待ち状態
  */
 export interface HighlightState {
   /** コマンドID */
   commandId: string;
-  /** コマンドタイプ */
+  /** コマンド種別 */
   commandType: CommandType;
-  /** ハイライト対象段落ID */
+  /** ハイライトを維持する段落IDリスト */
   paragraphIds: ParagraphId[];
-  /** 実行前スナップショット */
+  /** 破棄操作時に復元するためのデータ群 */
   beforeSnapshot: ParagraphSnapshot[];
-  /** コマンドオブジェクト */
+  /** 実行されたコマンド情報 */
   command: Command;
-  /** 承認済みか */
+  /** 承認フラグ */
   approved: boolean;
-  /** 破棄済みか */
+  /** 破棄フラグ */
   rejected: boolean;
-  /** ハイライト作成時刻 */
+  /** 作成時刻 */
   timestamp: number;
 }
 
 /**
- * コマンドパース結果
+ * パース結果の全体像
  */
 export interface ParseResult {
-  /** パースされたコマンド */
+  /** 正常に解釈されたコマンド群 */
   commands: Command[];
-  /** パースエラー */
+  /** 解釈に失敗したエラー群 */
   errors: ParseError[];
 }
 
 /**
- * パースエラー
+ * 構文エラー情報
  */
 export interface ParseError {
-  /** エラーメッセージ */
+  /** エラーメッセージ（日本語） */
   message: string;
-  /** エラーが発生した行番号 */
+  /** ファイル内での行番号 */
   lineNumber?: number;
-  /** エラーの原因となったコマンド文字列 */
+  /** エラーとなった元の文字列 */
   rawCommand?: string;
 }
 
 /**
- * 承認/破棄アクション
+ * 承認・破棄アクションの種別
  */
 export type ApprovalAction = 'approve' | 'reject';
 
 /**
- * 承認/破棄結果
+ * 承認・破棄の結果
  */
 export interface ApprovalResult {
-  /** 成功したか */
+  /** 処理の完遂可否 */
   success: boolean;
-  /** コマンドID */
+  /** 対象となったコマンドID */
   commandId: string;
-  /** アクション */
+  /** 実行されたアクション */
   action: ApprovalAction;
   /** エラーメッセージ（失敗時） */
   error?: string;
-  /** 処理時刻 */
+  /** 処理完了時刻 */
   timestamp: number;
 }
