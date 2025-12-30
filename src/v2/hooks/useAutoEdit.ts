@@ -140,6 +140,10 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
         
         toast.success(`新コマンド実行完了: ${successCount}個のコマンドを実行しました`, { position: 'top-center' });
 
+        // ハイライトが確実にApp.tsxの状態に反映されるまでごく短時間待機してから
+        // isAutoEditProcessing を false に戻す（隙間をなくす）
+        await new Promise(resolve => setTimeout(resolve, 50));
+
       } catch (error) {
         console.error('[AutoEdit] エラーが発生:', error);
         
@@ -159,7 +163,7 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
 
         setEditPendingApproval(false);
       } finally {
-        // 処理終了。ただし保留中のハイライトがあれば App.tsx 側でロックは継続される
+        // 処理終了。保留中のハイライトがあれば App.tsx 側の enforceLock が物理・論理ロックを維持する
         setAutoEditProcessing(false);
       }
     },

@@ -75,18 +75,24 @@ export const EditorV3 = () => {
     // 未処理の件数を計算
     const pendingCount = Array.from(highlights.values()).filter(h => !h.approved && !h.rejected).length;
 
+    // ロック中かどうかを判定
+    const shouldLock = isProcessing || pendingCount > 0;
+
     // ロック状態を強制反映させるためのEffect
     useEffect(() => {
         if (!editor) return;
 
-        const shouldLock = isProcessing || pendingCount > 0;
         const targetEditable = !shouldLock;
 
         // ロックを強制適用する関数
         const enforceLock = () => {
+            // Tiptap内部や他の拡張機能による変更を徹底的に上書き
             if (editor.isEditable !== targetEditable) {
-                // Tiptap内部や他の拡張機能による変更を上書き
                 editor.setEditable(targetEditable);
+            }
+            // view自体の設定も念のため確認
+            if (editor.view.editable !== targetEditable) {
+              (editor.view as any).editable = targetEditable;
             }
         };
 
@@ -102,8 +108,8 @@ export const EditorV3 = () => {
         editor.on('update', enforceLock);
         editor.on('selectionUpdate', enforceLock);
 
-        // 保険として短周期でチェック
-        const intervalId = setInterval(enforceLock, 100);
+        // 保険として短周期(50ms)でチェック
+        const intervalId = setInterval(enforceLock, 50);
 
         return () => {
             clearTimeout(timeoutId);
@@ -112,7 +118,7 @@ export const EditorV3 = () => {
             editor.off('update', enforceLock);
             editor.off('selectionUpdate', enforceLock);
         };
-    }, [editor, isProcessing, pendingCount]);
+    }, [editor, shouldLock]);
 
     // Dialogs (ロジック分離)
     const { confirm, prompt, confirmState, promptState, handleConfirmClose, handlePromptClose } = useDialogs();
@@ -183,7 +189,9 @@ export const EditorV3 = () => {
                                 <LinkBubbleMenu editor={editor} prompt={prompt} />
                                 <AIImageIndex editor={editor} />
                                 <ImageContextMenu editor={editor}>
-                                    <EditorContent editor={editor} />
+                                    <div className={shouldLock ? 'pointer-events-none select-none opacity-90' : ''}>
+                                        <EditorContent editor={editor} />
+                                    </div>
                                 </ImageContextMenu>
                             </>
                         )}
