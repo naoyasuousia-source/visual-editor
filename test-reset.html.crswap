@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document</title>
+
+<!--
+===============================================================================
+AI ASSISTANT GUIDE & COMMAND API SPECIFICATIONS (v2.0 - Paragraph ID System)
+===============================================================================
+
+## OVERVIEW
+This document is being edited with a visual editor.
+As an AI Assistant, you can perform automated edits by writing commands targeting
+specific paragraphs using their unique IDs in the COMMAND AREA at the beginning of <body>.
+
+## DOCUMENT STRUCTURE
+- Paginated Mode: Split into A4 sections with paragraph IDs like 'p1-1', 'p1-2' (page-paragraph).
+- Every paragraph/heading has a unique 'id' attribute (e.g., id="p1-1", id="p2-3").
+- The format is "p{page}-{paragraph}" where numbers are 1-indexed.
+- Editable content is inside elements with class "page-inner".
+
+## COMMAND AREA LOCATION
+The COMMAND AREA is located immediately after the <body> tag opening.
+Look for the markers: <!-- AI_COMMAND_START --> and <!-- AI_COMMAND_END -->
+
+## SUPPORTED COMMANDS (New Paragraph ID System)
+
+All commands use paragraph IDs to target specific paragraphs.
+Commands are written as: COMMAND_NAME(arguments)
+
+1. REPLACE_PARAGRAPH(targetId, text, [options])
+   - Replaces the content of a paragraph with new text.
+   - targetId: The paragraph ID (e.g., "p1-2" or "p5")
+   - text: New text content (can include <b>, <br>, <sup>, <sub> tags)
+   - options (optional): key=value pairs separated by commas
+     * blockType=p|h1|h2|h3 (default: p)
+     * textAlign=left|center|right (default: left)
+     * spacing=none|small|medium|large (default: none)
+     * indent=0|1|2|3|4 (default: 0)
+   - Examples:
+     REPLACE_PARAGRAPH(p1-2, これは<b>修正された</b>テキストです。)
+     REPLACE_PARAGRAPH(p3-1, 見出しテキスト, blockType=h1, textAlign=center)
+     REPLACE_PARAGRAPH(p2-5, インデント段落, indent=1, spacing=medium)
+
+2. INSERT_PARAGRAPH(targetId, text, [options])
+   - Inserts a new paragraph immediately AFTER the target paragraph.
+   - targetId: The paragraph ID after which to insert
+   - text: New paragraph content (can include <b>, <br>, <sup>, <sub> tags)
+   - options (optional): Same as REPLACE_PARAGRAPH
+   - The new paragraph will receive a temporary ID (temp-{uuid}) until the document is saved.
+   - Examples:
+     INSERT_PARAGRAPH(p1-3, これは新しい段落です。)
+     INSERT_PARAGRAPH(p2-1, 新しい見出し, blockType=h2, textAlign=center)
+
+3. DELETE_PARAGRAPH(targetId)
+   - Marks a paragraph for deletion (visually crossed out until approved).
+   - targetId: The paragraph ID to delete
+   - Example:
+     DELETE_PARAGRAPH(p2-2)
+
+4. MOVE_PARAGRAPH(sourceId, targetId)
+   - Moves a paragraph from sourceId position to immediately AFTER targetId.
+   - sourceId: The paragraph ID to move
+   - targetId: The paragraph ID after which to place the moved paragraph
+   - Example:
+     MOVE_PARAGRAPH(p2-3, p1-5)  // Moves p2-3 to after p1-5
+
+5. SPLIT_PARAGRAPH(targetId, beforeText, afterText)
+   - Splits a paragraph into two paragraphs at a specific text boundary.
+   - targetId: The paragraph ID to split
+   - beforeText: Text that should end the first paragraph
+   - afterText: Text that should start the second paragraph
+   - The split point is determined by finding these texts in the paragraph.
+   - The second paragraph receives a temporary ID (temp-{uuid}).
+   - Example:
+     SPLIT_PARAGRAPH(p2-4, 前半部分。, 後半部分)
+
+6. MERGE_PARAGRAPH(sourceId, targetId)
+   - Merges two paragraphs by appending sourceId content to targetId.
+   - sourceId: The paragraph ID whose content will be appended
+   - targetId: The paragraph ID that will receive the merged content
+   - The sourceId paragraph is deleted after merging.
+   - Example:
+     MERGE_PARAGRAPH(p3-1, p3-2)  // Append p3-1 to p3-2, delete p3-1
+
+## HTML TAG SUPPORT IN TEXT
+Text content can include the following HTML tags:
+- <b>bold text</b> - Bold formatting
+- <br> - Line break
+- <sup>superscript</sup> - Superscript
+- <sub>subscript</sub> - Subscript
+
+Example: REPLACE_PARAGRAPH(p1-1, H<sub>2</sub>O is water.<br>CO<sub>2</sub> is <b>carbon dioxide</b>.)
+
+## OPTION VALUES REFERENCE
+- blockType: p (paragraph), h1 (heading 1), h2 (heading 2), h3 (heading 3)
+- textAlign: left, center, right
+- spacing: none, small (0.5em), medium (1em), large (1.5em)
+- indent: 0 (none), 1 (36pt), 2 (72pt), 3 (108pt), 4 (144pt)
+
+## IMPORTANT RULES
+- Commands must be ONE PER LINE inside the COMMAND AREA.
+- Use paragraph IDs exactly as they appear in the document (e.g., "p1-2", not "p1-02").
+- Do NOT edit any content outside the COMMAND AREA.
+- The editor will detect, execute, and highlight your changes for user approval.
+- Commands are executed sequentially in the order they appear.
+- After execution, changed paragraphs are highlighted in different colors:
+  * Blue: REPLACE_PARAGRAPH
+  * Green: INSERT_PARAGRAPH
+  * Red: DELETE_PARAGRAPH (with strikethrough)
+  * Purple: MOVE_PARAGRAPH
+  * Orange: SPLIT_PARAGRAPH
+  * Teal: MERGE_PARAGRAPH
+
+===============================================================================
+-->
+
+<style>
+:root { --page-margin: 17mm; }
+
+
+:root {
+  --page-margin: 17mm;
+  --editor-font-family: inherit;
+  --tab-width: 0px;
+}
+
+body.standalone-html {
+  background-color: #525659;
+  margin: 0;
+  padding: 48px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+#pages-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
+.ProseMirror {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+section.page {
+  position: relative;
+  width: 210mm;
+  min-width: 210mm;
+  height: 297mm;
+  min-height: 297mm;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+section.page::after {
+  content: attr(data-page);
+  position: absolute;
+  left: 50%;
+  bottom: 6mm;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #666;
+}
+
+.page-inner {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: var(--page-margin);
+  position: relative;
+  overflow-y: auto;
+  outline: none;
+  font-family: var(--editor-font-family, inherit);
+  font-size: 11pt;
+  color: #333;
+  line-height: 1.6;
+}
+
+.page-inner p,
+.page-inner h1,
+.page-inner h2,
+.page-inner h3,
+.page-inner h6 {
+  margin: 0 0 1em;
+  position: relative;
+  padding-left: 0;
+}
+
+.page-inner h1,
+.page-inner h2,
+.page-inner h3,
+.page-inner h6 {
+  font-weight: revert;
+  font-size: revert;
+  line-height: revert;
+  color: revert;
+}
+
+.page-inner p {
+  font-size: 1em;
+  font-weight: 400;
+}
+
+.page-inner p[data-para]::before,
+.page-inner h1[data-para]::before,
+.page-inner h2[data-para]::before,
+.page-inner h3[data-para]::before,
+.page-inner h6[data-para]::before {
+  content: "[" attr(data-para) "]";
+  position: absolute;
+  left: -11mm;
+  top: 1px;
+  width: 2.4rem;
+  text-align: right;
+  color: #999;
+  font-size: 10.5pt !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  user-select: none;
+  pointer-events: none;
+  font-family: var(--editor-font-family, inherit);
+}
+
+body.hide-page-numbers section.page::after {
+  display: none !important;
+}
+
+body.hide-para-numbers .page-inner [data-para]::before,
+body.hide-para-numbers .ProseMirror [data-para]::before {
+  display: none !important;
+}
+
+.page-inner img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0.8em auto;
+}
+
+.page-inner .image-container.img-xs {
+  width: 20%;
+}
+
+.page-inner .image-container.img-s {
+  width: 35%;
+}
+
+.page-inner .image-container.img-m {
+  width: 50%;
+}
+
+.page-inner .image-container.img-l {
+  width: 65%;
+}
+
+.page-inner .image-container.img-xl {
+  width: 85%;
+}
+
+.page-inner p:has(> .image-container) {
+  display: block;
+  text-align: center;
+  padding: 0;
+  line-height: 1;
+  font-size: inherit;
+  caret-color: #000;
+}
+
+.page-inner .image-container {
+  display: inline-block;
+  vertical-align: top;
+  width: auto;
+  max-width: 100%;
+  line-height: 0;
+  font-size: 0;
+  position: relative;
+  margin-right: 1.5pt;
+  margin-bottom: 0;
+  transition: margin-bottom 0.2s;
+}
+
+.page-inner .image-container.has-title {
+  margin-bottom: 24px;
+}
+
+.page-inner .image-container.has-title.title-mini {
+  margin-bottom: 20px;
+}
+
+.page-inner .image-container img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.page-inner .image-container.has-title::after {
+  content: attr(data-title);
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: block;
+  width: max-content;
+  max-width: 200%;
+  text-align: center;
+  font-size: 11pt;
+  line-height: 1.4;
+  color: #333;
+  padding-top: 4px;
+  user-select: none;
+  pointer-events: none;
+}
+
+.page-inner .image-container.has-title.title-mini::after {
+  font-size: calc(11pt * 0.67);
+  font-weight: bold;
+  color: #666;
+}
+
+.page-inner p:has(> img:not(.ProseMirror-separator)) .ProseMirror-trailingBreak,
+.page-inner p:has(> .image-container) .ProseMirror-trailingBreak {
+  display: none;
+}
+
+.page-inner img.has-border {
+  border: 1px solid currentColor;
+}
+
+.page.line-height-s .page-inner {
+  line-height: 1.25;
+}
+
+.page.line-height-l .page-inner {
+  line-height: 2.0;
+}
+
+.inline-tab {
+  display: inline-block;
+  vertical-align: bottom;
+  height: 1em;
+}
+
+.page-inner .indent-1 {
+  padding-left: 36pt;
+}
+
+.page-inner .indent-2 {
+  padding-left: 72pt;
+}
+
+.page-inner .indent-3 {
+  padding-left: 108pt;
+}
+
+.page-inner .indent-4 {
+  padding-left: 144pt;
+}
+
+.page-inner .indent-5 {
+  padding-left: 180pt;
+}
+
+.page-inner .hanging-indent {
+  text-indent: -1em;
+}
+
+.page-inner .indent-1.hanging-indent {
+  padding-left: 36pt;
+  text-indent: -36pt;
+}
+
+.page-inner .indent-2.hanging-indent {
+  padding-left: 72pt;
+  text-indent: -72pt;
+}
+
+.page-inner .indent-3.hanging-indent {
+  padding-left: 108pt;
+  text-indent: -108pt;
+}
+
+.page-inner .indent-4.hanging-indent {
+  padding-left: 144pt;
+  text-indent: -144pt;
+}
+
+.page-inner .indent-5.hanging-indent {
+  padding-left: 180pt;
+  text-indent: -180pt;
+}
+
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  
+  html,
+  body, 
+  body.standalone-html {
+    background: #fff !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  
+  #toolbar,
+  #page-navigator,
+  #ai-image-index,
+  #ai-meta-guide,
+  .sonner,
+  [data-sonner-toaster],
+  button,
+  dialog,
+  [role="menu"],
+  [role="dialog"],
+  [role="tooltip"],
+  .bubble-menu,
+  .no-print {
+    display: none !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  
+  .flex.flex-col.h-screen {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  .flex.flex-1.overflow-hidden {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  #pages-container {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+    gap: 0 !important;
+  }
+
+  
+  #pages-container > div {
+    display: block !important;
+    width: 210mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 auto !important;
+    zoom: 1 !important; 
+    gap: 0 !important; 
+    font-size: 0 !important; 
+    line-height: 0 !important;
+  }
+
+
+  section.page {
+    position: relative;
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    outline: none !important;
+    background: #fff !important;
+    overflow: hidden !important;
+    break-after: page !important;
+    page-break-after: always !important;
+    display: block !important;
+  }
+
+  section.page:last-child {
+    break-after: auto !important;
+    page-break-after: auto !important;
+    margin-bottom: 0 !important;
+  }
+
+  .page-inner {
+    width: 100% !important;
+    height: 100% !important;
+    padding: var(--page-margin) !important;
+    overflow: visible !important;
+  }
+
+  
+  .page-inner,
+  .page-inner * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    pointer-events: auto !important;
+  }
+
+  
+  .ProseMirror-trailingBreak {
+    display: none !important;
+  }
+}
+
+
+
+
+body.mode-word #pages-container {
+  background-color: #e0e0e0;
+}
+
+body.mode-word section.page {
+  height: auto !important;
+  min-height: 297mm !important;
+  box-shadow: 10px 0 10px -5px rgba(0, 0, 0, 0.1), -10px 0 10px -5px rgba(0, 0, 0, 0.1) !important;
+  overflow: visible !important;
+}
+
+body.mode-word .page-inner {
+  height: auto !important;
+  min-height: 297mm !important;
+  padding-bottom: calc(297mm - var(--page-margin)) !important;
+  overflow: visible !important;
+}
+
+body.mode-word section.page::after {
+  display: none !important;
+}
+
+body.mode-word #page-navigator,
+body.mode-word #sidebar-toggle-overlay,
+body.mode-word #sidebar-toggle-btn,
+body.mode-word #ai-image-index {
+  display: none !important;
+}
+
+
+
+
+
+.page-inner p[data-command-type="replace"],
+.page-inner h1[data-command-type="replace"],
+.page-inner h2[data-command-type="replace"],
+.page-inner h3[data-command-type="replace"] {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+  border-left: 4px solid #3b82f6 !important;
+  padding-left: 8px !important;
+  transition: background-color 0.3s, border-color 0.3s;
+  cursor: pointer;
+}
+
+.page-inner p[data-command-type="replace"]:hover,
+.page-inner h1[data-command-type="replace"]:hover,
+.page-inner h2[data-command-type="replace"]:hover,
+.page-inner h3[data-command-type="replace"]:hover {
+  background-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+
+.page-inner p[data-command-type="insert"],
+.page-inner h1[data-command-type="insert"],
+.page-inner h2[data-command-type="insert"],
+.page-inner h3[data-command-type="insert"] {
+  background-color: rgba(34, 197, 94, 0.2) !important;
+  border-left: 4px solid #22c55e !important;
+  padding-left: 8px !important;
+  transition: background-color 0.3s, border-color 0.3s;
+  cursor: pointer;
+}
+
+.page-inner p[data-command-type="insert"]:hover,
+.page-inner h1[data-command-type="insert"]:hover,
+.page-inner h2[data-command-type="insert"]:hover,
+.page-inner h3[data-command-type="insert"]:hover {
+  background-color: rgba(34, 197, 94, 0.3) !important;
+}
+
+
+.page-inner p[data-command-type="delete"],
+.page-inner h1[data-command-type="delete"],
+.page-inner h2[data-command-type="delete"],
+.page-inner h3[data-command-type="delete"] {
+  background-color: rgba(239, 68, 68, 0.2) !important;
+  border-left: 4px solid #ef4444 !important;
+  padding-left: 8px !important;
+  opacity: 0.5 !important;
+  text-decoration: line-through;
+  transition: background-color 0.3s, border-color 0.3s, opacity 0.3s;
+  cursor: pointer;
+}
+
+.page-inner p[data-command-type="delete"]:hover,
+.page-inner h1[data-command-type="delete"]:hover,
+.page-inner h2[data-command-type="delete"]:hover,
+.page-inner h3[data-command-type="delete"]:hover {
+  background-color: rgba(239, 68, 68, 0.3) !important;
+  opacity: 0.7 !important;
+}
+
+
+.page-inner p[data-command-type="move"],
+.page-inner h1[data-command-type="move"],
+.page-inner h2[data-command-type="move"],
+.page-inner h3[data-command-type="move"] {
+  background-color: rgba(168, 85, 247, 0.2) !important;
+  border-left: 4px solid #a855f7 !important;
+  padding-left: 8px !important;
+  transition: background-color 0.3s, border-color 0.3s;
+  cursor: pointer;
+}
+
+.page-inner p[data-command-type="move"]:hover,
+.page-inner h1[data-command-type="move"]:hover,
+.page-inner h2[data-command-type="move"]:hover,
+.page-inner h3[data-command-type="move"]:hover {
+  background-color: rgba(168, 85, 247, 0.3) !important;
+}
+
+
+.page-inner p[data-command-type="split"],
+.page-inner h1[data-command-type="split"],
+.page-inner h2[data-command-type="split"],
+.page-inner h3[data-command-type="split"] {
+  background-color: rgba(249, 115, 22, 0.2) !important;
+  border-left: 4px solid #f97316 !important;
+  padding-left: 8px !important;
+  transition: background-color 0.3s, border-color 0.3s;
+  cursor: pointer;
+}
+
+.page-inner p[data-command-type="split"]:hover,
+.page-inner h1[data-command-type="split"]:hover,
+.page-inner h2[data-command-type="split"]:hover,
+.page-inner h3[data-command-type="split"]:hover {
+  background-color: rgba(249, 115, 22, 0.3) !important;
+}
+
+
+.page-inner p[data-command-type="merge"],
+.page-inner h1[data-command-type="merge"],
+.page-inner h2[data-command-type="merge"],
+.page-inner h3[data-command-type="merge"] {
+  background-color: rgba(20, 184, 166, 0.2) !important;
+  border-left: 4px solid #14b8a6 !important;
+  padding-left: 8px !important;
+  transition: background-color 0.3s, border-color 0.3s;
+  cursor: pointer;
+}
+
+.page-inner p[data-command-type="merge"]:hover,
+.page-inner h1[data-command-type="merge"]:hover,
+.page-inner h2[data-command-type="merge"]:hover,
+.page-inner h3[data-command-type="merge"]:hover {
+  background-color: rgba(20, 184, 166, 0.3) !important;
+}
+
+
+</style>
+</head>
+<body class="standalone-html">
+
+<!-- AI_COMMAND_START -->
+<!-- ここにコマンドを記述してください / Write your commands here -->
+<!-- AI_COMMAND_END -->
+
+<div id="pages-container">
+<section data-page="1" class="page"><div class="page-inner"><p data-para="1" id="p1-1" class="inline-spacing-none">最初の段落</p><p data-para="2" id="p1-2" class="inline-spacing-none">2番目の段落</p><p data-para="3" id="p1-3" class="inline-spacing-none">3番目の段落</p></div></section><section data-page="2" class="page"><div class="page-inner"><p data-para="1" id="p2-1" class="inline-spacing-none">2ページ目の最初の段落</p><p data-para="2" id="p2-2" class="inline-spacing-none">2ページ目の2番目の段落</p></div></section>
+</div>
+<div id="ai-image-index" class="hidden" aria-hidden="true"></div>
+</body>
+</html>

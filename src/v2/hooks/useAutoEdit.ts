@@ -68,7 +68,7 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
       }
 
       try {
-        const hasValidCommands = commandParser.hasCommands(event.content);
+        const hasValidCommands = commandParser.hasNewCommands(event.content);
         
         if (!hasValidCommands) {
           editor.setEditable(false);
