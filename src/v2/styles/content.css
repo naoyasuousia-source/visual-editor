@@ -255,7 +255,7 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
 }
 
 .page-inner .inline-spacing-xs {
-  margin-bottom: 4px !important;
+  margin-bottom: 0.25em !important;
 }
 
 .page-inner .inline-spacing-s {
@@ -263,15 +263,15 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
 }
 
 .page-inner .inline-spacing-m {
-  margin-bottom: 2em !important;
+  margin-bottom: 2.25em !important;
 }
 
 .page-inner .inline-spacing-l {
-  margin-bottom: 3em !important;
+  margin-bottom: 4em !important;
 }
 
 .page-inner .inline-spacing-xl {
-  margin-bottom: 4em !important;
+  margin-bottom: 6em !important;
 }
 
 .page-inner .indent-1 {

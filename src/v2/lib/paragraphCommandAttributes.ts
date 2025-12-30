@@ -72,24 +72,41 @@ export const ParagraphCommandAttributes = Extension.create({
           spacing: {
             default: null,
             keepOnSplit: true,
-            parseHTML: (element) => element.getAttribute('data-spacing'),
+            parseHTML: (element) => {
+              const attrValue = element.getAttribute('data-spacing');
+              if (attrValue) return attrValue;
+
+              // クラス名からの復元もサポート (救済措置)
+              const classes = Array.from(element.classList);
+              return classes.find(c => c.startsWith('inline-spacing-'))?.replace('inline-spacing-', '');
+            },
             renderHTML: (attributes) => {
               if (!attributes.spacing) return {};
-              return { 'data-spacing': attributes.spacing };
+              return { 
+                'data-spacing': attributes.spacing,
+                class: `inline-spacing-${attributes.spacing}`
+              };
             },
           },
 
-          // インデントレベル（0～4）
+          // インデントレベル（0～5）
           indent: {
             default: 0,
             keepOnSplit: true,
             parseHTML: (element) => {
-              const value = element.getAttribute('data-indent');
-              return value ? parseInt(value, 10) : 0;
+              const attrValue = element.getAttribute('data-indent');
+              if (attrValue) return parseInt(attrValue, 10);
+
+              // クラス名からの復元もサポート
+              const m = element.className.match(/indent-(\d+)/);
+              return m ? parseInt(m[1], 10) : 0;
             },
             renderHTML: (attributes) => {
               if (!attributes.indent || attributes.indent === 0) return {};
-              return { 'data-indent': String(attributes.indent) };
+              return { 
+                'data-indent': String(attributes.indent),
+                class: `indent-${attributes.indent}`
+              };
             },
           },
         },
