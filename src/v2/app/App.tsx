@@ -21,10 +21,10 @@ import { useFileIO } from '@/hooks/useFileIO';
 import { useTiptapEditor } from '@/hooks/useTiptapEditor';
 import { useGlobalStyles } from '@/hooks/useGlobalStyles';
 import { EditorLockOverlay } from '@/components/features/EditorLockOverlay';
-import { AutoEditBar } from '@/components/features/AutoEditBar';
 import { useAutoEdit } from '@/hooks/useAutoEdit';
-import { CommandPopup } from '@/components/CommandPopup';
-import { CommandApprovalBar } from '@/components/CommandApprovalBar';
+import { AutoEditBar } from '@/components/features/AutoEdit/AutoEditBar';
+import { CommandPopup } from '@/components/features/AutoEdit/CommandPopup';
+import { CommandApprovalBar } from '@/components/features/AutoEdit/CommandApprovalBar';
 import { useCommandApprovalController } from '@/hooks/useCommandApprovalController';
 
 /**
@@ -188,10 +188,6 @@ export const EditorV3 = () => {
                                 <LinkBubbleMenu editor={editor} prompt={prompt} />
                                 <AIImageIndex editor={editor} />
                                 <ImageContextMenu editor={editor}>
-                                    <style>{`
-                                        .locked-editor .ProseMirror { pointer-events: none; }
-                                        .locked-editor .ProseMirror [data-command-type] { pointer-events: auto; cursor: pointer; }
-                                    `}</style>
                                     <div className={shouldLock ? 'locked-editor' : ''}>
                                         <EditorContent editor={editor} />
                                     </div>
