@@ -613,6 +613,55 @@
   - pendingCount, ハンドラーをpropsとして渡す
 - EditorLockOverlayの後、Toasterの前に配置
 
+### 2025-12-30 旧コマンドシステム削除とAI用ガイド更新（完了）
+
+#### 修正ファイル7: `src/v2/utils/aiMetadata.ts`
+**分析結果:**
+- 出力HTMLのhead内にAI用ガイドが記述されている
+- 旧コマンドシステム用のガイドが記載されている
+- 新コマンドシステム用に全面書き換えが必要
+
+**方針:**
+- `generateAiGuide()`関数を新コマンドシステム用に完全書き換え
+- 段落IDシステムの説明を追加
+- 6種類の新コマンドの詳細な使用方法を記述
+- HTMLタグサポート、オプション値リファレンスを追加
+- ハイライトカラーの説明を追加
+
+**変更内容:**
+- タイトルを「(v2.0 - Paragraph ID System)」に変更
+- 段落ID形式の説明（Wordモード: p{number}、Paginatedモード: p{page}-{paragraph}）
+- 6種類の新コマンドの詳細:
+  * REPLACE_PARAGRAPH(targetId, text, [options])
+  * INSERT_PARAGRAPH(targetId, text, [options])
+  * DELETE_PARAGRAPH(targetId)
+  * MOVE_PARAGRAPH(sourceId, targetId)
+  * SPLIT_PARAGRAPH(targetId, beforeText, afterText)
+  * MERGE_PARAGRAPH(sourceId, targetId)
+- HTMLタグサポートセクション追加（<b>, <br>, <sup>, <sub>）
+- オプション値リファレンス追加（blockType, textAlign, spacing, indent）
+- ハイライトカラー説明追加（Blue/Green/Red/Purple/Orange/Teal）
+
+#### 修正ファイル8: `src/v2/hooks/useAutoEdit.ts`
+**分析結果:**
+- 新旧コマンドシステムの分岐処理が存在
+- 旧コマンドシステムの処理を完全に削除する必要がある
+- useChangeHighlightとhighlightChangesは旧システム専用
+
+**方針:**
+- 新旧コマンド判定ロジックを削除
+- 旧コマンド分岐（elseブロック）を削除
+- 新コマンドシステムのみを直接実行
+- 旧システム関連のインポートと変数を削除
+
+**変更内容:**
+- `useChangeHighlight`のインポートを削除
+- `highlightChanges`変数を削除
+- `hasNewCommands()`による判定ロジックを削除
+- if-else分岐を削除し、新コマンド処理のみを残す
+- 依存配列から`highlightChanges`を削除
+- コメントを「新コマンドシステムのパース」に更新
+
 ## 3. 分析中に気づいた重要ポイント
 
 ### 段落ID管理の課題

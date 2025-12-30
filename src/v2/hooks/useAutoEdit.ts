@@ -12,7 +12,6 @@ import { useFileSystemWatcher } from '@/hooks/useFileSystemWatcher';
 import { useCommandParser } from '@/hooks/useCommandParser';
 import { useCommandExecutor } from '@/hooks/useCommandExecutor';
 import { useEditApproval } from '@/hooks/useEditApproval';
-import { useChangeHighlight } from '@/hooks/useChangeHighlight';
 import { useCommandHighlight } from '@/hooks/useCommandHighlight';
 import type { FileChangeEvent } from '@/types/ai-sync.types';
 import contentCssText from '@/styles/content.css?raw';
@@ -52,7 +51,6 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
   const commandParser = useCommandParser();
   const commandExecutor = useCommandExecutor(editor);
   const editApproval = useEditApproval(editor, currentFileHandle);
-  const { highlightChanges } = useChangeHighlight(editor);
   const commandHighlight = useCommandHighlight(editor);
 
   /**
@@ -107,92 +105,45 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
 
         setAutoEditProcessing(true);
 
-        // 新コマンドシステムか旧コマンドシステムかを判定
-        const hasNewCommands = commandParser.hasNewCommands(event.content);
-
-        if (hasNewCommands) {
-          // 新コマンドシステムの処理
-          const parseResult = commandParser.parseNewCommandsFromHtml(event.content);
-          if (parseResult.errors.length > 0) {
-            const firstError = parseResult.errors[0].message;
-            toast.error(`コマンドエラー: ${firstError}`, { position: 'top-center' });
-            throw new Error(`パースエラー: ${firstError}`);
-          }
-
-          // 編集前の状態（HTML）を保存
-          editApproval.savePreEditState(editor.getHTML());
-
-          // 新コマンド実行
-          const results = commandExecutor.executeNewCommands(parseResult.commands);
-
-          // ハイライト登録
-          commandHighlight.registerMultipleHighlights(results, parseResult.commands);
-
-          const { isWordMode, pageMargin } = useAppStore.getState();
-          const fullHtml = await AutoEditService.saveExecutionResult(editor, event.fileHandle, isWordMode, pageMargin, contentCssText);
-          
-          setBaseFullHtml(fullHtml);
-          await fileSystemWatcher.syncLastModified();
-
-          const successCount = results.filter((r) => r.success).length;
-          const failureCount = results.length - successCount;
-
-          if (failureCount > 0) {
-            const firstError = results.find(r => !r.success)?.error || '不明なエラー';
-            throw new Error(`自動編集失敗: ${firstError}`);
-          }
-
-          setLastAutoEditTime(Date.now());
-          // 新コマンドシステムでは承認待ちにしない（ハイライトUIで個別承認）
-          setEditPendingApproval(false);
-          
-          // エディタを編集可能に戻す
-          editor.setEditable(true);
-
-          toast.success(`新コマンド実行完了: ${successCount}個のコマンドを実行しました`, { position: 'top-center' });
-        } else {
-          // 旧コマンドシステムの処理
-          const parseResult = commandParser.parseFromHtml(event.content);
-          if (parseResult.errors.length > 0) {
-            const firstError = parseResult.errors[0].message;
-            toast.error(`コマンドエラー: ${firstError}`, { position: 'top-center' });
-            throw new Error(`パースエラー: ${firstError}`);
-          }
-
-          // 編集前の状態（HTML）を保存
-          editApproval.savePreEditState(editor.getHTML());
-
-          const results = commandExecutor.executeCommands(parseResult.commands);
-
-          const { isWordMode, pageMargin } = useAppStore.getState();
-          const fullHtml = await AutoEditService.saveExecutionResult(editor, event.fileHandle, isWordMode, pageMargin, contentCssText);
-          
-          setBaseFullHtml(fullHtml);
-          await fileSystemWatcher.syncLastModified();
-
-          const successCount = results.filter((r) => r.success).length;
-          const failureCount = results.length - successCount;
-
-          if (failureCount > 0) {
-            const firstError = results.find(r => !r.success)?.error || '不明なエラー';
-            throw new Error(`自動編集失敗: ${firstError}`);
-          }
-
-          setLastAutoEditTime(Date.now());
-          setEditPendingApproval(true);
-
-          const allChangedRanges = results
-            .filter((r) => r.success && r.changedRanges)
-            .flatMap((r) => r.changedRanges!);
-          
-          if (allChangedRanges.length > 0) {
-            editor.setEditable(true);
-            highlightChanges(allChangedRanges);
-            editor.setEditable(false);
-          }
-
-          toast.success(`自動編集完了: ${successCount}個のコマンドを実行しました`, { position: 'top-center' });
+        // 新コマンドシステムのパース
+        const parseResult = commandParser.parseNewCommandsFromHtml(event.content);
+        if (parseResult.errors.length > 0) {
+          const firstError = parseResult.errors[0].message;
+          toast.error(`コマンドエラー: ${firstError}`, { position: 'top-center' });
+          throw new Error(`パースエラー: ${firstError}`);
         }
+
+        // 編集前の状態（HTML）を保存
+        editApproval.savePreEditState(editor.getHTML());
+
+        // 新コマンド実行
+        const results = commandExecutor.executeNewCommands(parseResult.commands);
+
+        // ハイライト登録
+        commandHighlight.registerMultipleHighlights(results, parseResult.commands);
+
+        const { isWordMode, pageMargin } = useAppStore.getState();
+        const fullHtml = await AutoEditService.saveExecutionResult(editor, event.fileHandle, isWordMode, pageMargin, contentCssText);
+        
+        setBaseFullHtml(fullHtml);
+        await fileSystemWatcher.syncLastModified();
+
+        const successCount = results.filter((r) => r.success).length;
+        const failureCount = results.length - successCount;
+
+        if (failureCount > 0) {
+          const firstError = results.find(r => !r.success)?.error || '不明なエラー';
+          throw new Error(`自動編集失敗: ${firstError}`);
+        }
+
+        setLastAutoEditTime(Date.now());
+        // 新コマンドシステムでは承認待ちにしない（ハイライトUIで個別承認）
+        setEditPendingApproval(false);
+        
+        // エディタを編集可能に戻す
+        editor.setEditable(true);
+
+        toast.success(`新コマンド実行完了: ${successCount}個のコマンドを実行しました`, { position: 'top-center' });
 
       } catch (error) {
         console.error('[AutoEdit] エラーが発生:', error);
@@ -225,7 +176,6 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
       commandParser,
       commandExecutor,
       editApproval,
-      highlightChanges,
       commandHighlight,
       setAutoEditProcessing,
       setEditPendingApproval,
