@@ -28,7 +28,7 @@
 ## 1. 未解決要件（移動許可がNGの要件は絶対に移動・編集しないこと）
 
 <repuirement>
-<content>textAlign=centerオプションが先ほどは反映されていたのに、反映されない。</content>
+<content>MOVE・MERGEは正常に動作するが、承諾後もカラー表示が解除されない</content>
 <current-situation></current-situation>
 <remarks></remarks>
 <permission-to-move>NG</permission-to-move>
@@ -124,6 +124,14 @@
 - **検索対象拡大**: `findParagraphById` 等の ID 検索ユーティリティにおいて、`paragraph` だけでなく `heading` ノードも検索対象に含めるように変更。これにより見出し化された段落も引き続きコマンドで操作可能。
 - **動的生成**: 挿入・置換・移動等の全てのコマンドにおいて、新規ノード作成時に `options` を参照して最初から正しいタイプで作成するように改善。
 
+### 修正11: StyleAttributes 拡張への属性名マッピングと CSS クラス不足の修正 (2025-12-31 00:35)
+
+**ファイル**: `src/v2/lib/styleAttributes.ts`, `src/v2/utils/paragraphOperations.ts`, `src/v2/services/newCommandExecutionService.ts`, `src/v2/styles/content.css`  
+**修正**: 
+- **属性名同期**: `StyleAttributes` 拡張が内部で `textAlign` ではなく `align` という属性名を使用していたため、コマンドオプションから `align` 属性へマッピングするよう修正。
+- **CSSクラス追加**: `.inline-align-center` や `.inline-spacing-medium` などのクラス定義が `content.css` に不足していたため追加。これにより属性付与がスタイルとして視覚的に反映されるようになった。
+- **型変換**: `indent` 属性を数値から文字列形式へ変換して保存するように統一。
+
 ### 重要な実装詳細
 
 ### ハイライトカラー (content.css)
@@ -207,6 +215,11 @@
 - **問題**: `blockType=h1` などを指定しても属性のみが保持され、ノードタイプが `paragraph` のままだったため、見た目が変わらず、また一度見出し化（属性付与）されたノードが検索できなくなる問題があった。
 - **解決方法**: `setNodeMarkup` による物理的なノードタイプ変換を実装。ID 検索ロジックを `paragraph` と `heading` の両方に対応させ、全てのコマンドにおいて一貫して見出しを扱えるようにした。
 
+### textAlign, spacing, indent オプションの属性名同期と CSS クラス追加
+
+- **問題**: `textAlign=center` などを指定しても属性名が `StyleAttributes` 拡張の期待するものと異なっていたため無視され、また対応する CSS クラスも定義されていなかった。
+- **解決方法**: オプション名を拡張機能の属性名（`align` 等）にマッピングし、かつ `content.css` に必要なスタイル定義を追加することで、オプションが即座に見た目に反映されるようにした。
+
 ### 承認バーおよび個別承認ポップアップの表示不具合 & エディタのロック (再修正完了)
 
 - **問題1 (表示)**: `CommandPopup` のレンダリングロジックが位置確定まで `null` を返していたため、`ref` が取得できず位置計算が始まらなかった。
@@ -276,6 +289,12 @@
 - プロジェクトでは `data-block-type` 属性と Tiptap のノードタイプ（`paragraph`, `heading`）を同期させている。
 - コマンド実行時、`blockType` オプションがあれば `setNodeMarkup` を通じて `paragraph` から `heading` (level=1-3) へ、またはその逆へと物理的に変換する。
 - 全ての ID 検索ユーティリティは `paragraph` と `heading` の両ノードを走査するため、変換後も ID ベースの追跡が維持される。
+
+### スタイル属性と CSS クラスの同期
+
+- `StyleAttributes` 拡張は `align`, `spacing`, `indent` などの属性値に基づいて、`.inline-align-xxx` などの特定の CSS クラスを動的に付与する。
+- 見た目を反映させるには、`attrs.align = 'center'` のように属性をセットした上で、`content.css` 側にクラスのスタイル定義が存在する必要がある。
+- コマンドシステムはこの拡張機能の属性名仕様（マッピング）に準拠するように設計されている。
 
 ### 個別承認の仕組み
 

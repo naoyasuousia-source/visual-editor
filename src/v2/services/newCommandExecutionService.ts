@@ -85,6 +85,10 @@ function executeReplaceParagraph(
       attrs.blockType = 'p';
     }
 
+    if (options?.textAlign) attrs.align = options.textAlign;
+    if (options?.spacing) attrs.spacing = options.spacing;
+    if (options?.indent !== undefined) attrs.indent = options.indent !== 0 ? String(options.indent) : null;
+
     // 段落内容を置換
     editor
       .chain()
@@ -173,6 +177,10 @@ function executeInsertParagraph(
     } else {
       attrs.blockType = 'p';
     }
+
+    if (options?.textAlign) attrs.align = options.textAlign;
+    if (options?.spacing) attrs.spacing = options.spacing;
+    if (options?.indent !== undefined) attrs.indent = options.indent !== 0 ? String(options.indent) : null;
 
     // 新段落を挿入
     editor

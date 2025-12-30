@@ -232,6 +232,36 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
   height: 1em;
 }
 
+/* Alignments */
+.page-inner .inline-align-left {
+  text-align: left;
+}
+
+.page-inner .inline-align-center {
+  text-align: center;
+}
+
+.page-inner .inline-align-right {
+  text-align: right;
+}
+
+/* Spacings */
+.page-inner .inline-spacing-none {
+  margin-bottom: 0 !important;
+}
+
+.page-inner .inline-spacing-small {
+  margin-bottom: 0.5em !important;
+}
+
+.page-inner .inline-spacing-medium {
+  margin-bottom: 1em !important;
+}
+
+.page-inner .inline-spacing-large {
+  margin-bottom: 2em !important;
+}
+
 .page-inner .indent-1 {
   padding-left: 36pt;
 }

@@ -73,9 +73,9 @@ export function captureParagraphSnapshot(
       : '',
     options: {
       blockType,
-      textAlign: (node.attrs.textAlign as ParagraphOptions['textAlign']) || 'left',
+      textAlign: (node.attrs.align as ParagraphOptions['textAlign']) || (node.attrs.textAlign as ParagraphOptions['textAlign']) || 'left',
       spacing: (node.attrs.spacing as ParagraphOptions['spacing']) || 'none',
-      indent: (node.attrs.indent as ParagraphOptions['indent']) || 0,
+      indent: node.attrs.indent ? parseInt(node.attrs.indent, 10) as IndentLevel : 0,
     },
     timestamp: Date.now(),
   };
@@ -140,10 +140,10 @@ export function applyParagraphOptions(
       delete attrs.level;
     }
 
-    // その他の属性を更新
-    if (textAlign) attrs.textAlign = textAlign;
+    // StyleAttributes 拡張に合わせた属性の更新
+    if (textAlign) attrs.align = textAlign;
     if (spacing) attrs.spacing = spacing;
-    if (indent !== undefined) attrs.indent = indent;
+    if (indent !== undefined) attrs.indent = indent !== 0 ? String(indent) : null;
 
     // ノードのタイプと属性を更新
     editor.chain().focus().setNodeSelection(pos).setNodeMarkup(typeName, attrs).run();
