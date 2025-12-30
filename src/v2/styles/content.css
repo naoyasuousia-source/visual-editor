@@ -75,7 +75,7 @@ section.page::after {
 .page-inner h4,
 .page-inner h5,
 .page-inner h6 {
-  margin: 0 0 1.25em;
+  margin: 0 0 1em;
   position: relative;
   padding-left: 0;
 }
@@ -250,10 +250,6 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
 }
 
 /* Spacings (XS, S=標準, M, L, XL) */
-.page-inner .inline-spacing-none {
-  margin-bottom: 1em;
-}
-
 .page-inner .inline-spacing-xs {
   margin-bottom: 0.25em !important;
 }
@@ -263,7 +259,7 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
 }
 
 .page-inner .inline-spacing-m {
-  margin-bottom: 2em !important;
+  margin-bottom: 2.5em !important;
 }
 
 .page-inner .inline-spacing-l {
