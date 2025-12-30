@@ -25,13 +25,13 @@
 # 以下、AIが自動的に更新する部分
 ----------------------------------------
 
-## 1. 未解決要件（移動許可がNGの要件は絶対に移動・編集しないこと）（移動許可は勝手にOKにしないこと）
+## 1. 未解決要件（移動許可がNGの要件は絶対に移動・編集しないこと）
 
 <repuirement>
-<content>REPLACE_PARAGRAPH(p1-1, 見出しテキスト, blockType=h1)というコマンドを実行すると、テキストは置換されるが、blockTypeは変更されない</content>
+<content>textAlign=centerオプションが先ほどは反映されていたのに、反映されない。</content>
 <current-situation></current-situation>
 <remarks></remarks>
-<permission-to-move>OK</permission-to-move>
+<permission-to-move>NG</permission-to-move>
 </repuirement>
 
 ## 2. 未解決要件に関するコード変更履歴（目的、変更内容、変更日時）
@@ -116,6 +116,14 @@
 - これにより、`INSERT_PARAGRAPH` や `SPLIT_PARAGRAPH` で増えた段落が、破棄時に正しく消去されるようになった。
 - 併せて `MOVE_PARAGRAPH` 等の複雑な位置変更を伴うコマンドの破棄整合性も向上。
 
+### 修正10: blockType に基づく物理ノード変換の実装 (2025-12-31 00:25)
+
+**ファイル**: `src/v2/utils/paragraphOperations.ts`, `src/v2/services/newCommandExecutionService.ts`  
+**修正**: 
+- **ノード変換**: `applyParagraphOptions` において `setNodeMarkup` を使用し、`blockType` オプション（p, h1-h3）に応じて Tiptap のノードタイプを `paragraph` または `heading` (level付き) に物理的に変換するように修正。
+- **検索対象拡大**: `findParagraphById` 等の ID 検索ユーティリティにおいて、`paragraph` だけでなく `heading` ノードも検索対象に含めるように変更。これにより見出し化された段落も引き続きコマンドで操作可能。
+- **動的生成**: 挿入・置換・移動等の全てのコマンドにおいて、新規ノード作成時に `options` を参照して最初から正しいタイプで作成するように改善。
+
 ### 重要な実装詳細
 
 ### ハイライトカラー (content.css)
@@ -194,6 +202,11 @@
 - **問題**: 挿入コマンドを破棄しても、新規作成された段落が削除されず、ハイライトが残ったまま居座っていた。（スナップショットに元のデータがないため、従来の復元ロジックが機能していなかった）
 - **解決方法**: `useCommandHighlight.ts` の `rejectHighlight` を強化し、スナップショットに含まれない ID を「新規作成された段落」と判定して物理的に削除する汎用的な破棄ロジックを実装。これにより、INSERT, SPLIT, MOVE等による新規/移動先ノードの破棄が正確に動作するようになった。
 
+### blockType オプションの物理反映と検索対象の拡大
+
+- **問題**: `blockType=h1` などを指定しても属性のみが保持され、ノードタイプが `paragraph` のままだったため、見た目が変わらず、また一度見出し化（属性付与）されたノードが検索できなくなる問題があった。
+- **解決方法**: `setNodeMarkup` による物理的なノードタイプ変換を実装。ID 検索ロジックを `paragraph` と `heading` の両方に対応させ、全てのコマンドにおいて一貫して見出しを扱えるようにした。
+
 ### 承認バーおよび個別承認ポップアップの表示不具合 & エディタのロック (再修正完了)
 
 - **問題1 (表示)**: `CommandPopup` のレンダリングロジックが位置確定まで `null` を返していたため、`ref` が取得できず位置計算が始まらなかった。
@@ -257,6 +270,12 @@
 
 - カッコ内の文字列をカンマで機械的に分割。
 - 得られた要素の配列に対し、後ろから（オプションがある場合）処理を行い、オプションでない部分はすべて `text` としてカンマを付けて再結合する。これにより「テキスト内のカンマ」を安全に扱える。
+
+### blockType とノードタイプの同期
+
+- プロジェクトでは `data-block-type` 属性と Tiptap のノードタイプ（`paragraph`, `heading`）を同期させている。
+- コマンド実行時、`blockType` オプションがあれば `setNodeMarkup` を通じて `paragraph` から `heading` (level=1-3) へ、またはその逆へと物理的に変換する。
+- 全ての ID 検索ユーティリティは `paragraph` と `heading` の両ノードを走査するため、変換後も ID ベースの追跡が維持される。
 
 ### 個別承認の仕組み
 

@@ -26,9 +26,9 @@ export function findParagraphById(
   let result: { node: ProseMirrorNode; pos: number } | null = null;
 
   editor.state.doc.descendants((node, pos) => {
-    // 段落ノードかつIDが一致する場合
+    // 段落または見出しノードかつIDが一致する場合
     if (
-      node.type.name === 'paragraph' &&
+      (node.type.name === 'paragraph' || node.type.name === 'heading') &&
       (node.attrs.id === paragraphId || node.attrs['data-temp-id'] === paragraphId)
     ) {
       result = { node, pos };
@@ -57,6 +57,14 @@ export function captureParagraphSnapshot(
 
   const { node } = found;
   
+  // blockType の判定（heading の場合は level から判定）
+  let blockType: BlockType = 'p';
+  if (node.type.name === 'heading') {
+    blockType = `h${node.attrs.level}` as BlockType;
+  } else {
+    blockType = (node.attrs.blockType as BlockType) || 'p';
+  }
+
   return {
     paragraphId,
     text: node.textContent,
@@ -64,7 +72,7 @@ export function captureParagraphSnapshot(
       ? (node.type.spec.toDOM(node) as any).outerHTML || ''
       : '',
     options: {
-      blockType: (node.attrs.blockType as ParagraphOptions['blockType']) || 'p',
+      blockType,
       textAlign: (node.attrs.textAlign as ParagraphOptions['textAlign']) || 'left',
       spacing: (node.attrs.spacing as ParagraphOptions['spacing']) || 'none',
       indent: (node.attrs.indent as ParagraphOptions['indent']) || 0,
@@ -114,15 +122,31 @@ export function applyParagraphOptions(
     return false;
   }
 
-  const { pos } = found;
+  const { node, pos } = found;
+  const { blockType, textAlign, spacing, indent } = options;
 
   try {
-    editor.chain().focus().setNodeSelection(pos).updateAttributes('paragraph', {
-      blockType: options.blockType,
-      textAlign: options.textAlign,
-      spacing: options.spacing,
-      indent: options.indent,
-    }).run();
+    let typeName = 'paragraph';
+    const attrs: any = { ...node.attrs };
+
+    // blockType に応じてノードタイプを決定
+    if (blockType && blockType !== 'p') {
+      typeName = 'heading';
+      attrs.level = parseInt(blockType.substring(1), 10);
+      attrs.blockType = blockType;
+    } else {
+      typeName = 'paragraph';
+      attrs.blockType = 'p';
+      delete attrs.level;
+    }
+
+    // その他の属性を更新
+    if (textAlign) attrs.textAlign = textAlign;
+    if (spacing) attrs.spacing = spacing;
+    if (indent !== undefined) attrs.indent = indent;
+
+    // ノードのタイプと属性を更新
+    editor.chain().focus().setNodeSelection(pos).setNodeMarkup(typeName, attrs).run();
 
     return true;
   } catch (error) {
@@ -191,11 +215,11 @@ export function assignIdsToAllParagraphs(editor: Editor): number {
   let paragraphNumberInPage = 1;
 
   editor.state.doc.descendants((node, pos) => {
-    if (node.type.name === 'paragraph') {
+    if (node.type.name === 'paragraph' || node.type.name === 'heading') {
       // すでにIDがある場合はスキップ
       if (!node.attrs.id && !node.attrs['data-temp-id']) {
         const newId = `p${currentPage}-${paragraphNumberInPage}`;
-        editor.chain().focus().setNodeSelection(pos).updateAttributes('paragraph', {
+        editor.chain().focus().setNodeSelection(pos).updateAttributes(node.type.name, {
           id: newId,
         }).run();
         assignedCount++;

@@ -69,6 +69,22 @@ function executeReplaceParagraph(
     // HTMLテキストをパース
     const content = parseHtmlText(text);
 
+    // ノードタイプと属性の決定
+    let typeName = 'paragraph';
+    const attrs: any = {
+      id: targetId,
+      'data-command-type': 'replace',
+      'data-command-id': commandId,
+    };
+
+    if (options?.blockType && options.blockType !== 'p') {
+      typeName = 'heading';
+      attrs.level = parseInt(options.blockType.substring(1), 10);
+      attrs.blockType = options.blockType;
+    } else {
+      attrs.blockType = 'p';
+    }
+
     // 段落内容を置換
     editor
       .chain()
@@ -76,12 +92,8 @@ function executeReplaceParagraph(
       .setNodeSelection(pos)
       .deleteSelection()
       .insertContentAt(pos, {
-        type: 'paragraph',
-        attrs: {
-          id: targetId,
-          'data-command-type': 'replace',
-          'data-command-id': commandId,
-        },
+        type: typeName,
+        attrs,
         content,
       })
       .run();
@@ -146,17 +158,29 @@ function executeInsertParagraph(
     // HTMLテキストをパース
     const content = parseHtmlText(text);
 
+    // ノードタイプと属性の決定
+    let typeName = 'paragraph';
+    const attrs: any = {
+      'data-temp-id': tempId,
+      'data-command-type': 'insert',
+      'data-command-id': commandId,
+    };
+
+    if (options?.blockType && options.blockType !== 'p') {
+      typeName = 'heading';
+      attrs.level = parseInt(options.blockType.substring(1), 10);
+      attrs.blockType = options.blockType;
+    } else {
+      attrs.blockType = 'p';
+    }
+
     // 新段落を挿入
     editor
       .chain()
       .focus()
       .insertContentAt(insertPos, {
-        type: 'paragraph',
-        attrs: {
-          'data-temp-id': tempId,
-          'data-command-type': 'insert',
-          'data-command-id': commandId,
-        },
+        type: typeName,
+        attrs,
         content,
       })
       .run();
@@ -326,13 +350,14 @@ function executeMoveParagraph(
     // 移動元を削除
     editor.chain().focus().deleteRange({ from: sourcePos, to: sourcePos + sourceNode.nodeSize }).run();
 
-    // 移動先に挿入
+    // 移動先に挿入（元のノードタイプと属性を維持）
     editor
       .chain()
       .focus()
       .insertContentAt(insertPos, {
-        type: 'paragraph',
+        type: sourceNode.type.name,
         attrs: {
+          ...sourceNode.attrs,
           id: sourceId,
           'data-command-type': 'move',
           'data-command-id': commandId,
@@ -432,14 +457,11 @@ function executeSplitParagraph(
       .chain()
       .focus()
       .setNodeSelection(pos)
-      .updateAttributes('paragraph', {
-        'data-command-type': 'split',
-        'data-command-id': commandId,
-      })
       .deleteSelection()
       .insertContentAt(pos, {
-        type: 'paragraph',
+        type: node.type.name,
         attrs: {
+          ...node.attrs,
           id: targetId,
           'data-command-type': 'split',
           'data-command-id': commandId,
@@ -454,8 +476,10 @@ function executeSplitParagraph(
       .chain()
       .focus()
       .insertContentAt(insertPos, {
-        type: 'paragraph',
+        type: node.type.name,
         attrs: {
+          ...node.attrs,
+          id: undefined,
           'data-temp-id': tempId,
           'data-command-type': 'split',
           'data-command-id': commandId,
@@ -550,14 +574,11 @@ function executeMergeParagraph(
       .chain()
       .focus()
       .setNodeSelection(targetPos)
-      .updateAttributes('paragraph', {
-        'data-command-type': 'merge',
-        'data-command-id': commandId,
-      })
       .deleteSelection()
       .insertContentAt(targetPos, {
-        type: 'paragraph',
+        type: targetNode.type.name,
         attrs: {
+          ...targetNode.attrs,
           id: targetId,
           'data-command-type': 'merge',
           'data-command-id': commandId,
