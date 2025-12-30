@@ -38,6 +38,18 @@ export function useCommandApprovalController(editor: Editor | null, onApprovalCh
   const [showApprovalBar, setShowApprovalBar] = useState(false);
 
   /**
+   * ハイライト箇所がある間はエディタを読み取り専用にする
+   */
+  useEffect(() => {
+    if (!editor) return;
+    if (pendingCount > 0) {
+      editor.setEditable(false);
+    } else {
+      editor.setEditable(true);
+    }
+  }, [editor, pendingCount]);
+
+  /**
    * ハイライトされた段落のホバーイベントをリスン
    */
   useEffect(() => {
@@ -75,7 +87,14 @@ export function useCommandApprovalController(editor: Editor | null, onApprovalCh
 
     const handleMouseOut = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
+      const relatedTarget = event.relatedTarget as HTMLElement;
+      
       const paragraph = target.closest('[data-command-type]');
+      
+      // 移動先が同じ段落内であればタイマーをクリアしない
+      if (paragraph && paragraph.contains(relatedTarget)) {
+        return;
+      }
       
       if (paragraph && hoverTimeout) {
         clearTimeout(hoverTimeout);
