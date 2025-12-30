@@ -12,15 +12,12 @@ interface CommandApprovalBarProps {
   onApproveAll: () => void;
   /** 全体破棄ボタンクリック時のコールバック */
   onRejectAll: () => void;
-  /** バーを閉じる */
-  onClose: () => void;
 }
 
 export function CommandApprovalBar({
   pendingCount,
   onApproveAll,
   onRejectAll,
-  onClose,
 }: CommandApprovalBarProps) {
   if (pendingCount === 0) return null;
 
@@ -68,15 +65,6 @@ export function CommandApprovalBar({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
             全て破棄
-          </button>
-          <button
-            onClick={onClose}
-            className="text-white hover:bg-white/20 rounded p-2 transition-colors ml-2"
-            aria-label="閉じる"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
           </button>
         </div>
       </div>

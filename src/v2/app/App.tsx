@@ -143,7 +143,7 @@ export const EditorV3 = () => {
     return (
         <div className="flex flex-col h-screen bg-[#525659] overflow-hidden font-sans">
             {/* Toolbar Area */}
-            <div id="toolbar">
+            <div id="toolbar" className={shouldLock ? 'pointer-events-none select-none opacity-80' : ''}>
                 <Toolbar
                     editor={editor}
                     onAddPage={addPage}
@@ -167,19 +167,18 @@ export const EditorV3 = () => {
                     pendingCount={approvalController.pendingCount}
                     onApproveAll={approvalController.handleApproveAll}
                     onRejectAll={approvalController.handleRejectAll}
-                    onClose={approvalController.closeApprovalBar}
                 />
             )}
             
             {/* Main Content Area */}
-            <div className="flex flex-1 overflow-hidden relative">
+            <div className={`flex flex-1 overflow-hidden relative ${shouldLock ? 'pointer-events-none select-none' : ''}`}>
                 {editor && (
                     <div id="page-navigator">
                         <PageNavigator editor={editor} />
                     </div>
                 )}
                 
-                <div id="pages-container" className="flex-1 overflow-auto p-12 scroll-smooth">
+                <div id="pages-container" className="flex-1 overflow-auto p-12 scroll-smooth pointer-events-auto">
                     <div 
                         className={`flex flex-col gap-6 transition-all duration-200 mx-auto w-[210mm] ${isWordMode ? 'mode-word' : ''}`}
                         style={{ zoom: zoomLevel / 100 } as React.CSSProperties}
@@ -189,7 +188,11 @@ export const EditorV3 = () => {
                                 <LinkBubbleMenu editor={editor} prompt={prompt} />
                                 <AIImageIndex editor={editor} />
                                 <ImageContextMenu editor={editor}>
-                                    <div className={shouldLock ? 'pointer-events-none select-none opacity-90' : ''}>
+                                    <style>{`
+                                        .locked-editor .ProseMirror { pointer-events: none; }
+                                        .locked-editor .ProseMirror [data-command-type] { pointer-events: auto; cursor: pointer; }
+                                    `}</style>
+                                    <div className={shouldLock ? 'locked-editor' : ''}>
                                         <EditorContent editor={editor} />
                                     </div>
                                 </ImageContextMenu>
@@ -225,6 +228,7 @@ export const EditorV3 = () => {
                     onClose={approvalController.closePopup}
                 />
             )}
+
 
 
             <Toaster position="top-center" richColors />
