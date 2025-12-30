@@ -140,6 +140,8 @@ section.page::after {
 .page-inner h1,
 .page-inner h2,
 .page-inner h3,
+.page-inner h4,
+.page-inner h5,
 .page-inner h6 {
   margin: 0 0 1em;
   position: relative;
@@ -165,6 +167,8 @@ section.page::after {
 .page-inner h1[data-para]::before,
 .page-inner h2[data-para]::before,
 .page-inner h3[data-para]::before,
+.page-inner h4[data-para]::before,
+.page-inner h5[data-para]::before,
 .page-inner h6[data-para]::before {
   content: "[" attr(data-para) "]";
   position: absolute;
@@ -294,20 +298,24 @@ section.page::after {
   text-align: right;
 }
 
-.page-inner .inline-spacing-none {
-  margin-bottom: 0 !important;
+.page-inner .inline-spacing-xs {
+  margin-bottom: 0.25em !important;
 }
 
-.page-inner .inline-spacing-small {
-  margin-bottom: 0.5em !important;
-}
-
-.page-inner .inline-spacing-medium {
+.page-inner .inline-spacing-s {
   margin-bottom: 1em !important;
 }
 
-.page-inner .inline-spacing-large {
-  margin-bottom: 2em !important;
+.page-inner .inline-spacing-m {
+  margin-bottom: 2.5em !important;
+}
+
+.page-inner .inline-spacing-l {
+  margin-bottom: 5em !important;
+}
+
+.page-inner .inline-spacing-xl {
+  margin-bottom: 10em !important;
 }
 
 .page-inner .indent-1 {
@@ -480,7 +488,7 @@ section.page::after {
 <!-- AI_COMMAND_END -->
 
 <div id="pages-container">
-<section data-page="1" class="page"><div class="page-inner"><h1 data-para="1" id="p1-1" class="inline-spacing-none">フロントエンド開発入門メモ＆IT/AI知識</h1><h3 data-para="2" id="p1-2" class="inline-spacing-none">【教養】</h3><p data-para="3" id="p1-3" class="inline-spacing-none"><strong>PHP</strong>:バックエンド言語のシェアno.1</p><p data-para="4" id="p1-4" class="inline-spacing-none">サーバー＝コンピュータ（ストレージだけのことではない）</p><p data-para="5" id="p1-5" class="inline-spacing-none">フレームワークは骨組み提供、ライブラリは道具(Reactはライブラリ、それを前提としたフレームワークがnext.js)<br>（cytoscapeはjsライブラリの1種）</p><p data-para="6" id="p1-6" class="inline-spacing-none">css-in-jsもあるがバイブコーディングには向いてない</p></div></section><section data-page="2" class="page"><div class="page-inner"><h2 data-para="1" id="p2-1" class="inline-spacing-none">Webアプリのバイブコーディング最適化</h2><h3 data-para="2" id="p2-2" class="inline-spacing-none"><u>スタック</u></h3><p data-para="3" id="p2-3" class="inline-spacing-none"><strong>【構造】：Reactコンポーネントベース・外部ライブラリ・独自ロジック</strong><br>・HTMLは最小限記述のみ<br>・独自ロジックに固執せず、既存ライブラリを積極的に利用する<br>・DOM操作は必ずhooksを経由し、Reactの副作用として行う<br>・コンポーネント内は基本的にUIのみで、ロジックは外に切り出す</p><p data-para="4" id="p2-4" class="inline-spacing-none"><strong>【ビルド環境】：Vite</strong></p><p data-para="5" id="p2-5" class="inline-spacing-none"><strong>【スタイリング】：Tailwind限定・shadcn/ui</strong><br>・Tailwindのクラスをコンポーネントに直接書く<br>・shadcn/uiのスタイリング内蔵部品を積極的に利用する</p><p data-para="6" id="p2-6" class="inline-spacing-none">※アプリの特性によってはNext.jsを選択する。</p><p data-para="7" id="p2-7" class="inline-spacing-none"><strong>【テスト】：Playwright利用</strong><br>・スクショ比較でUI崩壊検知可能<br>・Antigravityにエラーが出そうな操作を考えさせ、playwrite回させる</p><h3 data-para="8" id="p2-8" class="inline-spacing-none"><u>ワークフロー</u></h3><p data-para="9" id="p2-9" class="inline-spacing-none"><strong>【アプリ作成開始時および新機能追加時】</strong><br>1. <a target="_blank" rel="noopener noreferrer nofollow" class="text-blue-600 underline cursor-pointer" href="http://要件定義書を.md">要件定義書を.md</a>で書く（目的、設計思想/想定環境/条件、スタック、機能/UI一覧）<br>2. Geminiにレビューさせて詰める<br>3. Antigravityに<strong>計画書兼進捗チェックリスト</strong>を日本語で書かせて、フォルダに入れさせる<br>4. Geminiに計画書をレビューさせる→計画書にコメントして提出<strong>（計画書にはrules.md順守を明記）</strong><br>5. <a target="_blank" rel="noopener noreferrer nofollow" class="text-blue-600 underline cursor-pointer" href="http://rules.md">rules.md</a>に汎用ルールを貼る<br>6. 計画を進めさせる（時々コード整理させる）</p><p data-para="10" id="p2-10" class="inline-spacing-none"><strong>【デバッグ時】</strong><br>1. ひな型をコピペして、デバッグ用.mdを作成<br>2. ワークフローひな型をコピペする<br>3. ワークフローを回させる</p></div></section>
+<section data-page="1" class="page"><div class="page-inner"><h1 data-para="1" id="p1-1" data-spacing="none" class="inline-spacing-none">フロントエンド開発入門メモ＆IT/AI知識</h1><h3 data-para="2" id="p1-2" data-spacing="none" class="inline-spacing-none">【教養】</h3><p data-para="3" id="p1-3" data-spacing="none" class="inline-spacing-none"><strong>PHP</strong>:バックエンド言語のシェアno.1</p><p data-para="4" id="p1-4" data-spacing="none" class="inline-spacing-none">サーバー＝コンピュータ（ストレージだけのことではない）</p><p data-para="5" id="p1-5" data-spacing="none" class="inline-spacing-none">フレームワークは骨組み提供、ライブラリは道具(Reactはライブラリ、それを前提としたフレームワークがnext.js)<br>（cytoscapeはjsライブラリの1種）</p><p data-para="6" id="p1-6" data-spacing="none" class="inline-spacing-none">css-in-jsもあるがバイブコーディングには向いてない</p></div></section><section data-page="2" class="page"><div class="page-inner"><h2 data-para="1" id="p2-1" data-spacing="none" class="inline-spacing-none">Webアプリのバイブコーディング最適化</h2><h3 data-para="2" id="p2-2" data-spacing="none" class="inline-spacing-none"><u>スタック</u></h3><p data-para="3" id="p2-3" data-spacing="none" class="inline-spacing-none"><strong>【構造】：Reactコンポーネントベース・外部ライブラリ・独自ロジック</strong><br>・HTMLは最小限記述のみ<br>・独自ロジックに固執せず、既存ライブラリを積極的に利用する<br>・DOM操作は必ずhooksを経由し、Reactの副作用として行う<br>・コンポーネント内は基本的にUIのみで、ロジックは外に切り出す</p><p data-para="4" id="p2-4" data-spacing="none" class="inline-spacing-none"><strong>【ビルド環境】：Vite</strong></p><p data-para="5" id="p2-5" data-spacing="none" class="inline-spacing-none"><strong>【スタイリング】：Tailwind限定・shadcn/ui</strong><br>・Tailwindのクラスをコンポーネントに直接書く<br>・shadcn/uiのスタイリング内蔵部品を積極的に利用する</p><p data-para="6" id="p2-6" data-spacing="none" class="inline-spacing-none">※アプリの特性によってはNext.jsを選択する。</p><p data-para="7" id="p2-7" data-spacing="none" class="inline-spacing-none"><strong>【テスト】：Playwright利用</strong><br>・スクショ比較でUI崩壊検知可能<br>・Antigravityにエラーが出そうな操作を考えさせ、playwrite回させる</p><h3 data-para="8" id="p2-8" data-spacing="none" class="inline-spacing-none"><u>ワークフロー</u></h3><p data-para="9" id="p2-9" data-spacing="none" class="inline-spacing-none"><strong>【アプリ作成開始時および新機能追加時】</strong><br>1. <a target="_blank" rel="noopener noreferrer nofollow" class="text-blue-600 underline cursor-pointer" href="http://要件定義書を.md">要件定義書を.md</a>で書く（目的、設計思想/想定環境/条件、スタック、機能/UI一覧）<br>2. Geminiにレビューさせて詰める<br>3. Antigravityに<strong>計画書兼進捗チェックリスト</strong>を日本語で書かせて、フォルダに入れさせる<br>4. Geminiに計画書をレビューさせる→計画書にコメントして提出<strong>（計画書にはrules.md順守を明記）</strong><br>5. <a target="_blank" rel="noopener noreferrer nofollow" class="text-blue-600 underline cursor-pointer" href="http://rules.md">rules.md</a>に汎用ルールを貼る<br>6. 計画を進めさせる（時々コード整理させる）</p><p data-para="10" id="p2-10" data-spacing="none" class="inline-spacing-none"><strong>【デバッグ時】</strong><br>1. ひな型をコピペして、デバッグ用.mdを作成<br>2. ワークフローひな型をコピペする<br>3. ワークフローを回させる</p></div></section>
 </div>
 <div id="ai-image-index" class="hidden" aria-hidden="true"></div>
 </body>
