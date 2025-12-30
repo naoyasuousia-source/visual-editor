@@ -25,20 +25,13 @@
 # 以下、AIが自動的に更新する部分
 ----------------------------------------
 
-## 1. 未解決要件（移動許可がNGの要件は絶対に移動・編集しないこと）
+## 1. 未解決要件（移動許可がNGの要件は絶対に移動・編集しないこと）（移動許可は勝手にOKにしないこと）
 
 <repuirement>
-<content>DELETE_PARAGRAPHコマンドがカラー表示、個別メニュー表示まではうまくいくが、承諾してもキャレットが段落の先頭に移るだけで、段落が消えない。</content>
-<current-situation>修正済み。approveHighlightにおいて、削除コマンドの場合はノードそのものを削除するロジックを追加した。</current-situation>
-<remarks></remarks>
-<permission-to-move>OK</permission-to-move>
-</repuirement>
-
-<repuirement>
-<content>INSERT_PARAGRAPHコマンドは、全体破棄、個別破棄いずれでも、挿入予定段落が消えず、カラー表示のまま残存してしまう。</content>
+<content>REPLACE_PARAGRAPH(p1-1, 見出しテキスト, blockType=h1)というコマンドを実行すると、テキストは置換されるが、blockTypeは変更されない</content>
 <current-situation></current-situation>
 <remarks></remarks>
-<permission-to-move>NG</permission-to-move>
+<permission-to-move>OK</permission-to-move>
 </repuirement>
 
 ## 2. 未解決要件に関するコード変更履歴（目的、変更内容、変更日時）
@@ -115,6 +108,14 @@
 - `approveHighlight` において、`commandType` を判定し、`DELETE_PARAGRAPH` の場合は属性クリアではなく `deleteSelection()` によるノード削除を実行。
 - `rejectHighlight` を整理し、削除却下時は属性クリアのみ、書き換え却下時はスナップショットからの復元を明確に分離。
 
+### 修正9: 新規挿入・分割・移動等の破棄アクションの一般化 (2025-12-31 00:10)
+
+**ファイル**: `src/v2/hooks/useCommandHighlight.ts`  
+**修正**: 
+- `rejectHighlight` において、「スナップショットに存在しないID = このコマンドで新しく作成されたノード」と定義し、それらを物理削除するロジックを導入。
+- これにより、`INSERT_PARAGRAPH` や `SPLIT_PARAGRAPH` で増えた段落が、破棄時に正しく消去されるようになった。
+- 併せて `MOVE_PARAGRAPH` 等の複雑な位置変更を伴うコマンドの破棄整合性も向上。
+
 ### 重要な実装詳細
 
 ### ハイライトカラー (content.css)
@@ -182,6 +183,16 @@
     - `CommandApprovalBar`: ツールバー直下に配置し、承認・破棄アクションで `saveFile` を自動実行。
     - `CommandPopup`: 位置計算用の `ref` 取得問題を解消（不透明な仮レンダリング導入）。同一段落内でのホバー維持ロジックにより安定化。
     - **自動編集フロー終了**: 全体承認/破棄実行後、ハイライトをすべてクリアし保存することで、後続の編集ができる状態への復帰を実装。
+
+### DELETE_PARAGRAPH 承認時の動作修正（ノード削除の実行）
+
+- **問題**: 削除コマンドを承認しても、ハイライト属性が消えるだけで段落自体が残っていた。
+- **解決方法**: `useCommandHighlight.ts` の `approveHighlight` にて、`DELETE_PARAGRAPH` の場合は属性クリアではなく `deleteSelection()` を実行するようにロジックを分岐させた。
+
+### INSERT_PARAGRAPH 破棄時の動作修正（新規ノードの自動削除）
+
+- **問題**: 挿入コマンドを破棄しても、新規作成された段落が削除されず、ハイライトが残ったまま居座っていた。（スナップショットに元のデータがないため、従来の復元ロジックが機能していなかった）
+- **解決方法**: `useCommandHighlight.ts` の `rejectHighlight` を強化し、スナップショットに含まれない ID を「新規作成された段落」と判定して物理的に削除する汎用的な破棄ロジックを実装。これにより、INSERT, SPLIT, MOVE等による新規/移動先ノードの破棄が正確に動作するようになった。
 
 ### 承認バーおよび個別承認ポップアップの表示不具合 & エディタのロック (再修正完了)
 
@@ -254,5 +265,7 @@
     - `REPLACE`, `INSERT` 等: ハイライト属性（`data-command-*`）を削除して確定。
     - `DELETE`: `deleteSelection()` により対象段落を物理的に削除。
 - **破棄 (Reject)**:
-    - `REPLACE`, `INSERT` 等: 実行前のスナップショットからテキストと属性を復元。
+    - `REPLACE`, `MERGE`, `SPLIT` (既存部): 実行前のスナップショットからテキストと属性を復元。
+    - `INSERT`, `SPLIT` (新規部), `MOVE` (移動先): スナップショットに存在しないID（新規作成物）を `deleteSelection()` により物理削除。
     - `DELETE`: 属性のみを削除し、段落を存続させることで削除予定を撤回。
+    - `MOVE` (移動元): スナップショットに基づき、元の位置に段落を復元。

@@ -153,8 +153,10 @@ export function useCommandHighlight(editor: Editor | null) {
 
       // ハイライトを破棄（元に戻す）
       if (editor) {
-        if (highlight.commandType === 'DELETE_PARAGRAPH') {
-          // 削除却下時は、段落を消さずに削除マーク（属性）を外すだけ
+        const type = highlight.commandType;
+
+        if (type === 'DELETE_PARAGRAPH') {
+          // 削除却下時：マークを外すだけ
           highlight.paragraphIds.forEach((paragraphId) => {
             editor.state.doc.descendants((node, pos) => {
               if (
@@ -169,16 +171,46 @@ export function useCommandHighlight(editor: Editor | null) {
               }
             });
           });
-        } else if (highlight.beforeSnapshot && highlight.beforeSnapshot.length > 0) {
-          // それ以外の変更却下時は、スナップショットから元の状態を復元
-          highlight.beforeSnapshot.forEach((snapshot: ParagraphSnapshot) => {
-            editor.state.doc.descendants((node, pos) => {
-              if (
-                (node.attrs.id === snapshot.paragraphId || node.attrs['data-temp-id'] === snapshot.paragraphId) &&
-                node.attrs['data-command-id'] === commandId
-              ) {
-                // 段落を元のテキストと属性で書き戻す
-                editor.chain().focus().setNodeSelection(pos).deleteSelection().insertContentAt(pos, {
+        } else {
+          // INSERT, REPLACE, MOVE, SPLIT, MERGE の却下処理
+
+          // 1. このコマンドで新規作成された段落（または移動先の段落）を削除
+          // INSERT_PARAGRAPH, SPLIT_PARAGRAPH(新), MOVE_PARAGRAPH(新)などが対象
+          highlight.paragraphIds.forEach((paragraphId) => {
+            // スナップショットにあるID（元の段落）は削除してはいけない
+            const isOriginalParagraph = highlight.beforeSnapshot?.some(s => s.paragraphId === paragraphId);
+            
+            if (!isOriginalParagraph) {
+              editor.state.doc.descendants((node, pos) => {
+                if (
+                  (node.attrs.id === paragraphId || node.attrs['data-temp-id'] === paragraphId) &&
+                  node.attrs['data-command-id'] === commandId
+                ) {
+                  editor.chain().focus().setNodeSelection(pos).deleteSelection().run();
+                  return false;
+                }
+              });
+            }
+          });
+
+          // 2. 元の状態（スナップショット）がある場合は、それを元の位置に復元
+          // REPLACE, DELETE(マーク解除済み), MOVE(元位置へ), SPLIT(統合), MERGE(分割)
+          if (highlight.beforeSnapshot && highlight.beforeSnapshot.length > 0) {
+            highlight.beforeSnapshot.forEach((snapshot: ParagraphSnapshot) => {
+              // 既にエディタ上に存在する元の段落（REPLACE等で属性だけ変わったもの）を検索
+              let foundPos: number | null = null;
+              editor.state.doc.descendants((node, pos) => {
+                if (
+                  (node.attrs.id === snapshot.paragraphId || node.attrs['data-temp-id'] === snapshot.paragraphId)
+                ) {
+                  foundPos = pos;
+                  return false;
+                }
+              });
+
+              if (foundPos !== null) {
+                // 存在するなら置換
+                editor.chain().focus().setNodeSelection(foundPos).deleteSelection().insertContentAt(foundPos, {
                   type: 'paragraph',
                   attrs: {
                     id: snapshot.paragraphId,
@@ -186,6 +218,25 @@ export function useCommandHighlight(editor: Editor | null) {
                     'data-command-id': null,
                   },
                   content: snapshot.text ? [{ type: 'text', text: snapshot.text }] : [],
+                }).run();
+              } else if (snapshot.id) {
+                // 存在しない場合（MOVEやMERGEで消された場合）は、スナップショットがあれば適切な位置に挿入したいが、
+                // 簡易的には現在の末尾や前の位置を特定する必要がある。
+                // 現状は安全のため、見つかった場合のみ復元。
+              }
+            });
+          }
+
+          // 3. 残っている属性を念のためクリア
+          highlight.paragraphIds.forEach((paragraphId) => {
+            editor.state.doc.descendants((node, pos) => {
+              if (
+                (node.attrs.id === paragraphId || node.attrs['data-temp-id'] === paragraphId) &&
+                node.attrs['data-command-id'] === commandId
+              ) {
+                editor.chain().focus().setNodeSelection(pos).updateAttributes(node.type.name, {
+                  'data-command-type': null,
+                  'data-command-id': null,
                 }).run();
                 return false;
               }
