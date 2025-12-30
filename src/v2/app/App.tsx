@@ -68,25 +68,48 @@ export const EditorV3 = () => {
     useGlobalStyles(editor); // スタイル・設定の同期
 
     // エディタのロック状態を統合管理 (自動編集中 + 承認待ち)
-    const isAutoEditProcessing = useAppStore((state) => state.isAutoEditProcessing);
-    const pendingCount = useCommandHighlightStore((state) => {
-        return Array.from(state.highlights.values()).filter(h => !h.approved && !h.rejected).length;
-    });
+    const isProcessing = useAppStore((state) => state.isAutoEditProcessing);
+    // highlights Map 自体の変更を検知
+    const highlights = useCommandHighlightStore((state) => state.highlights);
+    
+    // 未処理の件数を計算
+    const pendingCount = Array.from(highlights.values()).filter(h => !h.approved && !h.rejected).length;
 
     useEffect(() => {
         if (!editor) return;
-        const shouldLock = isAutoEditProcessing || pendingCount > 0;
-        
-        // Tiptapのライフサイクル外で発生する可能性があるため、確実に適用
-        editor.setEditable(!shouldLock);
-        
-        // 保険として短時間のインターバルで再適用（他のフックによる上書き防止）
-        const timer = setTimeout(() => {
-            editor.setEditable(!shouldLock);
-        }, 50);
-        
-        return () => clearTimeout(timer);
-    }, [editor, isAutoEditProcessing, pendingCount]);
+
+        const shouldLock = isProcessing || pendingCount > 0;
+        const currentEditable = editor.isEditable;
+        const targetEditable = !shouldLock;
+
+        // 状態が不一致なら同期
+        if (currentEditable !== targetEditable) {
+            editor.setEditable(targetEditable);
+        }
+
+        // Tiptapの内部更新や他の拡張機能による上書きを防止するため、
+        // エディタのイベントにフックして強制的にロックを維持する
+        const handleLockState = () => {
+            if (editor.isEditable !== targetEditable) {
+                editor.setEditable(targetEditable);
+            }
+        };
+
+        // トランザクション時や更新時にチェック
+        editor.on('transaction', handleLockState);
+        editor.on('update', handleLockState);
+        editor.on('selectionUpdate', handleLockState);
+
+        // 定期的な強制チェック (保険)
+        const timer = setInterval(handleLockState, 200);
+
+        return () => {
+            editor.off('transaction', handleLockState);
+            editor.off('update', handleLockState);
+            editor.off('selectionUpdate', handleLockState);
+            clearInterval(timer);
+        };
+    }, [editor, isProcessing, pendingCount]);
 
     // Dialogs (ロジック分離)
     const { confirm, prompt, confirmState, promptState, handleConfirmClose, handlePromptClose } = useDialogs();

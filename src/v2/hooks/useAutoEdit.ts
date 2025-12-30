@@ -160,7 +160,6 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
 
         setEditPendingApproval(false);
         setAutoEditProcessing(false);
-        if (editor) editor.setEditable(true);
       } finally {
         setAutoEditProcessing(false);
       }
