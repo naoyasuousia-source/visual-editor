@@ -1,0 +1,4 @@
+<!-- AI_COMMAND_START -->
+<!-- === テスト3A: INSERT_PARAGRAPH (基本形) === -->
+<!-- INSERT_PARAGRAPH[3][新しい段落テキスト] -->
+<!-- AI_COMMAND_END -->

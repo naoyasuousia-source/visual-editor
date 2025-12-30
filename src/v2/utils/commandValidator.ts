@@ -139,7 +139,8 @@ export function validateCommand(
           if (![1, 2, 3].includes(level)) {
             return { valid: false, error: '見出しレベルは1-3である必要があります' };
           }
-          if (type !== 'heading') {
+          // typeが明示的に'paragraph'の場合のみエラー（headingまたはundefinedはOK）
+          if (type === 'paragraph') {
             return { valid: false, error: 'levelはtype=headingの場合のみ指定可能です' };
           }
         }
