@@ -7,6 +7,7 @@ import { useState, useCallback, useEffect } from 'react';
 import type { Editor } from '@tiptap/react';
 import { useCommandHighlight } from '@/hooks/useCommandHighlight';
 import { useCommandHighlightStore } from '@/store/useCommandHighlightStore';
+import { useAppStore } from '@/store/useAppStore';
 import type { HighlightState } from '@/types/command';
 
 /**
@@ -37,17 +38,28 @@ export function useCommandApprovalController(editor: Editor | null, onApprovalCh
 
   const [showApprovalBar, setShowApprovalBar] = useState(false);
 
+  const isAutoEditProcessing = useAppStore((state) => state.isAutoEditProcessing);
+
   /**
-   * ハイライト箇所がある間はエディタを読み取り専用にする
+   * エディタのロック状態を統合管理
+   * 自動編集中、または保留中のハイライトがある間は編集不可にする
    */
   useEffect(() => {
     if (!editor) return;
-    if (pendingCount > 0) {
-      editor.setEditable(false);
-    } else {
-      editor.setEditable(true);
-    }
-  }, [editor, pendingCount]);
+
+    const shouldLock = isAutoEditProcessing || pendingCount > 0;
+    
+    // Tiptapの状態更新サイクルを考慮し、微小な遅延を置いて確実に適用
+    const timer = setTimeout(() => {
+      if (shouldLock) {
+        editor.setEditable(false);
+      } else {
+        editor.setEditable(true);
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [editor, isAutoEditProcessing, pendingCount]);
 
   /**
    * ハイライトされた段落のホバーイベントをリスン
@@ -91,8 +103,8 @@ export function useCommandApprovalController(editor: Editor | null, onApprovalCh
       
       const paragraph = target.closest('[data-command-type]');
       
-      // 移動先が同じ段落内であればタイマーをクリアしない
-      if (paragraph && paragraph.contains(relatedTarget)) {
+      // 移動先が同じ段落内、またはポップアップ自体の中であればタイマーをクリアしない
+      if (paragraph && (paragraph.contains(relatedTarget) || relatedTarget?.closest('.fixed.z-[9999]'))) {
         return;
       }
       

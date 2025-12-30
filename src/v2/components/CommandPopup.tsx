@@ -205,15 +205,15 @@ export function CommandPopup({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose]);
 
-  if (!position) return null;
-
   return (
     <div
       ref={popupRef}
-      className="fixed z-[9999] bg-white rounded-lg shadow-2xl border border-gray-200 max-w-md"
+      className={`fixed z-[9999] bg-white rounded-lg shadow-2xl border border-gray-200 max-w-md transition-opacity duration-200 ${
+        position ? 'opacity-100' : 'opacity-0 invisible'
+      }`}
       style={{
-        top: `${position.top}px`,
-        left: `${position.left}px`,
+        top: position ? `${position.top}px` : '0px',
+        left: position ? `${position.left}px` : '0px',
       }}
     >
       {/* ヘッダー */}

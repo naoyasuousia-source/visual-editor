@@ -140,8 +140,10 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
         // 新コマンドシステムでは承認待ちにしない（ハイライトUIで個別承認）
         setEditPendingApproval(false);
         
-        // エディタを編集可能に戻す
-        editor.setEditable(true);
+        // エディタを編集可能に戻す (保留中のコマンドがない場合のみ)
+        if (commandHighlight.getPendingCount() === 0) {
+          editor.setEditable(true);
+        }
 
         toast.success(`新コマンド実行完了: ${successCount}個のコマンドを実行しました`, { position: 'top-center' });
 
