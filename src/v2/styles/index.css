@@ -2,7 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ProseMirrorエディタの基本スタイル */
+/* 
+ * 外部ライブラリ上書き: ProseMirrorエディタの基本スタイル
+ * ライブラリが生成する内部クラスのスタイル調整
+ */
 @layer base {
   .ProseMirror {
     outline: none;
@@ -25,32 +28,12 @@
   }
 }
 
-/* ページとコンポーネントのスタイル */
+/* 
+ * 複雑な構造的セレクタ: 擬似要素・属性セレクタ
+ * Tailwindクラスでは可読性が著しく低下する構造のみ
+ */
 @layer components {
-  /* ページ関連 */
-  .page {
-    background-color: white;
-    position: relative;
-    margin-left: auto;
-    margin-right: auto;
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-    width: 210mm;
-    min-height: 297mm;
-    page-break-after: always;
-  }
-
-  .page-inner {
-    position: relative;
-    padding: var(--page-margin, 17mm);
-    outline: none;
-    min-height: 297mm;
-    counter-reset: paragraph-counter;
-  }
-
-  .page-inner p {
-    position: relative;
-  }
-
+  /* パラグラフ番号表示（擬似要素::before） */
   .page-inner p::before {
     position: absolute;
     left: 5mm;
@@ -67,7 +50,7 @@
     content: "p" counter(paragraph-counter);
   }
 
-  /* エディタロック時のポインターイベント制御 */
+  /* エディタロック時のポインターイベント制御（属性セレクタ） */
   .locked-editor .ProseMirror {
     pointer-events: none;
   }
@@ -77,6 +60,7 @@
     cursor: pointer;
   }
 
+  /* コマンドハイライト（属性セレクタ） */
   /* REPLACE - 青色 */
   .page-inner p[data-command-type="replace"],
   .page-inner h1[data-command-type="replace"],
@@ -186,16 +170,5 @@
   .page-inner h2[data-command-type="merge"]:hover,
   .page-inner h3[data-command-type="merge"]:hover {
     background-color: rgba(20, 184, 166, 0.3) !important;
-  }
-}
-
-/* ユーティリティ */
-@layer utilities {
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
   }
 }
