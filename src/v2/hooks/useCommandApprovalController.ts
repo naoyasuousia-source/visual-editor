@@ -38,29 +38,6 @@ export function useCommandApprovalController(editor: Editor | null, onApprovalCh
 
   const [showApprovalBar, setShowApprovalBar] = useState(false);
 
-  const isAutoEditProcessing = useAppStore((state) => state.isAutoEditProcessing);
-
-  /**
-   * エディタのロック状態を統合管理
-   * 自動編集中、または保留中のハイライトがある間は編集不可にする
-   */
-  useEffect(() => {
-    if (!editor) return;
-
-    const shouldLock = isAutoEditProcessing || pendingCount > 0;
-    
-    // Tiptapの状態更新サイクルを考慮し、微小な遅延を置いて確実に適用
-    const timer = setTimeout(() => {
-      if (shouldLock) {
-        editor.setEditable(false);
-      } else {
-        editor.setEditable(true);
-      }
-    }, 0);
-
-    return () => clearTimeout(timer);
-  }, [editor, isAutoEditProcessing, pendingCount]);
-
   /**
    * ハイライトされた段落のホバーイベントをリスン
    */

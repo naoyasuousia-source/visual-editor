@@ -71,8 +71,6 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
         const hasValidCommands = commandParser.hasNewCommands(event.content);
         
         if (!hasValidCommands) {
-          editor.setEditable(false);
-          
           window.alert(
             '外部からのファイル変更を検知しましたが、有効なコマンドが見つかりませんでした。\n\n' +
             '不正な変更からドキュメントを保護するため、エディタの内容でファイルを上書き保存します。'
@@ -87,23 +85,24 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
           } finally {
             setInternalSaving(false);
           }
-          
-          editor.setEditable(true);
           return;
         }
 
-        editor.setEditable(false);
+        // 先に処理中フラグを立てて、App.tsxのEffect経由で確実にロックをかける
+        setAutoEditProcessing(true);
+        
+        // UIスレッドを一時解放してロック反映を待つ
+        await new Promise(resolve => setTimeout(resolve, 50));
+
         const confirmed = window.confirm(
           '外部からのAI編集コマンドを検知しました。\n' +
           '現在の変更を保存して、自動編集を実行しますか？'
         );
 
         if (!confirmed) {
-          editor.setEditable(true);
+          setAutoEditProcessing(false);
           return;
         }
-
-        setAutoEditProcessing(true);
 
         // 新コマンドシステムのパース
         const parseResult = commandParser.parseNewCommandsFromHtml(event.content);
@@ -119,7 +118,7 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
         // 新コマンド実行
         const results = commandExecutor.executeNewCommands(parseResult.commands);
 
-        // ハイライト登録
+        // ハイライト登録 (この時点で pendingCount > 0 になり、App.tsx側でロックが継続される)
         commandHighlight.registerMultipleHighlights(results, parseResult.commands);
 
         const { isWordMode, pageMargin } = useAppStore.getState();
@@ -140,11 +139,6 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
         // 新コマンドシステムでは承認待ちにしない（ハイライトUIで個別承認）
         setEditPendingApproval(false);
         
-        // エディタを編集可能に戻す (保留中のコマンドがない場合のみ)
-        if (commandHighlight.getPendingCount() === 0) {
-          editor.setEditable(true);
-        }
-
         toast.success(`新コマンド実行完了: ${successCount}個のコマンドを実行しました`, { position: 'top-center' });
 
       } catch (error) {

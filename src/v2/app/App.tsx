@@ -10,6 +10,7 @@ import { AIImageIndex } from '@/components/features/AIImageIndex';
 import { DialogGroup } from '@/components/common/DialogGroup';
 
 import { useAppStore } from '@/store/useAppStore';
+import { useCommandHighlightStore } from '@/store/useCommandHighlightStore';
 import { usePageOperations } from '@/hooks/usePageOperations';
 import { useBrowserCheck } from '@/hooks/useBrowserCheck';
 import { useIMEControl } from '@/hooks/useIMEControl';
@@ -65,6 +66,27 @@ export const EditorV3 = () => {
     }, [editor, registerIME]);
 
     useGlobalStyles(editor); // スタイル・設定の同期
+
+    // エディタのロック状態を統合管理 (自動編集中 + 承認待ち)
+    const isAutoEditProcessing = useAppStore((state) => state.isAutoEditProcessing);
+    const pendingCount = useCommandHighlightStore((state) => {
+        return Array.from(state.highlights.values()).filter(h => !h.approved && !h.rejected).length;
+    });
+
+    useEffect(() => {
+        if (!editor) return;
+        const shouldLock = isAutoEditProcessing || pendingCount > 0;
+        
+        // Tiptapのライフサイクル外で発生する可能性があるため、確実に適用
+        editor.setEditable(!shouldLock);
+        
+        // 保険として短時間のインターバルで再適用（他のフックによる上書き防止）
+        const timer = setTimeout(() => {
+            editor.setEditable(!shouldLock);
+        }, 50);
+        
+        return () => clearTimeout(timer);
+    }, [editor, isAutoEditProcessing, pendingCount]);
 
     // Dialogs (ロジック分離)
     const { confirm, prompt, confirmState, promptState, handleConfirmClose, handlePromptClose } = useDialogs();
