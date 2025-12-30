@@ -118,36 +118,48 @@ function optimizeCssForMode(contentCss: string, isWordMode: boolean): string {
     cleanedCss = cleanedCss.replace(/body\.hide-para-numbers[^{]*\{[^}]*\}/g, '');
     
     // 5. @media print内のエディタ専用セレクタを削除（PDF出力には不要）
-    // .ProseMirror-trailingBreak は必要なので保持
-    // .flex, .flex-col などTailwindクラスは実際に存在する可能性があるが、
-    // 出力HTMLには含まれないため削除
     cleanedCss = cleanedCss.replace(
         /@media print\s*\{([\s\S]*?)\}/,
         (match, printContent) => {
-            // エディタUI要素の非表示ルールを最適化
-            // #toolbar, .bubble-menu, .sonner など存在しない要素を削除
             let optimizedPrint = printContent
                 .replace(/\.flex\.flex-col\.h-screen\s*\{[^}]*\}/g, '')
                 .replace(/\.flex\.flex-1\.overflow-hidden\s*\{[^}]*\}/g, '');
-            
             return `@media print {${optimizedPrint}}`;
         }
     );
     
     // 6. モード別の最適化
     if (isWordMode) {
-        // Wordモード: Paginatedモード専用スタイルを削除
         cleanedCss = cleanedCss.replace(/section\.page::after\s*\{[^}]*\}/g, '');
         cleanedCss = cleanedCss.replace(
             /section\.page\s*\{\s*position:\s*relative;\s*width:\s*210mm;\s*min-width:\s*210mm;\s*height:\s*297mm;\s*min-height:\s*297mm;[^}]*\}/g,
             'section.page { position: relative; width: 210mm; min-width: 210mm; background: #fff; box-shadow: 10px 0 10px -5px rgba(0, 0, 0, 0.1), -10px 0 10px -5px rgba(0, 0, 0, 0.1); box-sizing: border-box; overflow: visible; margin: 0 auto; height: auto; min-height: 297mm; }'
         );
     } else {
-        // Paginatedモード: Wordモード専用スタイルを削除
         cleanedCss = cleanedCss.replace(/body\.mode-word[^{]*\{[^}]*\}/g, '');
     }
     
-    // 7. 空行の削除（3行以上の連続空行を2行に、末尾空白削除）
+    // 7. エディタ専用プロパティの削除
+    // caret-color（カーソル色）の削除
+    cleanedCss = cleanedCss.replace(/\s*caret-color:\s*[^;]+;/g, '');
+    
+    // overflow-y: auto（エディタのスクロール）の削除
+    cleanedCss = cleanedCss.replace(/\s*overflow-y:\s*auto;/g, '');
+    
+    // outline: none（フォーカス枠削除）の削除
+    cleanedCss = cleanedCss.replace(/\s*outline:\s*none;/g, '');
+    
+    // transition（エディタのアニメーション）の削除
+    cleanedCss = cleanedCss.replace(/\s*transition:\s*[^;]+;/g, '');
+    
+    // 8. ProseMirror関連セレクタを含むルールの削除
+    // .ProseMirror-separator, .ProseMirror-trailingBreak などを含むルール
+    cleanedCss = cleanedCss.replace(
+        /[^}]*\.ProseMirror-[^{]*\{[^}]*\}\s*/g,
+        ''
+    );
+    
+    // 9. 空行の削除（3行以上の連続空行を2行に、末尾空白削除）
     cleanedCss = cleanedCss.replace(/\n\s*\n\s*\n+/g, '\n\n');
     cleanedCss = cleanedCss.trim();
     

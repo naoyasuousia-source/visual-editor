@@ -78,15 +78,11 @@ RULES:
 -->
 
 <style>
-:root { --page-margin: 17mm; }
-
-
-:root {
-  --page-margin: 17mm;
+:root { 
+  --page-margin: 17mm; 
   --editor-font-family: inherit;
   --tab-width: 0px;
 }
-
 body.standalone-html {
   background-color: #525659;
   margin: 0;
@@ -103,13 +99,6 @@ body.standalone-html {
   align-items: center;
   gap: 24px;
   width: 100%;
-}
-
-.ProseMirror {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
 }
 
 section.page {
@@ -192,15 +181,6 @@ section.page::after {
   user-select: none;
   pointer-events: none;
   font-family: var(--editor-font-family, inherit);
-}
-
-body.hide-page-numbers section.page::after {
-  display: none !important;
-}
-
-body.hide-para-numbers .page-inner [data-para]::before,
-body.hide-para-numbers .ProseMirror [data-para]::before {
-  display: none !important;
 }
 
 .page-inner img {
@@ -313,7 +293,6 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
   height: 1em;
 }
 
-
 .page-inner .inline-align-left {
   text-align: left;
 }
@@ -325,7 +304,6 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
 .page-inner .inline-align-right {
   text-align: right;
 }
-
 
 .page-inner .inline-spacing-none {
   margin-bottom: 0 !important;
@@ -392,14 +370,12 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
   text-indent: -180pt;
 }
 
-
 @media print {
   @page {
     size: A4 portrait;
     margin: 0;
   }
 
-  
   html,
   body, 
   body.standalone-html {
@@ -413,7 +389,6 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
     margin: 0 !important;
   }
 
-  
   #toolbar,
   #page-navigator,
   #ai-image-index,
@@ -433,7 +408,6 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
     overflow: hidden !important;
   }
 
-  
   .flex.flex-col.h-screen {
     display: block !important;
     height: auto !important;
@@ -461,7 +435,6 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
     gap: 0 !important;
   }
 
-  
   #pages-container > div {
     display: block !important;
     width: 210mm !important;
@@ -473,7 +446,6 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
     font-size: 0 !important; 
     line-height: 0 !important;
   }
-
 
   section.page {
     position: relative;
@@ -504,7 +476,6 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
     overflow: visible !important;
   }
 
-  
   .page-inner,
   .page-inner * {
     user-select: text !important;
@@ -512,28 +483,10 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
     pointer-events: auto !important;
   }
 
-  
   .ProseMirror-trailingBreak {
     display: none !important;
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 </style>
 </head>
 <body class="standalone-html">
