@@ -82,7 +82,7 @@ export const EditorV3 = () => {
     const autoEdit = useAutoEdit(editor);
 
     // Command Approval Controller (新コマンドシステム)
-    const approvalController = useCommandApprovalController(editor);
+    const approvalController = useCommandApprovalController(editor, saveFile);
 
 
 
@@ -104,6 +104,16 @@ export const EditorV3 = () => {
                     lastEditTime={autoEdit.lastEditTime}
                     onApprove={autoEdit.approveEdit}
                     onReject={autoEdit.rejectEdit}
+                />
+            )}
+
+            {/* Command Approval Bar - 新コマンドシステム (メニューバーのすぐ下) */}
+            {approvalController.showApprovalBar && approvalController.pendingCount > 0 && (
+                <CommandApprovalBar
+                    pendingCount={approvalController.pendingCount}
+                    onApproveAll={approvalController.handleApproveAll}
+                    onRejectAll={approvalController.handleRejectAll}
+                    onClose={approvalController.closeApprovalBar}
                 />
             )}
             
@@ -160,15 +170,6 @@ export const EditorV3 = () => {
                 />
             )}
 
-            {/* Command Approval Bar - 新コマンドシステム */}
-            {approvalController.showApprovalBar && approvalController.pendingCount > 0 && (
-                <CommandApprovalBar
-                    pendingCount={approvalController.pendingCount}
-                    onApproveAll={approvalController.handleApproveAll}
-                    onRejectAll={approvalController.handleRejectAll}
-                    onClose={approvalController.closeApprovalBar}
-                />
-            )}
 
             <Toaster position="top-center" richColors />
         </div>

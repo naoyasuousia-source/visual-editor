@@ -12,9 +12,10 @@ import type { HighlightState } from '@/types/command';
  * コマンド承認コントローラーフック
  * 
  * @param editor - Tiptapエディタインスタンス
+ * @param onApprovalChange - 承認状態が変化した際のコールバック（保存用など）
  * @returns コントローラー関数群
  */
-export function useCommandApprovalController(editor: Editor | null) {
+export function useCommandApprovalController(editor: Editor | null, onApprovalChange?: () => void) {
   const {
     getAllHighlights,
     getPendingCount,
@@ -39,7 +40,7 @@ export function useCommandApprovalController(editor: Editor | null) {
 
     let hoverTimeout: NodeJS.Timeout | null = null;
 
-    const handleMouseEnter = (event: MouseEvent) => {
+    const handleMouseOver = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       
       // ハイライトされた段落かチェック
@@ -49,18 +50,22 @@ export function useCommandApprovalController(editor: Editor | null) {
       const commandId = paragraph.getAttribute('data-command-id');
       if (!commandId) return;
 
-      // ハイライト状態を取得
-      const highlights = getAllHighlights();
-      const highlight = highlights.find(h => h.commandId === commandId);
-      if (!highlight) return;
+      // すでに同じIDのポップアップが表示中ならタイマーをクリアして終了
+      if (activePopup?.highlight.commandId === commandId) {
+        if (hoverTimeout) clearTimeout(hoverTimeout);
+        return;
+      }
 
-      // 500ms後にポップアップ表示
+      // 既存のタイマーがあればクリア
+      if (hoverTimeout) clearTimeout(hoverTimeout);
+
+      // 300ms後にポップアップ表示
       hoverTimeout = setTimeout(() => {
         setActivePopup({ highlight, targetElement: paragraph });
-      }, 500);
+      }, 300);
     };
 
-    const handleMouseLeave = (event: MouseEvent) => {
+    const handleMouseOut = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       const paragraph = target.closest('[data-command-type]');
       
@@ -70,26 +75,30 @@ export function useCommandApprovalController(editor: Editor | null) {
       }
     };
 
-    // イベントリスナーを登録
+    // イベントリスナーを登録 (デリゲーション)
     const editorElement = editor.view.dom;
-    editorElement.addEventListener('mouseenter', handleMouseEnter, true);
-    editorElement.addEventListener('mouseleave', handleMouseLeave, true);
+    editorElement.addEventListener('mouseover', handleMouseOver);
+    editorElement.addEventListener('mouseout', handleMouseOut);
 
     return () => {
-      editorElement.removeEventListener('mouseenter', handleMouseEnter, true);
-      editorElement.removeEventListener('mouseleave', handleMouseLeave, true);
+      editorElement.removeEventListener('mouseover', handleMouseOver);
+      editorElement.removeEventListener('mouseout', handleMouseOut);
       if (hoverTimeout) {
         clearTimeout(hoverTimeout);
       }
     };
-  }, [editor, getAllHighlights]);
+  }, [editor, getAllHighlights, activePopup]);
 
   /**
    * 承認バーの表示/非表示を自動管理
    */
   useEffect(() => {
     const pendingCount = getPendingCount();
-    setShowApprovalBar(pendingCount > 0);
+    if (pendingCount > 0) {
+      setShowApprovalBar(true);
+    } else {
+      setShowApprovalBar(false);
+    }
   }, [getPendingCount]);
 
   /**
@@ -105,7 +114,8 @@ export function useCommandApprovalController(editor: Editor | null) {
   const handleApprove = useCallback((commandId: string) => {
     approveHighlight(commandId);
     closePopup();
-  }, [approveHighlight, closePopup]);
+    if (onApprovalChange) onApprovalChange();
+  }, [approveHighlight, closePopup, onApprovalChange]);
 
   /**
    * 破棄ハンドラー
@@ -113,7 +123,8 @@ export function useCommandApprovalController(editor: Editor | null) {
   const handleReject = useCallback((commandId: string) => {
     rejectHighlight(commandId);
     closePopup();
-  }, [rejectHighlight, closePopup]);
+    if (onApprovalChange) onApprovalChange();
+  }, [rejectHighlight, closePopup, onApprovalChange]);
 
   /**
    * 全体承諾ハンドラー
@@ -121,7 +132,9 @@ export function useCommandApprovalController(editor: Editor | null) {
   const handleApproveAll = useCallback(() => {
     approveAllHighlights();
     closePopup();
-  }, [approveAllHighlights, closePopup]);
+    setShowApprovalBar(false);
+    if (onApprovalChange) onApprovalChange();
+  }, [approveAllHighlights, closePopup, onApprovalChange]);
 
   /**
    * 全体破棄ハンドラー
@@ -129,7 +142,9 @@ export function useCommandApprovalController(editor: Editor | null) {
   const handleRejectAll = useCallback(() => {
     rejectAllHighlights();
     closePopup();
-  }, [rejectAllHighlights, closePopup]);
+    setShowApprovalBar(false);
+    if (onApprovalChange) onApprovalChange();
+  }, [rejectAllHighlights, closePopup, onApprovalChange]);
 
   /**
    * 承認バーを閉じる（未処理があっても強制的に非表示）

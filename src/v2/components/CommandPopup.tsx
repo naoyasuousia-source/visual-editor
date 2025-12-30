@@ -167,17 +167,27 @@ export function CommandPopup({
     const popupRect = popupRef.current.getBoundingClientRect();
 
     // ターゲット要素の下に表示、画面外に出る場合は上に表示
-    let top = targetRect.bottom + window.scrollY + 8;
-    let left = targetRect.left + window.scrollX;
+    let top = targetRect.bottom + 8;
+    let left = targetRect.left;
 
     // 画面右端を超える場合は左寄せ
     if (left + popupRect.width > window.innerWidth) {
       left = window.innerWidth - popupRect.width - 16;
     }
 
+    // 画面左端を割り込む場合は右に調整
+    if (left < 16) {
+      left = 16;
+    }
+
     // 画面下端を超える場合は上に表示
-    if (targetRect.bottom + popupRect.height > window.innerHeight) {
-      top = targetRect.top + window.scrollY - popupRect.height - 8;
+    if (top + popupRect.height > window.innerHeight) {
+      top = targetRect.top - popupRect.height - 8;
+    }
+
+    // 画面上端を割り込む場合は下に調整
+    if (top < 16) {
+      top = 16;
     }
 
     setPosition({ top, left });
