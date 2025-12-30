@@ -75,39 +75,42 @@ export const EditorV3 = () => {
     // 未処理の件数を計算
     const pendingCount = Array.from(highlights.values()).filter(h => !h.approved && !h.rejected).length;
 
+    // ロック状態を強制反映させるためのEffect
     useEffect(() => {
         if (!editor) return;
 
         const shouldLock = isProcessing || pendingCount > 0;
-        const currentEditable = editor.isEditable;
         const targetEditable = !shouldLock;
 
-        // 状態が不一致なら同期
-        if (currentEditable !== targetEditable) {
-            editor.setEditable(targetEditable);
-        }
-
-        // Tiptapの内部更新や他の拡張機能による上書きを防止するため、
-        // エディタのイベントにフックして強制的にロックを維持する
-        const handleLockState = () => {
+        // ロックを強制適用する関数
+        const enforceLock = () => {
             if (editor.isEditable !== targetEditable) {
+                // Tiptap内部や他の拡張機能による変更を上書き
                 editor.setEditable(targetEditable);
             }
         };
 
-        // トランザクション時や更新時にチェック
-        editor.on('transaction', handleLockState);
-        editor.on('update', handleLockState);
-        editor.on('selectionUpdate', handleLockState);
+        // 依存関係が変化した瞬間に即座に実行
+        enforceLock();
 
-        // 定期的な強制チェック (保険)
-        const timer = setInterval(handleLockState, 200);
+        // 非同期的な書き換え（他の Effect 等）に対抗するため、
+        // 次のマイクロタスクでも実行
+        const timeoutId = setTimeout(enforceLock, 0);
+
+        // 各種イベントでロックを維持
+        editor.on('transaction', enforceLock);
+        editor.on('update', enforceLock);
+        editor.on('selectionUpdate', enforceLock);
+
+        // 保険として短周期でチェック
+        const intervalId = setInterval(enforceLock, 100);
 
         return () => {
-            editor.off('transaction', handleLockState);
-            editor.off('update', handleLockState);
-            editor.off('selectionUpdate', handleLockState);
-            clearInterval(timer);
+            clearTimeout(timeoutId);
+            clearInterval(intervalId);
+            editor.off('transaction', enforceLock);
+            editor.off('update', enforceLock);
+            editor.off('selectionUpdate', enforceLock);
         };
     }, [editor, isProcessing, pendingCount]);
 

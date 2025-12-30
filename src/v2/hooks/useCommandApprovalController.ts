@@ -81,7 +81,8 @@ export function useCommandApprovalController(editor: Editor | null, onApprovalCh
       const paragraph = target.closest('[data-command-type]');
       
       // 移動先が同じ段落内、またはポップアップ自体の中であればタイマーをクリアしない
-      if (paragraph && (paragraph.contains(relatedTarget) || relatedTarget?.closest('.fixed.z-[9999]'))) {
+      // 注意: Tailwindの z-[9999] のような角括弧を含むクラスは、セレクターとして使う際にエスケープが必要
+      if (paragraph && (paragraph.contains(relatedTarget) || (relatedTarget && relatedTarget.closest('.fixed.z-\\[9999\\]')))) {
         return;
       }
       

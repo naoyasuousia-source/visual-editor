@@ -67,7 +67,13 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
         return;
       }
 
+      // 外部変更を検知した瞬間にロックを開始 (要件: 外部上書き検知～)
+      setAutoEditProcessing(true);
+
       try {
+        // ロックが確実にUIに反映されるまで微小待機
+        await new Promise(resolve => setTimeout(resolve, 30));
+
         const hasValidCommands = commandParser.hasNewCommands(event.content);
         
         if (!hasValidCommands) {
@@ -88,19 +94,12 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
           return;
         }
 
-        // 先に処理中フラグを立てて、App.tsxのEffect経由で確実にロックをかける
-        setAutoEditProcessing(true);
-        
-        // UIスレッドを一時解放してロック反映を待つ
-        await new Promise(resolve => setTimeout(resolve, 50));
-
         const confirmed = window.confirm(
           '外部からのAI編集コマンドを検知しました。\n' +
           '現在の変更を保存して、自動編集を実行しますか？'
         );
 
         if (!confirmed) {
-          setAutoEditProcessing(false);
           return;
         }
 
@@ -136,7 +135,7 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
         }
 
         setLastAutoEditTime(Date.now());
-        // 新コマンドシステムでは承認待ちにしない（ハイライトUIで個別承認）
+        // 旧システム用の承認待ちフラグは不要だが、整合性のために初期化
         setEditPendingApproval(false);
         
         toast.success(`新コマンド実行完了: ${successCount}個のコマンドを実行しました`, { position: 'top-center' });
@@ -159,8 +158,8 @@ export function useAutoEdit(editor: Editor | null): UseAutoEditReturn {
         }
 
         setEditPendingApproval(false);
-        setAutoEditProcessing(false);
       } finally {
+        // 処理終了。ただし保留中のハイライトがあれば App.tsx 側でロックは継続される
         setAutoEditProcessing(false);
       }
     },
