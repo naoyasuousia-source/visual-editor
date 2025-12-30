@@ -389,6 +389,113 @@
 - ページ3: MERGE_PARAGRAPH用の段落
 - コマンドエリア: 6種類のコマンドサンプル（オプション引数含む）
 
+### 2025-12-30 既存フローとの統合（完了）
+
+#### 修正ファイル2: `src/v2/hooks/useCommandParser.ts`
+**分析結果:**
+- 既存のuseCommandParserは旧コマンドシステム用
+- 新旧両方のコマンドシステムを共存させる必要がある
+- 後方互換性を保ちつつ新機能を追加
+
+**方針:**
+- 旧コマンドパース機能は`parseFromHtml`として保持（後方互換性）
+- 新コマンドパース機能を`parseNewCommandsFromHtml`として追加
+- 新コマンド検出機能を`hasNewCommands`として追加
+- 両方のParseResult型を使い分け
+
+**変更内容:**
+- インポート追加: `parseNewCommands`、新旧ParseResult型
+- `parseFromHtml`: 旧コマンドパース（既存機能維持）
+- `parseNewCommandsFromHtml`: 新コマンドパース（新規）
+- `hasCommands`: 旧・新両対応のコマンド存在チェック
+- `hasNewCommands`: 新コマンド専用の存在チェック（正規表現パターンマッチング）
+
+#### 修正ファイル3: `src/v2/hooks/useCommandExecutor.ts`
+**分析結果:**
+- 既存のuseCommandExecutorは旧コマンドシステム用
+- 新旧両方のコマンド実行機能を提供する必要がある
+- エラーハンドリングとログ出力を強化
+
+**方針:**
+- 旧コマンド実行機能は`executeCommand`, `executeCommands`として保持
+- 新コマンド実行機能を`executeNewCommand`, `executeNewCommands`として追加
+- 新コマンド実行時のtry-catchによる堅牢なエラーハンドリング
+- 両方のExecutionResult型を使い分け
+
+**変更内容:**
+- インポート追加: `executeNewCommand`, `executeNewCommands`、新旧Command/ExecutionResult型
+- `executeCommand`: 旧コマンド実行（既存機能維持）
+- `executeCommands`: 複数旧コマンド実行（既存機能維持）
+- `executeSingleNewCommand`: 新コマンド実行（新規）
+- `executeMultipleNewCommands`: 複数新コマンド実行（新規）
+- エディタ未初期化チェックの強化
+- 例外キャッチとエラーログ出力
+
+### 2025-12-30 ハイライトシステム実装（完了）
+
+#### 作成ファイル10: `src/v2/store/useCommandHighlightStore.ts`
+**分析結果:**
+- ハイライト状態をグローバルに管理する必要がある
+- 複数のコンポーネントから参照・更新される可能性がある
+- 承認/破棄状態の管理が必要
+
+**方針:**
+- Zustandを使用してグローバルストアとして実装
+- Map<commandId, HighlightState>でハイライトを管理
+- 承認/破棄のマーク機能と一括処理機能を提供
+
+**変更内容:**
+- `highlights: Map<string, HighlightState>`: ハイライトマップ
+- `addHighlight()`: ハイライト追加
+- `removeHighlight()`: ハイライト削除
+- `getAllHighlights()`, `getHighlight()`: ハイライト取得
+- `markAsApproved()`, `markAsRejected()`: 個別マーク
+- `approveAll()`, `rejectAll()`: 一括マーク
+- `clearAll()`: 全削除
+- `getPendingCount()`: 未処理数取得
+
+#### 作成ファイル11: `src/v2/hooks/useCommandHighlight.ts`
+**分析結果:**
+- コマンド実行結果をハイライトとして登録する処理が必要
+- 承認時のdata属性削除処理が必要
+- 破棄時の段落復元処理が必要
+
+**方針:**
+- ストアとエディタを橋渡しするフック
+- CommandExecutionResultからHighlightStateへの変換
+- 承認/破棄時のエディタ操作を実装
+
+**変更内容:**
+- `createHighlightFromResult()`: 実行結果→ハイライト変換
+- `registerHighlight()`: 単一ハイライト登録
+- `registerMultipleHighlights()`: 複数ハイライト一括登録
+- `approveHighlight()`: ハイライト承認（data属性削除）
+- `rejectHighlight()`: ハイライト破棄（段落復元）
+- `approveAllHighlights()`: 全承認
+- `rejectAllHighlights()`: 全破棄
+- エディタのdescendantsを使った段落検索と更新
+
+#### 修正ファイル4: `src/v2/styles/content.css`
+**分析結果:**
+- data-command-type属性に基づくCSSハイライトが必要
+- 6種類のコマンドタイプごとに異なる視覚的表現が必要
+- ホバー時の強調表示が必要
+
+**方針:**
+- 各コマンドタイプに固有の色を割り当て
+- background-colorとborder-leftで視覚的に区別
+- DELETE_PARAGRAPHは薄く表示+取り消し線
+
+**変更内容:**
+- REPLACE_PARAGRAPH: 青色ハイライト（rgba(59, 130, 246, 0.2)）
+- INSERT_PARAGRAPH: 緑色ハイライト（rgba(34, 197, 94, 0.2)）
+- DELETE_PARAGRAPH: 赤色ハイライト + opacity 0.5 + 取り消し線
+- MOVE_PARAGRAPH: 紫色ハイライト（rgba(168, 85, 247, 0.2)）
+- SPLIT_PARAGRAPH: オレンジ色ハイライト（rgba(249, 115, 22, 0.2)）
+- MERGE_PARAGRAPH: 青緑色ハイライト（rgba(20, 184, 166, 0.2)）
+- ホバー時の濃度強化（0.2 → 0.3）
+- カーソルポインター追加
+
 ## 3. 分析中に気づいた重要ポイント
 
 ### 段落ID管理の課題
