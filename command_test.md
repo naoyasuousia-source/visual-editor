@@ -264,6 +264,51 @@
 - `paragraphExists()`: 段落存在確認
 - `getParagraphIdAtPosition()`: 位置から段落ID取得
 
+#### 作成ファイル4: `src/v2/utils/newCommandParser.ts`
+**分析結果:**
+- 既存の`commandParser.ts`は旧コマンドシステム用
+- 新コマンドシステムには6種類の段落ベースコマンドのパーサーが必要
+- オプション文字列（key=value形式）のパース機能が必要
+
+**方針:**
+- 既存パーサーとは別に新しいパーサーファイルを作成
+- 各コマンドタイプごとに専用のパース関数を実装
+- 段落ID検証とエラーハンドリングを強化
+
+**変更内容:**
+- `extractArguments()`: カッコ内の引数を抽出
+- `parseOptions()`: オプション文字列（key=value形式）をParagraphOptionsに変換
+- `parseReplaceParagraph()`: REPLACE_PARAGRAPHのパース
+- `parseInsertParagraph()`: INSERT_PARAGRAPHのパース（仮ID自動生成）
+- `parseDeleteParagraph()`: DELETE_PARAGRAPHのパース
+- `parseMoveParagraph()`: MOVE_PARAGRAPHのパース
+- `parseSplitParagraph()`: SPLIT_PARAGRAPHのパース（仮ID自動生成）
+- `parseMergeParagraph()`: MERGE_PARAGRAPHのパース
+- `parseSingleCommand()`: 単一コマンドのディスパッチ
+- `parseNewCommands()`: 複数コマンドの一括パース
+
+#### 作成ファイル5: `src/v2/services/newCommandExecutionService.ts`
+**分析結果:**
+- 既存の`commandExecutionService.ts`は旧コマンドシステム用
+- 新コマンドシステムには段落操作（置換、挿入、削除、移動、分割、結合）の実行ロジックが必要
+- 実行前スナップショット取得と、data属性によるハイライトマークが必要
+
+**方針:**
+- 既存サービスとは別に新しいサービスファイルを作成
+- 各コマンドタイプごとに専用の実行関数を実装
+- ProseMirror Transactionを使った段落操作
+- DELETE_PARAGRAPHは実際には削除せず、削除マークのみ付与（承認時に実削除）
+
+**変更内容:**
+- `executeReplaceParagraph()`: 段落内容の置換（スナップショット取得、HTMLパース、オプション適用）
+- `executeInsertParagraph()`: 新段落の挿入（ターゲット直後に挿入、仮ID付与）
+- `executeDeleteParagraph()`: 削除マーク付与（data-command-type='delete'）
+- `executeMoveParagraph()`: 段落の移動（削除→挿入）
+- `executeSplitParagraph()`: 段落の分割（分割位置検出、2つの段落に分割）
+- `executeMergeParagraph()`: 段落の結合（テキスト結合、結合元削除）
+- `executeNewCommand()`: コマンド実行のディスパッチ
+- `executeNewCommands()`: 複数コマンドの順次実行
+
 ## 3. 分析中に気づいた重要ポイント
 
 ### 段落ID管理の課題
