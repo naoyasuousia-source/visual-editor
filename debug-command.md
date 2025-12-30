@@ -27,19 +27,6 @@
 
 ## 1. 未解決要件（移動許可がNGの要件は絶対に移動・編集しないこと）（勝手に移動許可をOKに書き換えないこと）
 
-<repuirement>
-<content>splitコマンドが期待通りではなく、アップ画像のように、別の段落を跨いで分割されてしまう</content>
-<current-situation></current-situation>
-<remarks></remarks>
-<permission-to-move>NG</permission-to-move>
-</repuirement>
-
-<repuirement>
-<content>MOVE・MERGEは正常に動作するが、承諾後もカラー表示が解除されない (解決済み・修正済み)</content>
-<current-situation></current-situation>
-<remarks>承認・破棄ロジックのリファクタリングにより、属性ベースの全探索・一括消去を導入し解決。</remarks>
-<permission-to-move>OK</permission-to-move>
-</repuirement>
 
 ## 2. 未解決要件に関するコード変更履歴（目的、変更内容、変更日時）
 
@@ -140,11 +127,15 @@
 - **スタイル復元機能**: `rejectHighlight` において、スナップショットからブロックタイプや配置、インデントなどのオプションも含めて完全に復元するヘルパー `restoreParagraphFromSnapshot` を導入。
 - **影響リスト修正**: `MERGE_PARAGRAPH` の実行結果に、削除された結合元の ID も含めるように修正。
 
-**ファイル**: `src/v2/lib/styleAttributes.ts`, `src/v2/utils/paragraphOperations.ts`, `src/v2/services/newCommandExecutionService.ts`, `src/v2/styles/content.css`  
-**修正**: 
-- **属性名同期**: `StyleAttributes` 拡張が内部で `textAlign` ではなく `align` という属性名を使用していたため、コマンドオプションから `align` 属性へマッピングするよう修正。
-- **CSSクラス追加**: `.inline-align-center` や `.inline-spacing-medium` などのクラス定義が `content.css` に不足していたため追加。これにより属性付与がスタイルとして視覚的に反映されるようになった。
 - **型変換**: `indent` 属性を数値から文字列形式へ変換して保存するように統一。
+
+### 修正13: コマンド実行の単一トランザクション化 (2025-12-31 01:00)
+
+**ファイル**: `src/v2/services/newCommandExecutionService.ts`  
+**修正**: 
+- **トランザクション管理**: `executeSplitParagraph`, `executeMoveParagraph`, `executeMergeParagraph` において、複数の `.run()` 呼び出しを単一の `editor.chain()...run()` に統合。
+- **SPLIT修正**: 元の段落の削除と、前後2つの新段落の挿入を同一チェーン内で実行するようにリファクタリング。これにより、ドキュメント構造の変化による Pos の不整合（後半部分の見当違いな位置への挿入）を解消。
+- **MOVE/MERGE堅牢化**: 削除と移動・結合を一つの不可分な操作として実行するように変更。
 
 ### 重要な実装詳細
 
@@ -193,6 +184,11 @@
 - **ID 検索の不整合リスク**: `MOVE` や `MERGE` はノードを物理的に削除・置換するため、ストア上の ID とエディタ上の属性 ID が一時的なズレを起こす可能性がある。ID ベースの検索に依存せず、属性 `data-command-id` を直接追跡することで最も確実に「そのコマンドの影響を受けたノード」を特定できる。
 - **複数処理時の pos ズレ**: 1つの承認アクションで複数のノードを削除（DELETE承認時）または復元（REPLACE却下時）する場合、ドキュメントの前方から更新をかけると、削除されたノードの分だけ後続の `pos` が狂う。後ろから順にソートして処理することが必須である。
 
+### SPLIT / MOVE / MERGE における重複 .run() の問題
+- **事象**: 段落分割後の後半部分が、数段落先に挿入されてしまう。
+- **原因**: `newCommandExecutionService.ts` 内の各実行関数で、変更処理を複数回の `.run()` に分けて実行している。Tiptap では一度 `.run()` を呼ぶとドキュメントが更新されインデックスが変動するため、直後の Pos 計算（`pos + node.nodeSize` など）が古いドキュメントの状態を指してしまい、挿入位置がずれる。
+- **対策**: `editor.chain()` を使用し、一連の操作（削除・挿入・置換）を単一のトランザクションとして `.run()` 1回でコミットする。
+
 ### デバッグ時の確認ポイント
 
 1. `htmlCommentParser` が `<!-- AI_COMMAND_START -->` を見つけられているか。
@@ -232,6 +228,15 @@
 
 - **問題**: `blockType=h1` などを指定しても属性のみが保持され、ノードタイプが `paragraph` のままだったため、見た目が変わらず、また一度見出し化（属性付与）されたノードが検索できなくなる問題があった。
 - **解決方法**: `setNodeMarkup` による物理的なノードタイプ変換を実装。ID 検索ロジックを `paragraph` と `heading` の両方に対応させ、全てのコマンドにおいて一貫して見出しを扱えるようにした。
+
+### MOVE・MERGE 等の承認後にカラーが消えない問題
+
+- **解決方法**: `useCommandHighlight.ts` の承認・破棄ロジックをリファクタリングし、`ID` ではなく `data-command-id` 属性によるドキュメント全走査 + 後方からの順次一括処理に変更することで、どんな複雑な ID 変動下でも確実に属性をクリーンアップできるようにした。
+
+### SPLIT コマンドの位置ずれ不具合
+
+- **問題**: 分割後の後半部分が数段落先に飛ばされて挿入される。原因は `.run()` を 2回呼んでいたことで、1回目の実行で Pos が変動したにもかかわらず、2回目で古い Pos を使っていたため。
+- **解決方法**: 変更操作をすべて `editor.chain()` に積み上げ、最後に 1回だけ `.run()` を呼ぶように修正。特に SPLIT では `insertContentAt` にノードの配列を渡すことで、前後段落を一括で正しい位置に挿入するようにした。
 
 ### textAlign, spacing, indent オプションの属性名同期と CSS クラス追加
 
@@ -315,6 +320,11 @@
 - **一括特定**: 承認・破棄時にはドキュメントを 1回フル走査し、`data-command-id` が一致する全ノードの位置（`pos`）とタイプを取得する。
 - **降順処理**: 収集したターゲットを `pos` の大きい順にソートして処理する。これにより、ノードの削除やスタイルの変更がドキュメント前方の `pos` に影響を与えることを防ぎ、一貫した更新を保証する。
 - **snapshot 駆動の復元**: `reject` 時はスナップショットに保存されたオプション（`blockType`, `textAlign`, `spacing`, `indent`）を参照し、エディタの状態を操作前の状態（属性も含めて）に完全にロールバックする。
+
+### コマンド実行の原子性とトランザクション
+
+- **単一トランザクション**: 1つの AI コマンド実行において、ドキュメントへの物理的な変更（削除、挿入、タイプ変更）は、すべて一つの `editor.chain()...run()` 内で完結させる。
+- **Pos の安定性**: 物理的な変更を行うと DOM/ProseMirror のインデックスが変動するため、変更の合間に Pos を再計算するのはエラーの元となる。一度に全ての変更を配列として渡すか、チェーン内で相対的な変更を完結させるべきである。
 
 ### 個別承認の仕組み
 

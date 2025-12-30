@@ -355,13 +355,11 @@ function executeMoveParagraph(
     // ノード内容を取得
     const sourceContent = sourceNode.content.toJSON();
 
-    // 移動元を削除
-    editor.chain().focus().deleteRange({ from: sourcePos, to: sourcePos + sourceNode.nodeSize }).run();
-
-    // 移動先に挿入（元のノードタイプと属性を維持）
+    // 移動元を削除し、移動先に挿入（単一のチェーンで実行）
     editor
       .chain()
       .focus()
+      .deleteRange({ from: sourcePos, to: sourcePos + sourceNode.nodeSize })
       .insertContentAt(insertPos, {
         type: sourceNode.type.name,
         attrs: {
@@ -460,40 +458,35 @@ function executeSplitParagraph(
     const firstPartText = fullText.substring(0, splitPos);
     const secondPartText = fullText.substring(splitPos);
 
-    // 元の段落を前半部分で置換
+    // 分割実行（単一のチェーンで実行）
     editor
       .chain()
       .focus()
       .setNodeSelection(pos)
       .deleteSelection()
-      .insertContentAt(pos, {
-        type: node.type.name,
-        attrs: {
-          ...node.attrs,
-          id: targetId,
-          'data-command-type': 'split',
-          'data-command-id': commandId,
+      .insertContentAt(pos, [
+        {
+          type: node.type.name,
+          attrs: {
+            ...node.attrs,
+            id: targetId,
+            'data-command-type': 'split',
+            'data-command-id': commandId,
+          },
+          content: parseHtmlText(firstPartText),
         },
-        content: parseHtmlText(firstPartText),
-      })
-      .run();
-
-    // 後半部分を新段落として挿入
-    const insertPos = pos + node.nodeSize;
-    editor
-      .chain()
-      .focus()
-      .insertContentAt(insertPos, {
-        type: node.type.name,
-        attrs: {
-          ...node.attrs,
-          id: undefined,
-          'data-temp-id': tempId,
-          'data-command-type': 'split',
-          'data-command-id': commandId,
-        },
-        content: parseHtmlText(secondPartText),
-      })
+        {
+          type: node.type.name,
+          attrs: {
+            ...node.attrs,
+            id: undefined,
+            'data-temp-id': tempId,
+            'data-command-type': 'split',
+            'data-command-id': commandId,
+          },
+          content: parseHtmlText(secondPartText),
+        }
+      ])
       .run();
 
     return {
@@ -577,7 +570,7 @@ function executeMergeParagraph(
     // 両方のテキストを結合
     const mergedText = targetNode.textContent + sourceNode.textContent;
 
-    // 結合先を更新
+    // 結合実行（単一のチェーンで実行）
     editor
       .chain()
       .focus()
@@ -593,10 +586,8 @@ function executeMergeParagraph(
         },
         content: parseHtmlText(mergedText),
       })
+      .deleteRange({ from: sourcePos, to: sourcePos + sourceNode.nodeSize })
       .run();
-
-    // 結合元を削除
-    editor.chain().focus().deleteRange({ from: sourcePos, to: sourcePos + sourceNode.nodeSize }).run();
 
     return {
       success: true,
