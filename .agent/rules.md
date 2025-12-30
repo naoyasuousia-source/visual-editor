@@ -73,11 +73,18 @@ React (TypeScript) のコンポーネントベースで開発せよ。（本体�
 
 「スタイルの統一性とアクセシビリティを徹底せよ」
 
-- **Tailwind Exclusive**: スタイリングは Tailwind CSS のみで行うこと。style 属性の使用は、動的な値を扱う場合を除いて禁止。
+- **Tailwind Exclusive**: スタイリングは原則として Tailwind CSS のみで行う。
+    - **`index.css` の役割**: 基本は `@tailwind` の3行のみとする。ただし、以下の場合は `@layer base` または `@layer components` 内への記述を許可する。
+        - **外部ライブラリ上書き**: ProseMirror、FullCalendar 等、ライブラリが生成する内部クラスのスタイル調整。
+        - **複雑な構造的セレクタ**: 属性セレクタ（`[data-state="active"]`）や、Tailwind クラスでは可読性が著しく低下する複雑な擬似要素（`::before` 等）の定義。
+    - **`style` 属性の制限**: インラインスタイルは、**JSで動的に計算される数値（進捗率、ドラッグ座標、リアルタイムな色変化等）**を除き、原則禁止とする。
 - **Shadcn/ui & Tailwind Hybrid:** UI構築は Shadcn/ui を第一選択とせよ。Shadcn/ui に存在しないコンポーネントやレイアウト、詳細なデザイン調整は、Tailwind CSS を用いて自作・拡張すること。
 - **Desktop Responsive:** PCのウィンドウ幅（1024px〜1920px以上）の変化に対して、コンテナ幅、グリッドレイアウト、余白が適切に追従する「デスクトップ・フルレスポンシブ」を徹底せよ。
 - **Shadcn/ui Customization:** `src/components/ui/` は「プロジェクト独自の基盤デザイン」とする。テーマ変更や共通の Variant 追加が必要な場合は、**直接ファイルを編集して最適化せよ。**
-- **Tailwind & Class Management:** `cn()` (tailwind-merge) を必須とし、クラスの衝突を回避せよ。独自数値（`h-[32px]`等）を避け、`tailwind.config.ts` のトークンを優先使用すること。`style` 属性は動的数値を除き禁止。
+- **Tailwind & Class Management:** 
+- **`cn()` (tailwind-merge) の必須化**: 動的なクラス結合には `cn()` を使い、クラスの衝突を回避せよ。
+    - **`tailwind.config.ts` の役割**: **ブランドカラー、独自フォント、共通の余白、サイズ定数（デザイントークン）**を定義する場所とする。
+    - **独自数値の回避**: `h-[32px]` などのマジックナンバーを直接書かず、config に定義したトークンを優先的に使用せよ。
 - **Domain Wrapping:** 特定の業務ロジックや状態（例：保存中のみ光るボタン等）を付与する場合は、`features/` 内で UI コンポーネントをラップして定義せよ。
 - **Accessibility (A11y):** WAI-ARIA、適切な `aria-label`、キーボード操作の保証をシニアレベルで行え。
 
