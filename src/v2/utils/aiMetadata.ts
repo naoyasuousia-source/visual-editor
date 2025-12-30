@@ -19,7 +19,7 @@ AI ASSISTANT GUIDE & COMMAND API SPECIFICATIONS (v2.0 - Paragraph ID System)
 ## OVERVIEW
 This document is being edited with a visual editor.
 As an AI Assistant, you can perform automated edits by writing commands targeting
-specific paragraphs using their unique IDs in the COMMAND AREA at the beginning of <body>.
+specific paragraphs using their unique IDs in the COMMAND AREA.
 
 ## DOCUMENT STRUCTURE
 - ${modeDesc}
@@ -29,67 +29,95 @@ specific paragraphs using their unique IDs in the COMMAND AREA at the beginning 
 
 ## COMMAND AREA LOCATION
 The COMMAND AREA is located immediately after the <body> tag opening.
-Look for the markers: <!-- AI_COMMAND_START --> and <!-- AI_COMMAND_END -->
+Look for the markers:
+  <!-- AI_COMMAND_START -->
+  <!-- AI_COMMAND_END -->
 
-## SUPPORTED COMMANDS (New Paragraph ID System)
+⚠️ CRITICAL: Write commands BETWEEN these markers, NOT replacing them!
+
+## ⚠️ COMMAND FORMAT RULES (MUST READ!)
+
+Each command MUST be wrapped in HTML comment tags: <!-- COMMAND -->
+
+✅ CORRECT FORMAT:
+  <!-- AI_COMMAND_START -->
+  <!-- REPLACE_PARAGRAPH(p1-2, New text here) -->
+  <!-- INSERT_PARAGRAPH(p1-3, Another paragraph) -->
+  <!-- DELETE_PARAGRAPH(p2-1) -->
+  <!-- AI_COMMAND_END -->
+
+❌ WRONG FORMAT (will NOT work):
+  <!-- AI_COMMAND_START -->
+  REPLACE_PARAGRAPH(p1-2, New text here)  ← Missing <!-- -->
+  INSERT_PARAGRAPH(p1-3, Another paragraph)  ← Missing <!-- -->
+  <!-- AI_COMMAND_END -->
+
+## SUPPORTED COMMANDS
 
 All commands use paragraph IDs to target specific paragraphs.
-Commands are written as: COMMAND_NAME(arguments)
+Remember: Each command line MUST be wrapped in <!-- -->
 
 1. REPLACE_PARAGRAPH(targetId, text, [options])
    - Replaces the content of a paragraph with new text.
-   - targetId: The paragraph ID (e.g., "p1-2" or "p5")
+   - targetId: The paragraph ID (e.g., "p1-2")
    - text: New text content (can include <b>, <br>, <sup>, <sub> tags)
    - options (optional): key=value pairs separated by commas
-     * blockType=p|h1|h2|h3 (default: p)
-     * textAlign=left|center|right (default: left)
-     * spacing=none|small|medium|large (default: none)
-     * indent=0|1|2|3|4 (default: 0)
-   - Examples:
-     REPLACE_PARAGRAPH(p1-2, これは<b>修正された</b>テキストです。)
-     REPLACE_PARAGRAPH(p3-1, 見出しテキスト, blockType=h1, textAlign=center)
-     REPLACE_PARAGRAPH(p2-5, インデント段落, indent=1, spacing=medium)
+   
+   Available options:
+     • blockType=p|h1|h2|h3 (default: p)
+     • textAlign=left|center|right (default: left)
+     • spacing=none|small|medium|large (default: none)
+     • indent=0|1|2|3|4 (default: 0)
+   
+   Examples:
+     <!-- REPLACE_PARAGRAPH(p1-2, This is <b>modified</b> text.) -->
+     <!-- REPLACE_PARAGRAPH(p3-1, Heading Text, blockType=h1, textAlign=center) -->
+     <!-- REPLACE_PARAGRAPH(p2-5, Indented paragraph, indent=1, spacing=medium) -->
 
 2. INSERT_PARAGRAPH(targetId, text, [options])
    - Inserts a new paragraph immediately AFTER the target paragraph.
    - targetId: The paragraph ID after which to insert
-   - text: New paragraph content (can include <b>, <br>, <sup>, <sub> tags)
-   - options (optional): Same as REPLACE_PARAGRAPH
-   - The new paragraph will receive a temporary ID (temp-{uuid}) until the document is saved.
-   - Examples:
-     INSERT_PARAGRAPH(p1-3, これは新しい段落です。)
-     INSERT_PARAGRAPH(p2-1, 新しい見出し, blockType=h2, textAlign=center)
+   - text: New paragraph content
+   - options: Same as REPLACE_PARAGRAPH
+   - The new paragraph receives a temporary ID (temp-{uuid}) until saved.
+   
+   Examples:
+     <!-- INSERT_PARAGRAPH(p1-3, This is a new paragraph.) -->
+     <!-- INSERT_PARAGRAPH(p2-1, New heading, blockType=h2, textAlign=center) -->
 
 3. DELETE_PARAGRAPH(targetId)
    - Marks a paragraph for deletion (visually crossed out until approved).
    - targetId: The paragraph ID to delete
-   - Example:
-     DELETE_PARAGRAPH(p2-2)
+   
+   Example:
+     <!-- DELETE_PARAGRAPH(p2-2) -->
 
 4. MOVE_PARAGRAPH(sourceId, targetId)
    - Moves a paragraph from sourceId position to immediately AFTER targetId.
    - sourceId: The paragraph ID to move
    - targetId: The paragraph ID after which to place the moved paragraph
-   - Example:
-     MOVE_PARAGRAPH(p2-3, p1-5)  // Moves p2-3 to after p1-5
+   
+   Example:
+     <!-- MOVE_PARAGRAPH(p2-3, p1-5) -->
 
 5. SPLIT_PARAGRAPH(targetId, beforeText, afterText)
    - Splits a paragraph into two paragraphs at a specific text boundary.
    - targetId: The paragraph ID to split
    - beforeText: Text that should end the first paragraph
    - afterText: Text that should start the second paragraph
-   - The split point is determined by finding these texts in the paragraph.
    - The second paragraph receives a temporary ID (temp-{uuid}).
-   - Example:
-     SPLIT_PARAGRAPH(p2-4, 前半部分。, 後半部分)
+   
+   Example:
+     <!-- SPLIT_PARAGRAPH(p2-4, First part., Second part) -->
 
 6. MERGE_PARAGRAPH(sourceId, targetId)
    - Merges two paragraphs by appending sourceId content to targetId.
    - sourceId: The paragraph ID whose content will be appended
    - targetId: The paragraph ID that will receive the merged content
    - The sourceId paragraph is deleted after merging.
-   - Example:
-     MERGE_PARAGRAPH(p3-1, p3-2)  // Append p3-1 to p3-2, delete p3-1
+   
+   Example:
+     <!-- MERGE_PARAGRAPH(p3-1, p3-2) -->
 
 ## HTML TAG SUPPORT IN TEXT
 Text content can include the following HTML tags:
@@ -98,32 +126,48 @@ Text content can include the following HTML tags:
 - <sup>superscript</sup> - Superscript
 - <sub>subscript</sub> - Subscript
 
-Example: REPLACE_PARAGRAPH(p1-1, H<sub>2</sub>O is water.<br>CO<sub>2</sub> is <b>carbon dioxide</b>.)
+Example:
+  <!-- REPLACE_PARAGRAPH(p1-1, H<sub>2</sub>O is water.<br>CO<sub>2</sub> is <b>carbon dioxide</b>.) -->
 
 ## OPTION VALUES REFERENCE
-- blockType: p (paragraph), h1 (heading 1), h2 (heading 2), h3 (heading 3)
+- blockType: p (paragraph), h1 (heading level 1), h2 (heading level 2), h3 (heading level 3)
 - textAlign: left, center, right
 - spacing: none, small (0.5em), medium (1em), large (1.5em)
 - indent: 0 (none), 1 (36pt), 2 (72pt), 3 (108pt), 4 (144pt)
 
-## IMPORTANT RULES
-- Commands must be ONE PER LINE inside the COMMAND AREA.
-- Use paragraph IDs exactly as they appear in the document (e.g., "p1-2", not "p1-02").
-- Do NOT edit any content outside the COMMAND AREA.
-- The editor will detect, execute, and highlight your changes for user approval.
-- Commands are executed sequentially in the order they appear.
-- After execution, changed paragraphs are highlighted in different colors:
-  * Blue: REPLACE_PARAGRAPH
-  * Green: INSERT_PARAGRAPH
-  * Red: DELETE_PARAGRAPH (with strikethrough)
-  * Purple: MOVE_PARAGRAPH
-  * Orange: SPLIT_PARAGRAPH
-  * Teal: MERGE_PARAGRAPH
+## COMPLETE WORKING EXAMPLE
+
+<!-- AI_COMMAND_START -->
+<!-- REPLACE_PARAGRAPH(p1-1, <b>Chapter 1</b> - Introduction, blockType=h1, textAlign=center) -->
+<!-- INSERT_PARAGRAPH(p1-1, This chapter explains basic concepts., indent=1) -->
+<!-- REPLACE_PARAGRAPH(p1-2, Important <b>points</b> to remember.) -->
+<!-- DELETE_PARAGRAPH(p2-3) -->
+<!-- MOVE_PARAGRAPH(p2-1, p1-4) -->
+<!-- AI_COMMAND_END -->
+
+## CRITICAL RULES (READ CAREFULLY!)
+
+1. ⚠️ Each command MUST be on its own line wrapped in <!-- -->
+2. ⚠️ Use paragraph IDs EXACTLY as they appear (e.g., "p1-2", not "p1-02")
+3. ⚠️ Do NOT edit any content outside the COMMAND AREA
+4. ⚠️ Do NOT replace or remove the <!-- AI_COMMAND_START --> and <!-- AI_COMMAND_END --> markers
+5. Commands are executed sequentially in the order they appear
+6. After execution, changed paragraphs are highlighted:
+   • Blue: REPLACE_PARAGRAPH
+   • Green: INSERT_PARAGRAPH
+   • Red (strikethrough): DELETE_PARAGRAPH
+   • Purple: MOVE_PARAGRAPH
+   • Orange: SPLIT_PARAGRAPH
+   • Teal: MERGE_PARAGRAPH
+
+⚠️ FINAL REMINDER: Every command line MUST start with <!-- and end with -->
+Without these tags, your commands will NOT be recognized!
 
 ===============================================================================
 -->
 `;
 }
+
 
 /**
  * コマンドエリアを生成（body直後に配置）
