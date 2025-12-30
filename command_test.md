@@ -201,6 +201,69 @@
 
 ## 2. 未解決要件に関するコード変更履歴
 
+### 2025-12-30 フェーズ1: 既存コード分析と設計（進行中）
+
+#### 作成ファイル1: `src/v2/types/command.ts`
+**分析結果:**
+- 既存の`ai-sync.types.ts`は段落番号ベースのコマンドシステムを使用
+- 新要件では段落IDベース（p2-1形式）のコマンドシステムが必要
+- 6つの新コマンド（REPLACE_PARAGRAPH, INSERT_PARAGRAPH, DELETE_PARAGRAPH, MOVE_PARAGRAPH, SPLIT_PARAGRAPH, MERGE_PARAGRAPH）の型定義が必要
+
+**方針:**
+- 既存の型定義とは別に新しい`command.ts`ファイルを作成
+- 段落ID（正式ID: p2-1、仮ID: temp-uuid）をサポート
+- ハイライト状態と承認/破棄処理のための型を追加
+
+**変更内容:**
+- `CommandType`: 6種類の段落コマンドを定義
+- `ParagraphOptions`: ブロック要素4択、文字揃え3択、段落下余白4択、インデント0～4を定義
+- 各コマンドインターフェース: ReplaceParagraphCommand, InsertParagraphCommand, DeleteParagraphCommand, MoveParagraphCommand, SplitParagraphCommand, MergeParagraphCommand
+- `ParagraphSnapshot`: 承認/破棄用の段落スナップショット
+- `HighlightState`: ハイライト管理用の状態
+- `CommandExecutionResult`: コマンド実行結果
+- `ApprovalResult`: 承認/破棄結果
+
+#### 作成ファイル2: `src/v2/utils/paragraphIdManager.ts`
+**分析結果:**
+- 段落IDの生成と管理を一元化する必要がある
+- 正式ID（p{page}-{num}）と仮ID（temp-{uuid}）の2種類をサポート
+- IDの検証、変換、ソート機能が必要
+
+**方針:**
+- 段落ID関連の全ユーティリティ関数を集約
+- 型安全性を保証するための検証関数を提供
+- 仮IDから正式IDへの昇格機能を実装
+
+**変更内容:**
+- `generateParagraphId()`: 正式ID生成
+- `generateTempId()`: 仮ID生成（uuidを使用）
+- `isOfficialId()`, `isTempId()`, `isValidParagraphId()`: ID検証
+- `extractPageNumber()`, `extractParagraphNumber()`: ID解析
+- `promoteTempId()`: 仮ID→正式ID変換
+- `sortParagraphIds()`: ID配列のソート
+- `filterTempIds()`, `filterOfficialIds()`: IDフィルタリング
+
+#### 作成ファイル3: `src/v2/utils/paragraphOperations.ts`
+**分析結果:**
+- Tiptapエディタでの段落検索と操作には専用ユーティリティが必要
+- ProseMirrorのデータ構造を直接操作する必要がある
+- HTMLタグ（<b>、<br>、<sup>、<sub>）をパースしてTiptapノードに変換する機能が必要
+
+**方針:**
+- エディタに依存する段落操作を集約
+- スナップショット取得機能で承認/破棄をサポート
+- HTMLテキストのパース機能を実装
+
+**変更内容:**
+- `findParagraphById()`: 段落IDで段落ノードを検索
+- `captureParagraphSnapshot()`: 単一段落のスナップショット取得
+- `captureMultipleSnapshots()`: 複数段落のスナップショット一括取得
+- `applyParagraphOptions()`: 段落オプションの適用
+- `parseHtmlText()`: HTMLタグを含むテキストをTiptapノード用にパース
+- `assignIdsToAllParagraphs()`: 全段落への自動ID付与
+- `paragraphExists()`: 段落存在確認
+- `getParagraphIdAtPosition()`: 位置から段落ID取得
+
 ## 3. 分析中に気づいた重要ポイント
 
 ### 段落ID管理の課題
@@ -231,6 +294,27 @@
 - 現在の全体承諾/破棄フローを拡張する形で部分承諾/破棄を追加
 - `useCommandExecutor.ts`と`useCommandParser.ts`の大幅な改造が必要
 - `commandExecutionService.ts`と`commandParser.ts`の完全な書き換えが必要
+
+### フェーズ1実装時の技術的課題
+
+#### UUID依存関係
+- 仮ID生成に`uuid`パッケージ（v4）が必要
+- package.jsonへの追加が必要: `npm install uuid @types/uuid`
+
+#### Tiptap段落ノードの属性拡張
+- 段落ノードにid属性とdata-temp-id属性を追加する必要がある
+- Tiptap Extensionで段落ノードのスキーマを拡張する必要がある
+- カスタム属性: `id`, `data-temp-id`, `blockType`, `textAlign`, `spacing`, `indent`
+
+#### HTMLパーサーの制約
+- `parseHtmlText()`は簡易的な実装（正規表現ベース）
+- ネストされたタグには対応していない（例: `<b><sup>text</sup></b>`）
+- より堅牢なパーサーが必要になる可能性がある
+
+#### ProseMirrorのTransaction理解が必要
+- 段落操作にはProseMirrorのTransac tionの深い理解が必要
+- ノードの挿入・削除・移動は位置計算が複雑
+- エディタの状態管理とトランザクションの同期が重要
 
 ## 4. 解決済み要件とその解決方法
 
