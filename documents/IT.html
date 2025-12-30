@@ -2,21 +2,116 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document</title>
+
+<!--
+===============================================================================
+AI ASSISTANT GUIDE & COMMAND API SPECIFICATIONS
+===============================================================================
+
+## OVERVIEW
+This document is being edited by a human using a visual editor.
+As an AI Assistant, you can perform automated edits by writing commands in the
+COMMAND AREA located at the beginning of <body>.
+
+## DOCUMENT STRUCTURE
+- Paginated Mode: Split into A4 sections (<section class="page">).
+- Editable content is inside elements with class "page-inner".
+- Every paragraph/heading has a [data-para] attribute (e.g., [1], [2]).
+- Images are wrapped in "image-container" and may have "data-title".
+
+## COMMAND AREA LOCATION
+The COMMAND AREA is located immediately after the <body> tag opening.
+Look for the markers: [AI_COMMAND_START] and [AI_COMMAND_END]
+
+## SUPPORTED COMMANDS
+
+1. INSERT_TEXT[paragraph:offset][text][bold?]
+   - Inserts text at the specified offset in a paragraph.
+   - paragraph: The [data-para] number (1-indexed).
+   - offset: Character position (0-indexed).
+   - bold (optional): Specify "bold" to insert text in bold style.
+   - Examples: 
+     <!-- INSERT_TEXT[1:0][Hello ] -->
+     <!-- INSERT_TEXT[2:5][重要][bold] -->
+
+2. REPLACE_TEXT[search][replace][options?]
+   - Searches and replaces text within the document.
+   - options (optional): "all", "regex", "caseSensitive"
+   - Example: <!-- REPLACE_TEXT[apple][orange][all] -->
+
+3. DELETE_TEXT[paragraph:start-end]
+   - Deletes text in the specified range within a paragraph.
+   - Range is specified as "paragraph:startOffset-endOffset".
+   - Example: <!-- DELETE_TEXT[1:0-5] --> (deletes chars 0-5 in para 1)
+
+4. INSERT_PARAGRAPH[position][text][options?]
+   - Inserts a new paragraph at the specified position.
+   - position: Paragraph number (1-indexed) where to insert.
+   - options (optional): "heading", "level:1-3", "center", "right", "left", "indent:N"
+   - Examples:
+     <!-- INSERT_PARAGRAPH[1][新しい段落] -->
+     <!-- INSERT_PARAGRAPH[2][見出し][heading][level:2][center] -->
+     <!-- INSERT_PARAGRAPH[3][本文][paragraph][indent:1] -->
+
+5. DELETE_PARAGRAPH[paragraph]
+   - Deletes the entire paragraph at the specified position.
+   - Example: <!-- DELETE_PARAGRAPH[3] -->
+
+6. MOVE_PARAGRAPH[from][to]
+   - Moves a paragraph from one position to another.
+   - Example: <!-- MOVE_PARAGRAPH[2][5] --> (move para 2 to position 5)
+
+## IMPORTANT RULES
+- Commands must be wrapped in HTML comments: <!-- COMMAND[...] -->
+- Only one command per line inside the COMMAND AREA.
+- Do NOT edit any content outside the COMMAND AREA.
+- The editor ignores/overwrites external changes to content during auto-edit.
+- Commands are executed sequentially in the order they appear.
+
+===============================================================================
+-->
+
 <style>
-:root { --page-margin: 17mm; } 
+:root { --page-margin: 17mm; }
+
+
 :root {
   --page-margin: 17mm;
-  --para-number-left: 6mm;
   --editor-font-family: inherit;
   --tab-width: 0px;
 }
 
-/* A4ページ */
+body.standalone-html {
+  background-color: #525659;
+  margin: 0;
+  padding: 48px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+#pages-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
+.ProseMirror {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
 section.page {
   position: relative;
   width: 210mm;
   min-width: 210mm;
-  /* Strict A4 dimensions to guarantee ratio regardless of browser support */
   height: 297mm;
   min-height: 297mm;
   background: #fff;
@@ -24,7 +119,6 @@ section.page {
   box-sizing: border-box;
   overflow: hidden;
   margin: 0 auto;
-  /* 中央配置 */
 }
 
 section.page::after {
@@ -37,7 +131,6 @@ section.page::after {
   color: #666;
 }
 
-/* ページ内編集領域 */
 .page-inner {
   width: 100%;
   height: 100%;
@@ -56,123 +149,158 @@ section.page::after {
 .page-inner h1,
 .page-inner h2,
 .page-inner h3,
-.page-inner h4,
-.page-inner h5,
 .page-inner h6 {
   margin: 0 0 1em;
   position: relative;
   padding-left: 0;
 }
 
-/* 段落番号 */
+.page-inner h1,
+.page-inner h2,
+.page-inner h3,
+.page-inner h6 {
+  font-weight: revert;
+  font-size: revert;
+  line-height: revert;
+  color: revert;
+}
+
+.page-inner p {
+  font-size: 1em;
+  font-weight: 400;
+}
+
 .page-inner p[data-para]::before,
 .page-inner h1[data-para]::before,
 .page-inner h2[data-para]::before,
 .page-inner h3[data-para]::before,
-.page-inner h4[data-para]::before,
-.page-inner h5[data-para]::before,
 .page-inner h6[data-para]::before {
   content: "[" attr(data-para) "]";
   position: absolute;
   left: -11mm;
-  top: 0.25em;
+  top: 1px;
   width: 2.4rem;
   text-align: right;
   color: #999;
-  font-size: 0.75rem;
-  font-weight: 400;
-  line-height: 1;
-  user-select: none;
+  font-size: 10.5pt !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
   user-select: none;
   pointer-events: none;
+  font-family: var(--editor-font-family, inherit);
 }
 
 body.hide-page-numbers section.page::after {
-  display: none;
+  display: none !important;
 }
 
-body.hide-para-numbers .page-inner [data-para]::before {
-  display: none;
+body.hide-para-numbers .page-inner [data-para]::before,
+body.hide-para-numbers .ProseMirror [data-para]::before {
+  display: none !important;
 }
-
-/* 画像コンテキストメニュー */
-
 
 .page-inner img {
   display: block;
   max-width: 100%;
   height: auto;
   margin: 0.8em auto;
-  /* 強制中央 */
 }
 
-.page-inner .figure-inline {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  margin: 1em 0;
-}
-
-.page-inner .figure-inline img {
-  margin: 0;
-}
-
-.img-xs {
+.page-inner .image-container.img-xs {
   width: 20%;
 }
 
-.img-s {
+.page-inner .image-container.img-s {
   width: 35%;
 }
 
-.img-m {
+.page-inner .image-container.img-m {
   width: 50%;
 }
 
-.img-l {
+.page-inner .image-container.img-l {
   width: 65%;
 }
 
-.img-xl {
+.page-inner .image-container.img-xl {
   width: 85%;
 }
 
-/* .figure-title: Removed custom font/color styles to list block tag control style (e.g. h6) */
-.page-inner .figure-title {
-  display: inline;
-  /* blockからinlineへ変更（横並びや自然な配置のため） */
-  margin: 0;
+.page-inner p:has(> .image-container) {
+  display: block;
+  text-align: center;
+  padding: 0;
+  line-height: 1;
+  font-size: inherit;
+  caret-color: #000;
 }
 
-.page-inner .figure-inline .caret-slot {
-  font-size: 0;
+.page-inner .image-container {
+  display: inline-block;
+  vertical-align: top;
+  width: auto;
+  max-width: 100%;
   line-height: 0;
+  font-size: 0;
+  position: relative;
+  margin-right: 1.5pt;
+  margin-bottom: 0;
+  transition: margin-bottom 0.2s;
+}
+
+.page-inner .image-container.has-title {
+  margin-bottom: 24px;
+}
+
+.page-inner .image-container.has-title.title-mini {
+  margin-bottom: 20px;
+}
+
+.page-inner .image-container img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.page-inner .image-container.has-title::after {
+  content: attr(data-title);
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: block;
+  width: max-content;
+  max-width: 200%;
+  text-align: center;
+  font-size: 11pt;
+  line-height: 1.4;
+  color: #333;
+  padding-top: 4px;
+  user-select: none;
+  pointer-events: none;
+}
+
+.page-inner .image-container.has-title.title-mini::after {
+  font-size: calc(11pt * 0.67);
+  font-weight: bold;
+  color: #666;
+}
+
+.page-inner p:has(> img:not(.ProseMirror-separator)) .ProseMirror-trailingBreak,
+.page-inner p:has(> .image-container) .ProseMirror-trailingBreak {
+  display: none;
 }
 
 .page-inner img.has-border {
   border: 1px solid currentColor;
 }
 
-/* その他UIパーツ */
-
-
-/* インデントと行間 */
-.page-inner {
-  line-height: 1.6;
-}
-
-.page-inner.line-height-s {
+.page.line-height-s .page-inner {
   line-height: 1.25;
 }
 
-.page-inner.line-height-l {
+.page.line-height-l .page-inner {
   line-height: 2.0;
-}
-
-.inline-highlight {
-  border-radius: 2px;
-  padding: 2px 0;
 }
 
 .inline-tab {
@@ -181,9 +309,6 @@ body.hide-para-numbers .page-inner [data-para]::before {
   height: 1em;
 }
 
-
-
-/* インデント定義: 36pt = 0.5in = 1.27cm */
 .page-inner .indent-1 {
   padding-left: 36pt;
 }
@@ -203,9 +328,6 @@ body.hide-para-numbers .page-inner [data-para]::before {
 .page-inner .indent-5 {
   padding-left: 180pt;
 }
-
-/* ぶら下げ(hanging-indent)は、padding-leftで設定したインデントを
-   text-indent: -padding-left で相殺し、1行目を左端(0地点)に戻す挙動と定義 */
 
 .page-inner .hanging-indent {
   text-indent: -1em;
@@ -236,139 +358,296 @@ body.hide-para-numbers .page-inner [data-para]::before {
   text-indent: -180pt;
 }
 
-/* Align Helpers */
-.inline-align {
-  display: inline-block;
-  width: 100%;
-  box-sizing: border-box;
-}
 
-.inline-align-left {
-  text-align: left;
-}
-
-.inline-align-center {
-  text-align: center;
-}
-
-.inline-align-right {
-  text-align: right;
-}
-
-.page-inner p.inline-spacing-xs,
-.page-inner .inline-align.inline-spacing-xs {
-  margin-bottom: 4px;
-}
-
-.page-inner p.inline-spacing-s,
-.page-inner .inline-align.inline-spacing-s {
-  margin-bottom: 12px;
-}
-
-.page-inner p.inline-spacing-m,
-.page-inner .inline-align.inline-spacing-m {
-  margin-bottom: 20px;
-}
-
-.page-inner p.inline-spacing-l,
-.page-inner .inline-align.inline-spacing-l {
-  margin-bottom: 28px;
-}
-
-.page-inner p.inline-spacing-xl,
-.page-inner .inline-align.inline-spacing-xl {
-  margin-bottom: 36px;
-}
-
-/* Removed .mini-text */
-
-
-
-/* Print / PDF Output Optimized Styles */
 @media print {
   @page {
     size: A4 portrait;
     margin: 0;
   }
 
-  body {
-    background: #fff;
-    overflow: visible;
-    height: auto;
-    width: 100%;
+  
+  html,
+  body, 
+  body.standalone-html {
+    background: #fff !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  
+  #toolbar,
+  #page-navigator,
+  #ai-image-index,
+  #ai-meta-guide,
+  .sonner,
+  [data-sonner-toaster],
+  button,
+  dialog,
+  [role="menu"],
+  [role="dialog"],
+  [role="tooltip"],
+  .bubble-menu,
+  .no-print {
+    display: none !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  
+  .flex.flex-col.h-screen {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  .flex.flex-1.overflow-hidden {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  #pages-container {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+    gap: 0 !important;
+  }
+
+  
+  #pages-container > div {
+    display: block !important;
+    width: 210mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 auto !important;
+    zoom: 1 !important; 
+    gap: 0 !important; 
+    font-size: 0 !important; 
+    line-height: 0 !important;
   }
 
 
-  /* Ensure page exactly matches A4 and breaks correctly */
   section.page {
     position: relative;
-    width: 210mm;
-    height: 297mm;
-    min-height: 297mm;
-    margin: 0;
-    padding: 0;
-    box-shadow: none;
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
     outline: none !important;
-    /* Remove active page outline */
-    background: #fff;
-    overflow: hidden;
-    break-after: page;
-    page-break-after: always;
+    background: #fff !important;
+    overflow: hidden !important;
+    break-after: page !important;
+    page-break-after: always !important;
+    display: block !important;
   }
 
-  /* Remove break after the last page to avoid empty sheet? 
-     Usually beneficial, but sometimes browser handles it.
-     Let's be explicit if possible. */
   section.page:last-child {
-    break-after: auto;
-    page-break-after: auto;
+    break-after: auto !important;
+    page-break-after: auto !important;
+    margin-bottom: 0 !important;
   }
 
-  /* Maintain internal layout fidelity */
   .page-inner {
-    width: 100%;
-    height: 100%;
-    padding: var(--page-margin);
-    overflow: visible;
+    width: 100% !important;
+    height: 100% !important;
+    padding: var(--page-margin) !important;
+    overflow: visible !important;
   }
 
-  /* Force text selection to be available in PDF readers */
-  /* Note: pointer-events: none on * in print media can sometimes help if overlay issues, but default is usually fine. */
-
+  
   .page-inner,
   .page-inner * {
     user-select: text !important;
     -webkit-user-select: text !important;
+    pointer-events: auto !important;
+  }
+
+  
+  .ProseMirror-trailingBreak {
+    display: none !important;
   }
 }
+
+
+
+
+body.mode-word #pages-container {
+  background-color: #e0e0e0;
+}
+
+body.mode-word section.page {
+  height: auto !important;
+  min-height: 297mm !important;
+  box-shadow: 10px 0 10px -5px rgba(0, 0, 0, 0.1), -10px 0 10px -5px rgba(0, 0, 0, 0.1) !important;
+  overflow: visible !important;
+}
+
+body.mode-word .page-inner {
+  height: auto !important;
+  min-height: 297mm !important;
+  padding-bottom: calc(297mm - var(--page-margin)) !important;
+  overflow: visible !important;
+}
+
+body.mode-word section.page::after {
+  display: none !important;
+}
+
+body.mode-word #page-navigator,
+body.mode-word #sidebar-toggle-overlay,
+body.mode-word #sidebar-toggle-btn,
+body.mode-word #ai-image-index {
+  display: none !important;
+}
+
+
+
+
+
+.page-inner p[data-command-type="replace"],
+.page-inner h1[data-command-type="replace"],
+.page-inner h2[data-command-type="replace"],
+.page-inner h3[data-command-type="replace"] {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+  border-left: 4px solid #3b82f6 !important;
+  padding-left: 8px !important;
+  transition: background-color 0.3s, border-color 0.3s;
+  cursor: pointer;
+}
+
+.page-inner p[data-command-type="replace"]:hover,
+.page-inner h1[data-command-type="replace"]:hover,
+.page-inner h2[data-command-type="replace"]:hover,
+.page-inner h3[data-command-type="replace"]:hover {
+  background-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+
+.page-inner p[data-command-type="insert"],
+.page-inner h1[data-command-type="insert"],
+.page-inner h2[data-command-type="insert"],
+.page-inner h3[data-command-type="insert"] {
+  background-color: rgba(34, 197, 94, 0.2) !important;
+  border-left: 4px solid #22c55e !important;
+  padding-left: 8px !important;
+  transition: background-color 0.3s, border-color 0.3s;
+  cursor: pointer;
+}
+
+.page-inner p[data-command-type="insert"]:hover,
+.page-inner h1[data-command-type="insert"]:hover,
+.page-inner h2[data-command-type="insert"]:hover,
+.page-inner h3[data-command-type="insert"]:hover {
+  background-color: rgba(34, 197, 94, 0.3) !important;
+}
+
+
+.page-inner p[data-command-type="delete"],
+.page-inner h1[data-command-type="delete"],
+.page-inner h2[data-command-type="delete"],
+.page-inner h3[data-command-type="delete"] {
+  background-color: rgba(239, 68, 68, 0.2) !important;
+  border-left: 4px solid #ef4444 !important;
+  padding-left: 8px !important;
+  opacity: 0.5 !important;
+  text-decoration: line-through;
+  transition: background-color 0.3s, border-color 0.3s, opacity 0.3s;
+  cursor: pointer;
+}
+
+.page-inner p[data-command-type="delete"]:hover,
+.page-inner h1[data-command-type="delete"]:hover,
+.page-inner h2[data-command-type="delete"]:hover,
+.page-inner h3[data-command-type="delete"]:hover {
+  background-color: rgba(239, 68, 68, 0.3) !important;
+  opacity: 0.7 !important;
+}
+
+
+.page-inner p[data-command-type="move"],
+.page-inner h1[data-command-type="move"],
+.page-inner h2[data-command-type="move"],
+.page-inner h3[data-command-type="move"] {
+  background-color: rgba(168, 85, 247, 0.2) !important;
+  border-left: 4px solid #a855f7 !important;
+  padding-left: 8px !important;
+  transition: background-color 0.3s, border-color 0.3s;
+  cursor: pointer;
+}
+
+.page-inner p[data-command-type="move"]:hover,
+.page-inner h1[data-command-type="move"]:hover,
+.page-inner h2[data-command-type="move"]:hover,
+.page-inner h3[data-command-type="move"]:hover {
+  background-color: rgba(168, 85, 247, 0.3) !important;
+}
+
+
+.page-inner p[data-command-type="split"],
+.page-inner h1[data-command-type="split"],
+.page-inner h2[data-command-type="split"],
+.page-inner h3[data-command-type="split"] {
+  background-color: rgba(249, 115, 22, 0.2) !important;
+  border-left: 4px solid #f97316 !important;
+  padding-left: 8px !important;
+  transition: background-color 0.3s, border-color 0.3s;
+  cursor: pointer;
+}
+
+.page-inner p[data-command-type="split"]:hover,
+.page-inner h1[data-command-type="split"]:hover,
+.page-inner h2[data-command-type="split"]:hover,
+.page-inner h3[data-command-type="split"]:hover {
+  background-color: rgba(249, 115, 22, 0.3) !important;
+}
+
+
+.page-inner p[data-command-type="merge"],
+.page-inner h1[data-command-type="merge"],
+.page-inner h2[data-command-type="merge"],
+.page-inner h3[data-command-type="merge"] {
+  background-color: rgba(20, 184, 166, 0.2) !important;
+  border-left: 4px solid #14b8a6 !important;
+  padding-left: 8px !important;
+  transition: background-color 0.3s, border-color 0.3s;
+  cursor: pointer;
+}
+
+.page-inner p[data-command-type="merge"]:hover,
+.page-inner h1[data-command-type="merge"]:hover,
+.page-inner h2[data-command-type="merge"]:hover,
+.page-inner h3[data-command-type="merge"]:hover {
+  background-color: rgba(20, 184, 166, 0.3) !important;
+}
+
+
 </style>
 </head>
-<body>
+<body class="standalone-html">
+
+<!-- AI_COMMAND_START -->
+<!-- ここにコマンドを記述してください / Write your commands here -->
+<!-- AI_COMMAND_END -->
+
 <div id="pages-container">
-
-
-
-<div id="ai-meta-guide" style="display: none;">
-<!-- AI ASSISTANT GUIDE
-This HTML structure represents a paginated document.
-- <section class="page"> represents a physical A4 page.
-- .page-inner contains the editable content.
-- Paragraphs have IDs like "p1-1" (Page 1, Paragraph 1).
-- Images and figure metadata are stored in #ai-image-index at the bottom.
-Use the IDs to locate specific paragraphs when assisting the user.
--->
+<section data-page="1" class="page"><div class="page-inner"><h1 data-para="1" id="p1-1" class="inline-spacing-none">フロントエンド開発入門メモ＆IT/AI知識</h1><h3 data-para="2" id="p1-2" class="inline-spacing-none">【教養】</h3><p data-para="3" id="p1-3" class="inline-spacing-none"><strong>PHP</strong>:バックエンド言語のシェアno.1</p><p data-para="4" id="p1-4" class="inline-spacing-none">サーバー＝コンピュータ（ストレージだけのことではない）</p><p data-para="5" id="p1-5" class="inline-spacing-none">フレームワークは骨組み提供、ライブラリは道具(Reactはライブラリ、それを前提としたフレームワークがnext.js)<br>（cytoscapeはjsライブラリの1種）</p><p data-para="6" id="p1-6" class="inline-spacing-none">css-in-jsもあるがバイブコーディングには向いてない</p></div></section><section data-page="2" class="page"><div class="page-inner"><h2 data-para="1" id="p2-1" class="inline-spacing-none"><strong>バイブコーディング最適化</strong></h2><p data-para="2" id="p2-2" class="inline-spacing-none"><strong>【Webアプリの構造】</strong></p><p data-para="3" id="p2-3" class="inline-spacing-none">★UIはReactのコンポーネントを組み合わせる<br>→HTML要素も関数中でreturn、スタイリングもTailwindのクラスを直接書くor shadcn/uiのスタイリング内蔵部品を呼び出す<br>→.tsxファイルのコンポーネントにHTML要素、スタイリング、機能がまとまった状態<br>(本体のHTMLは｢空っぽの器｣で、サイトのタイトル、アイコン、フォント読み込みくらいの要素しか持たない)</p><p data-para="4" id="p2-4" class="inline-spacing-none"><strong>React：</strong>Stateに応じた描画を宣言、stateと常に同期し、stateの変化に応じて一斉に関数走らせ（計算）、一括でDOM操作（描画）→その後副作用<br>（state変化による仮想domでの計算と、dom操作や外部とのやり取り（副作用）は独立している）<br>（Vanilla TSは、それぞれの関数がそれぞれのタイミングで描画、関数同士の依存も多い）</p><p data-para="5" id="p2-5" class="inline-spacing-none">※Next.jsでは、そもそも.htmlを触らない！</p><p data-para="6" id="p2-6" class="inline-spacing-none"><strong>・Tailwind CSS:</strong> CSSの設定が、あらかじめ短いクラス名として登録されている辞書。CSSファイルを作るのではなく、Reactの中に直接タグを書き込む。<br>（Prettier + Tailwind Plugin・**Tailwind CSS IntelliSense**を使う！）</p><p data-para="7" id="p2-7" class="inline-spacing-none"><strong>・shadcn/ui:</strong> radix-uiというライブラリでTailwindベースで作られた「ボタン」「入力フォーム」「メニュー」などのスタイリング済み機能</p><p data-para="8" id="p2-8" class="inline-spacing-none"><strong>【Reactにない機能の実装】</strong></p><p data-para="9" id="p2-9" class="inline-spacing-none">・.tsファイルで独自ロジック組むor外部ライブラリ探す→ラッパーし、カスタムフックでReactと連携<br>(外部ライブラリや独自ロジックは、ラッパーし、すべてReactに結びつき、直接DOM操作せず、React計算後の副作用のタイミングに合わせて動かすような仕組みにする！)<br>→イベントでstate遷移→計算→副作用として外部ロジック起動→state遷移→計算という2段階！<br>→いろいろなテクで隠す！！<br>（起動タイミング、破棄、範囲の制御をしっかり行う！）</p><p data-para="10" id="p2-10" class="inline-spacing-none">（Reactライブラリは自動同期！）</p><p data-para="11" id="p2-11" class="inline-spacing-none">(例)<br>Zustand（状態管理）<br>TanStack Query<br>Zod</p></div></section><section data-page="3" class="page"><div class="page-inner"><p data-para="1" id="p3-1" class="inline-spacing-none"><strong>【設計】</strong>どちらか選ぶ</p><p data-para="2" id="p3-2" class="inline-spacing-none">①React + 追加ライブラリ ＋ Vite（シンプル、簡単）</p><p data-para="3" id="p3-3" class="inline-spacing-none">②Next.js ＋ 追加ライブラリ<br>（React、ビルドツール、seo対策、バックエンドが内蔵されたフルスタックだが、ルール多く、複雑)<br></p><p data-para="4" id="p3-4" class="inline-spacing-none"><strong>【テスト】</strong></p><p data-para="5" id="p3-5" class="inline-spacing-none">**Playwright利用**</p><p data-para="6" id="p3-6" class="inline-spacing-none">・スクショ比較でUI崩壊検知可能<br>・Antigravityにエラーが出そうな操作を考えさせ、playwrite回させる<br></p><p data-para="7" id="p3-7" class="inline-spacing-none"><strong>【ワークフロー】</strong></p><p data-para="8" id="p3-8" class="inline-spacing-none">- 要件定義書書く（目的、設計思想/想定環境/条件、スタック、機能/UI一覧）<br>→足りない項目を提案させる！</p><p data-para="9" id="p3-9" class="inline-spacing-none">- 計画書を日本語で書かせて、フォルダに入れさせる<br>→Geminiにチェックさせつつ要件定義書通りの計画になっているか、なにか注意事項足すべきかを詰める</p><p data-para="10" id="p3-10" class="inline-spacing-none">- 「.agent/rules.md」に重要ルールを書く</p><ul><li><p data-para="11" id="p3-11" class="inline-spacing-none">- 機能追加時は、自前のひな型使う！！</p></li></ul></div></section>
 </div>
-        <!-- 初期ページ -->
-        <section class="page" data-page="1">
-          <div class="page-inner" data-preferred-block-tag="p" data-pending-block-tag="">
-            <h1 data-para="1" id="p1-1" data-block-style="h1"><span class="inline-align inline-align-center">フロントエンド開発入門メモ＆IT/AI知識</span></h1><h3 data-block-style="h3" data-para="2" id="p1-2"><span class="inline-align inline-align-left">【教養】</span></h3><p data-block-style="p" data-para="3" id="p1-3"><span class="inline-align inline-align-left"><strong>PHP</strong>:バックエンド言語のシェアno.1</span></p><p data-block-style="p" data-para="4" id="p1-4"><span class="inline-align inline-align-left">サーバー＝コンピュータ（ストレージだけのことではない）</span></p><p data-block-style="p" data-para="5" id="p1-5"><span class="inline-align inline-align-left">フレームワークは骨組み提供、ライブラリは道具(Reactはライブラリ、それを前提としたフレームワークがnext.js)<br><!-- notionvc: 534a671f-9145-4406-9eb0-6985d2179ec3 --></span><span style="font-size: 11pt;">（cytoscapeはjsライブラリの1種）</span></p><p data-block-style="p" data-para="6" id="p1-6">css-in-jsもあるがバイブコーディングには向いてない</p><p data-block-style="p" data-para="7" id="p1-7"><br></p><p data-block-style="p" data-para="8" id="p1-8"><br></p><p data-block-style="p" data-para="9" id="p1-9"><br></p><p data-block-style="p" data-para="10" id="p1-10"><br></p><p data-block-style="p" data-para="11" id="p1-11"><br></p><p data-block-style="p" data-para="12" id="p1-12"><br></p><p data-block-style="p" data-para="13" id="p1-13"><br></p><p data-block-style="p" data-para="14" id="p1-14"><br></p><p data-block-style="p" data-para="15" id="p1-15"><br></p><p data-block-style="p" data-para="16" id="p1-16"><br></p><p data-block-style="p" data-para="17" id="p1-17"><br></p><p data-block-style="p" data-para="18" id="p1-18"><br></p><p data-block-style="p" data-para="19" id="p1-19"><br></p><!-- notionvc: 6064ad9b-bec1-455e-a35b-45597594736b -->
-          </div>
-        </section>
-        
-      
-
-<section class="page" data-page="2"><div class="page-inner" data-preferred-block-tag="p" data-pending-block-tag="p"><p data-block-style="p" data-para="1" id="p2-1"><span class="inline-highlight" style="background-color: rgb(255, 255, 0);"><strong>バイブコーディング最適化</strong></span></p><p data-block-style="p" data-para="2" id="p2-2"><strong>【Webアプリの構造】</strong></p><p data-block-style="p" data-para="3" id="p2-3"><span style="font-size: 11pt;">★UIはReactのコンポーネントを組み合わせる<br></span><span style="font-size: 11pt;">→HTML要素も関数中でreturn、スタイリングもTailwindのクラスを直接書くor shadcn/uiのスタイリング内蔵部品を呼び出す<br></span><span style="font-size: 11pt;">→.tsxファイルのコンポーネントにHTML要素、スタイリング、機能がまとまった状態<br></span><span style="font-size: 11pt;">(本体のHTMLは｢空っぽの器｣で、サイトのタイトル、アイコン、フォント読み込みくらいの要素しか持たない)</span></p><p data-block-style="p" data-para="4" id="p2-4"><span style="font-size: 11pt;"><strong>React：</strong>Stateに応じた描画を宣言、stateと常に同期し、stateの変化に応じて一斉に関数走らせ（計算）、一括でDOM操作（描画）→その後副作用<br>（state変化による仮想domでの計算と、dom操作や外部とのやり取り（副作用）は独立している）<br>（Vanilla TSは、それぞれの関数がそれぞれのタイミングで描画、関数同士の依存も多い）</span></p><p data-block-style="p" data-para="5" id="p2-5">※Next.jsでは、そもそも.htmlを触らない！</p><p data-block-style="p" data-para="6" id="p2-6"><br></p><p data-block-style="p" data-para="7" id="p2-7"><strong>・Tailwind CSS:</strong> CSSの設定が、あらかじめ短いクラス名として登録されている辞書。CSSファイルを作るのではなく、Reactの中に直接タグを書き込む。<br><span style="font-size: 11pt;">（Prettier + Tailwind Plugin・</span><span style="font-size: 11pt;">**Tailwind CSS IntelliSense**を使う！）</span></p><p data-block-style="p" data-para="8" id="p2-8"><strong>・shadcn/ui:</strong> radix-uiというライブラリでTailwindベースで作られた「ボタン」「入力フォーム」「メニュー」などのスタイリング済み機能</p><p data-block-style="p" data-para="9" id="p2-9"><br></p><p data-block-style="p" data-para="10" id="p2-10"><strong>【Reactにない機能の実装】</strong></p><p data-block-style="p" data-para="11" id="p2-11">・.tsファイルで独自ロジック組むor外部ライブラリ探す<br><span style="font-size: 11pt;">→ラッパーし、カスタムフックでReactと連携<br>(</span>外部ライブラリや独自ロジックは、ラッパーし、<span style="font-size: 11pt;">すべてReactに結びつき、直接DOM操作せず、React計算後の副作用のタイミングに合わせて動かすような仕組みにする！)<br></span>→イベントでstate遷移→計算→副作用として外部ロジック起動→state遷移→計算という2段階！<br>→いろいろなテクで隠す！！<br><span style="font-size: 11pt;">（起動タイミング、破棄、範囲の制御をしっかり行う！）</span></p><p data-block-style="p" data-para="12" id="p2-12"><span style="font-size: 11pt;">（Reactライブラリは自動同期！）</span></p><p data-block-style="p" data-para="13" id="p2-13"><span style="font-size: 14.6667px;">(例)</span><br style="font-size: 14.6667px;"><span style="font-size: 11pt;">Zustand（状態管理）<br></span><span style="font-size: 11pt;">TanStack Query<br></span><span style="font-size: 11pt;">Zod</span></p></div></section><section class="page" data-page="3"><div class="page-inner" data-preferred-block-tag="p" data-pending-block-tag=""><p data-block-style="p" data-para="1" id="p3-1"><strong style="font-size: 14.6667px;">【設計】</strong><span style="font-size: 14.6667px;">どちらか選ぶ</span></p><p data-block-style="p" data-para="2" id="p3-2">①React + 追加ライブラリ ＋ Vite<span style="font-size: 11pt;">（シンプル、簡単）</span></p><p data-block-style="p" data-para="3" id="p3-3">②Next.js ＋ 追加ライブラリ<br>（React、ビルドツール、seo対策、バックエンドが内蔵されたフルスタックだが、ルール多く、複雑)</p><p data-block-style="p" data-para="4" id="p3-4"><br></p><p data-block-style="p" data-para="5" id="p3-5"><strong style="font-size: 14.6667px;">【テスト】</strong></p><p data-block-style="p" data-para="6" id="p3-6">**Playwright利用**</p><p data-block-style="p" data-para="7" id="p3-7">・スクショ比較でUI崩壊検知可能<br><span style="font-size: 11pt;">・Antigravityにエラーが出そうな操作を考えさせ、playwrite回させる</span></p><p data-block-style="p" data-para="8" id="p3-8"><span style="font-size: 11pt;"><br></span></p><p data-block-style="p" data-para="9" id="p3-9"><strong>【ワークフロー】</strong></p><p data-block-style="p" data-para="10" id="p3-10">- 要件定義書書く<span style="font-size: 11pt;">（目的、設計思想/想定環境/条件、</span><span style="font-size: 14.6667px;">スタック、</span><span style="font-size: 11pt;">機能/UI一覧）<br></span><span style="font-size: 11pt;">→足りない項目を提案させる！</span></p><p data-block-style="p" data-para="11" id="p3-11">- 計画書を日本語で書かせて、フォルダに入れさせる<br><span style="font-size: 11pt;">→Geminiにチェックさせつつ要件定義書通りの計画になっているか、なにか注意事項足すべきかを詰める</span></p><p data-block-style="p" data-para="12" id="p3-12">- 「.agent/rules.md」に重要ルールを書く</p><p data-block-style="p" data-para="13" id="p3-13"><br></p><p data-block-style="p" data-para="14" id="p3-14"><br></p><p data-block-style="p" data-para="15" id="p3-15"><br></p></div></section>
-<div id="ai-image-index" style="display:none"></div>
-</div>
+<div id="ai-image-index" class="hidden" aria-hidden="true"></div>
 </body>
 </html>
