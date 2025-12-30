@@ -1,3 +1,201 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ProseMirrorエディタの基本スタイル */
+@layer base {
+  .ProseMirror {
+    outline: none;
+    min-height: 100%;
+  }
+  .ProseMirror img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin-left: auto;
+    margin-right: auto;
+    transition: all 0.3s ease;
+  }
+  .ProseMirror a {
+    color: #2563eb;
+    text-decoration: underline;
+    cursor: pointer;
+    text-decoration-color: #93c5fd;
+    text-underline-offset: 2px;
+  }
+}
+
+/* ページとコンポーネントのスタイル */
+@layer components {
+  /* ページ関連 */
+  .page {
+    background-color: white;
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    width: 210mm;
+    min-height: 297mm;
+    page-break-after: always;
+  }
+
+  .page-inner {
+    position: relative;
+    padding: var(--page-margin, 17mm);
+    outline: none;
+    min-height: 297mm;
+    counter-reset: paragraph-counter;
+  }
+
+  .page-inner p {
+    position: relative;
+  }
+
+  .page-inner p::before {
+    position: absolute;
+    left: 5mm;
+    font-size: 10px;
+    color: #d1d5db;
+    font-family: ui-monospace, monospace;
+    user-select: none;
+    pointer-events: none;
+    counter-increment: paragraph-counter;
+    content: "p" attr(data-page) "-" counter(paragraph-counter);
+  }
+
+  .mode-word .page-inner p::before {
+    content: "p" counter(paragraph-counter);
+  }
+
+  /* エディタロック時のポインターイベント制御 */
+  .locked-editor .ProseMirror {
+    pointer-events: none;
+  }
+
+  .locked-editor .ProseMirror [data-command-type] {
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  /* REPLACE - 青色 */
+  .page-inner p[data-command-type="replace"],
+  .page-inner h1[data-command-type="replace"],
+  .page-inner h2[data-command-type="replace"],
+  .page-inner h3[data-command-type="replace"] {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+    border-left: 4px solid #3b82f6 !important;
+    padding-left: 8px !important;
+    transition: background-color 0.3s, border-color 0.3s;
+    cursor: pointer;
+  }
+  .page-inner p[data-command-type="replace"]:hover,
+  .page-inner h1[data-command-type="replace"]:hover,
+  .page-inner h2[data-command-type="replace"]:hover,
+  .page-inner h3[data-command-type="replace"]:hover {
+    background-color: rgba(59, 130, 246, 0.3) !important;
+  }
+
+  /* INSERT - 緑色 */
+  .page-inner p[data-command-type="insert"],
+  .page-inner h1[data-command-type="insert"],
+  .page-inner h2[data-command-type="insert"],
+  .page-inner h3[data-command-type="insert"] {
+    background-color: rgba(34, 197, 94, 0.2) !important;
+    border-left: 4px solid #22c55e !important;
+    padding-left: 8px !important;
+    transition: background-color 0.3s, border-color 0.3s;
+    cursor: pointer;
+  }
+  .page-inner p[data-command-type="insert"]:hover,
+  .page-inner h1[data-command-type="insert"]:hover,
+  .page-inner h2[data-command-type="insert"]:hover,
+  .page-inner h3[data-command-type="insert"]:hover {
+    background-color: rgba(34, 197, 94, 0.3) !important;
+  }
+
+  /* DELETE - 赤色 */
+  .page-inner p[data-command-type="delete"],
+  .page-inner h1[data-command-type="delete"],
+  .page-inner h2[data-command-type="delete"],
+  .page-inner h3[data-command-type="delete"] {
+    background-color: rgba(239, 68, 68, 0.2) !important;
+    border-left: 4px solid #ef4444 !important;
+    padding-left: 8px !important;
+    opacity: 0.5 !important;
+    text-decoration: line-through;
+    transition: background-color 0.3s, border-color 0.3s, opacity 0.3s;
+    cursor: pointer;
+  }
+  .page-inner p[data-command-type="delete"]:hover,
+  .page-inner h1[data-command-type="delete"]:hover,
+  .page-inner h2[data-command-type="delete"]:hover,
+  .page-inner h3[data-command-type="delete"]:hover {
+    background-color: rgba(239, 68, 68, 0.3) !important;
+    opacity: 0.7 !important;
+  }
+
+  /* MOVE - 紫色 */
+  .page-inner p[data-command-type="move"],
+  .page-inner h1[data-command-type="move"],
+  .page-inner h2[data-command-type="move"],
+  .page-inner h3[data-command-type="move"] {
+    background-color: rgba(168, 85, 247, 0.2) !important;
+    border-left: 4px solid #a855f7 !important;
+    padding-left: 8px !important;
+    transition: background-color 0.3s, border-color 0.3s;
+    cursor: pointer;
+  }
+  .page-inner p[data-command-type="move"]:hover,
+  .page-inner h1[data-command-type="move"]:hover,
+  .page-inner h2[data-command-type="move"]:hover,
+  .page-inner h3[data-command-type="move"]:hover {
+    background-color: rgba(168, 85, 247, 0.3) !important;
+  }
+
+  /* SPLIT - オレンジ色 */
+  .page-inner p[data-command-type="split"],
+  .page-inner h1[data-command-type="split"],
+  .page-inner h2[data-command-type="split"],
+  .page-inner h3[data-command-type="split"] {
+    background-color: rgba(249, 115, 22, 0.2) !important;
+    border-left: 4px solid #f97316 !important;
+    padding-left: 8px !important;
+    transition: background-color 0.3s, border-color 0.3s;
+    cursor: pointer;
+  }
+  .page-inner p[data-command-type="split"]:hover,
+  .page-inner h1[data-command-type="split"]:hover,
+  .page-inner h2[data-command-type="split"]:hover,
+  .page-inner h3[data-command-type="split"]:hover {
+    background-color: rgba(249, 115, 22, 0.3) !important;
+  }
+
+  /* MERGE - 青緑色 */
+  .page-inner p[data-command-type="merge"],
+  .page-inner h1[data-command-type="merge"],
+  .page-inner h2[data-command-type="merge"],
+  .page-inner h3[data-command-type="merge"] {
+    background-color: rgba(20, 184, 166, 0.2) !important;
+    border-left: 4px solid #14b8a6 !important;
+    padding-left: 8px !important;
+    transition: background-color 0.3s, border-color 0.3s;
+    cursor: pointer;
+  }
+  .page-inner p[data-command-type="merge"]:hover,
+  .page-inner h1[data-command-type="merge"]:hover,
+  .page-inner h2[data-command-type="merge"]:hover,
+  .page-inner h3[data-command-type="merge"]:hover {
+    background-color: rgba(20, 184, 166, 0.3) !important;
+  }
+}
+
+/* ユーティリティ */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
