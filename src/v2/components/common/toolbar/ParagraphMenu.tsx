@@ -171,6 +171,7 @@ export const ParagraphMenu: React.FC<ParagraphMenuProps> = ({ editor }) => {
                                     <MenuItem onSelect={(e) => { e.preventDefault(); applyParagraphSpacing('s'); }}>標準</MenuItem>
                                     <MenuItem onSelect={(e) => { e.preventDefault(); applyParagraphSpacing('m'); }}>やや広い</MenuItem>
                                     <MenuItem onSelect={(e) => { e.preventDefault(); applyParagraphSpacing('l'); }}>広い</MenuItem>
+                                    <MenuItem onSelect={(e) => { e.preventDefault(); applyParagraphSpacing('xl'); }}>最大</MenuItem>
                                 </>
                             )}
                             {expanded === 'line-height' && (

@@ -251,7 +251,7 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
 
 /* Spacings (XS, S=標準, M, L, XL) */
 .page-inner .inline-spacing-none {
-  margin-bottom: 1.25em;
+  margin-bottom: 1em;
 }
 
 .page-inner .inline-spacing-xs {
@@ -259,19 +259,19 @@ body.hide-para-numbers .ProseMirror [data-para]::before {
 }
 
 .page-inner .inline-spacing-s {
-  margin-bottom: 1.25em !important;
+  margin-bottom: 1em !important;
 }
 
 .page-inner .inline-spacing-m {
-  margin-bottom: 2.25em !important;
+  margin-bottom: 2em !important;
 }
 
 .page-inner .inline-spacing-l {
-  margin-bottom: 4em !important;
+  margin-bottom: 5em !important;
 }
 
 .page-inner .inline-spacing-xl {
-  margin-bottom: 6em !important;
+  margin-bottom: 10em !important;
 }
 
 .page-inner .indent-1 {
