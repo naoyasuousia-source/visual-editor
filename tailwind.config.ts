@@ -77,6 +77,14 @@ const config: Config = {
         '.mode-word .page-inner p::before': {
           content: '"p" counter(paragraph-counter)',
         },
+        /* エディタロック時のポインターイベント制御 */
+        '.locked-editor .ProseMirror': {
+          pointerEvents: 'none',
+        },
+        '.locked-editor .ProseMirror [data-command-type]': {
+          pointerEvents: 'auto',
+          cursor: 'pointer',
+        },
       });
       addUtilities({
         '.scrollbar-hide': {

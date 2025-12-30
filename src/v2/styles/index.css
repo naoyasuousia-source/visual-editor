@@ -1,15 +1,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@layer components {
-  /* エディタロック時のポインターイベント制御 */
-  .locked-editor .ProseMirror {
-    pointer-events: none;
-  }
-  
-  .locked-editor .ProseMirror [data-command-type] {
-    pointer-events: auto;
-    cursor: pointer;
-  }
-}
