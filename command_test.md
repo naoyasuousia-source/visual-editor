@@ -566,6 +566,53 @@
 - `closePopup()`, `closeApprovalBar()`: UI閉じる処理
 - `pendingCount`の自動監視と承認バー表示制御
 
+### 2025-12-30 ファイル監視フロー統合とUIコンポーネント組み込み（完了）
+
+#### 修正ファイル5: `src/v2/hooks/useAutoEdit.ts`
+**分析結果:**
+- 既存の自動編集フローは旧コマンドシステム専用
+- 新コマンドシステムの検出と実行フローを統合する必要がある
+- 新コマンドシステムではハイライト登録が必要
+
+**方針:**
+- `hasNewCommands()`で新旧コマンドを判定
+- 新コマンド検出時は`parseNewCommandsFromHtml()`と`executeNewCommands()`を使用
+- 新コマンド実行後は`registerMultipleHighlights()`でハイライト登録
+- 旧コマンドの処理は既存のまま維持（後方互換性）
+
+**変更内容:**
+- インポート追加: `useCommandHighlight`
+- `commandHighlight`変数追加
+- `handleFileChange`関数内で新旧コマンドを分岐処理:
+  - `hasNewCommands()`で判定
+  - 新コマンド時: `parseNewCommandsFromHtml()` → `executeNewCommands()` → `registerMultipleHighlights()`
+  - 旧コマンド時: 従来通りの処理フロー
+- 新コマンド実行後はエディタを編集可能にする（個別承認UI使用のため）
+- 旧コマンド実行後は従来通り承認待ち状態にする
+- 依存配列に`commandHighlight`追加
+
+#### 修正ファイル6: `src/v2/app/App.tsx`
+**分析結果:**
+- メインのEditorV3コンポーネントにUIコンポーネントを組み込む必要がある
+- useCommandApprovalControllerでポップアップと承認バーを制御
+- 条件付きレンダリングで適切なタイミングで表示
+
+**方針:**
+- CommandPopup, CommandApprovalBar, useCommandApprovalControllerをインポート
+- EditorV3関数内でuseCommandApprovalController()を呼び出し
+- return部分で条件付きレンダリング
+
+**変更内容:**
+- インポート追加: `CommandPopup`, `CommandApprovalBar`, `useCommandApprovalController`
+- `approvalController`変数追加（コントローラーフック呼び出し）
+- レンダリング部分にCommandPopupを追加:
+  - `activePopup`が存在する場合のみ表示
+  - highlight, targetElement, ハンドラーをpropsとして渡す
+- レンダリング部分にCommandApprovalBarを追加:
+  - `showApprovalBar`かつ`pendingCount > 0`の場合のみ表示
+  - pendingCount, ハンドラーをpropsとして渡す
+- EditorLockOverlayの後、Toasterの前に配置
+
 ## 3. 分析中に気づいた重要ポイント
 
 ### 段落ID管理の課題

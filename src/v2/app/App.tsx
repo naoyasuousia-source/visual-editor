@@ -22,6 +22,9 @@ import { useGlobalStyles } from '@/hooks/useGlobalStyles';
 import { EditorLockOverlay } from '@/components/features/EditorLockOverlay';
 import { AutoEditBar } from '@/components/features/AutoEditBar';
 import { useAutoEdit } from '@/hooks/useAutoEdit';
+import { CommandPopup } from '@/components/CommandPopup';
+import { CommandApprovalBar } from '@/components/CommandApprovalBar';
+import { useCommandApprovalController } from '@/hooks/useCommandApprovalController';
 
 /**
  * EditorV3 - V2エディタのメインコンポーネント
@@ -77,6 +80,9 @@ export const EditorV3 = () => {
 
     // Auto Edit (v2.0 - 自動編集フロー)
     const autoEdit = useAutoEdit(editor);
+
+    // Command Approval Controller (新コマンドシステム)
+    const approvalController = useCommandApprovalController(editor);
 
 
 
@@ -142,6 +148,27 @@ export const EditorV3 = () => {
 
             {/* Editor Lock Overlay */}
             <EditorLockOverlay />
+
+            {/* Command Popup - 新コマンドシステム */}
+            {approvalController.activePopup && (
+                <CommandPopup
+                    highlight={approvalController.activePopup.highlight}
+                    targetElement={approvalController.activePopup.targetElement}
+                    onApprove={approvalController.handleApprove}
+                    onReject={approvalController.handleReject}
+                    onClose={approvalController.closePopup}
+                />
+            )}
+
+            {/* Command Approval Bar - 新コマンドシステム */}
+            {approvalController.showApprovalBar && approvalController.pendingCount > 0 && (
+                <CommandApprovalBar
+                    pendingCount={approvalController.pendingCount}
+                    onApproveAll={approvalController.handleApproveAll}
+                    onRejectAll={approvalController.handleRejectAll}
+                    onClose={approvalController.closeApprovalBar}
+                />
+            )}
 
             <Toaster position="top-center" richColors />
         </div>
