@@ -76,15 +76,14 @@ export function extractCommandFromComment(line: string): string | null {
     !content ||
     content.startsWith('ここにコマンドを記述') ||
     content.startsWith('Write your commands') ||
-    content.startsWith('AI_COMMAND_') ||
-    content.startsWith('テスト') ||
-    (content.includes(':') && !content.match(/\d+:\d+/)) // コロンを含むが位置指定でないもの（説明文）
+    content.startsWith('AI_COMMAND_')
   ) {
     return null;
   }
 
-  // コマンドとして有効な形式かチェック（大文字の英字で始まり、[ を含む）
-  if (!content.match(/^[A-Z_]+\[/)) {
+  // 新コマンド形式かチェック（COMMAND_NAME( の形式）
+  const newCommandPattern = /^(REPLACE_PARAGRAPH|INSERT_PARAGRAPH|DELETE_PARAGRAPH|MOVE_PARAGRAPH|SPLIT_PARAGRAPH|MERGE_PARAGRAPH)\s*\(/;
+  if (!newCommandPattern.test(content)) {
     return null;
   }
 
