@@ -58,17 +58,31 @@ export function parseInsertParagraph(
   args: string[],
   lineNumber?: number
 ): Command | ParseError {
-  if (args.length < 2) {
+  if (args.length < 3) {
     return {
-      message: 'INSERT_PARAGRAPH: 引数が不足しています（targetId, text が必要）',
+      message: 'INSERT_PARAGRAPH: 引数が不足しています（targetId, text, tempId が最低限必要）',
       lineNumber,
       rawCommand: `INSERT_PARAGRAPH(${args.join(', ')})`,
     };
   }
 
   const targetId = args[0];
-  let firstOptionIndex = args.length;
-  for (let i = 2; i < args.length; i++) {
+  const lastArg = args[args.length - 1];
+
+  // 最後の引数が temp- で始まっているかチェック
+  if (!lastArg.startsWith('temp-')) {
+    return {
+      message: 'INSERT_PARAGRAPH: 最後の引数は temp- で始まる仮IDである必要があります',
+      lineNumber,
+      rawCommand: `INSERT_PARAGRAPH(${args.join(', ')})`,
+    };
+  }
+
+  const tempId = lastArg;
+
+  // オプションとテキストの境界を探す
+  let firstOptionIndex = args.length - 1; // 最後の一個手前まで
+  for (let i = 1; i < args.length - 1; i++) {
     if (args[i].includes('=')) {
       firstOptionIndex = i;
       break;
@@ -77,7 +91,9 @@ export function parseInsertParagraph(
 
   const textParts = args.slice(1, firstOptionIndex);
   const text = textParts.join(', ');
-  const optionsStr = firstOptionIndex < args.length ? args.slice(firstOptionIndex).join(', ') : undefined;
+  const optionsStr = firstOptionIndex < args.length - 1 
+    ? args.slice(firstOptionIndex, args.length - 1).join(', ') 
+    : undefined;
 
   if (!isValidParagraphId(targetId)) {
     return {
@@ -88,7 +104,6 @@ export function parseInsertParagraph(
   }
 
   const options = optionsStr ? parseOptions(optionsStr) : undefined;
-  const tempId = generateTempId();
 
   return {
     type: 'INSERT_PARAGRAPH',
@@ -183,15 +198,15 @@ export function parseSplitParagraph(
   args: string[],
   lineNumber?: number
 ): Command | ParseError {
-  if (args.length < 3) {
+  if (args.length < 4) {
     return {
-      message: 'SPLIT_PARAGRAPH: 引数が不足しています（targetId, beforeText, afterText が必要）',
+      message: 'SPLIT_PARAGRAPH: 引数が不足しています（targetId, beforeText, afterText, tempId が必要）',
       lineNumber,
       rawCommand: `SPLIT_PARAGRAPH(${args.join(', ')})`,
     };
   }
 
-  const [targetId, beforeText, afterText] = args;
+  const [targetId, beforeText, afterText, tempId] = args;
 
   if (!isValidParagraphId(targetId)) {
     return {
@@ -201,7 +216,13 @@ export function parseSplitParagraph(
     };
   }
 
-  const tempId = generateTempId();
+  if (!tempId.startsWith('temp-')) {
+    return {
+      message: 'SPLIT_PARAGRAPH: 仮IDは temp- で始まる必要があります',
+      lineNumber,
+      rawCommand: `SPLIT_PARAGRAPH(${args.join(', ')})`,
+    };
+  }
 
   return {
     type: 'SPLIT_PARAGRAPH',

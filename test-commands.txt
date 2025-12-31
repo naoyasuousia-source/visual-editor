@@ -3,8 +3,8 @@
 ### 1. 基本的な置換とスタイリングのテスト
 <!-- REPLACE_PARAGRAPH(p1-1, <b>見出しに変更された一段落目</b>, blockType=h1, textAlign=center) -->
 
-### 2. 段落の挿入テスト（p1-2の後に挿入）
-<!-- INSERT_PARAGRAPH(p1-2, これは新しく挿入された中寄せの段落です。, textAlign=center, spacing=medium) -->
+### 2. 段落の挿入テスト（p1-2の後に挿入、仮ID: temp-new-para を指定）
+<!-- INSERT_PARAGRAPH(p1-2, これは新しく挿入された中寄せの段落です。, textAlign=center, spacing=medium, temp-new-para) -->
 
 ### 3. 段落の削除テスト
 <!-- DELETE_PARAGRAPH(p1-3) -->
@@ -12,15 +12,20 @@
 ### 4. 段落の移動テスト（p2-1をp1-1の後に移動）
 <!-- MOVE_PARAGRAPH(p2-1, p1-1) -->
 
-### 5. 段落の分割テスト
-<!-- SPLIT_PARAGRAPH(p2-2, 2ページ目の, 2段落目を分割しました) -->
+### 5. 段落の分割テスト（後半部分に仮ID: temp-split-half を指定）
+<!-- SPLIT_PARAGRAPH(p2-2, 2ページ目の, 2段落目を分割しました, temp-split-half) -->
 
 ### 6. 段落の結合テスト（p1-2をp1-1に結合）
 <!-- MERGE_PARAGRAPH(p1-2, p1-1) -->
 
-### 複数コマンドの同時実行例（すべて一気に試す場合）
+### 7. 【新仕様】仮IDを用いた連続編集のテスト
+<!-- INSERT_PARAGRAPH(p1-1, この段落は挿入された直後に移動されます。, temp-chain-1) -->
+<!-- MOVE_PARAGRAPH(temp-chain-1, p2-1) -->
+<!-- REPLACE_PARAGRAPH(temp-chain-1, 挿入して移動した後に内容を書き換えました。) -->
+
+### 複数コマンドの同時実行例（新仕様準拠）
 <!-- REPLACE_PARAGRAPH(p1-1, <b>タイトル</b>, blockType=h1, textAlign=center) -->
-<!-- INSERT_PARAGRAPH(p1-1, 副題としての挿入段落, textAlign=center) -->
+<!-- INSERT_PARAGRAPH(p1-1, 副題としての挿入段落, textAlign=center, temp-sub-title) -->
 <!-- REPLACE_PARAGRAPH(p1-2, 内容を更新しました。) -->
 <!-- DELETE_PARAGRAPH(p1-3) -->
-<!-- MOVE_PARAGRAPH(p2-1, p1-2) -->
+<!-- MOVE_PARAGRAPH(temp-sub-title, p1-2) -->

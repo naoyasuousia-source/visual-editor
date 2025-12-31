@@ -50,25 +50,31 @@ COMMANDS:
             spacing=none|small|medium|large, indent=0|1|2|3|4
    Example: &lt;!-- REPLACE_PARAGRAPH(p1-2, &lt;b&gt;Bold&lt;/b&gt; text, blockType=h1) --&gt;
 
-2. INSERT_PARAGRAPH(targetId, text, [options])
-   Insert new paragraph AFTER target. Options same as REPLACE_PARAGRAPH.
-   Example: &lt;!-- INSERT_PARAGRAPH(p1-3, New paragraph) --&gt;
+2. INSERT_PARAGRAPH(targetId, text, [options], tempId)
+   Insert new paragraph AFTER target. 'tempId' (e.g., temp-1) is MANDATORY.
+   Example: <!-- INSERT_PARAGRAPH(p1-3, New paragraph, temp-1) -->
 
 3. DELETE_PARAGRAPH(targetId)
    Mark for deletion (crossed out until approved).
-   Example: &lt;!-- DELETE_PARAGRAPH(p2-2) --&gt;
+   Example: <!-- DELETE_PARAGRAPH(p2-2) -->
 
 4. MOVE_PARAGRAPH(sourceId, targetId)
-   Move source paragraph to AFTER target.
-   Example: &lt;!-- MOVE_PARAGRAPH(p2-3, p1-5) --&gt;
+   Move source paragraph to AFTER target. Works with tempIds!
+   Example: <!-- MOVE_PARAGRAPH(temp-1, p1-5) -->
 
-5. SPLIT_PARAGRAPH(targetId, beforeText, afterText)
-   Split paragraph at text boundary.
-   Example: &lt;!-- SPLIT_PARAGRAPH(p2-4, First part., Second part) --&gt;
+5. SPLIT_PARAGRAPH(targetId, beforeText, afterText, tempId)
+   Split paragraph at text boundary. 'tempId' is for the SECOND part.
+   Example: <!-- SPLIT_PARAGRAPH(p2-4, First part., Second part, temp-2) -->
 
 6. MERGE_PARAGRAPH(sourceId, targetId)
    Merge source into target (source deleted).
-   Example: &lt;!-- MERGE_PARAGRAPH(p3-1, p3-2) --&gt;
+   Example: <!-- MERGE_PARAGRAPH(p3-1, p3-2) -->
+
+CHAINING COMMANDS:
+You can use a 'tempId' assigned in the same session for subsequent commands.
+Example:
+  <!-- INSERT_PARAGRAPH(p1-1, Sub heading, blockType=h2, temp-h2) -->
+  <!-- MOVE_PARAGRAPH(temp-h2, p2-3) -->
 
 HTML TAGS IN TEXT:
 &lt;b&gt;bold&lt;/b&gt;, &lt;br&gt;, &lt;sup&gt;superscript&lt;/sup&gt;, &lt;sub&gt;subscript&lt;/sub&gt;

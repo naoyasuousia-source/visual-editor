@@ -98,7 +98,7 @@ export interface InsertParagraphCommand extends BaseCommand {
   /** 適用するスタイルオプション */
   options?: ParagraphOptions;
   /** AI側で発行された仮ID（連続挿入を可能にするため） */
-  tempId?: ParagraphId;
+  tempId: ParagraphId;
 }
 
 /**
@@ -136,7 +136,7 @@ export interface SplitParagraphCommand extends BaseCommand {
   /** 後半部分の開始文字列 */
   afterText: string;
   /** 分割後に生成される新しい段落の仮ID */
-  tempId?: ParagraphId;
+  tempId: ParagraphId;
 }
 
 /**
