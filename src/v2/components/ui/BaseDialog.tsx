@@ -5,7 +5,8 @@ import { X } from 'lucide-react';
 interface BaseDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    title: string;
+    title: React.ReactNode;
+    titleClassName?: string;
     description?: string;
     children: React.ReactNode;
     maxWidth?: 'sm' | 'md' | 'lg' | 'xl';
@@ -23,6 +24,7 @@ export const BaseDialog: React.FC<BaseDialogProps> = ({
     open,
     onOpenChange,
     title,
+    titleClassName,
     description,
     children,
     maxWidth = 'md'
@@ -46,8 +48,8 @@ export const BaseDialog: React.FC<BaseDialogProps> = ({
                 >
                     {/* Header */}
                     <div className="flex items-start justify-between">
-                        <div className="space-y-1.5">
-                            <Dialog.Title className="text-lg font-semibold leading-none tracking-tight">
+                        <div className="space-y-1.5 flex-1 mr-8">
+                            <Dialog.Title className={`text-lg font-semibold leading-tight tracking-tight ${titleClassName || ''}`}>
                                 {title}
                             </Dialog.Title>
                             {description && (
