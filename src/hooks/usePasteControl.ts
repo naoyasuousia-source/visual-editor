@@ -37,10 +37,19 @@ export const usePasteControl = () => {
     }, []);
 
     const transformPastedHTML = useCallback((html: string): string => {
-        // 段落番号(data-para)やID(id="p...")を削除してクリーンアップ
-        return html
-            .replace(/\sdata-para="[^"]*"/g, '')
-            .replace(/\sid="p[0-9-]*"/g, '');
+        let cleaned = html;
+
+        // 1. 全ての div と section タグを除去して、中身の要素 (p, h1, b, i等) だけを残す
+        // ページベースのエディタにおいて、構造タグがペーストされるとレイアウトが壊れる（ページの中にページが入る等）ため、
+        // ペーストされるHTMLからは純粋なボディーコンテンツのみを抽出する。
+        cleaned = cleaned.replace(/<(?:div|section)[^>]*>/gi, '');
+        cleaned = cleaned.replace(/<\/(?:div|section)>/gi, '');
+
+        // 2. 段落番号 (data-para) や ID (id="p...") を削除してクリーンアップ
+        cleaned = cleaned.replace(/\sdata-para="[^"]*"/g, '')
+                        .replace(/\sid="p[0-9-]*"/g, '');
+
+        return cleaned;
     }, []);
 
     return {
