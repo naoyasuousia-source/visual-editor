@@ -22,14 +22,28 @@ export const usePageOperations = (editor: Editor | null, options: UsePageOperati
     const addPage = () => {
         if (!editor) return;
         
-        const { tr } = editor.state;
+        const { tr, selection, doc } = editor.state;
         const node = editor.schema.nodes.page.createAndFill({
             class: 'page'
         });
         
         if (node) {
-            const endPos = editor.state.doc.content.size;
-            editor.view.dispatch(tr.insert(endPos, node));
+            let insertPos = doc.content.size;
+            const { from } = selection;
+            
+            // 現在の選択範囲が含まれるページを探す
+            doc.descendants((child, pos) => {
+                if (child.type.name === 'page') {
+                    const pageEnd = pos + child.nodeSize;
+                    if (from >= pos && from < pageEnd) {
+                        insertPos = pageEnd;
+                    }
+                    return false; // ページの中までは探索しない
+                }
+                return true;
+            });
+
+            editor.view.dispatch(tr.insert(insertPos, node));
             toast.success('ページを追加しました');
         }
     };
