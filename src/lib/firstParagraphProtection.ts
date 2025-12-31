@@ -6,10 +6,8 @@ import { Plugin, PluginKey } from '@tiptap/pm/state';
  * 
  * 1ページ目から全ての段落が削除されることを防ぐ。
  * 
- * 【重要】
- * - マージ操作（段落2→段落1へのBackspace）は許可する
- * - 1ページ目に最低1つの段落が残ればOK
- * - idやdata-paraは変わってもよい（paragraphNumberingが再付与する）
+ * 【修正内容】
+ * Attribute `data-page` に依存せず、ドキュメントの構造（最初のページ）を直接チェックするように改善。
  */
 export const FirstParagraphProtection = Extension.create({
     name: 'firstParagraphProtection',
@@ -25,31 +23,25 @@ export const FirstParagraphProtection = Extension.create({
                     // トランザクション適用後のドキュメントを確認
                     const newDoc = transaction.doc;
                     
-                    // 1ページ目に段落が残るかチェック
-                    let firstPageHasParagraph = false;
-                    
-                    newDoc.descendants((node) => {
-                        if (firstPageHasParagraph) return false;
-                        
-                        // 1ページ目を探す
-                        if (node.type.name === 'page') {
-                            const pageNum = node.attrs['data-page'];
-                            if (pageNum === '1' || pageNum === 1) {
-                                // このページ内に段落があるか確認
-                                node.descendants((child) => {
-                                    if (child.type.name === 'paragraph' || child.type.name === 'heading') {
-                                        firstPageHasParagraph = true;
-                                        return false;
-                                    }
-                                });
-                            }
-                            // 1ページ目をチェックしたら終了
-                            if (pageNum === '1' || pageNum === 1) return false;
+                    // 最初のノード（1ページ目）を取得
+                    const firstPage = newDoc.firstChild;
+                    if (!firstPage || firstPage.type.name !== 'page') {
+                        // 1ページ目自体が存在しない、または型が異なる場合はSchemaの強制に任せる
+                        return true;
+                    }
+
+                    // 1ページ目に段落（または見出し）が存在するかチェック
+                    let hasBlock = false;
+                    firstPage.descendants((node) => {
+                        if (hasBlock) return false;
+                        if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+                            hasBlock = true;
+                            return false; 
                         }
                     });
 
-                    // 1ページ目に段落が残らない場合は阻止
-                    if (!firstPageHasParagraph) {
+                    // 1ページ目に一つもブロック要素がない場合は阻止（保険）
+                    if (!hasBlock) {
                         return false;
                     }
 
