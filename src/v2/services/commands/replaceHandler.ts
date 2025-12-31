@@ -66,9 +66,7 @@ export function executeReplaceParagraph(
     editor
       .chain()
       .focus()
-      .setNodeSelection(pos)
-      .deleteSelection()
-      .insertContentAt(pos, {
+      .insertContentAt({ from: pos, to: pos + found.node.nodeSize }, {
         type: typeName,
         attrs,
         content,

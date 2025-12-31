@@ -56,12 +56,11 @@ export function executeInsertParagraph(
     if (options?.indent !== undefined) attrs.indent = options.indent !== 0 ? String(options.indent) : null;
 
     if (isPlaceholder) {
-      // プレースホルダーを消して同じ位置に挿入
+      // プレースホルダーの場合は範囲指定で置換
       editor
         .chain()
         .focus()
-        .deleteRange({ from: pos, to: pos + node.nodeSize })
-        .insertContentAt(insertPos, {
+        .insertContentAt({ from: pos, to: pos + node.nodeSize }, {
           type: typeName,
           attrs,
           content,

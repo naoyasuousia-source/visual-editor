@@ -27,15 +27,13 @@
 
 ## 1. 未解決要件（移動許可がNGの要件は絶対に移動・編集しないこと）（勝手に移動許可をOKに書き換えないこと）
 
+
 <requirement>
-<content><!-- INSERT_PARAGRAPH(p3-1, このコマンドで3ページ目が自動生成されます。, blockType=h1, spacing=m, temp-p3-para1) -->このコマンド単体で3ページ目の1行目に挿入されるが、空の二段落目も生成されてしまう</content>
+<content>split後に片方をreplaceすると、replaceされていないほうの段落にも色付けハイライトが残ってしまい、さらに個別メニューは出ないので自動編集終了後も色付けハイライトが残ってしまう。→split後に片方がreplaceされたら、もう片方は色付けハイライトしないようにする。</content>
 <current-situation></current-situation>
 <remarks></remarks>
 <permission-to-move>NG</permission-to-move>
 </requirement>
-
-
-
 
 
 
@@ -46,7 +44,7 @@
 - 2025-12-31: `useCommandHighlight.ts` を大幅に刷新。Reactの副作用やクロージャによる古い状態参照を避けるため、一括登録および個別承認の全行程で `useCommandHighlightStore.getState()` を直接使用するように変更。これにより連続編集時の状態残留を完全に解消。
 - 2025-12-31: `approveHighlight` に DOM 整合性チェックを追加。承認アクション時に、何らかの理由で DOM から消失している保留中ハイライト（ゴースト）があれば自動的に掃除する安全策を導入。
 - 2025-12-31: `newCommandExecutionService.ts` を修正。仮想ターゲットIDのプレフィックスを `temp-` に統一し、複数コマンドによる連番ページ生成（`p3-1`, `p3-1` → P3, P4）をサポート。
-- 2025-12-31: `insertHandler.ts` および `moveHandler.ts` を修正。ターゲットが仮想プレースホルダーの場合に「あとに挿入」ではなく「置換/消費」することで、新ページの1段落目として正しく配置されるよう改善。
+- 2025-12-31: `insertHandler.ts`, `replaceHandler.ts`, `moveHandler.ts` を修正。ターゲットが仮想プレースホルダーの場合の処理を「削除→挿入」から「範囲指定による原子的置換」に変更。これにより、新ページが一時的に空になることで発生していた「空の2段落目が自動挿入される」不具合を解消。
 - 2025-12-31: `aiMetadata.ts` のAIガイドを更新。デフォルトオプション（p, left, s, 0）を非表示にし、新ページ生成のルールを追記。
 - 2025-12-31: `tiptapContentUtils.ts` の `parseHtmlText` を修正。斜体タグ（<i>, <em>）のサポートを追加し、Tiptapの標準マーク（strong/em）にマッピングされることを確認。
 - 2025-12-31: `ParagraphSpacing` 型を `none|xs|m|l|xl` に刷新。
@@ -68,6 +66,7 @@
 - **オプション設定の共通化・最適化**: デフォルト値（p, left, xs/s, 0）をAIに省略させるルールを整備。同時に `spacing` の選択肢を `none|xs|m|l|xl` に刷新。
 - **Bold/Italic対応**: `parseHtmlText` において `<b>/<strong>` および `<i>/<em>` を Tiptap の `bold/italic` マークへ変換する処理を実装。
 - **改ページ機能（仮想ターゲット）**: `pX-1` 指定による新ページ自動生成と、複数ページ連続生成、および1段落目への正確な挿入（プレースホルダー型から消費型への改善）を実現。
+- **新ページ空段落混入の防止**: プレースホルダー消費時に「範囲指定の原子的置換」を行うことで、Tiptapのスキーマ修正（空ページへの段落自動挿入）を回避。
 
 ## 5. 要件に関連する全ファイルのファイル構成（それぞれの役割を1行で併記）
 - `src/v2/utils/paragraphIdManager.ts`: 段落ID（正式・仮）の生成・検証ロジックを管理。

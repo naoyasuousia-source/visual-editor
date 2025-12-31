@@ -79,13 +79,11 @@ export function executeMoveParagraph(
     const sourceContent = sourceNode.content.toJSON();
 
     if (isPlaceholder) {
-      // プレースホルダーの場合はその場所に割り込む形で移動し、プレースホルダーを消す
+      // プレースホルダーの場合は範囲指定で置換（原子的に入れ替える）
       editor
         .chain()
         .focus()
-        .deleteRange({ from: sourcePos, to: sourcePos + sourceSize })
-        // sourcePos < insertPos の補正は済んでいるので insertPos をそのまま使う
-        .insertContentAt(insertPos, {
+        .insertContentAt({ from: targetPos, to: targetPos + targetNode.nodeSize }, {
           type: sourceNode.type.name,
           attrs: {
             ...sourceNode.attrs,
@@ -96,12 +94,24 @@ export function executeMoveParagraph(
           },
           content: sourceContent,
         })
-        // 挿入後にずれたプレースホルダー（元あった場所＋挿入分）を削除
-        // プレースホルダーの新しい位置 = insertPos + sourceSize
-        .deleteRange({ from: insertPos + sourceSize, to: insertPos + sourceSize + targetNode.nodeSize })
+        .run();
+
+      // 移動元の削除。挿入（置換ではないが今回はサイズが違う可能性があるので注意）後の位置を計算
+      // ターゲットがソースより前にある場合、挿入されたノードのサイズ分だけソースの位置が後ろにずれる
+      // ただし、今回は「置換」なので、(sourceNode.nodeSize - targetNode.nodeSize) 分の変動がある
+      let adjustedSourcePos = sourcePos;
+      if (targetPos < sourcePos) {
+        adjustedSourcePos += (sourceNode.nodeSize - targetNode.nodeSize);
+      }
+
+      editor
+        .chain()
+        .focus()
+        .deleteRange({ from: adjustedSourcePos, to: adjustedSourcePos + sourceSize })
         .run();
     } else {
       // 通常の移動（あとに挿入）
+      // ... (既存のロジックを維持)
       editor
         .chain()
         .focus()
