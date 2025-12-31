@@ -30,7 +30,7 @@ export default defineConfig(({ command }) => ({
   ],
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src/v2'),
+      '@': resolve(__dirname, 'src'),
     },
   },
   base: './', // GitHub Pages用。リポジトリ名が決まっている場合は '/repo-name/' でも良い

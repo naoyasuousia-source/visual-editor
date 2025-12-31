@@ -4,7 +4,7 @@
     "module": "ES2020",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/v2/*"]
+      "@/*": ["src/*"]
     },
     "rootDir": "./src",
     "outDir": "./dist",
