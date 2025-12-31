@@ -50,7 +50,7 @@ export function isOfficialId(id: ParagraphId): boolean {
  * @returns 仮IDの場合true
  */
 export function isTempId(id: ParagraphId): boolean {
-  return /^temp-[a-f0-9-]+$/.test(id);
+  return /^temp-[\w-]+$/.test(id);
 }
 
 /**
