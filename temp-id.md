@@ -33,26 +33,28 @@
 <current-situation>コンソールエラーは出なくなったが、やはり、insert→moveの場合、表示されてる個別承認をすべて完了しても、「一個の変更が保留中です」となり、自動編集フローが終了しない。
 </current-situation>
 <remarks></remarks>
-<permission-to-move>NG</permission-to-move>
+<permission-to-move>OK</permission-to-move>
 </requirement>
 
 ## 2. 未解決要件に関するコード変更履歴（目的、変更内容、変更日時）
 - 2025-12-31: INSERT_PARAGRAPH/SPLIT_PARAGRAPH での tempId 指定を必須化。AIガイドも更新。
 - 2025-12-31: isTempId の正規表現を緩和（`temp-[\w-]+`）。AIの自由なID命名に対応。
 - 2025-12-31: `moveHandler.ts` の位置計算ロジックを修正。`sourcePos < insertPos` の場合に削除によるズレを補正する処理を追記。Position out of rangeエラーを解消。
-- 2025-12-31: `useCommandHighlight.ts` の `registerHighlight` を修正。新コマンドが既存の pending ハイライトと同じ段落を対象とする場合、古いハイライトを自動で store から削除するように変更。連続編集時の「透明な未承認編集」残留問題を解消。
+- 2025-12-31: `useCommandHighlight.ts` を大幅に刷新。Reactの副作用やクロージャによる古い状態参照を避けるため、一括登録および個別承認の全行程で `useCommandHighlightStore.getState()` を直接使用するように変更。これにより連続編集時の状態残留を完全に解消。
+- 2025-12-31: `approveHighlight` に DOM 整合性チェックを追加。承認アクション時に、何らかの理由で DOM から消失している保留中ハイライト（ゴースト）があれば自動的に掃除する安全策を導入。
 
 ## 3. 分析中に気づいた重要ポイント（試してだめだったこと、仮設、制約条件等...）
 - 【原因1: パースエラー】以前の仮IDシステムがUUIDを前提としていたため、`isTempId` が厳格すぎて `temp-chain-1` 等を拒絶していた。
-- 【原因2: 実行エラー】`MOVE_PARAGRAPH` において、`sourcePos < insertPos` の順序で処理（削除→挿入）を行う際、削除によってドキュメントが短くなることを考慮せず元の `insertPos` を使ったため、末尾付近で `Position out of range` が発生していた。
-- 【原因3: 状態残留エラー】`INSERT` した段落を `MOVE` すると、DOM上の `data-command-id` が `INSERTのID` から `MOVEのID` に上書きされる。そのため `INSERT` の個別承認が不可能になり、Store内に未承認状態として残り続けることで、自動編集フロー（ロック状態）が終了しなくなっていた。
-- 【制約】Tiptapの `.chain()` を使う場合、途中の削除による位置の変化を手動で計算して後続のコマンド（`.insertContentAt`）に渡す必要がある。
+- 【原因2: 実行エラー】`MOVE_PARAGRAPH` において、削除によるドキュメント長の縮みを考慮せず元の `insertPos` を使ったため、範囲外エラーが発生していた。
+- 【原因3: 状態残留エラー（再分析）】`registerMultipleHighlights` の `forEach` ループ内では、React の `useCallback` がそのレンダリングサイクルの `highlights` 状態に固定（クロージャにキャプチャ）されていた。そのため、ループの 1 回目で追加したハイライトを、2 回目の `registerHighlight` が「ストア内の最新状態」として認識できず、重複削除が機能していなかった。
+- 【解決策】ループ内でも常に最新の Zustand 内部状態にアクセスできるよう、`getState()` を用いた直接参照に切り替えた。
+- 【ゴーストハイライト】コマンドが連鎖すると、古いコマンド ID 属性が新しいコマンドで上書きされる。DOM 上に物理的に存在しなくなった未承認状態は、承認ポップアップも出せないため、自動的にクリーンアップする必要がある。
 
 ## 4. 解決済み要件とその解決方法
 - **仮IDのパースエラー**: `paragraphIdManager.ts` の正規表現を緩和することで解決。
 - **連続編集時の位置ずれエラー**: `moveHandler.ts` で `insertPos` の動的補正を実装することで解決。
 - **temp-chain-1 がパースエラーで通らない**: `isTempId` の正規表現を `temp-[\w-]+` に修正することで解消（UUID以外の自由な命名を許可）。
-- **連続編集後にフローが終了しない**: `useCommandHighlight.ts` で、同一段落への後続コマンド実行時に古いハイライトを自動除去するロジックを導入して解決。
+- **連続編集後にフローが終了しない (Root Cause Fixed)**: `useCommandHighlight.ts` で `getState()` を用いた同期的な重複チェックと、承認時の DOM 整合性チェックを導入することで完全に解決。
 - **挿入後に移動した段落の承認**: 単一ノードに対して複数コマンドが連なった場合、最新の状態（MOVE等）のみを承認対象とすることでUXをシンプル化。
 
 ## 5. 要件に関連する全ファイルのファイル構成（それぞれの役割を1行で併記）

@@ -67,22 +67,26 @@ export function useCommandHighlight(editor: Editor | null) {
         return;
       }
 
-      // 重複チェック: 同じ段落に対する古い未承認ハイライトがあれば削除する
-      // (新しいコマンドによって属性が上書きされ、古い方はDOMから消えて承認不能になるため)
-      const existingHighlights = Array.from(highlights.values());
-      result.affectedParagraphIds.forEach(pId => {
-        const superseded = existingHighlights.find(h => 
-          !h.approved && !h.rejected && h.paragraphIds.includes(pId)
-        );
-        if (superseded) {
-          store.removeHighlight(superseded.commandId);
-        }
+      // 重要: クロージャ内の hooks 経由の highlights ではなく、getState() で最新の状態を取得する
+      const storeState = useCommandHighlightStore.getState();
+      const currentHighlightsList = Array.from(storeState.highlights.values());
+
+      // 重複チェック: 新しいコマンドが対象とする段落IDのいずれかに関連付けられている
+      // 古い未承認のハイライトをすべて解消する (上書きされたゴーストハイライトを防止)
+      const toRemove = currentHighlightsList.filter(h => 
+        !h.approved && !h.rejected && 
+        h.commandId !== result.commandId &&
+        h.paragraphIds.some(pId => result.affectedParagraphIds.includes(pId))
+      );
+
+      toRemove.forEach(superseded => {
+        storeState.removeHighlight(superseded.commandId);
       });
 
       const highlight = createHighlightFromResult(result, command);
-      store.addHighlight(highlight);
+      storeState.addHighlight(highlight);
     },
-    [createHighlightFromResult, highlights, store]
+    [createHighlightFromResult]
   );
 
   /**
@@ -105,14 +109,15 @@ export function useCommandHighlight(editor: Editor | null) {
    */
   const approveHighlight = useCallback(
     (commandId: string) => {
-      const highlight = highlights.get(commandId);
+      const storeState = useCommandHighlightStore.getState();
+      const highlight = storeState.highlights.get(commandId);
       if (!highlight || !editor) {
         if (!highlight) console.error('ハイライトが見つかりません:', commandId);
         return;
       }
 
       // 承認済みマーク
-      store.markAsApproved(commandId);
+      storeState.markAsApproved(commandId);
 
       // 1. 対象のノードを全列挙（属性ベースで確実に探す）
       const targets: { node: any; pos: number }[] = [];
@@ -142,9 +147,22 @@ export function useCommandHighlight(editor: Editor | null) {
       }
 
       // ハイライトを削除
-      store.removeHighlight(commandId);
+      storeState.removeHighlight(commandId);
+
+      // 安全策: 承認後の DOM に残っている可能性のある他のハイライトとの整合性をチェック
+      // (もし pending のものが DOM から消えていたら、それもついでに消す)
+      const remaining = Array.from(storeState.highlights.values()).filter(h => !h.approved && !h.rejected);
+      remaining.forEach(h => {
+        let existsInDoc = false;
+        editor.state.doc.descendants(node => {
+          if (node.attrs['data-command-id'] === h.commandId) { existsInDoc = true; return false; }
+        });
+        if (!existsInDoc) {
+          storeState.removeHighlight(h.commandId);
+        }
+      });
     },
-    [editor, highlights, store]
+    [editor]
   );
 
   /**
@@ -152,14 +170,15 @@ export function useCommandHighlight(editor: Editor | null) {
    */
   const rejectHighlight = useCallback(
     (commandId: string) => {
-      const highlight = highlights.get(commandId);
+      const storeState = useCommandHighlightStore.getState();
+      const highlight = storeState.highlights.get(commandId);
       if (!highlight || !editor) {
         if (!highlight) console.error('ハイライトが見つかりません:', commandId);
         return;
       }
 
       // 破棄済みマーク
-      store.markAsRejected(commandId);
+      storeState.markAsRejected(commandId);
 
       // 1. エディタ上に存在する、このコマンドの影響を受けたノードを特定
       const targets: { node: any; pos: number }[] = [];
@@ -195,34 +214,34 @@ export function useCommandHighlight(editor: Editor | null) {
       // ※簡易的には上記のループで処理されないものが残るが、現状は安全のため基本的な復元に留める
 
       // ハイライトを削除
-      store.removeHighlight(commandId);
+      storeState.removeHighlight(commandId);
     },
-    [editor, highlights, store]
+    [editor]
   );
 
   /**
    * すべてのハイライトを承認
    */
   const approveAllHighlights = useCallback(() => {
-    const list = Array.from(highlights.values());
+    const list = Array.from(useCommandHighlightStore.getState().highlights.values());
     const pending = list.filter((h) => !h.approved && !h.rejected);
 
     pending.forEach((highlight) => {
       approveHighlight(highlight.commandId);
     });
-  }, [highlights, approveHighlight]);
+  }, [approveHighlight]);
 
   /**
    * すべてのハイライトを破棄
    */
   const rejectAllHighlights = useCallback(() => {
-    const list = Array.from(highlights.values());
+    const list = Array.from(useCommandHighlightStore.getState().highlights.values());
     const pending = list.filter((h) => !h.approved && !h.rejected);
 
     pending.forEach((highlight) => {
       rejectHighlight(highlight.commandId);
     });
-  }, [highlights, rejectHighlight]);
+  }, [rejectHighlight]);
 
   return {
     registerHighlight,
@@ -232,7 +251,7 @@ export function useCommandHighlight(editor: Editor | null) {
     approveAllHighlights,
     rejectAllHighlights,
     getAllHighlights,
-    getHighlight: (id: string) => highlights.get(id),
+    getHighlight: (id: string) => useCommandHighlightStore.getState().highlights.get(id),
     getPendingCount,
     clearAll: store.clearAll,
   };
