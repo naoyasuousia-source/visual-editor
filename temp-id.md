@@ -28,9 +28,8 @@
 ## 1. 未解決要件（移動許可がNGの要件は絶対に移動・編集しないこと）（勝手に移動許可をOKに書き換えないこと）
 
 <requirement>
-<content>改ページし、正しく新ページにinsert、moveできる機能の開放。どういう方式でもいいので、1ターンで、複数新ページを生成できるコマンドルールを整備してほしい
-</content>
-<current-situation><!-- INSERT_PARAGRAPH(p3-1, このコマンドで3ページ目が自動生成されます。, blockType=h1, spacing=m, temp-p3-para1) -->このコマンド単体だと、3ページ目の2段落目に挿入されてしまう。1段落目に挿入されるようにしてほしい</current-situation>
+<content><!-- INSERT_PARAGRAPH(p3-1, このコマンドで3ページ目が自動生成されます。, blockType=h1, spacing=m, temp-p3-para1) -->このコマンド単体で3ページ目の1行目に挿入されるが、空の二段落目も生成されてしまう</content>
+<current-situation></current-situation>
 <remarks></remarks>
 <permission-to-move>NG</permission-to-move>
 </requirement>
@@ -46,7 +45,8 @@
 - 2025-12-31: `moveHandler.ts` の位置計算ロジックを修正。`sourcePos < insertPos` の場合に削除によるズレを補正する処理を追記。Position out of rangeエラーを解消。
 - 2025-12-31: `useCommandHighlight.ts` を大幅に刷新。Reactの副作用やクロージャによる古い状態参照を避けるため、一括登録および個別承認の全行程で `useCommandHighlightStore.getState()` を直接使用するように変更。これにより連続編集時の状態残留を完全に解消。
 - 2025-12-31: `approveHighlight` に DOM 整合性チェックを追加。承認アクション時に、何らかの理由で DOM から消失している保留中ハイライト（ゴースト）があれば自動的に掃除する安全策を導入。
-- 2025-12-31: `newCommandExecutionService.ts` に仮想ターゲット解決ロジックを実装。`pX-1`（X > 最大ページ）へのターゲット指定による自動ページ生成（改ページ機能）をサポート。
+- 2025-12-31: `newCommandExecutionService.ts` を修正。仮想ターゲットIDのプレフィックスを `temp-` に統一し、複数コマンドによる連番ページ生成（`p3-1`, `p3-1` → P3, P4）をサポート。
+- 2025-12-31: `insertHandler.ts` および `moveHandler.ts` を修正。ターゲットが仮想プレースホルダーの場合に「あとに挿入」ではなく「置換/消費」することで、新ページの1段落目として正しく配置されるよう改善。
 - 2025-12-31: `aiMetadata.ts` のAIガイドを更新。デフォルトオプション（p, left, s, 0）を非表示にし、新ページ生成のルールを追記。
 - 2025-12-31: `tiptapContentUtils.ts` の `parseHtmlText` を修正。斜体タグ（<i>, <em>）のサポートを追加し、Tiptapの標準マーク（strong/em）にマッピングされることを確認。
 - 2025-12-31: `ParagraphSpacing` 型を `none|xs|m|l|xl` に刷新。
@@ -67,6 +67,7 @@
 - **連続編集後のフロー終了不具合**: `useCommandHighlight.ts` で `getState()` を用いた同期的な重複チェックと、承認時の DOM 整合性チェックを導入することで、挿入→移動といった連続操作後も正しく全ハイライトがクリアされ、フローが終了するように修正。
 - **オプション設定の共通化・最適化**: デフォルト値（p, left, xs/s, 0）をAIに省略させるルールを整備。同時に `spacing` の選択肢を `none|xs|m|l|xl` に刷新。
 - **Bold/Italic対応**: `parseHtmlText` において `<b>/<strong>` および `<i>/<em>` を Tiptap の `bold/italic` マークへ変換する処理を実装。
+- **改ページ機能（仮想ターゲット）**: `pX-1` 指定による新ページ自動生成と、複数ページ連続生成、および1段落目への正確な挿入（プレースホルダー型から消費型への改善）を実現。
 
 ## 5. 要件に関連する全ファイルのファイル構成（それぞれの役割を1行で併記）
 - `src/v2/utils/paragraphIdManager.ts`: 段落ID（正式・仮）の生成・検証ロジックを管理。

@@ -59,18 +59,19 @@ export function executeNewCommands(
   commands: Command[]
 ): CommandExecutionResult[] {
   const results: CommandExecutionResult[] = [];
-  const currentMaxPage = getMaxPageNumber(editor);
-  let virtualPageOffset = 0;
+  const originalMaxPage = getMaxPageNumber(editor);
+  let lastUsedVirtualPage = originalMaxPage;
 
   for (const command of commands) {
-    // ターゲットが「まだ存在しない新ページの最初の段落」かチェック
-    // 複数のコマンドが新ページをターゲットとした場合、順次 n+1, n+2... として扱う
-    if (
-      ('targetId' in command && isVirtualNewPageTarget(editor, command.targetId, currentMaxPage)) ||
-      (command.type === 'MOVE_PARAGRAPH' && isVirtualNewPageTarget(editor, command.targetId, currentMaxPage))
-    ) {
-      virtualPageOffset++;
-      const actualPageNum = currentMaxPage + virtualPageOffset;
+    // ターゲットが新ページの最初の段落 (pX-1) かつ現在の最大ページより大きいか判定
+    const match = command.targetId.match(/^p(\d+)-1$/);
+    if (match && parseInt(match[1], 10) > originalMaxPage) {
+      // 本来の要求ページ番号（X）か、既に発行済みの仮想ページ＋1の大きい方を採用
+      // これにより、複数の p3-1 指定があった場合に P3, P4... と連番で生成される
+      const requestedPageNum = parseInt(match[1], 10);
+      const actualPageNum = Math.max(requestedPageNum, lastUsedVirtualPage + 1);
+      lastUsedVirtualPage = actualPageNum;
+      
       const placeholderId = `temp-virtual-${actualPageNum}-1`;
 
       // 新ページとプレースホルダー段落を作成

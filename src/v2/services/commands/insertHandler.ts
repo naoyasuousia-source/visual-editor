@@ -29,7 +29,10 @@ export function executeInsertParagraph(
 
   try {
     const { node, pos } = found;
-    const insertPos = pos + node.nodeSize;
+    const isPlaceholder = node.attrs['data-virtual-placeholder'] === 'true';
+    
+    // プレースホルダーの場合は、「あとに挿入」ではなく「これ自体をその内容にする」（実質置換）
+    const insertPos = isPlaceholder ? pos : pos + node.nodeSize;
 
     const content = parseHtmlText(text);
 
@@ -52,15 +55,30 @@ export function executeInsertParagraph(
     if (options?.spacing) attrs.spacing = options.spacing;
     if (options?.indent !== undefined) attrs.indent = options.indent !== 0 ? String(options.indent) : null;
 
-    editor
-      .chain()
-      .focus()
-      .insertContentAt(insertPos, {
-        type: typeName,
-        attrs,
-        content,
-      })
-      .run();
+    if (isPlaceholder) {
+      // プレースホルダーを消して同じ位置に挿入
+      editor
+        .chain()
+        .focus()
+        .deleteRange({ from: pos, to: pos + node.nodeSize })
+        .insertContentAt(insertPos, {
+          type: typeName,
+          attrs,
+          content,
+        })
+        .run();
+    } else {
+      // 通常の挿入（あとに挿入）
+      editor
+        .chain()
+        .focus()
+        .insertContentAt(insertPos, {
+          type: typeName,
+          attrs,
+          content,
+        })
+        .run();
+    }
 
     if (options && tempId) {
       applyParagraphOptions(editor, tempId, options);

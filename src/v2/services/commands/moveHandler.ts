@@ -54,12 +54,13 @@ export function executeMoveParagraph(
   try {
     const { node: sourceNode, pos: sourcePos } = sourceFound;
     const { node: targetNode, pos: targetPos } = targetFound;
+    const isPlaceholder = targetNode.attrs['data-virtual-placeholder'] === 'true';
 
     const sourceSize = sourceNode.nodeSize;
-    let insertPos = targetPos + targetNode.nodeSize;
+    let insertPos = isPlaceholder ? targetPos : targetPos + targetNode.nodeSize;
 
     // 移動元と移動先が同じ、または移動元が既にターゲットの直後にある場合は何もしない
-    if (sourcePos === insertPos || (sourcePos === targetPos + targetNode.nodeSize)) {
+    if (sourcePos === insertPos || (!isPlaceholder && sourcePos === targetPos + targetNode.nodeSize)) {
       return {
         success: true,
         commandId,
@@ -77,22 +78,47 @@ export function executeMoveParagraph(
 
     const sourceContent = sourceNode.content.toJSON();
 
-    editor
-      .chain()
-      .focus()
-      .deleteRange({ from: sourcePos, to: sourcePos + sourceSize })
-      .insertContentAt(insertPos, {
-        type: sourceNode.type.name,
-        attrs: {
-          ...sourceNode.attrs,
-          id: sourceId,
-          'data-command-type': 'move',
-          'data-command-id': commandId,
-          'data-move-from': sourcePos,
-        },
-        content: sourceContent,
-      })
-      .run();
+    if (isPlaceholder) {
+      // プレースホルダーの場合はその場所に割り込む形で移動し、プレースホルダーを消す
+      editor
+        .chain()
+        .focus()
+        .deleteRange({ from: sourcePos, to: sourcePos + sourceSize })
+        // sourcePos < insertPos の補正は済んでいるので insertPos をそのまま使う
+        .insertContentAt(insertPos, {
+          type: sourceNode.type.name,
+          attrs: {
+            ...sourceNode.attrs,
+            id: sourceId,
+            'data-command-type': 'move',
+            'data-command-id': commandId,
+            'data-move-from': sourcePos,
+          },
+          content: sourceContent,
+        })
+        // 挿入後にずれたプレースホルダー（元あった場所＋挿入分）を削除
+        // プレースホルダーの新しい位置 = insertPos + sourceSize
+        .deleteRange({ from: insertPos + sourceSize, to: insertPos + sourceSize + targetNode.nodeSize })
+        .run();
+    } else {
+      // 通常の移動（あとに挿入）
+      editor
+        .chain()
+        .focus()
+        .deleteRange({ from: sourcePos, to: sourcePos + sourceSize })
+        .insertContentAt(insertPos, {
+          type: sourceNode.type.name,
+          attrs: {
+            ...sourceNode.attrs,
+            id: sourceId,
+            'data-command-type': 'move',
+            'data-command-id': commandId,
+            'data-move-from': sourcePos,
+          },
+          content: sourceContent,
+        })
+        .run();
+    }
 
     return {
       success: true,
