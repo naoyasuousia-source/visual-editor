@@ -29,17 +29,10 @@
 
 <requirement>
 <content><!-- INSERT_PARAGRAPH(p1-1, この段落は挿入された直後に移動されます。, temp-chain-1) -->
-<!-- MOVE_PARAGRAPH(temp-chain-1, p2-1) -->このコマンドを送ると、挿入されるが、エラーでmoveは通らない。</content>
-<current-situation></current-situation>
-<remarks>このファイルの下部の計画書を参考に分析すること。</remarks>
-<permission-to-move>OK</permission-to-move>
-</requirement>
-
-<requirement>
-<content><!-- INSERT_PARAGRAPH(p1-1, この段落は挿入された直後に移動されます。, temp-chain-1) -->
 <!-- MOVE_PARAGRAPH(temp-chain-1, p2-1) -->このコマンドを送ると、moveまで正常にされるが、個別に承認を完了しても未承認が残ってるということになり、自動編集フローが終了しない。</content>
-<current-situation></current-situation>
-<remarks>insertもひとつの編集とみなされ、moveして存在しないのに、承認を求めてしまっているのではないか。</remarks>
+<current-situation>コンソールエラーは出なくなったが、やはり、insert→moveの場合、表示されてる個別承認をすべて完了しても、「一個の変更が保留中です」となり、自動編集フローが終了しない。
+</current-situation>
+<remarks></remarks>
 <permission-to-move>NG</permission-to-move>
 </requirement>
 
@@ -47,15 +40,20 @@
 - 2025-12-31: INSERT_PARAGRAPH/SPLIT_PARAGRAPH での tempId 指定を必須化。AIガイドも更新。
 - 2025-12-31: isTempId の正規表現を緩和（`temp-[\w-]+`）。AIの自由なID命名に対応。
 - 2025-12-31: `moveHandler.ts` の位置計算ロジックを修正。`sourcePos < insertPos` の場合に削除によるズレを補正する処理を追記。Position out of rangeエラーを解消。
+- 2025-12-31: `useCommandHighlight.ts` の `registerHighlight` を修正。新コマンドが既存の pending ハイライトと同じ段落を対象とする場合、古いハイライトを自動で store から削除するように変更。連続編集時の「透明な未承認編集」残留問題を解消。
 
 ## 3. 分析中に気づいた重要ポイント（試してだめだったこと、仮設、制約条件等...）
 - 【原因1: パースエラー】以前の仮IDシステムがUUIDを前提としていたため、`isTempId` が厳格すぎて `temp-chain-1` 等を拒絶していた。
 - 【原因2: 実行エラー】`MOVE_PARAGRAPH` において、`sourcePos < insertPos` の順序で処理（削除→挿入）を行う際、削除によってドキュメントが短くなることを考慮せず元の `insertPos` を使ったため、末尾付近で `Position out of range` が発生していた。
+- 【原因3: 状態残留エラー】`INSERT` した段落を `MOVE` すると、DOM上の `data-command-id` が `INSERTのID` から `MOVEのID` に上書きされる。そのため `INSERT` の個別承認が不可能になり、Store内に未承認状態として残り続けることで、自動編集フロー（ロック状態）が終了しなくなっていた。
 - 【制約】Tiptapの `.chain()` を使う場合、途中の削除による位置の変化を手動で計算して後続のコマンド（`.insertContentAt`）に渡す必要がある。
 
 ## 4. 解決済み要件とその解決方法
 - **仮IDのパースエラー**: `paragraphIdManager.ts` の正規表現を緩和することで解決。
 - **連続編集時の位置ずれエラー**: `moveHandler.ts` で `insertPos` の動的補正を実装することで解決。
+- **temp-chain-1 がパースエラーで通らない**: `isTempId` の正規表現を `temp-[\w-]+` に修正することで解消（UUID以外の自由な命名を許可）。
+- **連続編集後にフローが終了しない**: `useCommandHighlight.ts` で、同一段落への後続コマンド実行時に古いハイライトを自動除去するロジックを導入して解決。
+- **挿入後に移動した段落の承認**: 単一ノードに対して複数コマンドが連なった場合、最新の状態（MOVE等）のみを承認対象とすることでUXをシンプル化。
 
 ## 5. 要件に関連する全ファイルのファイル構成（それぞれの役割を1行で併記）
 - `src/v2/utils/paragraphIdManager.ts`: 段落ID（正式・仮）の生成・検証ロジックを管理。
@@ -63,6 +61,8 @@
 - `src/v2/types/command.ts`: コマンドオブジェクトの型定義。tempId を必須プロパティとして保持。
 - `src/v2/services/commands/insertHandler.ts`: 実行時に `data-temp-id` 属性を DOM に付与。
 - `src/v2/utils/paragraphFinder.ts`: `data-temp-id` を含む段落を DOM から検索。
+- `src/v2/hooks/useCommandHighlight.ts`: ハイライトの登録と、重複（上書き）発生時のクリーンアップを担当。
+- `src/v2/store/useCommandHighlightStore.ts`: 未承認コマンドのリストを集中管理。
 
 ## 6. 要件に関する機能の技術スタックと動作原理（依存関係含む）
 - **技術スタック**: TypeScript, Regex (ID検証), Tiptap (属性拡張 `data-temp-id`), ProseMirror (Position Mapping)。
@@ -73,6 +73,7 @@
     4. 後続コマンドが `MOVE_PARAGRAPH(temp-xxx, ...)` を発行。
     5. `paragraphFinder` が `data-temp-id === "temp-xxx"` のノードを検索し、正しい位置で実行する。
     6. 移動（MOVE）の際は、先行する削除操作によるドキュメント長の縮みを計算し、正しい挿入位置を算出する。
+    7. **連続編集の最適化**: 同一の `temp-xxx` に対して新しいコマンドが登録される際、古いコマンドは「上書きされた」とみなして自動的に解決済み状態にする。
 
 ----------------------------------------
 # 以下、参考記述

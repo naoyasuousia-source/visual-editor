@@ -67,10 +67,22 @@ export function useCommandHighlight(editor: Editor | null) {
         return;
       }
 
+      // 重複チェック: 同じ段落に対する古い未承認ハイライトがあれば削除する
+      // (新しいコマンドによって属性が上書きされ、古い方はDOMから消えて承認不能になるため)
+      const existingHighlights = Array.from(highlights.values());
+      result.affectedParagraphIds.forEach(pId => {
+        const superseded = existingHighlights.find(h => 
+          !h.approved && !h.rejected && h.paragraphIds.includes(pId)
+        );
+        if (superseded) {
+          store.removeHighlight(superseded.commandId);
+        }
+      });
+
       const highlight = createHighlightFromResult(result, command);
       store.addHighlight(highlight);
     },
-    [createHighlightFromResult, store]
+    [createHighlightFromResult, highlights, store]
   );
 
   /**
