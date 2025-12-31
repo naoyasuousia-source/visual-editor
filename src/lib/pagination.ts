@@ -32,8 +32,8 @@ export const Pagination = Extension.create<PaginationOptions>({
                     const checkOverflow = () => {
                         if (isProcessing) return;
                         
-                        // Wordモード時はページ溢れチェックをスキップ
-                        if (options.isWordMode) return;
+                        // Wordモード時やIME変換中はページ溢れチェックをスキップ
+                        if (options.isWordMode || editorView.composing) return;
 
                         isProcessing = true;
 
@@ -47,14 +47,8 @@ export const Pagination = Extension.create<PaginationOptions>({
                                 
                                 if (!inner) continue;
 
-                                // 一時的に高さをautoにして正確なコンテンツ高を取得
-                                const originalHeight = inner.style.height;
-                                inner.style.height = 'auto';
-                                const scrollHeight = inner.scrollHeight;
-                                inner.style.height = originalHeight;
-
                                 // Check if content overflows (2px buffer for rounding)
-                                if (scrollHeight > inner.clientHeight + 2) {
+                                if (inner.scrollHeight > inner.clientHeight + 2) {
 
 
                                     // Find the page node in Tiptap document
