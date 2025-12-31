@@ -1,7 +1,7 @@
 import React from 'react';
 import { BaseDialog } from '@/components/ui/BaseDialog';
 import { useAppStore } from '@/store/useAppStore';
-import { User, FileDown, ExternalLink } from 'lucide-react';
+import { User, FileDown, ExternalLink, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface HelpDialogProps {
@@ -13,7 +13,7 @@ interface HelpDialogProps {
  * ユーザー向けヘルプ・ガイドダイアログ（v1のデザインを完全再現）
  */
 export const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose }) => {
-    const { openSubHelp, openDialog } = useAppStore();
+    const { openSubHelp, openDialog, isWordMode } = useAppStore();
 
     const handleSubHelpClick = (e: React.MouseEvent<HTMLAnchorElement>, type: string) => {
         e.preventDefault();
@@ -80,23 +80,47 @@ export const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose }) => {
                     </div>
                 </section>
 
-                {/* PDF Output Section */}
+                {/* Conditional Section: PDF (Standard) or Word (Word Mode) */}
                 <section className="pb-8 border-b border-slate-100 space-y-4">
-                    <h2 className="text-[1.25rem] font-bold text-cyan-600">PDF出力</h2>
-                    <div className="flex gap-5 bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-                        <div className="flex-shrink-0 w-16 h-16 bg-cyan-50 rounded-xl flex items-center justify-center border border-cyan-100">
-                            <FileDown className="w-10 h-10 text-cyan-600" />
-                        </div>
-                        <div className="flex-1 space-y-2">
-                            <p className="text-[15px] text-slate-600 leading-relaxed font-medium">
-                                エディタ上のレイアウトを維持したPDF出力が可能です。印刷ダイアログで
-                                <strong className="text-red-600 mx-1">「PDFに保存」</strong>
-                                を選択し、必ず
-                                <strong className="text-red-600 mx-1">「背景のグラフィック」</strong>
-                                をONにして出力してください。
-                            </p>
-                        </div>
-                    </div>
+                    {!isWordMode ? (
+                        <>
+                            <h2 className="text-[1.25rem] font-bold text-cyan-600">PDF出力</h2>
+                            <div className="flex gap-5 bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+                                <div className="flex-shrink-0 w-16 h-16 bg-cyan-50 rounded-xl flex items-center justify-center border border-cyan-100">
+                                    <FileDown className="w-10 h-10 text-cyan-600" />
+                                </div>
+                                <div className="flex-1 space-y-2">
+                                    <p className="text-[15px] text-slate-600 leading-relaxed font-medium">
+                                        エディタ上のレイアウトを維持したPDF出力が可能です。印刷ダイアログで
+                                        <strong className="text-red-600 mx-1">「PDFに保存」</strong>
+                                        を選択し、必ず
+                                        <strong className="text-red-600 mx-1">「背景のグラフィック」</strong>
+                                        をONにして出力してください。
+                                    </p>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <h2 className="text-[1.25rem] font-bold text-cyan-600">Word互換機能</h2>
+                            <div className="flex gap-5 bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+                                <div className="flex-shrink-0 w-16 h-16 bg-cyan-50 rounded-xl flex items-center justify-center border border-cyan-100">
+                                    <div className="relative">
+                                        <FileText className="w-10 h-10 text-cyan-600" />
+                                        <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 border border-cyan-100 shadow-sm">
+                                            <ExternalLink className="w-3 h-3 text-cyan-500" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex-1 space-y-2">
+                                    <p className="text-[15px] text-slate-600 leading-relaxed font-medium">
+                                        Wordへの貼り付けは、エディタ上で<strong className="text-red-600 mx-1">Ctrl+A → Ctrl+C</strong>を行い、Word側で<strong className="text-red-600 mx-1">Ctrl+V</strong>で貼り付けてください。<br />
+                                        Wordファイルを読み込む場合は、「Wordファイル(docx)を開く」メニューからインポートしてください。
+                                    </p>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </section>
 
                 {/* Footer Links & Copyright */}
