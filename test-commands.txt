@@ -1,31 +1,28 @@
 以下のコマンドを test-reset.html の <!-- AI_COMMAND_START --> と <!-- AI_COMMAND_END --> の間にコピー＆ペーストしてテストしてください。
 
-### 1. 基本的な置換とスタイリングのテスト
-<!-- REPLACE_PARAGRAPH(p1-1, <b>見出しに変更された一段落目</b>, blockType=h1, textAlign=center) -->
+### 1. 全コマンド・全オプションの網羅テスト（最新仕様）
+<!-- INSERT_PARAGRAPH(p1-2, 挿入段落（h2インデント2・余白L）, blockType=h2, indent=2, spacing=l, temp-new-1) -->
+<!-- DELETE_PARAGRAPH(p1-1) -->
 
-### 2. 段落の挿入テスト（p1-2の後に挿入、仮ID: temp-new-para を指定）
-<!-- INSERT_PARAGRAPH(p1-2, これは新しく挿入された中寄せの段落です。, textAlign=center, spacing=medium, temp-new-para) -->
+### 2. 太字・斜体タグの互換性テスト
+<!-- REPLACE_PARAGRAPH(p2-1, <b>bタグ</b>, <strong>strongタグ</strong>, <i>iタグ</i>, <em>emタグ</em> をすべて <strong>/<em> に変換) -->
 
-### 3. 段落の削除テスト
-<!-- DELETE_PARAGRAPH(p1-3) -->
+### 3. 【新機能】改ページ（新しいページの作成）のテスト
+<!-- INSERT_PARAGRAPH(p3-1, このコマンドで3ページ目が自動生成されます。, blockType=h1, spacing=m, temp-p3-para1) -->
+<!-- INSERT_PARAGRAPH(p3-1, 続けて4ページ目も自動生成します。, blockType=h1, spacing=m, temp-p4-para1) -->
 
-### 4. 段落の移動テスト（p2-1をp1-1の後に移動）
-<!-- MOVE_PARAGRAPH(p2-1, p1-1) -->
+### 4. 仮IDを用いた高度な連鎖操作のテスト
+<!-- INSERT_PARAGRAPH(p1-1, この段落は挿入直後に移動し、さらに分割されます。, temp-chain-1) -->
+<!-- MOVE_PARAGRAPH(temp-chain-1, p2-2) -->
+<!-- SPLIT_PARAGRAPH(temp-chain-1, 分割前の, 後半部分は余白XS, temp-chain-split) -->
+<!-- REPLACE_PARAGRAPH(temp-chain-split, スプリット後の置換テスト, spacing=xs) -->
 
-### 5. 段落の分割テスト（後半部分に仮ID: temp-split-half を指定）
-<!-- SPLIT_PARAGRAPH(p2-2, 2ページ目の, 2段落目を分割しました, temp-split-half) -->
+### 5. 分割と結合のテスト
+<!-- SPLIT_PARAGRAPH(p2-1, 2ページ目の1段落目を, ここで分割しました。, temp-split-2) -->
+<!-- MERGE_PARAGRAPH(p2-2, p2-1) -->
 
-### 6. 段落の結合テスト（p1-2をp1-1に結合）
-<!-- MERGE_PARAGRAPH(p1-2, p1-1) -->
-
-### 7. 【新仕様】仮IDを用いた連続編集のテスト
-<!-- INSERT_PARAGRAPH(p1-1, この段落は挿入された直後に移動されます。, temp-chain-1) -->
-<!-- MOVE_PARAGRAPH(temp-chain-1, p2-1) -->
-<!-- REPLACE_PARAGRAPH(temp-chain-1, 挿入して移動した後に内容を書き換えました。) -->
-
-### 複数コマンドの同時実行例（新仕様準拠）
-<!-- REPLACE_PARAGRAPH(p1-1, <b>タイトル</b>, blockType=h1, textAlign=center) -->
-<!-- INSERT_PARAGRAPH(p1-1, 副題としての挿入段落, textAlign=center, temp-sub-title) -->
-<!-- REPLACE_PARAGRAPH(p1-2, 内容を更新しました。) -->
-<!-- DELETE_PARAGRAPH(p1-3) -->
-<!-- MOVE_PARAGRAPH(temp-sub-title, p1-2) -->
+### 複数コマンド一括実行のシチュエーション
+<!-- REPLACE_PARAGRAPH(p1-1, タイトル, blockType=h1, textAlign=center, spacing=none) -->
+<!-- INSERT_PARAGRAPH(p1-1, リード文を挿入, textAlign=center, spacing=l, temp-lead) -->
+<!-- INSERT_PARAGRAPH(p3-1, 離れたページを新規作成, blockType=h2, temp-new-page) -->
+<!-- MOVE_PARAGRAPH(temp-lead, p2-1) -->

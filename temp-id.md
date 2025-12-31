@@ -28,10 +28,10 @@
 ## 1. 未解決要件（移動許可がNGの要件は絶対に移動・編集しないこと）（勝手に移動許可をOKに書き換えないこと）
 
 <requirement>
-<content>新ページの1段落目はエディタに存在していなくてもターゲットとして指定できるようにする。（改ページ機能の開放）
-（複数のコマンドが、新ページ1段落目をターゲットとした場合、上のコマンドのターゲットがn＋1ページ、次のコマンドがn+2ページとして処理される）</content>
-<current-situation></current-situation>
-<remarks></remarks>
+<content>改ページし、新ページにinsert、moveできる機能の開放。
+</content>
+<current-situation><!-- INSERT_PARAGRAPH(p3-1, このコマンドで3ページ目が自動生成されます。, blockType=h1, spacing=m, temp-p3-para1) -->このコマンド単体だと、3ページ目が作られるが、不正コマンドとなり、3ページにテキストが挿入されない。</current-situation>
+<remarks>どういう方式でもいいので、1ターンで、複数新ページを生成できるコマンドルールを整備してほしい</remarks>
 <permission-to-move>NG</permission-to-move>
 </requirement>
 
@@ -43,14 +43,14 @@
 （インデントも、0はデフォルトのため、オプションに含めない）</content>
 <current-situation></current-situation>
 <remarks></remarks>
-<permission-to-move>NG</permission-to-move>
+<permission-to-move>OK</permission-to-move>
 </requirement>
 
 <requirement>
 <content>コマンドで指定された太字と斜体は、エディタ準拠で、<b>、<i>ではなく、<strong>、<em>が適用されるかどうか確認する。</content>
 <current-situation></current-situation>
 <remarks></remarks>
-<permission-to-move>NG</permission-to-move>
+<permission-to-move>OK</permission-to-move>
 </requirement>
 
 
