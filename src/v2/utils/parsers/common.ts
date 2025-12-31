@@ -52,7 +52,7 @@ export function parseOptions(optionsStr: string): ParagraphOptions {
         }
         break;
       case 'spacing':
-        if (['none', 'small', 'medium', 'large'].includes(value)) {
+        if (['none', 'xs', 'm', 'l', 'xl'].includes(value)) {
           options.spacing = value as ParagraphSpacing;
         }
         break;

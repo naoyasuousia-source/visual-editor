@@ -36,7 +36,7 @@ export type TextAlign = 'left' | 'center' | 'right';
 /**
  * 段落下余白
  */
-export type ParagraphSpacing = 'none' | 'small' | 'medium' | 'large';
+export type ParagraphSpacing = 'none' | 'xs' | 'm' | 'l' | 'xl';
 
 /**
  * インデントレベル（0～4）

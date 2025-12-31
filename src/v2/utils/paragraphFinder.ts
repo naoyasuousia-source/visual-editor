@@ -52,3 +52,40 @@ export function getParagraphIdAtPosition(
 
   return null;
 }
+
+/**
+ * エディタ内の最大ページ番号を取得
+ */
+export function getMaxPageNumber(editor: Editor): number {
+  let maxPage = 0;
+  editor.state.doc.descendants((node) => {
+    if (node.type.name === 'page') {
+      const pageNum = parseInt(node.attrs['data-page'] || '0', 10);
+      if (pageNum > maxPage) maxPage = pageNum;
+    }
+  });
+  
+  // pageノードがない場合は、ドキュメント全体を1ページ目とみなす
+  return maxPage || 1;
+}
+
+/**
+ * 指定されたIDが「まだ存在しない新ページの最初の段落」を指しているか判定
+ */
+export function isVirtualNewPageTarget(
+  editor: Editor,
+  paragraphId: ParagraphId,
+  maxPage?: number
+): boolean {
+  if (!isValidParagraphId(paragraphId)) return false;
+  
+  // 公式ID形式 (pX-1) であることを確認 (ページ番号X, 段落番号1)
+  const match = paragraphId.match(/^p(\d+)-1$/);
+  if (!match) return false;
+  
+  const pageNum = parseInt(match[1], 10);
+  const currentMaxPage = maxPage !== undefined ? maxPage : getMaxPageNumber(editor);
+  
+  // 現在の最大ページ数より大きいページ番号の1段落目であればバーチャルターゲット
+  return pageNum > currentMaxPage;
+}

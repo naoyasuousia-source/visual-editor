@@ -16,7 +16,7 @@ export function parseHtmlText(htmlText: string): any[] {
   
   // 簡易タグパーサー (太字: ** または <b>, <i>, <u>, <sup>, <sub>, <br>)
   // 実際には正規表現で分割して処理
-  const tokens = htmlText.split(/(<b>.*?<\/b>|<strong>.*?<\/strong>|<sup>.*?<\/sup>|<sub>.*?<\/sub>|<br\s*\/?>)/g);
+  const tokens = htmlText.split(/(<b>.*?<\/b>|<strong>.*?<\/strong>|<i>.*?<\/i>|<em>.*?<\/em>|<sup>.*?<\/sup>|<sub>.*?<\/sub>|<br\s*\/?>)/g);
 
   for (const token of tokens) {
     if (!token) continue;
@@ -24,6 +24,9 @@ export function parseHtmlText(htmlText: string): any[] {
     if (token.startsWith('<b>') || token.startsWith('<strong>')) {
       const text = token.replace(/<\/?(b|strong)>/g, '');
       content.push({ type: 'text', text, marks: [{ type: 'bold' }] });
+    } else if (token.startsWith('<i>') || token.startsWith('<em>')) {
+      const text = token.replace(/<\/?(i|em)>/g, '');
+      content.push({ type: 'text', text, marks: [{ type: 'italic' }] });
     } else if (token.startsWith('<sup>')) {
       const text = token.replace(/<\/?sup>/g, '');
       content.push({ type: 'text', text, marks: [{ type: 'superscript' }] });

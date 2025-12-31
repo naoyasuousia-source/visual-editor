@@ -46,8 +46,8 @@ COMMANDS:
 
 1. REPLACE_PARAGRAPH(targetId, text, [options])
    Replace paragraph content.
-   Options: blockType=p|h1|h2|h3, textAlign=left|center|right, 
-            spacing=none|small|medium|large, indent=0|1|2|3|4
+   Options: blockType=h1|h2|h3, textAlign=center|right, 
+            spacing=none|xs|m|l|xl, indent=1|2|3|4
    Example: &lt;!-- REPLACE_PARAGRAPH(p1-2, &lt;b&gt;Bold&lt;/b&gt; text, blockType=h1) --&gt;
 
 2. INSERT_PARAGRAPH(targetId, text, [options], tempId)
@@ -76,6 +76,10 @@ Example:
   <!-- INSERT_PARAGRAPH(p1-1, Sub heading, blockType=h2, temp-h2) -->
   <!-- MOVE_PARAGRAPH(temp-h2, p2-3) -->
 
+NEW PAGE CREATION:
+To create a new page, target the first paragraph of the next page (e.g., p6-1 if current max page is 5).
+Multiple commands targeting new page first paragraphs will create pages N+1, N+2, etc. sequentially.
+
 HTML TAGS IN TEXT:
 &lt;b&gt;bold&lt;/b&gt;, &lt;br&gt;, &lt;sup&gt;superscript&lt;/sup&gt;, &lt;sub&gt;subscript&lt;/sub&gt;
 
@@ -85,6 +89,7 @@ RULES:
 3. Do NOT edit outside COMMAND AREA
 4. Do NOT replace/remove markers
 5. Commands execute sequentially
+6. To start a brand new page, use the pX-1 target.
 
 ===============================================================================
 -->

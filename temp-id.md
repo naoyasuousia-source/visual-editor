@@ -28,19 +28,31 @@
 ## 1. 未解決要件（移動許可がNGの要件は絶対に移動・編集しないこと）（勝手に移動許可をOKに書き換えないこと）
 
 <requirement>
-<content><!-- INSERT_PARAGRAPH(p1-1, この段落は挿入された直後に移動されます。, temp-chain-1) -->
-<!-- MOVE_PARAGRAPH(temp-chain-1, p2-1) -->このコマンドを送ると、moveまで正常にされるが、個別に承認を完了しても未承認が残ってるということになり、自動編集フローが終了しない。</content>
-<current-situation>コンソールエラーは出なくなったが、やはり、insert→moveの場合、表示されてる個別承認をすべて完了しても、「一個の変更が保留中です」となり、自動編集フローが終了しない。
-<remarks></remarks>
-<permission-to-move>OK</permission-to-move>
-</requirement>
-
-<requirement>
-<content>replaceも混ぜるとおかしい</content>
+<content>新ページの1段落目はエディタに存在していなくてもターゲットとして指定できるようにする。（改ページ機能の開放）
+（複数のコマンドが、新ページ1段落目をターゲットとした場合、上のコマンドのターゲットがn＋1ページ、次のコマンドがn+2ページとして処理される）</content>
 <current-situation></current-situation>
 <remarks></remarks>
 <permission-to-move>NG</permission-to-move>
 </requirement>
+
+<requirement>
+<content>オプションを整備する
+（ブロックタイプは、pはデフォルトのためオプションに含めない）
+（textAlignも、左揃えはデフォルトのためオプションに含めない）
+（spacingも、sはデフォルトのため、オプションに含めず、xs・m・l・xlをオプションとする）
+（インデントも、0はデフォルトのため、オプションに含めない）</content>
+<current-situation></current-situation>
+<remarks></remarks>
+<permission-to-move>NG</permission-to-move>
+</requirement>
+
+<requirement>
+<content>コマンドで指定された太字と斜体は、エディタ準拠で、<b>、<i>ではなく、<strong>、<em>が適用されるかどうか確認する。</content>
+<current-situation></current-situation>
+<remarks></remarks>
+<permission-to-move>NG</permission-to-move>
+</requirement>
+
 
 ## 2. 未解決要件に関するコード変更履歴（目的、変更内容、変更日時）
 - 2025-12-31: INSERT_PARAGRAPH/SPLIT_PARAGRAPH での tempId 指定を必須化。AIガイドも更新。
@@ -48,6 +60,10 @@
 - 2025-12-31: `moveHandler.ts` の位置計算ロジックを修正。`sourcePos < insertPos` の場合に削除によるズレを補正する処理を追記。Position out of rangeエラーを解消。
 - 2025-12-31: `useCommandHighlight.ts` を大幅に刷新。Reactの副作用やクロージャによる古い状態参照を避けるため、一括登録および個別承認の全行程で `useCommandHighlightStore.getState()` を直接使用するように変更。これにより連続編集時の状態残留を完全に解消。
 - 2025-12-31: `approveHighlight` に DOM 整合性チェックを追加。承認アクション時に、何らかの理由で DOM から消失している保留中ハイライト（ゴースト）があれば自動的に掃除する安全策を導入。
+- 2025-12-31: `newCommandExecutionService.ts` に仮想ターゲット解決ロジックを実装。`pX-1`（X > 最大ページ）へのターゲット指定による自動ページ生成（改ページ機能）をサポート。
+- 2025-12-31: `aiMetadata.ts` のAIガイドを更新。デフォルトオプション（p, left, s, 0）を非表示にし、新ページ生成のルールを追記。
+- 2025-12-31: `tiptapContentUtils.ts` の `parseHtmlText` を修正。斜体タグ（<i>, <em>）のサポートを追加し、Tiptapの標準マーク（strong/em）にマッピングされることを確認。
+- 2025-12-31: `ParagraphSpacing` 型を `none|xs|m|l|xl` に刷新。
 
 ## 3. 分析中に気づいた重要ポイント（試してだめだったこと、仮設、制約条件等...）
 - 【原因1: パースエラー】以前の仮IDシステムがUUIDを前提としていたため、`isTempId` が厳格すぎて `temp-chain-1` 等を拒絶していた。
@@ -62,6 +78,7 @@
 - **temp-chain-1 がパースエラーで通らない**: `isTempId` の正規表現を `temp-[\w-]+` に修正することで解消（UUID以外の自由な命名を許可）。
 - **連続編集後にフローが終了しない (Root Cause Fixed)**: `useCommandHighlight.ts` で `getState()` を用いた同期的な重複チェックと、承認時の DOM 整合性チェックを導入することで完全に解決。
 - **挿入後に移動した段落の承認**: 単一ノードに対して複数コマンドが連なった場合、最新の状態（MOVE等）のみを承認対象とすることでUXをシンプル化。
+- **連続編集後のフロー終了不具合**: `useCommandHighlight.ts` で `getState()` を用いた同期的な重複チェックと、承認時の DOM 整合性チェックを導入することで、挿入→移動といった連続操作後も正しく全ハイライトがクリアされ、フローが終了するように修正。
 
 ## 5. 要件に関連する全ファイルのファイル構成（それぞれの役割を1行で併記）
 - `src/v2/utils/paragraphIdManager.ts`: 段落ID（正式・仮）の生成・検証ロジックを管理。
@@ -70,7 +87,8 @@
 - `src/v2/services/commands/insertHandler.ts`: 実行時に `data-temp-id` 属性を DOM に付与。
 - `src/v2/utils/paragraphFinder.ts`: `data-temp-id` を含む段落を DOM から検索。
 - `src/v2/hooks/useCommandHighlight.ts`: ハイライトの登録と、重複（上書き）発生時のクリーンアップを担当。
-- `src/v2/store/useCommandHighlightStore.ts`: 未承認コマンドのリストを集中管理。
+- `src/v2/services/newCommandExecutionService.ts`: コマンド一括実行の司令塔。仮想ターゲットの解決とプレースホルダーの生成・清掃を担当。
+- `src/v2/utils/tiptapContentUtils.ts`: HTMLテキストのパースを担当。Bold/Italic等のタグをTiptapマークへ変換。
 
 ## 6. 要件に関する機能の技術スタックと動作原理（依存関係含む）
 - **技術スタック**: TypeScript, Regex (ID検証), Tiptap (属性拡張 `data-temp-id`), ProseMirror (Position Mapping)。
@@ -82,6 +100,11 @@
     5. `paragraphFinder` が `data-temp-id === "temp-xxx"` のノードを検索し、正しい位置で実行する。
     6. 移動（MOVE）の際は、先行する削除操作によるドキュメント長の縮みを計算し、正しい挿入位置を算出する。
     7. **連続編集の最適化**: 同一の `temp-xxx` に対して新しいコマンドが登録される際、古いコマンドは「上書きされた」とみなして自動的に解決済み状態にする。
+    8. **仮想ターゲット（改ページ）の仕組み**: 
+        - 実行前に全コマンドを走査し、存在しないページ（`pX-1`）への操作を検知。
+        - 検知した場合、一時的な「仮想プレースホルダー段落」を含む新ページをドキュメント末尾に自動生成。
+        - コマンドのターゲットをこのプレースホルダーに差し替えて実行。
+        - 全コマンド実行後、未使用または役割を終えたプレースホルダーを自動削除する。
 
 ----------------------------------------
 # 以下、参考記述

@@ -40,8 +40,8 @@ COMMANDS:
 
 1. REPLACE_PARAGRAPH(targetId, text, [options])
    Replace paragraph content.
-   Options: blockType=p|h1|h2|h3, textAlign=left|center|right, 
-            spacing=none|small|medium|large, indent=0|1|2|3|4
+   Options: blockType=h1|h2|h3, textAlign=center|right, 
+            spacing=none|xs|m|l|xl, indent=1|2|3|4
    Example: &lt;!-- REPLACE_PARAGRAPH(p1-2, &lt;b&gt;Bold&lt;/b&gt; text, blockType=h1) --&gt;
 
 2. INSERT_PARAGRAPH(targetId, text, [options], tempId)
@@ -70,6 +70,10 @@ Example:
   <!-- INSERT_PARAGRAPH(p1-1, Sub heading, blockType=h2, temp-h2) -->
   <!-- MOVE_PARAGRAPH(temp-h2, p2-3) -->
 
+NEW PAGE CREATION:
+To create a new page, target the first paragraph of the next page (e.g., p6-1 if current max page is 5).
+Multiple commands targeting new page first paragraphs will create pages N+1, N+2, etc. sequentially.
+
 HTML TAGS IN TEXT:
 &lt;b&gt;bold&lt;/b&gt;, &lt;br&gt;, &lt;sup&gt;superscript&lt;/sup&gt;, &lt;sub&gt;subscript&lt;/sub&gt;
 
@@ -79,6 +83,7 @@ RULES:
 3. Do NOT edit outside COMMAND AREA
 4. Do NOT replace/remove markers
 5. Commands execute sequentially
+6. To start a brand new page, use the pX-1 target.
 
 ===============================================================================
 -->
@@ -494,7 +499,7 @@ section.page::after {
 <!-- AI_COMMAND_END -->
 
 <div id="pages-container">
-<section data-page="1" class="page"><div class="page-inner"><p data-para="1" id="p1-1"><span style="font-family: &quot;Noto Sans JP&quot;, sans-serif;">一段落目</span></p><p data-para="2" id="p1-2" data-temp-id="temp-chain-1" data-command-type="insert" data-command-id="8f22d65f-3314-4f30-aa04-8887e4a82495">この段落は挿入された直後に移動されます。</p><p data-para="3" id="p1-3"><span style="font-family: &quot;Noto Sans JP&quot;, sans-serif;">二段落目</span></p><p data-para="4" id="p1-4"><span style="font-family: &quot;Noto Sans JP&quot;, sans-serif;">三段落目</span></p></div></section><section data-page="2" class="page"><div class="page-inner"><p data-para="1" id="p2-1"><span style="font-family: &quot;Noto Sans JP&quot;, sans-serif;">2ページ目の1段落目</span></p><p data-para="2" id="p2-2" data-command-type="replace" data-command-id="0fbbe98e-be02-4614-8d96-5500dcbb5907">挿入して移動した後に内容を書き換えました。</p><p data-para="3" id="p2-3"><span style="font-family: &quot;Noto Sans JP&quot;, sans-serif;">2ページ目の2段落目</span></p></div></section>
+<section data-page="1" class="page"><div class="page-inner"><p data-para="1" id="p1-1"><span style="font-family: &quot;Noto Sans JP&quot;, sans-serif;">一段落目</span></p><p data-para="2" id="p1-2"><span style="font-family: &quot;Noto Sans JP&quot;, sans-serif;">二段落目</span></p><p data-para="3" id="p1-3"><span style="font-family: &quot;Noto Sans JP&quot;, sans-serif;">三段落目</span></p></div></section><section data-page="2" class="page"><div class="page-inner"><p data-para="1" id="p2-1"><span style="font-family: &quot;Noto Sans JP&quot;, sans-serif;">2ページ目の1段落目</span></p><p data-para="2" id="p2-2"><span style="font-family: &quot;Noto Sans JP&quot;, sans-serif;">2ページ目の2段落目</span></p></div></section>
 </div>
 <div id="ai-image-index" class="hidden" aria-hidden="true"></div>
 </body>
