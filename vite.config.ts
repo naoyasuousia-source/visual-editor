@@ -39,7 +39,6 @@ export default defineConfig(({ command }) => ({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        editor_v2: resolve(__dirname, 'v2-editor.html'),
       },
     },
   },
