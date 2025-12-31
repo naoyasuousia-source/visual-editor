@@ -90,7 +90,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         <div className="sticky top-0 w-full z-50 bg-[#f8f9fa] border-b border-gray-300 shadow-sm p-2 flex items-center gap-2 flex-wrap">
             {/* Logo */}
             <div className="flex items-center mr-2 select-none pointer-events-none">
-                <img src="/image/logo-himawari.png" alt="Logo" className="h-8 w-auto object-contain rounded filter drop-shadow-sm" />
+                <img src="image/logo-himawari.png" alt="Logo" className="h-8 w-auto object-contain rounded filter drop-shadow-sm" />
             </div>
 
             {/* File Menu */}

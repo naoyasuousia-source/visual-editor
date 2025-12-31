@@ -74,7 +74,7 @@ export const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose }) => {
                     <h2 className="text-[1.25rem] font-bold text-cyan-600">生成AI連携方法</h2>
                     <div className="relative rounded-2xl overflow-hidden border border-slate-100 shadow-sm bg-slate-50">
                         <img 
-                            src="/image/work-flow.png" 
+                            src="image/work-flow.png" 
                             alt="生成AI連携方法ワークフロー" 
                             className="w-full h-auto block" 
                         />
