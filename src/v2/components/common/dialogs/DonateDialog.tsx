@@ -16,19 +16,23 @@ interface DonateDialogProps {
 export const DonateDialog: React.FC<DonateDialogProps> = ({ open, onClose }) => {
     const { donateScrollToBottom, setDonateScrollToBottom } = useAppStore();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const bottomRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (open && donateScrollToBottom && scrollContainerRef.current) {
-            // ダイアログが開いた直後にスクロールを実行
-            const container = scrollContainerRef.current;
-            setTimeout(() => {
-                container.scrollTo({
-                    top: container.scrollHeight,
-                    behavior: 'smooth'
-                });
-                // フラグをリセット
+        if (open && donateScrollToBottom) {
+            // ダイアログのアニメーションが完了し、中身がレンダリングされるのを待つ
+            const timer = setTimeout(() => {
+                if (bottomRef.current) {
+                    bottomRef.current.scrollIntoView({ 
+                        behavior: 'smooth',
+                        block: 'end'
+                    });
+                }
+                // スクロール完了後にフラグをリセット
                 setDonateScrollToBottom(false);
-            }, 150); // アニメーション等の完了を待つために少し遅延
+            }, 500); 
+            
+            return () => clearTimeout(timer);
         }
     }, [open, donateScrollToBottom, setDonateScrollToBottom]);
 
@@ -109,7 +113,7 @@ export const DonateDialog: React.FC<DonateDialogProps> = ({ open, onClose }) => 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                     {/* Developer Profile */}
-                    <div className="bg-slate-50/80 border border-slate-100 p-6 rounded-3xl space-y-4 hover:bg-slate-50 transition-colors">
+                    <div id="donate-profile-section" className="bg-slate-50/80 border border-slate-100 p-6 rounded-3xl space-y-4 hover:bg-slate-50 transition-colors">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white rounded-xl shadow-sm">
                                 <User className="w-5 h-5 text-slate-600" />
@@ -136,6 +140,8 @@ export const DonateDialog: React.FC<DonateDialogProps> = ({ open, onClose }) => 
                         </p>
                     </div>
                 </div>
+                {/* Scroll Anchor */}
+                <div ref={bottomRef} className="h-px" />
             </div>
         </BaseDialog>
     );
