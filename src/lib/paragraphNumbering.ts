@@ -57,22 +57,21 @@ export const ParagraphNumbering = Extension.create<ParagraphNumberingOptions>({
 
                     newState.doc.descendants((node, pos) => {
                         if (node.type.name === 'page') {
-                            const expectedPageNum = String(pageCounter++);
+                            const pageNum = String(pageCounter++);
                             
-                            // ページ番号を強制更新
-                            if (node.attrs['data-page'] !== expectedPageNum) {
+                            // ページ番号を更新
+                            if (node.attrs['data-page'] !== pageNum) {
                                 tr.setNodeMarkup(pos, undefined, {
                                     ...node.attrs,
-                                    'data-page': expectedPageNum,
+                                    'data-page': pageNum,
                                 });
                             }
 
-                            const pageNum = expectedPageNum;
                             let innerCounter = 1;
 
                             node.descendants((child, childPos) => {
-                                const absolutePos = pos + childPos + 1;
                                 if (child.type.name === 'paragraph' || child.type.name === 'heading') {
+                                    const absolutePos = pos + childPos + 1;
                                     const expectedIdx = isWordMode ? String(globalCounter++) : String(innerCounter++);
                                     const expectedId = isWordMode ? `p${expectedIdx}` : `p${pageNum}-${expectedIdx}`;
 
@@ -83,10 +82,13 @@ export const ParagraphNumbering = Extension.create<ParagraphNumberingOptions>({
                                             id: expectedId,
                                         });
                                     }
+                                    return false; // 段落内（テキスト等）は探索しない
                                 }
-                                return false;
+                                return true;
                             });
+                            return false; // ページ内は探索済みなので、doc.descendantsとしての再帰を停止
                         }
+                        return true;
                     });
 
                     return tr.docChanged ? tr : null;

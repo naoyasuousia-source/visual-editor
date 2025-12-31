@@ -61,6 +61,9 @@ export const Pagination = Extension.create<PaginationOptions>({
 
                                     if (!pageNode || pageNode.type.name !== 'page') continue;
 
+                                    // 【重要】ページ内にブロックが1つしかない場合は移動しない（無限ループ防止）
+                                    if (pageNode.childCount <= 1) continue;
+
                                     // Get the last child of the page
                                     const lastChild = pageNode.lastChild;
                                     if (!lastChild) continue;

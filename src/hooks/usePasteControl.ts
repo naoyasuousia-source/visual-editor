@@ -6,11 +6,6 @@ import { TiptapPasteHandler } from '@/types/tiptap';
 /**
  * ペースト制御フック
  * V1の events.ts のペースト制御ロジックを再現
- * 
- * 【制約】
- * - 画像ファイルの直接ペーストを禁止
- * - HTML形式での画像ペーストを禁止
- * - ユーザーには「ファイルメニューから挿入」を促す
  */
 export const usePasteControl = () => {
     /**
@@ -26,7 +21,7 @@ export const usePasteControl = () => {
             if (items[i].type.indexOf('image') !== -1) {
                 event.preventDefault();
                 toast.error('画像のペーストは利用できません。ツールバーの「ファイルを挿入」メニューから画像を追加してください。');
-                return true; // イベントを処理済みとしてマーク
+                return true;
             }
         }
 
@@ -35,13 +30,21 @@ export const usePasteControl = () => {
         if (html && /<img\s+/i.test(html)) {
             event.preventDefault();
             toast.error('画像を含むコンテンツのペーストは利用できません。');
-            return true; // イベントを処理済みとしてマーク
+            return true;
         }
 
         return false; // Tiptapのデフォルト処理を継続
     }, []);
 
+    const transformPastedHTML = useCallback((html: string): string => {
+        // 段落番号(data-para)やID(id="p...")を削除してクリーンアップ
+        return html
+            .replace(/\sdata-para="[^"]*"/g, '')
+            .replace(/\sid="p[0-9-]*"/g, '');
+    }, []);
+
     return {
-        handlePaste
+        handlePaste,
+        transformPastedHTML
     };
 };

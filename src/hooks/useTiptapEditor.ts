@@ -29,7 +29,8 @@ import { TiptapKeyDownHandler, TiptapPasteHandler } from '@/types/tiptap';
  */
 export const useTiptapEditor = (
     handleIMEKeyDown: TiptapKeyDownHandler,
-    handlePaste: TiptapPasteHandler
+    handlePaste: TiptapPasteHandler,
+    transformPastedHTML?: (html: string) => string
 ) => {
     const { isWordMode } = useAppStore();
 
@@ -79,6 +80,7 @@ export const useTiptapEditor = (
             },
             handleKeyDown: handleIMEKeyDown,
             handlePaste: handlePaste,
+            transformPastedHTML: transformPastedHTML,
             handleClick: (view, pos, event) => {
                 const target = event.target as HTMLElement;
                 const link = target.closest('a');

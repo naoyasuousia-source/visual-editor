@@ -33,23 +33,6 @@
  * Tailwindクラスでは可読性が著しく低下する構造のみ
  */
 @layer components {
-  /* パラグラフ番号表示（擬似要素::before） */
-  .page-inner p::before {
-    position: absolute;
-    left: 5mm;
-    font-size: 10px;
-    color: #d1d5db;
-    font-family: ui-monospace, monospace;
-    user-select: none;
-    pointer-events: none;
-    counter-increment: paragraph-counter;
-    content: "p" attr(data-page) "-" counter(paragraph-counter);
-  }
-
-  .mode-word .page-inner p::before {
-    content: "p" counter(paragraph-counter);
-  }
-
   /* エディタロック時のポインターイベント制御（属性セレクタ） */
   .locked-editor .ProseMirror {
     pointer-events: none;
