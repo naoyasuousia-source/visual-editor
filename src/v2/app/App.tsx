@@ -26,6 +26,7 @@ import { AutoEditBar } from '@/components/features/AutoEdit/AutoEditBar';
 import { CommandPopup } from '@/components/features/AutoEdit/CommandPopup';
 import { CommandApprovalBar } from '@/components/features/AutoEdit/CommandApprovalBar';
 import { useCommandApprovalController } from '@/hooks/useCommandApprovalController';
+import { useUnloadWarning } from '@/hooks/useUnloadWarning';
 
 /**
  * EditorV3 - V2エディタのメインコンポーネント
@@ -137,6 +138,9 @@ export const EditorV3 = () => {
 
     // Command Approval Controller (新コマンドシステム)
     const approvalController = useCommandApprovalController(editor, saveFile);
+
+    // Unload Warning (リロード・終了時の警告)
+    useUnloadWarning();
 
 
 

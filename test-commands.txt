@@ -1,20 +1,9 @@
 以下のコマンドを test-reset.html の <!-- AI_COMMAND_START --> と <!-- AI_COMMAND_END --> の間にコピー＆ペーストしてテストしてください。
 
-### 1. 全コマンド・全オプションの網羅テスト（最新仕様）
-<!-- INSERT_PARAGRAPH(p1-2, 挿入段落（h2インデント2・余白L）, blockType=h2, indent=2, spacing=l, temp-new-1) -->
-<!-- DELETE_PARAGRAPH(p1-1) -->
-
-### 2. 太字・斜体タグの互換性テスト
-<!-- REPLACE_PARAGRAPH(p2-1, <b>bタグ</b>, <strong>strongタグ</strong>, <i>iタグ</i>, <em>emタグ</em> をすべて <strong>/<em> に変換) -->
-
-### 3. 【新機能】改ページ（新しいページの作成）のテスト
-<!-- INSERT_PARAGRAPH(p3-1, このコマンドで3ページ目が自動生成されます。, blockType=h1, spacing=m, temp-p3-para1) -->
-<!-- INSERT_PARAGRAPH(p3-1, 続けて4ページ目も自動生成します。, blockType=h1, spacing=m, temp-p4-para1) -->
-
 ### 4. 仮IDを用いた高度な連鎖操作のテスト
 <!-- INSERT_PARAGRAPH(p1-1, この段落は挿入直後に移動し、さらに分割されます。, temp-chain-1) -->
 <!-- MOVE_PARAGRAPH(temp-chain-1, p2-2) -->
-<!-- SPLIT_PARAGRAPH(temp-chain-1, 分割前の, 後半部分は余白XS, temp-chain-split) -->
+<!-- SPLIT_PARAGRAPH(temp-chain-1, 直後に移動し、, さらに分割, temp-chain-split) -->
 <!-- REPLACE_PARAGRAPH(temp-chain-split, スプリット後の置換テスト, spacing=xs) -->
 
 ### 5. 分割と結合のテスト
