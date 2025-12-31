@@ -55,13 +55,32 @@ export function executeMoveParagraph(
     const { node: sourceNode, pos: sourcePos } = sourceFound;
     const { node: targetNode, pos: targetPos } = targetFound;
 
-    const insertPos = targetPos + targetNode.nodeSize;
+    const sourceSize = sourceNode.nodeSize;
+    let insertPos = targetPos + targetNode.nodeSize;
+
+    // 移動元と移動先が同じ、または移動元が既にターゲットの直後にある場合は何もしない
+    if (sourcePos === insertPos || (sourcePos === targetPos + targetNode.nodeSize)) {
+      return {
+        success: true,
+        commandId,
+        commandType: 'MOVE_PARAGRAPH',
+        affectedParagraphIds: [sourceId],
+        beforeSnapshot: [beforeSnapshot],
+        timestamp: Date.now(),
+      };
+    }
+
+    // 移動元が移動先より前にある場合、削除によって移動先のIndexが手前にずれるのを補正
+    if (sourcePos < insertPos) {
+      insertPos -= sourceSize;
+    }
+
     const sourceContent = sourceNode.content.toJSON();
 
     editor
       .chain()
       .focus()
-      .deleteRange({ from: sourcePos, to: sourcePos + sourceNode.nodeSize })
+      .deleteRange({ from: sourcePos, to: sourcePos + sourceSize })
       .insertContentAt(insertPos, {
         type: sourceNode.type.name,
         attrs: {

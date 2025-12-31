@@ -32,18 +32,30 @@
 <!-- MOVE_PARAGRAPH(temp-chain-1, p2-1) -->このコマンドを送ると、挿入されるが、エラーでmoveは通らない。</content>
 <current-situation></current-situation>
 <remarks>このファイルの下部の計画書を参考に分析すること。</remarks>
+<permission-to-move>OK</permission-to-move>
+</requirement>
+
+<requirement>
+<content><!-- INSERT_PARAGRAPH(p1-1, この段落は挿入された直後に移動されます。, temp-chain-1) -->
+<!-- MOVE_PARAGRAPH(temp-chain-1, p2-1) -->このコマンドを送ると、moveまで正常にされるが、個別に承認を完了しても未承認が残ってるということになり、自動編集フローが終了しない。</content>
+<current-situation></current-situation>
+<remarks>insertもひとつの編集とみなされ、moveして存在しないのに、承認を求めてしまっているのではないか。</remarks>
 <permission-to-move>NG</permission-to-move>
 </requirement>
 
 ## 2. 未解決要件に関するコード変更履歴（目的、変更内容、変更日時）
 - 2025-12-31: INSERT_PARAGRAPH/SPLIT_PARAGRAPH での tempId 指定を必須化。AIガイドも更新。
-- 2025-12-31: isTempId の正規表現を緩和。`temp-[a-f0-9-]+` から `temp-[\w-]+` へ変更。AIが発行する自由な形式のID（例: temp-chain-1）を許可するため。
+- 2025-12-31: isTempId の正規表現を緩和（`temp-[\w-]+`）。AIの自由なID命名に対応。
+- 2025-12-31: `moveHandler.ts` の位置計算ロジックを修正。`sourcePos < insertPos` の場合に削除によるズレを補正する処理を追記。Position out of rangeエラーを解消。
 
 ## 3. 分析中に気づいた重要ポイント（試してだめだったこと、仮設、制約条件等...）
-- 【原因】以前の仮IDシステムがUUIDを前提としていたため、`isTempId` の検証コードが hex 文字列（0-9, a-f）以外を拒否していた。
-- 【制約】AI発行方式では AI が覚えやすい ID（temp-1, temp-header など）を使うため、正規表現の緩和が必須。
+- 【原因1: パースエラー】以前の仮IDシステムがUUIDを前提としていたため、`isTempId` が厳格すぎて `temp-chain-1` 等を拒絶していた。
+- 【原因2: 実行エラー】`MOVE_PARAGRAPH` において、`sourcePos < insertPos` の順序で処理（削除→挿入）を行う際、削除によってドキュメントが短くなることを考慮せず元の `insertPos` を使ったため、末尾付近で `Position out of range` が発生していた。
+- 【制約】Tiptapの `.chain()` を使う場合、途中の削除による位置の変化を手動で計算して後続のコマンド（`.insertContentAt`）に渡す必要がある。
 
 ## 4. 解決済み要件とその解決方法
+- **仮IDのパースエラー**: `paragraphIdManager.ts` の正規表現を緩和することで解決。
+- **連続編集時の位置ずれエラー**: `moveHandler.ts` で `insertPos` の動的補正を実装することで解決。
 
 ## 5. 要件に関連する全ファイルのファイル構成（それぞれの役割を1行で併記）
 - `src/v2/utils/paragraphIdManager.ts`: 段落ID（正式・仮）の生成・検証ロジックを管理。
@@ -53,13 +65,14 @@
 - `src/v2/utils/paragraphFinder.ts`: `data-temp-id` を含む段落を DOM から検索。
 
 ## 6. 要件に関する機能の技術スタックと動作原理（依存関係含む）
-- **技術スタック**: TypeScript, Regex (ID検証), Tiptap (属性拡張 `data-temp-id`)。
+- **技術スタック**: TypeScript, Regex (ID検証), Tiptap (属性拡張 `data-temp-id`), ProseMirror (Position Mapping)。
 - **動作原理**:
     1. AI が `INSERT_PARAGRAPH` 等で `temp-xxx` という ID を指定。
     2. パーサーが `tempId` 属性として保持。
     3. 実行サービスが Tiptap のカスタム属性 `data-temp-id` として挿入。
     4. 後続コマンドが `MOVE_PARAGRAPH(temp-xxx, ...)` を発行。
     5. `paragraphFinder` が `data-temp-id === "temp-xxx"` のノードを検索し、正しい位置で実行する。
+    6. 移動（MOVE）の際は、先行する削除操作によるドキュメント長の縮みを計算し、正しい挿入位置を算出する。
 
 ----------------------------------------
 # 以下、参考記述
