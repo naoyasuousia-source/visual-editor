@@ -60,12 +60,16 @@ section.page::after {
   box-sizing: border-box;
   padding: var(--page-margin);
   position: relative;
-  overflow-y: auto;
+  overflow: hidden;
   outline: none;
   font-family: var(--editor-font-family, inherit);
   font-size: 11pt;
   color: #333;
   line-height: 1.6;
+}
+
+.page-inner > *:last-child {
+  margin-bottom: 0 !important;
 }
 
 .page-inner p,

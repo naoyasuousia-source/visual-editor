@@ -3,7 +3,8 @@ import { Node, mergeAttributes } from '@tiptap/core';
 export const PageExtension = Node.create({
     name: 'page',
     content: 'block+', // ページ内に複数のブロック要素を持つ
-    defining: false,
+    defining: true,
+    isolating: true,
 
     addAttributes() {
         return {

@@ -47,8 +47,14 @@ export const Pagination = Extension.create<PaginationOptions>({
                                 
                                 if (!inner) continue;
 
-                                // Check if content overflows (1px buffer for rounding)
-                                if (inner.scrollHeight > inner.clientHeight + 1) {
+                                // 一時的に高さをautoにして正確なコンテンツ高を取得
+                                const originalHeight = inner.style.height;
+                                inner.style.height = 'auto';
+                                const scrollHeight = inner.scrollHeight;
+                                inner.style.height = originalHeight;
+
+                                // Check if content overflows (2px buffer for rounding)
+                                if (scrollHeight > inner.clientHeight + 2) {
 
 
                                     // Find the page node in Tiptap document
@@ -90,8 +96,8 @@ export const Pagination = Extension.create<PaginationOptions>({
                                         
                                         tr = tr.insert(nextPagePos, newPage);
                                     } else {
-                                        // Move to existing next page
-                                        tr = tr.insert(nextPagePos + 2, lastChild);
+                                        // Move to existing next page (insert at the beginning of the next page node)
+                                        tr = tr.insert(nextPagePos + 1, lastChild);
                                     }
                                     
                                     // Delete from old page
