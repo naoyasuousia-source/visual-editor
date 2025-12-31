@@ -80,6 +80,27 @@ export function useCommandHighlight(editor: Editor | null) {
       );
 
       toRemove.forEach(superseded => {
+        // DOM属性のクリア (ゴーストハイライトを物理的に除去)
+        if (editor) {
+          const targets: { node: any; pos: number }[] = [];
+          editor.state.doc.descendants((node, pos) => {
+            if (node.attrs['data-command-id'] === superseded.commandId) {
+              targets.push({ node, pos });
+            }
+          });
+          
+          if (targets.length > 0) {
+            let chain = editor.chain().focus();
+            // 逆順で処理して整合性を保つ
+            [...targets].sort((a, b) => b.pos - a.pos).forEach(({ node, pos }) => {
+              chain = chain.setNodeSelection(pos).updateAttributes(node.type.name, {
+                'data-command-type': null,
+                'data-command-id': null,
+              });
+            });
+            chain.run();
+          }
+        }
         storeState.removeHighlight(superseded.commandId);
       });
 
