@@ -31,9 +31,15 @@
 <content><!-- INSERT_PARAGRAPH(p1-1, この段落は挿入された直後に移動されます。, temp-chain-1) -->
 <!-- MOVE_PARAGRAPH(temp-chain-1, p2-1) -->このコマンドを送ると、moveまで正常にされるが、個別に承認を完了しても未承認が残ってるということになり、自動編集フローが終了しない。</content>
 <current-situation>コンソールエラーは出なくなったが、やはり、insert→moveの場合、表示されてる個別承認をすべて完了しても、「一個の変更が保留中です」となり、自動編集フローが終了しない。
-</current-situation>
 <remarks></remarks>
 <permission-to-move>OK</permission-to-move>
+</requirement>
+
+<requirement>
+<content>replaceも混ぜるとおかしい</content>
+<current-situation></current-situation>
+<remarks></remarks>
+<permission-to-move>NG</permission-to-move>
 </requirement>
 
 ## 2. 未解決要件に関するコード変更履歴（目的、変更内容、変更日時）
