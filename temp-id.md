@@ -28,30 +28,16 @@
 ## 1. 未解決要件（移動許可がNGの要件は絶対に移動・編集しないこと）（勝手に移動許可をOKに書き換えないこと）
 
 <requirement>
-<content>改ページし、新ページにinsert、moveできる機能の開放。
+<content>改ページし、正しく新ページにinsert、moveできる機能の開放。どういう方式でもいいので、1ターンで、複数新ページを生成できるコマンドルールを整備してほしい
 </content>
-<current-situation><!-- INSERT_PARAGRAPH(p3-1, このコマンドで3ページ目が自動生成されます。, blockType=h1, spacing=m, temp-p3-para1) -->このコマンド単体だと、3ページ目が作られるが、不正コマンドとなり、3ページにテキストが挿入されない。</current-situation>
-<remarks>どういう方式でもいいので、1ターンで、複数新ページを生成できるコマンドルールを整備してほしい</remarks>
+<current-situation><!-- INSERT_PARAGRAPH(p3-1, このコマンドで3ページ目が自動生成されます。, blockType=h1, spacing=m, temp-p3-para1) -->このコマンド単体だと、3ページ目の2段落目に挿入されてしまう。1段落目に挿入されるようにしてほしい</current-situation>
+<remarks></remarks>
 <permission-to-move>NG</permission-to-move>
 </requirement>
 
-<requirement>
-<content>オプションを整備する
-（ブロックタイプは、pはデフォルトのためオプションに含めない）
-（textAlignも、左揃えはデフォルトのためオプションに含めない）
-（spacingも、sはデフォルトのため、オプションに含めず、xs・m・l・xlをオプションとする）
-（インデントも、0はデフォルトのため、オプションに含めない）</content>
-<current-situation></current-situation>
-<remarks></remarks>
-<permission-to-move>OK</permission-to-move>
-</requirement>
 
-<requirement>
-<content>コマンドで指定された太字と斜体は、エディタ準拠で、<b>、<i>ではなく、<strong>、<em>が適用されるかどうか確認する。</content>
-<current-situation></current-situation>
-<remarks></remarks>
-<permission-to-move>OK</permission-to-move>
-</requirement>
+
+
 
 
 ## 2. 未解決要件に関するコード変更履歴（目的、変更内容、変更日時）
@@ -79,6 +65,8 @@
 - **連続編集後にフローが終了しない (Root Cause Fixed)**: `useCommandHighlight.ts` で `getState()` を用いた同期的な重複チェックと、承認時の DOM 整合性チェックを導入することで完全に解決。
 - **挿入後に移動した段落の承認**: 単一ノードに対して複数コマンドが連なった場合、最新の状態（MOVE等）のみを承認対象とすることでUXをシンプル化。
 - **連続編集後のフロー終了不具合**: `useCommandHighlight.ts` で `getState()` を用いた同期的な重複チェックと、承認時の DOM 整合性チェックを導入することで、挿入→移動といった連続操作後も正しく全ハイライトがクリアされ、フローが終了するように修正。
+- **オプション設定の共通化・最適化**: デフォルト値（p, left, xs/s, 0）をAIに省略させるルールを整備。同時に `spacing` の選択肢を `none|xs|m|l|xl` に刷新。
+- **Bold/Italic対応**: `parseHtmlText` において `<b>/<strong>` および `<i>/<em>` を Tiptap の `bold/italic` マークへ変換する処理を実装。
 
 ## 5. 要件に関連する全ファイルのファイル構成（それぞれの役割を1行で併記）
 - `src/v2/utils/paragraphIdManager.ts`: 段落ID（正式・仮）の生成・検証ロジックを管理。

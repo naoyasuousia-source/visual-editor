@@ -109,6 +109,16 @@ export const ParagraphCommandAttributes = Extension.create({
               };
             },
           },
+          // 仮想プレースホルダーフラグ
+          'data-virtual-placeholder': {
+            default: null,
+            keepOnSplit: false,
+            parseHTML: (element) => element.getAttribute('data-virtual-placeholder'),
+            renderHTML: (attributes) => {
+              if (!attributes['data-virtual-placeholder']) return {};
+              return { 'data-virtual-placeholder': attributes['data-virtual-placeholder'] };
+            },
+          },
         },
       },
     ];

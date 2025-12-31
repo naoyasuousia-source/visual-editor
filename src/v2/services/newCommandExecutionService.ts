@@ -71,7 +71,7 @@ export function executeNewCommands(
     ) {
       virtualPageOffset++;
       const actualPageNum = currentMaxPage + virtualPageOffset;
-      const placeholderId = `virtual-target-${actualPageNum}-1`;
+      const placeholderId = `temp-virtual-${actualPageNum}-1`;
 
       // 新ページとプレースホルダー段落を作成
       // ドキュメントの最後に挿入
