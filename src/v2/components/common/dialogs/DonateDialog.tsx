@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { BaseDialog } from '@/components/ui/BaseDialog';
 import { Heart, User, Lightbulb } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useAppStore } from '@/store/useAppStore';
 
 interface DonateDialogProps {
     open: boolean;
@@ -10,9 +12,26 @@ interface DonateDialogProps {
 /**
  * 寄付ダイアログ（v1からのコンテンツを完全移植）
  */
-import { motion } from 'framer-motion';
 
 export const DonateDialog: React.FC<DonateDialogProps> = ({ open, onClose }) => {
+    const { donateScrollToBottom, setDonateScrollToBottom } = useAppStore();
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (open && donateScrollToBottom && scrollContainerRef.current) {
+            // ダイアログが開いた直後にスクロールを実行
+            const container = scrollContainerRef.current;
+            setTimeout(() => {
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: 'smooth'
+                });
+                // フラグをリセット
+                setDonateScrollToBottom(false);
+            }, 150); // アニメーション等の完了を待つために少し遅延
+        }
+    }, [open, donateScrollToBottom, setDonateScrollToBottom]);
+
     return (
         <BaseDialog
             open={open}
@@ -41,7 +60,10 @@ export const DonateDialog: React.FC<DonateDialogProps> = ({ open, onClose }) => 
             titleClassName="text-[1.8rem] font-black leading-tight tracking-tight py-1"
             maxWidth="lg"
         >
-            <div className="space-y-8 overflow-y-auto max-h-[70vh] pr-4 scrollbar-thin scrollbar-thumb-gray-200 font-['Noto_Sans_JP',sans-serif]">
+            <div 
+                ref={scrollContainerRef}
+                className="space-y-8 overflow-y-auto max-h-[70vh] pr-4 scrollbar-thin scrollbar-thumb-gray-200 font-['Noto_Sans_JP',sans-serif]"
+            >
                 <p className="text-[15px] leading-relaxed text-slate-500 font-medium">
                     いつもご利用ありがとうございます！<br />
                     このAI-Link Editorは、「快適なAIアシスト編集環境を提供したい」という想いから、個人で開発・運営しています。

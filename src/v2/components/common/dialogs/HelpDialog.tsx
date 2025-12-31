@@ -13,7 +13,7 @@ interface HelpDialogProps {
  * ユーザー向けヘルプ・ガイドダイアログ（v1のデザインを完全再現）
  */
 export const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose }) => {
-    const { openSubHelp, openDialog, isWordMode } = useAppStore();
+    const { openSubHelp, openDialog, isWordMode, setDonateScrollToBottom } = useAppStore();
 
     const handleSubHelpClick = (e: React.MouseEvent<HTMLAnchorElement>, type: string) => {
         e.preventDefault();
@@ -23,6 +23,7 @@ export const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose }) => {
     const handleDevProfileClick = (e: React.MouseEvent) => {
         e.preventDefault();
         onClose(); // 自身を閉じてからドネートダイアログを開く
+        setDonateScrollToBottom(true);
         setTimeout(() => {
             openDialog('donate');
         }, 100);

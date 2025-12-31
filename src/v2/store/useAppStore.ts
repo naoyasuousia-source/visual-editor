@@ -35,6 +35,10 @@ interface AppState {
     openSubHelp: (type: string) => void;
     closeSubHelp: () => void;
 
+    // Donate Dialog Scroll
+    donateScrollToBottom: boolean;
+    setDonateScrollToBottom: (scroll: boolean) => void;
+
     // File Handle (for Ctrl+S overwrite)
     currentFileHandle: FileSystemFileHandle | null;
     setCurrentFileHandle: (handle: FileSystemFileHandle | null) => void;
@@ -108,6 +112,10 @@ export const useAppStore = create<AppState>((set) => ({
     subHelpData: { isOpen: false, type: null },
     openSubHelp: (type) => set({ subHelpData: { isOpen: true, type } }),
     closeSubHelp: () => set({ subHelpData: { isOpen: false, type: null } }),
+
+    // Donate Dialog Scroll
+    donateScrollToBottom: false,
+    setDonateScrollToBottom: (scroll) => set({ donateScrollToBottom: scroll }),
 
     // File Handle
     currentFileHandle: null,
