@@ -21,7 +21,7 @@ trigger: always_on
 - **300-Line Limit:** 1ファイル300行以内を厳守せよ。
 - **No Placeholders:** `// TODO` や `// 実装予定` 等を残さず、全ての関数を完全に実装せよ。
 - **No Unauthorized Browser Check:** ユーザーの明示的な指示なく、勝手にブラウザ確認作業（`npm run dev` によるローカルサーバー起動やブラウザ操作）を開始しないこと（時間の浪費を避けるため）。
-- **Build Verification:** 構文エラーや型チェックのための `npm run build` は、ユーザーの許可なく必要に応じて実行して良い。
+
 
 ### 例外事項
  
@@ -53,12 +53,13 @@ trigger: always_on
         - **外部依存**: APIからの取得データ（Services）を画面用に整形する処理。
     - **重要**: 外部ライブラリや独自ロジックが hooks を経由せず、直接 DOM 操作をすることを禁止する。
 4. **UI (components)**
-    - **役割**: 描画とイベントの検知に専念する。
+    - **役割**: 描画と表現、ユーザーイベントの検知に専念する。
     - **コンポーネント内に書いても良いこと (UI Logic)**:
         - **見た目の制御**: 「開閉フラグに基づいて表示文言を切り替える」「特定条件でCSSクラスを付与する」など。
-        - **軽量なフィルタリング**: 「渡されたリストを表示順にソートする」程度の、10行以内で完結する pure な計算。
+        - **軽量な派生データ計算**: 渡された `props` や `state` から、表示に必要な形に変換する程度の pure な計算（10行以内目安）。
         - **useMemo の利用**: 上記の処理が再レンダリングで重くなる場合のメモ化。
-    - **禁止事項**: 複雑なビジネスロジックの混入、直接的な API 通信ロジックの記述。
+    - **プレミアムなデザイン実装**: 単に動くだけでなく、適切な余白、洗練された配色、滑らかなマイクロアニメーション（Hover, Transition）を積極的に導入し、プレミアムなユーザー体験（UX）を構築せよ。
+    - **禁止事項**: 複雑なビジネスロジックの混入、直接的な API 通信ロジックの記述。これらの Domain Logic は必ず Hooks へ委ねること。
 
 #### 2. 補助層 (Support Layers)
 
@@ -77,11 +78,12 @@ trigger: always_on
 
 ## 3. 💻 コーディング規格と型安全
 
-### ファイルとパス
+### ファイルと命名規則
 - **Path Alias**: すべて `@/` を使用せよ。相対パス（`../`）は禁止。
-- **Naming**:
-    - コンポーネント: `PascalCase`
-    - それ以外（hooks, utils, files）: `camelCase`
+- **Naming Conventions**:
+    - **ディレクトリ名**: `kebab-case` （例: `user-profile`, `common-ui`）
+    - **コンポーネントファイル名**: `PascalCase` （例: `PrimaryButton.tsx`）
+    - **それ以外のファイル（hooks, utils, services 等）**: `camelCase` （例: `useAuth.ts`, `formatDate.ts`）
 - **Early Return**: 早期リターンを徹底し、コードのネストを最小限に抑えよ。
 
 ### 型安全の徹底
@@ -111,8 +113,9 @@ trigger: always_on
 
 ### Tailwind CSS の運用
 - **Tailwind Exclusive**: 原則として Tailwind クラスのみを使用せよ。
-- **`index.css` の役割**: 基本は `@tailwind` 3行のみ。例外として、外部ライブラリ（ProseMirror 等）の内部クラス上書きや、Tailwind で記述困難な複雑な擬似要素（`::before` 等）のみ許可する。
-- **Dynamic Styles**: `style` 属性は、JS で動的に計算される数値（座標、進捗率、色変化等）に限定して使用を許可する。
+- **index.css の役割**: 基本は `@tailwind` 3行のみ。例外として、外部ライブラリ（ProseMirror 等）の内部クラス上書きや、Tailwind で記述困難な複雑な擬似要素（`::before` 等）のみ許可する。
+- **Dynamic Styles**: `style` 属性の使用は、JS で動的に計算される数値（座標、進捗率、色変化等）に限定せよ。それ以外の静的なスタイル、またはクラスで容易に定義可能なスタイルでの使用は禁止。
+- **Design Excellence**: モダンなタイポグラフィ（Inter, Roboto 等）、一貫したデザイントークン、アクセシビリティ（WAI-ARIA）を融合させ、「プロレベルの品質」を維持せよ。
 
 ### UI ライブラリとコンポーネント
 - **Shadcn/ui**: 第一選択の UI コンポーネント群とする。`src/components/ui/` は直接編集してプロジェクトに最適化して良い。
