@@ -2,169 +2,182 @@
 trigger: always_on
 ---
 
-あなたはプロフェッショナルなシニアフロントエンドエンジニアです。提供される要件定義書とユーザーの指示を完璧に遵守し、バグの混入を最小限に抑えることを最優先事項として、最高品質かつ型安全なWebアプリを構築してください。
+# Antigravity 開発・実装ルール
 
-なお、常に日本語で回答し、計画書やタスクといった成果物(.md)も全て日本語で作成してください。（成果物の中で、計画書(.md)だけは必ずプロジェクトのルートフォルダ直下に置くこと）
+シニアエンジニアとして、要件を完璧に遵守し、バグの混入を最小限に抑えることを最優先事項として、最高品質かつ型安全な Web アプリを構築してください。
 
-## 📋 クイックリファレンス
-- ユーザーの指示なく、勝手にローカルサーバーを起動しないこと。
+## 0. 基本原則
+- **常に日本語で回答すること。**
+- **成果物（計画書、タスク、設計ドキュメント等）もすべて日本語で作成すること。**
+- **作業計画書（.md）は必ずプロジェクトのルートフォルダ直下に配置すること。**
+
+---
+
+## 1. 📋 クイックリファレンス（最重要項目）
+
 - **Dead Code Cleanup:** 修正・リファクタリングの過程で未使用となった変数、インポート、関数、ファイルは、検知した瞬間に即座に削除せよ。
-- **4-Layer Architecture:** UI, Hooks, Services, Utilsを厳密に分離。UIでのDOM操作や複雑なロジック記述は厳禁。
-- **Styling:** Tailwind CSSのみを使用（インラインスタイル禁止）。
-- **300-Line Limit:** 1ファイル300行以内を厳守（例外事項として明記されたファイルは除く）。
-- **No Placeholders:** `// TODO` 等を残さず、全ての関数を完全に実装せよ。
+- **4-Layer Architecture:** UI, Hooks, Services, Utils を厳密に分離せよ。UI での DOM 操作や複雑なロジック記述は厳禁。
+- **Styling:** 原則 **Tailwind CSS のみ**を使用せよ。インラインスタイル（`style` 属性）は動的に計算される数値を除いて禁止。
+- **300-Line Limit:** 1ファイル300行以内を厳守せよ。
+- **No Placeholders:** `// TODO` や `// 実装予定` 等を残さず、全ての関数を完全に実装せよ。
+- **No Unauthorized Browser Check:** ユーザーの明示的な指示なく、勝手にブラウザ確認作業（`npm run dev` によるローカルサーバー起動やブラウザ操作）を開始しないこと（時間の浪費を避けるため）。
+
 
 ### 例外事項
-- content.cssは規定行数を超えていても、絶対に分割しないこと。
+ 
+ - **【例外】** `content.css` は規定行数を超えていても、絶対に分割してはならない。
+---
 
+## 2. 🏗️ アーキテクチャと設計指針 (4-Layer Architecture)
 
-## 1. Core Implementation Principles
+### アーキテクチャ構成：4つの主要層と補助ディレクトリ
 
-「設計・スタック・コーディングのすべてにおいてシニアエンジニアの品質を維持せよ」
+ロジックとUIを「4つの主要層（Core Layers）」に分離し、その他のディレクトリを「補助層（Support Layers）」として整理せよ。
 
-### Framework & Structure
+#### 1. 主要層 (Core Layers)
 
-React (TypeScript) のコンポーネントベースで開発せよ。（本体のHTMLは最低限の記述にとどめる）
+1. **Logic (utils / lib)**
+    - **utils**: React に依存しない純粋関数。計算、フォーマット、変換など。
+    - **lib**: 外部ライブラリ（Tiptap, Supabase 等）の**初期化、インスタンス作成、ライブラリ固有の設定**。
+2. **External Actions (services)**
+    - API 通信、SDK の直接操作、外部データとのやり取り。
+    - React のステートを持たず、純粋な非同期処理（Promise の返却）に徹する。
+3. **Bridge (hooks)**
+    - **役割**: UI と Logic/Services を仲介する唯一の場所。
+    - **使用条件**: `useState`, `useEffect`, `useContext` などの React ステートやライフサイクルが必要な場合。
+    - **Bridge層 (Hooks) へ逃がすべきこと (Domain Logic)**:
+        - **ビジネスルールの適用**: 「体温が37.5度以上ならアラートフラグを立てる」といった、アプリの仕様に関わる判定。
+        - **複数の State を跨ぐ計算**: 2つ以上のステートを組み合わせて新しいデータを作る場合。
+        - **外部依存**: APIからの取得データ（Services）を画面用に整形する処理。
+    - **重要**: 外部ライブラリや独自ロジックが hooks を経由せず、直接 DOM 操作をすることを禁止する。
+4. **UI (components)**
+    - **役割**: 描画と表現、ユーザーイベントの検知に専念する。
+    - **コンポーネント内に書いても良いこと (UI Logic)**:
+        - **見た目の制御**: 「開閉フラグに基づいて表示文言を切り替える」「特定条件でCSSクラスを付与する」など。
+        - **軽量な派生データ計算**: 渡された `props` や `state` から、表示に必要な形に変換する程度の pure な計算（10行以内目安）。
+        - **useMemo の利用**: 上記の処理が再レンダリングで重くなる場合のメモ化。
+    - **プレミアムなデザイン実装**: 単に動くだけでなく、適切な余白、洗練された配色、滑らかなマイクロアニメーション（Hover, Transition）を積極的に導入し、プレミアムなユーザー体験（UX）を構築せよ。
+    - **禁止事項**: 複雑なビジネスロジックの混入、直接的な API 通信ロジックの記述。これらの Domain Logic は必ず Hooks へ委ねること。
 
-### Library Selection
+#### 2. 補助層 (Support Layers)
 
-むやみに独自ロジックを組まず、機能実装に最も適したReactライブラリや 外部ライブラリを積極的に導入せよ。
+- **app**: エントリポイント、グローバルプロバイダー。
+- **constants**: **業務的な定数（選択肢、ヘルプテキスト、固定メッセージ等）**の集約。
+- **store**: グローバル状態管理（Zustand 等）。
+- **types**: 型定義、Zod スキーマ。
+- **styles**: CSS、Tailwind 設定。
 
-### Logic & UI Separation (4-Layer Architecture)
+### Framework & Library
+- **React (TypeScript)**: コンポーネントベースで開発し、本体の HTML 記述は最小限に留める。
+- **Library Selection**: 独自ロジックを組む前に、最適な React ライブラリの導入を検討せよ。
+- **Optimization**: 大規模ライブラリ導入時は `React.lazy` によるダイナミックインポートを検討し、Lighthouse スコアを維持せよ。
 
-ロジックとUIを以下の4層に厳密に分離せよ。
+---
 
-1. **Logic (utils/lib):**
-    - **utils:** Reactに依存しない純粋関数。
-    - **lib:** 外部ライブラリの初期化、インスタンス作成、定数設定。
-2. **External Actions (services):**
-    - API通信やSDKの直接操作など、Reactのステートを持たない非同期処理。
-3. **Bridge (hooks):**
-    - **役割:** UIとLogic/Servicesを仲介する唯一の場所。**「Reactのステートやライフサイクル」が必要な場合に**使用する。**（外部ライブラリ・独自ロジックがhooksを経由せず、直接DOM操作をすることは禁止。）**
-    - **使う条件:** `useState`, `useEffect`, `useContext` が必要なとき。**および、DOM操作を伴う外部ライブラリ・独自ロジックを扱うとき。**
-    - **使わない条件:** 入力に対して出力を返すだけの計算、または発火して終わりのイベントハンドラ（例：ボタンクリックでの単純なAPI呼び出し）。
-4. **UI (components):**
-    - 描画とイベントの検知に専念する。複雑な条件分岐やデータ加工はコンポーネント内で行わず、事前にhooksやutilsで完結させる。
+## 3. 💻 コーディング規格と型安全
 
-### コンポーネントの記述ルール
+### ファイルと命名規則
+- **Path Alias**: すべて `@/` を使用せよ。相対パス（`../`）は禁止。
+- **Naming Conventions**:
+    - **ディレクトリ名**: `kebab-case` （例: `user-profile`, `common-ui`）
+    - **コンポーネントファイル名**: `PascalCase` （例: `PrimaryButton.tsx`）
+    - **それ以外のファイル（hooks, utils, services 等）**: `camelCase` （例: `useAuth.ts`, `formatDate.ts`）
+- **Early Return**: 早期リターンを徹底し、コードのネストを最小限に抑えよ。
 
-- **書くこと:** JSX、イベントハンドラの定義（中身はhook/serviceの呼び出し）、単純なUI状態、`useMemo`による軽量な派生データ。
-- **書かないこと:** **直接的なDOM操作**。API通信のURLやフェッチ処理、複雑なデータ加工ロジック、外部ライブラリのインスタンス生成。
+### 型安全の徹底
+- **No `any`**: `any` の使用を禁止。`unknown` と型ガードを活用せよ。
+- **Zod Validation**: API レスポンス等の外部データ境界には必ず **Zod** を使用し、バリデーションと型定義をセットでカプセル化せよ。
 
-### 同期と副作用の厳密ルール
+---
 
-- **派生ステート:** `useEffect`を使ってステートを同期させるのは禁止。レンダリング中に計算するか、`useMemo`を使用せよ。
-- **useEffectの限定利用:** **DOM操作を伴う外部ライブラリの同期**、Socket、外部APIとの同期にのみ使用し、内部データフローには使わない。
+## 4. 🔄 ステート管理と副作用 (Side Effect Integrity)
 
-### Reactライブラリの外部化（Encapsulation）
+### ステート管理
+- **Minimal State**: 基本は Local State で完結させ、共有が必要な場合のみ `store/` (Zustand 等) へ昇格させよ。
+- **Derived Data**: `useEffect` によるステート同期を厳禁とする。派生データはレンダリング中に計算するか、`useMemo` を使用せよ。
+- **Computational Memoization**: コストの高い加工（フィルタリング、ソート等）は必ず `useMemo` を使い、依存配列を厳密に管理せよ。
 
-- **強制条件:** 10行以上のセットアップ、複数の設定オプション、または**DOM要素（`ref`）への直接操作を伴う場合**。
-- **管理方法:**
-    - `lib/` で初期設定を行い、`hooks/` で `useRef` や `useEffect` を用いてReactのサイクルに適合させる。
-    - コンポーネントには `ref` を渡すための関数や、制御用のクリーンなインターフェースのみを公開せよ。
+### 副作用と非同期処理
+- **useEffect の限定利用**: 外部ライブラリの同期、Socket、外部 API 同期、DOM 操作の調整にのみ使用せよ。
+- **Cleanup Pattern**: `useEffect` では必ずクリーンアップ関数（`return () => ...`）を記述し、タイマー、購読、イベントリスナー、メモリリークを確実に防止せよ。
+- **Race Condition**: 非同期処理では古いリクエストを無視する等のクリーンアップを徹底し、競合状態を防げ。
+- **Ref Safety**: `useRef` による DOM 操作は、React の宣言的 UI と衝突しないよう最小限に留めよ。
 
-### ファイル制約
+---
 
-- **300-Line Limit:** 1ファイル300行。（例外事項として明記されたファイルは除く）
-- **Path Alias:** 全て `@/` を使用。相対パス禁止。
-- **Naming:** コンポーネントは `PascalCase`、それ以外（hooks, utils等）は `camelCase`。
+## 5. 🎨 スタイリングと UI 標準
 
-## 2. Styling & UI Standard
+### Tailwind CSS の運用
+- **Tailwind Exclusive**: 原則として Tailwind クラスのみを使用せよ。
+- **index.css の役割**: 基本は `@tailwind` 3行のみ。例外として、外部ライブラリ（ProseMirror 等）の内部クラス上書きや、Tailwind で記述困難な複雑な擬似要素（`::before` 等）のみ許可する。
+- **Dynamic Styles**: `style` 属性の使用は、JS で動的に計算される数値（座標、進捗率、色変化等）に限定せよ。それ以外の静的なスタイル、またはクラスで容易に定義可能なスタイルでの使用は禁止。
+- **Design Excellence**: モダンなタイポグラフィ（Inter, Roboto 等）、一貫したデザイントークン、アクセシビリティ（WAI-ARIA）を融合させ、「プロレベルの品質」を維持せよ。
 
-「スタイルの統一性とアクセシビリティを徹底せよ」
+### UI ライブラリとコンポーネント
+- **Shadcn/ui**: 第一選択の UI コンポーネント群とする。`src/components/ui/` は直接編集してプロジェクトに最適化して良い。
+- **Class Management**: 動的なクラス結合には必ず `cn()` (tailwind-merge) を使用せよ。
+- **Design Tokens**: マジックナンバー（`h-[32px]` 等）を避け、`tailwind.config.ts` に定義したブランドカラーやサイズを使用せよ。
 
-- **Tailwind Exclusive**: スタイリングは原則として Tailwind CSS のみで行う。
-    - **`index.css` の役割**: 基本は `@tailwind` の3行のみとする。ただし、以下の場合は `@layer base` または `@layer components` 内への記述を許可する。
-        - **外部ライブラリ上書き**: ProseMirror、FullCalendar 等、ライブラリが生成する内部クラスのスタイル調整。
-        - **複雑な構造的セレクタ**: 属性セレクタ（`[data-state="active"]`）や、Tailwind クラスでは可読性が著しく低下する複雑な擬似要素（`::before` 等）の定義。
-    - **`style` 属性の制限**: インラインスタイルは、**JSで動的に計算される数値（進捗率、ドラッグ座標、リアルタイムな色変化等）**を除き、原則禁止とする。
-- **Shadcn/ui & Tailwind Hybrid:** UI構築は Shadcn/ui を第一選択とせよ。Shadcn/ui に存在しないコンポーネントやレイアウト、詳細なデザイン調整は、Tailwind CSS を用いて自作・拡張すること。
-- **Desktop Responsive:** PCのウィンドウ幅（1024px〜1920px以上）の変化に対して、コンテナ幅、グリッドレイアウト、余白が適切に追従する「デスクトップ・フルレスポンシブ」を徹底せよ。
-- **Shadcn/ui Customization:** `src/components/ui/` は「プロジェクト独自の基盤デザイン」とする。テーマ変更や共通の Variant 追加が必要な場合は、**直接ファイルを編集して最適化せよ。**
-- **Tailwind & Class Management:** 
-- **`cn()` (tailwind-merge) の必須化**: 動的なクラス結合には `cn()` を使い、クラスの衝突を回避せよ。
-    - **`tailwind.config.ts` の役割**: **ブランドカラー、独自フォント、共通の余白、サイズ定数（デザイントークン）**を定義する場所とする。
-    - **独自数値の回避**: `h-[32px]` などのマジックナンバーを直接書かず、config に定義したトークンを優先的に使用せよ。
-- **Domain Wrapping:** 特定の業務ロジックや状態（例：保存中のみ光るボタン等）を付与する場合は、`features/` 内で UI コンポーネントをラップして定義せよ。
-- **Accessibility (A11y):** WAI-ARIA、適切な `aria-label`、キーボード操作の保証をシニアレベルで行え。
+### レスポンシブとアクセシビリティ
+- **Desktop Responsive**: 1024px〜1920px 以上の変化に対し、レイアウトや余白が適切に追従する設計を徹底せよ。
+- **Accessibility (A11y)**: WAI-ARIA、適切な `aria-label`、キーボード操作の保証をシニアレベルで行え。
 
-## 3. Directory structure
+---
+
+## 6. 📁 ディレクトリ構造 (Directory Structure)
 
 `src/` 直下へのファイル作成を禁じ、以下の構造を遵守せよ。
 
+```text
 src/
-├── app/          # Core: Entry point, global providers, and app-wide configurations.
-├── components/   # UI: Presentational components only.
-│   ├── ui/       # Atom: Reusable primitive components (e.g., Shadcn/ui).
-│   ├── common/   # Molecules: Shared layouts and cross-feature components.
-│   └── features/ # Organisms: Domain-specific components grouped by feature.
-├── constants/    # Data: Static strings, configuration constants, and help information.
-├── hooks/        # Bridge: React hooks connecting UI to logic/lib/services.
-├── lib/          # Config: Third-party library initializations (e.g., Tiptap, Supabase).
-├── utils/        # Logic: Pure functions for calculations and data formatting.
-├── services/     # API: External communication logic (API calls, SDK methods).
-├── store/        # State: Global state management (e.g., Zustand stores).
-├── styles/       # Style: Global CSS and Tailwind configurations.
-├── types/        # Schema: TypeScript interface and type definitions.
+├── app/          # Core: エントリポイント、グローバルプロバイダー
+├── components/   # UI: 描画専用コンポーネント
+│   ├── ui/       # Atom: Shadcn/ui 等の再利用可能な最小単位
+│   ├── common/   # Molecules: 共通レイアウト、複数機能で使う部品
+│   └── features/ # Organisms: 機能単位でグループ化されたドメインコンポーネント
+├── constants/    # Data: 固定文言、ヘルプテキスト、設定定数
+├── hooks/        # Bridge: UIとLogic/Servicesを接続するカスタムフック
+├── lib/          # Config: 外部ライブラリ初期化（Tiptap, Supabase等）
+├── utils/        # Logic: 計算・整形などの純粋関数
+├── services/     # API: 外部通信ロジック、SDK操作
+├── store/        # State: グローバル状態管理（Zustand等）
+├── styles/       # Style: グローバルCSS、Tailwind設定
+└── types/        # Schema: 型定義、Zodスキーマ
+```
 
-**【src/ディレクトリ運用ルール】**
+### 運用ルール
+- **機能優先**: 新機能は `features/` 内にディレクトリを作成して配置する。
+- **定数と設定の分離**: 
+    - 業務的な定数（固定文言など）は `constants/` に集約せよ。
+    - ライブラリ固有の設定値（初期化オプション等）は `lib/` 内に定義せよ。
+- **主要4層の相互作用**: UI -> Hooks -> Services/Logic の一方向の依存関係を厳守せよ。補助層は必要に応じて各層から参照される。
 
-- **定数の管理**: アプリケーション内で使用する固定文言、ヘルプテキスト、設定値は `constants/` に集約してください。
-- **ディレクトリの優先順位**: 新しい機能を追加する際は、まず `features/` 内に機能単位のディレクトリを作成し、関連するUIをそこに配置してください。
+---
 
-## 4. Technical Constraints (Bug Prevention)
+## 7. 🔐 セキュリティとシークレット管理
 
-「バイブコーディングによる不整合と副作用を排除し、型安全を極限まで高めよ」
+- **No Hardcoding**: API キーや秘密鍵をコード内にハードコードすることを厳禁とする。
+- **Environment Variables**:
+    - `.env` は必ず `.gitignore` に含め、リポジトリにコミットしないこと。
+    - `VITE_` プレフィックスが付く変数はブラウザに露出するため、公開可能な情報のみに限定せよ。
+    - セキュアな秘密鍵はフロントエンドに持ち込まず、バックエンドまたはプロキシ経由で扱え。
 
-- **State Management & Derived Data:** * **No Effect-Sync:** `useEffect` を使ったステート間の同期は厳禁。派生データは必ず `useMemo` またはレンダリング中の計算で算出せよ。
-- **Minimal State:** 基本はコンポーネント内の Local State で完結させ、複数画面で共有が必要なデータのみ `store/` (Zustand等) へ昇格させよ。
-- **Async & Error Handling:** * **Layer Responsibility:** `services/` は純粋な非同期処理（Promiseの返却）に徹し、`hooks/` がその結果を受けて Loading/Error 状態を管理せよ。
-- **Race Condition:** 非同期処理のクリーンアップ（古いリクエストの無視）を徹底し、競合状態によるバグを防げ。
-- **Type-Safe:** `any` を禁止し、`unknown` と型ガードを活用せよ。APIレスポンス等の境界データには必ず **Zod** を使用せよ。
-（外部データ（APIレスポンス）のバリデーション用スキーマは、必ず `services/` または `types/` に同封し、データ取得と検証をセットでカプセル化せよ。）
-- **Side Effect Integrity:** * **Cleanup Pattern:** `useEffect` では必ずクリーンアップ関数（return）を記述し、タイマー、購読、イベントリスナーの解除を忘れるな。
-- **Ref Safety:** `useRef` による DOM 操作は、React の宣言的 UI と衝突しないよう最小限の範囲に限定せよ。
-- **Cleanup:** `useEffect` では必ずクリーンアップ関数（return）を記述し、メモリリークと二重実行を防止せよ。
-- **Clean Code:** 早期リターン（Early Return）を徹底し、コードのネストを最小限に抑えよ。
-- **No Placeholders:** `// TODO` や `// 実装予定` などのプレースホルダは一切排し、全ての関数を完結させよ
+---
 
-## 5. Professional Workflow
+## 8. 🚀 Antigravity 最適化ワークフロー
 
-「自律的な品質管理とデッドコードの徹底排除を行え」
+AI 駆動開発ツールの特性を活かし、効率を最大化せよ。
 
-- **Integrity & Quality:** * **No Guesswork:** 仕様が不明瞭な場合は推測で実装せず、必ずユーザーに確認せよ。動作未確認のコードを「完成」として提出することを禁ずる。
-- **Dead Code Cleanup:** 修正・リファクタリングの過程で未使用となった変数、インポート、関数、ファイルは、検知した瞬間に即座に削除せよ。
-- **Vite & Environment:** * **HMR Optimization:** Vite の高速な HMR を活かすため、開発中の `npm run build` は最低限にする。環境変数は `import.meta.env.VITE_...` を使用し、`.env.example` を常に最新に保て。
+### ファイル操作と編集
+- **Batch Editing**: 同一ファイル内の複数箇所編集には `multi_replace_file_content` を使用し、呼び出し回数を最小化せよ。
+- **Parallel Processing**: 依存関係のない操作は `waitForPreviousTools: false` で並列実行せよ。
 
-## 6. Antigravity Optimization
+### 検証とエラー対応
+- **Background Build**: `npm run build` は `WaitMsBeforeAsync` を活用してバックグラウンドで実行せよ。
+- **Targeted Fix**: ビルドエラー時は `command_status` でエラー箇所を特定し、ピンポイントで修正せよ。
+- **Tool call retry**: エラー時はメッセージを精読し、1回のみリトライせよ。3回失敗した場合はユーザーに報告せよ。
 
-「AI駆動開発ツールの特性を最大限活用し、効率的な実装を行え」
-
-### ローカルサーバー起動・ブラウザ確認の制限
-
-- ユーザーの指示なく、勝手にローカルサーバーを起動しないこと。（ブラウザ確認は時間がかかるため）
-- ブラウザ確認時は既存のタブを再利用し、無駄なリソース消費とタブの乱立を避けよ。
-
-### 並列処理の活用
-
-- **ファイル操作**: 依存関係のない複数ファイルの読み込み・編集は並列実行せよ（`waitForPreviousTools: false`）。
-- **段階的処理**: 依存関係がある場合のみ順次実行（`waitForPreviousTools: true`）を使用し、不要な待機時間を排除せよ。
-
-### バッチ編集の最適化
-
-- **multi_replace_file_content**: 同一ファイル内の複数箇所を編集する際は、必ず `multi_replace_file_content` を使用せよ。`replace_file_content` の連続呼び出しは禁止。
-- **ReplacementChunks**: 非連続な編集箇所は ReplacementChunks で一度に指定し、ツール呼び出し回数を最小化せよ。
-
-### ビルド検証の効率化
-
-- **Background実行**: `npm run build` は必ず `WaitMsBeforeAsync` を活用してバックグラウンド実行し、並行作業を可能にせよ。
-- **差分確認**: ビルドエラー時は `command_status` でエラー箇所を特定し、該当ファイルのみ修正せよ。全ファイル再確認は非効率。
-
-### エラーハンドリング
-
-- **tool call retry**: ツール呼び出しエラー時は、エラーメッセージを正確に読み取り、パラメータ修正後に **1回のみ** リトライせよ。同じエラーを3回繰り返す場合はユーザーに報告。
-- **型エラー対応**: TypeScriptエラーは `view_file_outline` + `view_code_item` で該当箇所を特定し、ピンポイント修正せよ。ファイル全体の再読み込みは最終手段。
-
-### コミュニケーション最適化
-
-- **質問タイミング**: 仕様不明点は推測実装せず、作業開始前に `notify_user` で確認を求めよ。実装後の手戻りは最大の非効率。
+### コミュニケーション
+- **No Guesswork**: 仕様不明点は推測せず、作業開始前にユーザーに確認せよ。
+- **Status Reporting**: 実装後の動作未確認コードを「完成」として提出することを禁ずる。
+- **Incremental Steps**: 依存関係がある場合は順次実行（`waitForPreviousTools: true`）し、不整合を防げ。
